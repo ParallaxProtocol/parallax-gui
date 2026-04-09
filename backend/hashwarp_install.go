@@ -98,13 +98,16 @@ func (m *MinerController) InstallHashwarp(gpuType string, emit func(step string,
 		}
 	}
 
-	// 6. Verify the binary was not removed by antivirus.
+	// 6. On Windows, poll for a while to verify Defender hasn't quarantined
+	// the binary. Real-time protection can take several seconds to act.
 	if goos == "windows" {
-		// Small delay to give real-time protection time to act.
-		time.Sleep(2 * time.Second)
-		if _, err := os.Stat(destPath); os.IsNotExist(err) {
-			emit("av-blocked", "")
-			return fmt.Errorf("hashwarp.exe was removed by antivirus — add an exclusion and try again")
+		emit("verifying", "")
+		for i := 0; i < 20; i++ {
+			time.Sleep(1 * time.Second)
+			if _, err := os.Stat(destPath); os.IsNotExist(err) {
+				emit("av-blocked", "")
+				return fmt.Errorf("hashwarp.exe was removed by Windows Defender — add an antivirus exclusion and try again")
+			}
 		}
 	}
 

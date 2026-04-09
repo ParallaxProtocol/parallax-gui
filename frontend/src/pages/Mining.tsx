@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   api,
   GUIConfig,
@@ -25,6 +25,8 @@ export default function Mining() {
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
   const [hashwarpFound, setHashwarpFound] = useState<boolean | null>(null); // null = loading
+  const [avBlocked, setAvBlocked] = useState(false); // Windows Defender blocked hashwarp
+  const isWindows = navigator.userAgent.includes("Windows");
 
   // Form state (kept in sync with config)
   const [wallet, setWallet] = useState("");
@@ -106,7 +108,14 @@ export default function Mining() {
       });
       await api.startMining(selectedMode as MiningMode);
     } catch (e: any) {
-      setErr(e?.message || String(e));
+      const msg = e?.message || String(e);
+      // If hashwarp is missing on Windows, it was likely deleted by Defender
+      if (isWindows && msg.toLowerCase().includes("hashwarp") && msg.toLowerCase().includes("not found")) {
+        setHashwarpFound(false);
+        setAvBlocked(true);
+      } else {
+        setErr(msg);
+      }
     } finally {
       setStarting(false);
     }
@@ -274,21 +283,26 @@ export default function Mining() {
         </StaggerItem>
       )}
 
-      {/* ── Hashwarp Setup Guide (GPU modes, binary not found) ── */}
-      {!isRunning && (selectedMode === "pool" || selectedMode === "sologpu") && hashwarpFound === false && (
+      {/* ── Hashwarp Setup Guide / AV Blocked (GPU modes) ── */}
+      {!isRunning && (selectedMode === "pool" || selectedMode === "sologpu") && (hashwarpFound === false || avBlocked) && (
         <StaggerItem>
-          <HashwarpSetupGuide onRetry={() => {
-            setHashwarpFound(null);
-            api.hashwarpInstalled().then((found) => {
-              setHashwarpFound(found);
-              if (found) api.detectGPUs().then(setGpus).catch(() => setGpus([]));
-            }).catch(() => setHashwarpFound(false));
-          }} />
+          <HashwarpSetupGuide
+            avBlocked={avBlocked}
+            setAvBlocked={setAvBlocked}
+            onRetry={() => {
+              setAvBlocked(false);
+              setHashwarpFound(null);
+              api.hashwarpInstalled().then((found) => {
+                setHashwarpFound(found);
+                if (found) api.detectGPUs().then(setGpus).catch(() => setGpus([]));
+              }).catch(() => setHashwarpFound(false));
+            }}
+          />
         </StaggerItem>
       )}
 
       {/* ── Configuration ── */}
-      {!isRunning && !((selectedMode === "pool" || selectedMode === "sologpu") && hashwarpFound === false) && (
+      {!isRunning && !avBlocked && !((selectedMode === "pool" || selectedMode === "sologpu") && hashwarpFound === false) && (
         <StaggerItem>
           <section className="card space-y-6">
             <div className="eyebrow mb-2">Configuration</div>
@@ -713,21 +727,28 @@ export default function Mining() {
   );
 }
 
-function HashwarpSetupGuide({ onRetry }: { onRetry: () => void }) {
+function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
+  onRetry: () => void;
+  avBlocked: boolean;
+  setAvBlocked: (v: boolean) => void;
+}) {
   const [installing, setInstalling] = useState(false);
   const [step, setStep] = useState("");
   const [installErr, setInstallErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [avBlocked, setAvBlocked] = useState(false);
   const [pendingGpu, setPendingGpu] = useState<"cuda" | "opencl" | null>(null);
   const [fixingAv, setFixingAv] = useState(false);
   const isWindows = navigator.userAgent.includes("Windows");
+
+  // Track whether the backend flagged AV during this install attempt
+  const avBlockedRef = useRef(false);
 
   useEffect(() => {
     const off = window.runtime.EventsOn(
       "hashwarp-install",
       (data: { step: string; detail: string }) => {
         if (data.step === "av-blocked") {
+          avBlockedRef.current = true;
           setAvBlocked(true);
           return;
         }
@@ -738,20 +759,23 @@ function HashwarpSetupGuide({ onRetry }: { onRetry: () => void }) {
               ? `Downloading ${data.detail}...`
               : data.step === "extracting"
                 ? "Extracting..."
-                : data.step === "done"
-                  ? "Installed!"
-                  : data.step,
+                : data.step === "verifying"
+                  ? "Verifying installation..."
+                  : data.step === "done"
+                    ? "Installed!"
+                    : data.step,
         );
         if (data.step === "done") setDone(true);
       },
     );
     return () => off();
-  }, []);
+  }, [setAvBlocked]);
 
   const install = async (gpuType: "cuda" | "opencl") => {
     setInstalling(true);
     setInstallErr(null);
     setAvBlocked(false);
+    avBlockedRef.current = false;
     setStep("Starting...");
     setDone(false);
     setPendingGpu(gpuType);
@@ -761,7 +785,7 @@ function HashwarpSetupGuide({ onRetry }: { onRetry: () => void }) {
       setTimeout(() => onRetry(), 1000);
     } catch (e: any) {
       // If it was an AV block, the avBlocked state is already set via event
-      if (!avBlocked) {
+      if (!avBlockedRef.current) {
         setInstallErr(e?.message || String(e));
       }
       setInstalling(false);
@@ -775,6 +799,7 @@ function HashwarpSetupGuide({ onRetry }: { onRetry: () => void }) {
       await api.addDefenderExclusion();
       // Re-attempt install after exclusion is added
       setAvBlocked(false);
+      avBlockedRef.current = false;
       setInstalling(true);
       setInstallErr(null);
       setStep("Starting...");
@@ -782,7 +807,9 @@ function HashwarpSetupGuide({ onRetry }: { onRetry: () => void }) {
       await api.installHashwarp(pendingGpu);
       setTimeout(() => onRetry(), 1000);
     } catch (e: any) {
-      setInstallErr(e?.message || String(e));
+      if (!avBlockedRef.current) {
+        setInstallErr(e?.message || String(e));
+      }
       setInstalling(false);
     } finally {
       setFixingAv(false);

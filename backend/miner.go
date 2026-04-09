@@ -20,9 +20,15 @@ import (
 	"sync"
 	"time"
 
+	"errors"
+
 	"github.com/ParallaxProtocol/parallax/common"
 	"github.com/ParallaxProtocol/parallax/log"
 )
+
+// ErrHashwarpNotFound is returned when the hashwarp binary cannot be located.
+// The frontend uses this to distinguish antivirus deletion from other errors.
+var ErrHashwarpNotFound = errors.New("hashwarp binary not found")
 
 // defaultPools is the static list of known Parallax mining pools shipped with
 // the GUI. Users can add custom pools in settings.
@@ -822,7 +828,7 @@ func (m *MinerController) hashwarpPath() (string, error) {
 	}
 	p, err := exec.LookPath("hashwarp")
 	if err != nil {
-		return "", fmt.Errorf("hashwarp binary not found (checked alongside prlx-gui and in $PATH)")
+		return "", fmt.Errorf("%w (checked alongside prlx-gui and in $PATH)", ErrHashwarpNotFound)
 	}
 	return p, nil
 }
