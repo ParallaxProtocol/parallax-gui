@@ -33,6 +33,8 @@ export default function Settings() {
   const [restarting, setRestarting] = useState(false);
   const [appVersion, setAppVersion] = useState<string>("");
   const [clientVersion, setClientVersion] = useState<string>("");
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState<string | null>(null);
 
   useEffect(() => {
     api.getConfig().then((c) => {
@@ -323,8 +325,8 @@ export default function Settings() {
       </StaggerItem>
 
       <StaggerItem>
-        <section className="card">
-          <div className="card-title mb-4">About</div>
+        <section className="card space-y-5">
+          <div className="card-title">About</div>
           <dl className="grid grid-cols-3 gap-y-3 text-sm">
             <dt className="eyebrow self-center">Client</dt>
             <dd className="col-span-2 font-mono text-fg">
@@ -335,6 +337,33 @@ export default function Settings() {
               {appVersion || "—"}
             </dd>
           </dl>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              className="btn-ghost shrink-0"
+              disabled={checking}
+              onClick={async () => {
+                setChecking(true);
+                setCheckResult(null);
+                try {
+                  const info = await api.checkForUpdate();
+                  setCheckResult(
+                    info
+                      ? `Update available: v${info.latestVersion}`
+                      : "You're up to date."
+                  );
+                } catch (e: any) {
+                  setCheckResult(e?.message || "Check failed");
+                }
+                setChecking(false);
+              }}
+            >
+              {checking ? "Checking…" : "Check for updates"}
+            </button>
+            {checkResult && (
+              <span className="text-sm text-muted">{checkResult}</span>
+            )}
+          </div>
         </section>
       </StaggerItem>
 

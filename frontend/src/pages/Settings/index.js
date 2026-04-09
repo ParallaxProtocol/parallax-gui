@@ -32,6 +32,8 @@ export default function Settings() {
     const [restarting, setRestarting] = useState(false);
     const [appVersion, setAppVersion] = useState("");
     const [clientVersion, setClientVersion] = useState("");
+    const [checking, setChecking] = useState(false);
+    const [checkResult, setCheckResult] = useState(null);
     useEffect(() => {
         api.getConfig().then((c) => {
             setCfg(c);
@@ -90,7 +92,20 @@ export default function Settings() {
                                                     trieDirtyCacheMB: parseInt(e.target.value, 10) || 0,
                                                 }) }) }), _jsx(Field, { label: "Snapshot cache (MB)", children: _jsx("input", { type: "number", className: "input", value: cfg.snapshotCacheMB, onChange: (e) => update({
                                                     snapshotCacheMB: parseInt(e.target.value, 10) || 0,
-                                                }) }) })] }) })) })] }) }), _jsx(StaggerItem, { children: _jsxs("section", { className: "card", children: [_jsx("div", { className: "card-title mb-4", children: "About" }), _jsxs("dl", { className: "grid grid-cols-3 gap-y-3 text-sm", children: [_jsx("dt", { className: "eyebrow self-center", children: "Client" }), _jsxs("dd", { className: "col-span-2 font-mono text-fg", children: ["prlx ", clientVersion || "—"] }), _jsx("dt", { className: "eyebrow self-center", children: "Desktop" }), _jsx("dd", { className: "col-span-2 font-mono text-fg", children: appVersion || "—" })] })] }) }), err && (_jsx(StaggerItem, { children: _jsx("div", { className: "card border-danger/40 bg-danger/10 text-danger", children: err }) })), _jsx("div", { className: "h-20" }), _jsx(FloatingSaveBar, { dirty: dirty, saved: saved, dirtyNeedsRestart: dirtyNeedsRestart, restartPending: restartPending, restarting: restarting, onSave: save, onDiscard: discard, onRestart: restartNode })] }));
+                                                }) }) })] }) })) })] }) }), _jsx(StaggerItem, { children: _jsxs("section", { className: "card space-y-5", children: [_jsx("div", { className: "card-title", children: "About" }), _jsxs("dl", { className: "grid grid-cols-3 gap-y-3 text-sm", children: [_jsx("dt", { className: "eyebrow self-center", children: "Client" }), _jsxs("dd", { className: "col-span-2 font-mono text-fg", children: ["prlx ", clientVersion || "—"] }), _jsx("dt", { className: "eyebrow self-center", children: "Desktop" }), _jsx("dd", { className: "col-span-2 font-mono text-fg", children: appVersion || "—" })] }), _jsxs("div", { className: "flex items-center gap-4", children: [_jsx("button", { type: "button", className: "btn-ghost shrink-0", disabled: checking, onClick: async () => {
+                                        setChecking(true);
+                                        setCheckResult(null);
+                                        try {
+                                            const info = await api.checkForUpdate();
+                                            setCheckResult(info
+                                                ? `Update available: v${info.latestVersion}`
+                                                : "You're up to date.");
+                                        }
+                                        catch (e) {
+                                            setCheckResult(e?.message || "Check failed");
+                                        }
+                                        setChecking(false);
+                                    }, children: checking ? "Checking…" : "Check for updates" }), checkResult && (_jsx("span", { className: "text-sm text-muted", children: checkResult }))] })] }) }), err && (_jsx(StaggerItem, { children: _jsx("div", { className: "card border-danger/40 bg-danger/10 text-danger", children: err }) })), _jsx("div", { className: "h-20" }), _jsx(FloatingSaveBar, { dirty: dirty, saved: saved, dirtyNeedsRestart: dirtyNeedsRestart, restartPending: restartPending, restarting: restarting, onSave: save, onDiscard: discard, onRestart: restartNode })] }));
 }
 function FloatingSaveBar({ dirty, saved, dirtyNeedsRestart, restartPending, restarting, onSave, onDiscard, onRestart, }) {
     const visible = dirty || saved || restartPending;
