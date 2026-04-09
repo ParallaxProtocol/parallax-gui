@@ -44,9 +44,8 @@ Section "Install"
   ; Main binary
   File "${BINDIR}\${PRODUCT_EXE}"
 
-  ; Bundle hashwarp if present
-  IfFileExists "${BINDIR}\hashwarp.exe" 0 +2
-    File "${BINDIR}\hashwarp.exe"
+  ; Bundle hashwarp if present (uses /nonfatal so build succeeds even without it)
+  File /nonfatal "${BINDIR}\hashwarp.exe"
 
   ; Uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"

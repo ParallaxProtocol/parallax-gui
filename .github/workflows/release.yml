@@ -180,29 +180,29 @@ jobs:
           brew install create-dmg
           VERSION="${{ steps.version.outputs.version }}"
           DISPLAY_ARCH="${{ matrix.display_arch }}"
-          APP_NAME="Parallax Client.app"
           DMG_NAME="Parallax-Client-${VERSION}-macos-${DISPLAY_ARCH}.dmg"
 
-          # Debug: show what wails produced
-          ls -lhR build/bin/
+          # Wails names the .app after the "name" field in wails.json
+          WAILS_APP="prlx-gui.app"
+          DISPLAY_APP="Parallax Client.app"
 
           # If hashwarp binary exists, embed it inside the .app bundle
           if [ -f "build/bin/hashwarp" ]; then
-            mkdir -p "build/bin/${APP_NAME}/Contents/Resources"
-            cp build/bin/hashwarp "build/bin/${APP_NAME}/Contents/Resources/"
+            mkdir -p "build/bin/${WAILS_APP}/Contents/Resources"
+            cp build/bin/hashwarp "build/bin/${WAILS_APP}/Contents/Resources/"
           fi
 
-          # Stage the .app into its own directory for create-dmg
+          # Stage and rename .app for user-facing DMG
           DMG_STAGE="build/dmg-stage"
           mkdir -p "${DMG_STAGE}"
-          cp -a "build/bin/${APP_NAME}" "${DMG_STAGE}/"
+          cp -a "build/bin/${WAILS_APP}" "${DMG_STAGE}/${DISPLAY_APP}"
 
           create-dmg \
             --volname "Parallax Client" \
             --window-pos 200 120 \
             --window-size 600 400 \
             --icon-size 100 \
-            --icon "${APP_NAME}" 150 185 \
+            --icon "${DISPLAY_APP}" 150 185 \
             --app-drop-link 450 185 \
             --no-internet-enable \
             "build/package/${DMG_NAME}" \
