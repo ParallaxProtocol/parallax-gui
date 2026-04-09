@@ -4,7 +4,7 @@
 package backend
 
 // GUIVersion is the user-facing version of the desktop app.
-const GUIVersion = "0.1.0"
+var GUIVersion = "0.1.0"
 
 // GUIConfig is the persisted configuration that the wizard / settings screens
 // edit. It is intentionally a flat struct so that Wails can serialise it to

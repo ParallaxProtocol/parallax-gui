@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ParallaxProtocol/parallax/cmd/prlx-gui/backend"
+	"github.com/ParallaxProtocol/parallax-gui/backend"
 	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
