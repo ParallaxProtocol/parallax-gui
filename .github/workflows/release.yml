@@ -22,26 +22,36 @@ jobs:
         include:
           - os: linux
             arch: amd64
+            display_os: linux
+            display_arch: x86_64
             target: linux/amd64
             runner: ubuntu-latest
             wails_tags: "embedfrontend webkit2_41"
           - os: linux
             arch: arm64
+            display_os: linux
+            display_arch: arm64
             target: linux/arm64
             runner: ubuntu-24.04-arm
             wails_tags: "embedfrontend webkit2_41"
           - os: darwin
             arch: amd64
+            display_os: macos
+            display_arch: x86_64
             target: darwin/amd64
             runner: macos-14
             wails_tags: "embedfrontend"
           - os: darwin
             arch: arm64
+            display_os: macos
+            display_arch: arm64
             target: darwin/arm64
             runner: macos-14
             wails_tags: "embedfrontend"
           - os: windows
             arch: amd64
+            display_os: windows
+            display_arch: x86_64
             target: windows/amd64
             runner: windows-latest
             wails_tags: "embedfrontend"
@@ -87,24 +97,120 @@ jobs:
         run: |
           choco install zip -y --no-progress
 
+      - name: Set version
+        id: version
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          [ -z "$VERSION" ] && VERSION="0.0.0"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Build GUI bundle
         shell: bash
         env:
           WAILS_TAGS: ${{ matrix.wails_tags }}
           GOPRIVATE: github.com/ParallaxProtocol/*
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          make prlx-gui-package GUI_TARGETS="${{ matrix.target }}"
+          make prlx-gui-package GUI_TARGETS="${{ matrix.target }}" VERSION="$VERSION"
 
       - name: Verify artifact exists
         shell: bash
         run: |
-          ls -lh build/package/parallax-gui-${{ matrix.os }}-${{ matrix.arch }}.zip
+          ls -lh build/package/Parallax-Client-${{ steps.version.outputs.version }}-${{ matrix.display_os }}-${{ matrix.display_arch }}.zip
+
+      - name: Build Linux AppImage
+        if: matrix.os == 'linux'
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DISPLAY_ARCH="${{ matrix.display_arch }}"
+
+          # appimagetool uses aarch64 in its release filenames
+          APPTOOL_ARCH="${DISPLAY_ARCH}"
+          [ "$APPTOOL_ARCH" = "arm64" ] && APPTOOL_ARCH="aarch64"
+
+          # Download appimagetool
+          wget -q "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${APPTOOL_ARCH}.AppImage" -O appimagetool
+          chmod +x appimagetool
+
+          # Build AppDir structure
+          APPDIR="build/Parallax-Client.AppDir"
+          mkdir -p "${APPDIR}/usr/bin" "${APPDIR}/usr/share/icons/hicolor/256x256/apps"
+
+          cp "build/bin/Parallax Client" "${APPDIR}/usr/bin/parallax-client"
+          chmod +x "${APPDIR}/usr/bin/parallax-client"
+
+          # Bundle hashwarp if present
+          if [ -f "build/bin/hashwarp" ]; then
+            cp build/bin/hashwarp "${APPDIR}/usr/bin/hashwarp"
+            chmod +x "${APPDIR}/usr/bin/hashwarp"
+          fi
+
+          cp build/appicon/appicon.png "${APPDIR}/usr/share/icons/hicolor/256x256/apps/parallax-client.png"
+          cp build/appicon/appicon.png "${APPDIR}/parallax-client.png"
+          cp build/linux/parallax-client.desktop "${APPDIR}/parallax-client.desktop"
+
+          # Create AppRun script
+          cat > "${APPDIR}/AppRun" << 'APPRUN'
+          #!/bin/bash
+          SELF="$(readlink -f "$0")"
+          HERE="${SELF%/*}"
+          exec "${HERE}/usr/bin/parallax-client" "$@"
+          APPRUN
+          chmod +x "${APPDIR}/AppRun"
+
+          # Build the AppImage (--appimage-extract-and-run avoids FUSE requirement in CI)
+          ARCH="${APPTOOL_ARCH}" ./appimagetool --appimage-extract-and-run "${APPDIR}" \
+            "build/package/Parallax-Client-${VERSION}-linux-${DISPLAY_ARCH}.AppImage"
+          chmod +x "build/package/Parallax-Client-${VERSION}-linux-${DISPLAY_ARCH}.AppImage"
+          ls -lh build/package/
+
+      - name: Build Windows installer
+        if: matrix.os == 'windows'
+        shell: bash
+        run: |
+          choco install nsis -y --no-progress
+          VERSION="${{ steps.version.outputs.version }}"
+          makensis -DVERSION="$VERSION" \
+                   -DBINDIR="$(pwd)/build/bin" \
+                   build/windows/installer.nsi
+          mv "build/windows/Parallax-Client-${VERSION}-windows-x86_64-setup.exe" build/package/
+          ls -lh build/package/
+
+      - name: Build macOS DMG
+        if: matrix.os == 'darwin'
+        shell: bash
+        run: |
+          brew install create-dmg
+          VERSION="${{ steps.version.outputs.version }}"
+          DISPLAY_ARCH="${{ matrix.display_arch }}"
+          APP_NAME="Parallax Client.app"
+          DMG_NAME="Parallax-Client-${VERSION}-macos-${DISPLAY_ARCH}.dmg"
+
+          # If hashwarp binary exists, embed it inside the .app bundle
+          if [ -f "build/bin/hashwarp" ]; then
+            mkdir -p "build/bin/${APP_NAME}/Contents/Resources"
+            cp build/bin/hashwarp "build/bin/${APP_NAME}/Contents/Resources/"
+          fi
+
+          create-dmg \
+            --volname "Parallax Client" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "${APP_NAME}" 150 185 \
+            --app-drop-link 450 185 \
+            --no-internet-enable \
+            "build/package/${DMG_NAME}" \
+            "build/bin/${APP_NAME}"
+          ls -lh build/package/
 
       - name: Upload GUI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: parallax-gui-${{ matrix.os }}-${{ matrix.arch }}
-          path: build/package/parallax-gui-${{ matrix.os }}-${{ matrix.arch }}.zip
+          name: parallax-gui-${{ matrix.display_os }}-${{ matrix.display_arch }}
+          path: build/package/Parallax-Client-*
           if-no-files-found: error
           retention-days: 14
 
@@ -127,7 +233,7 @@ jobs:
       - name: Stage release directory
         run: |
           mkdir -p release
-          find artifacts -type f -name '*.zip' -exec cp {} release/ \;
+          find artifacts -type f -name 'Parallax-Client-*' -exec cp {} release/ \;
           cd release
           ls -lh
           sha256sum * > SHA256SUMS.txt
@@ -137,7 +243,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release/parallax-gui-*.zip
+            release/Parallax-Client-*
             release/SHA256SUMS.txt
           generate_release_notes: true
           draft: true

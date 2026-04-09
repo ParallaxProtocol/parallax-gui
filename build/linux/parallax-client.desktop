@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Parallax Client
+Comment=Desktop wallet and node manager for the Parallax network
+Exec=parallax-client
+Icon=parallax-client
+Type=Application
+Categories=Network;Finance;
+Terminal=false

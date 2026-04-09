@@ -102,17 +102,21 @@ prlx-gui-package:
 	    echo "   !! skipped $$os/$$arch (no output in build/bin)"; \
 	    continue; \
 	  fi; \
-	  bundle="parallax-gui-$$os-$$arch"; \
+	  disparch="$$arch"; \
+	  [ "$$disparch" = "amd64" ] && disparch="x86_64"; \
+	  dispos="$$os"; \
+	  [ "$$dispos" = "darwin" ] && dispos="macos"; \
+	  bundle="Parallax-Client-$(VERSION)-$$dispos-$$disparch"; \
 	  out="$$PACKAGEDIR/$$bundle.zip"; \
 	  rm -f "$$out"; \
 	  ( cd "$$GUI_BIN" && zip -9 -r "$$out" . >/dev/null ); \
 	  echo "-> Packaged $$(basename "$$out")"; \
 	done; \
-	if ls "$$PACKAGEDIR"/parallax-gui-*.zip >/dev/null 2>&1; then \
+	if ls "$$PACKAGEDIR"/Parallax-Client-*.zip >/dev/null 2>&1; then \
 	  if command -v shasum >/dev/null 2>&1; then \
-	    ( cd "$$PACKAGEDIR" && shasum -a 256 parallax-gui-*.zip >> SHA256SUMS.txt ); \
+	    ( cd "$$PACKAGEDIR" && shasum -a 256 Parallax-Client-*.zip >> SHA256SUMS.txt ); \
 	  else \
-	    ( cd "$$PACKAGEDIR" && sha256sum parallax-gui-*.zip >> SHA256SUMS.txt ); \
+	    ( cd "$$PACKAGEDIR" && sha256sum Parallax-Client-*.zip >> SHA256SUMS.txt ); \
 	  fi; \
 	fi; \
 	echo "GUI bundles in $$PACKAGEDIR/"
