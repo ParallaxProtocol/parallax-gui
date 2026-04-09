@@ -1,4 +1,4 @@
-# Parallax Desktop (`prlx-gui`)
+# Parallax Desktop
 
 A desktop node manager for the Parallax network. Built on
 [Wails v2](https://wails.io) — a Go backend embeds a full `prl.Parallax`
@@ -62,7 +62,7 @@ make prlx-gui-package      # build + zip per GUI_TARGETS into build/package/
 Output is in `build/bin/`. Run it with:
 
 ```sh
-./build/bin/prlx-gui
+./build/bin/Parallax\ Client
 ```
 
 ### Development
