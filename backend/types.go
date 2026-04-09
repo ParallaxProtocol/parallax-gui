@@ -194,3 +194,25 @@ type MinerEvent struct {
 	Kind    string      `json:"kind"` // "started" | "stopped" | "error" | "dag" | "stats"
 	Payload interface{} `json:"payload,omitempty"`
 }
+
+// ---------------------------------------------------------------------------
+// Auto-update
+// ---------------------------------------------------------------------------
+
+// UpdateInfo describes an available update found on GitHub Releases.
+type UpdateInfo struct {
+	CurrentVersion string `json:"currentVersion"`
+	LatestVersion  string `json:"latestVersion"`
+	ReleaseURL     string `json:"releaseURL"`  // HTML URL for "View release notes"
+	AssetURL       string `json:"assetURL"`    // download URL for this OS/arch
+	AssetName      string `json:"assetName"`
+	AssetSize      int64  `json:"assetSize"`   // bytes
+	PublishedAt    string `json:"publishedAt"`
+}
+
+// UpdateProgress is broadcast over the "update-progress" Wails event channel.
+type UpdateProgress struct {
+	Step    string `json:"step"`    // "downloading" | "verifying" | "extracting" | "ready" | "error"
+	Percent int    `json:"percent"` // 0-100 for downloading
+	Detail  string `json:"detail"`
+}

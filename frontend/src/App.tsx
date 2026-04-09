@@ -10,6 +10,7 @@ import Settings from "./pages/Settings";
 import Logs from "./pages/Logs";
 import Onboarding from "./pages/Onboarding";
 import ClientStatus from "./components/ClientStatus";
+import UpdateBanner from "./components/UpdateBanner";
 import logo from "./assets/logo.svg";
 
 export default function App() {
@@ -64,6 +65,7 @@ export default function App() {
     <div className="flex flex-col h-full">
       <TopBar />
       <RoutedContent />
+      <UpdateBanner />
     </div>
   );
 }

@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ParallaxProtocol/parallax-gui/backend"
 	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
@@ -21,6 +22,7 @@ type App struct {
 	node     *backend.NodeController
 	metamask *backend.MetaMaskHelper
 	miner    *backend.MinerController
+	updater  *backend.Updater
 }
 
 // NewApp constructs the App. The heavy lifting (loading config, attaching the
@@ -67,9 +69,20 @@ func (a *App) startup(ctx context.Context) {
 	a.miner.SetEmitter(func(evt backend.MinerEvent) {
 		wruntime.EventsEmit(ctx, "miner", evt)
 	})
+
+	// Auto-updater: check for new releases on startup and periodically.
+	backend.CleanupOldBinary()
+	a.updater = backend.NewUpdater()
+	a.updater.SetEmitter(func(p backend.UpdateProgress) {
+		wruntime.EventsEmit(ctx, "update-progress", p)
+	})
+	a.updater.StartPeriodicCheck(30 * time.Minute)
 }
 
 func (a *App) shutdown(ctx context.Context) {
+	if a.updater != nil {
+		a.updater.Stop()
+	}
 	if a.miner != nil {
 		_ = a.miner.Stop()
 	}
@@ -171,4 +184,35 @@ func (a *App) Version() string {
 // ClientVersion returns the embedded prlx client version string.
 func (a *App) ClientVersion() string {
 	return a.node.ClientVersion()
+}
+
+// ---------------------------------------------------------------------------
+// Auto-update
+// ---------------------------------------------------------------------------
+
+// CheckForUpdate queries GitHub Releases for a newer version. Returns nil if
+// the app is already up-to-date.
+func (a *App) CheckForUpdate() (*backend.UpdateInfo, error) {
+	return a.updater.CheckForUpdate()
+}
+
+// GetLatestUpdate returns the cached update info from the last check, or nil.
+func (a *App) GetLatestUpdate() *backend.UpdateInfo {
+	return a.updater.Latest()
+}
+
+// ApplyUpdate downloads, verifies, and installs the latest update. Progress is
+// streamed via the "update-progress" event channel.
+func (a *App) ApplyUpdate() error {
+	return a.updater.DownloadAndInstall(a.ctx)
+}
+
+// DismissUpdate hides the update notification until a newer version appears.
+func (a *App) DismissUpdate() {
+	a.updater.Dismiss()
+}
+
+// RestartApp quits the application so the user can relaunch with the new binary.
+func (a *App) RestartApp() {
+	wruntime.Quit(a.ctx)
 }

@@ -11,6 +11,7 @@ import Settings from "./pages/Settings";
 import Logs from "./pages/Logs";
 import Onboarding from "./pages/Onboarding";
 import ClientStatus from "./components/ClientStatus";
+import UpdateBanner from "./components/UpdateBanner";
 import logo from "./assets/logo.svg";
 export default function App() {
     const [bootChecked, setBootChecked] = useState(false);
@@ -46,7 +47,7 @@ export default function App() {
                             navigate("/", { replace: true });
                         } }) }), _jsx(Route, { path: "*", element: _jsx(Navigate, { to: "/onboarding", replace: true }) })] }));
     }
-    return (_jsxs("div", { className: "flex flex-col h-full", children: [_jsx(TopBar, {}), _jsx(RoutedContent, {})] }));
+    return (_jsxs("div", { className: "flex flex-col h-full", children: [_jsx(TopBar, {}), _jsx(RoutedContent, {}), _jsx(UpdateBanner, {})] }));
 }
 function RoutedContent() {
     const location = useLocation();

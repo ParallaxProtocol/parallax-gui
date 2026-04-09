@@ -155,6 +155,26 @@ export type GPUDeviceStatus = {
   failed: number;
 };
 
+// ---------------------------------------------------------------------------
+// Auto-update
+// ---------------------------------------------------------------------------
+
+export type UpdateInfo = {
+  currentVersion: string;
+  latestVersion: string;
+  releaseURL: string;
+  assetURL: string;
+  assetName: string;
+  assetSize: number;
+  publishedAt: string;
+};
+
+export type UpdateProgress = {
+  step: "downloading" | "verifying" | "extracting" | "ready" | "error";
+  percent: number;
+  detail: string;
+};
+
 export type MinerStatus = {
   mode: MiningMode;
   running: boolean;
@@ -203,4 +223,11 @@ export const api = {
 
   version: () => call<string>("Version"),
   clientVersion: () => call<string>("ClientVersion"),
+
+  // Auto-update
+  checkForUpdate: () => call<UpdateInfo | null>("CheckForUpdate"),
+  getLatestUpdate: () => call<UpdateInfo | null>("GetLatestUpdate"),
+  applyUpdate: () => call<void>("ApplyUpdate"),
+  dismissUpdate: () => call<void>("DismissUpdate"),
+  restartApp: () => call<void>("RestartApp"),
 };

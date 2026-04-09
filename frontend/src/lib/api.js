@@ -44,4 +44,10 @@ export const api = {
     installHashwarp: (gpuType) => call("InstallHashwarp", gpuType),
     version: () => call("Version"),
     clientVersion: () => call("ClientVersion"),
+    // Auto-update
+    checkForUpdate: () => call("CheckForUpdate"),
+    getLatestUpdate: () => call("GetLatestUpdate"),
+    applyUpdate: () => call("ApplyUpdate"),
+    dismissUpdate: () => call("DismissUpdate"),
+    restartApp: () => call("RestartApp"),
 };
