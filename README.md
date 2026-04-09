@@ -5,20 +5,16 @@ A desktop node manager for the Parallax network. Built on
 node in-process and exposes it to a React frontend rendered in the
 platform's native webview. One binary, no sidecars.
 
-## Scope
+## Features
 
-This release is intentionally focused. It does **one thing**: run a
-Parallax full node from a friendly desktop UI. Wallet, mining, key
-management, and transaction history are deliberately out of scope.
-
-What ships:
-
-- One binary that runs a Parallax full node.
+- One binary that runs a Parallax full node — no sidecars.
 - First-run wizard for picking a data directory, sync mode, and inbound
   NAT policy.
 - **Client** dashboard with sync progress, peer count, uptime, disk
   usage, latest blocks (with miner / reward / size / gas-fill), and
   latest transactions.
+- **Mining** with GPU pool mining (via hashwarp) and CPU solo mining,
+  device detection, and live hashrate/stats.
 - **Connect** page with a one-click *Add to MetaMask* button (powered by
   an embedded localhost helper that calls
   `wallet_addEthereumChain` in the user's default browser) plus manual
@@ -63,28 +59,38 @@ make prlx-gui-cross        # cross-build (best-effort, see notes below)
 make prlx-gui-package      # build + zip per GUI_TARGETS into build/package/
 ```
 
-Output for `make prlx-gui` is in `cmd/prlx-gui/build/bin/`. Run it with:
+Output is in `build/bin/`. Run it with:
 
 ```sh
-./cmd/prlx-gui/build/bin/prlx-gui
+./build/bin/prlx-gui
 ```
 
 ### Development
 
 ```sh
-cd cmd/prlx-gui
 wails dev
 ```
 
 `wails dev` runs Vite in watch mode and live-reloads both the Go
 bindings and the React frontend.
 
+If you're also making changes to the core
+[parallax](https://github.com/ParallaxProtocol/parallax) module, add a
+`replace` directive to `go.mod` so the GUI builds against your local
+checkout:
+
+```
+replace github.com/ParallaxProtocol/parallax => ../parallax
+```
+
+Remove it before committing.
+
 ### Build tags
 
 Two tags are applied to every Parallax Desktop build via the Makefile's
 `WAILS_TAGS` variable (default `embedfrontend webkit2_41`):
 
-- **`embedfrontend`** — switches `cmd/prlx-gui/embed.go` (the real
+- **`embedfrontend`** — switches `embed.go` (the real
   `//go:embed all:frontend/dist`) on. Without it, the build falls back
   to the empty `embed_stub.go`. The tag is required for any production
   binary that needs to actually serve the UI; plain `go test ./...`
@@ -111,67 +117,68 @@ cross-compile problem entirely.
 ## Releases
 
 Tagged releases are produced by `.github/workflows/release.yml`. On
-`git push` of a `v*` tag, the workflow:
+`git push` of a `v*` tag, the workflow builds the GUI on a native runner
+per OS:
 
-1. Cross-compiles all CLI binaries (`prlx`, `clef`, `parallaxkey`) for
-   every entry in the Makefile's `TARGETS`, using the same `make package`
-   path local releases use.
-2. Builds the GUI on a native runner per OS:
-   - `linux/amd64` and `linux/arm64` on Ubuntu (apt installs the GTK +
-     WebKit deps).
-   - `darwin/amd64` on `macos-13` (last x86 macOS runner).
-   - `darwin/arm64` on `macos-latest` (Apple Silicon).
-   - `windows/amd64` on `windows-latest`.
-3. Combines every artifact into a single `release/` directory, generates
-   a unified `SHA256SUMS.txt`, and creates a **draft** GitHub Release.
-   A maintainer reviews the artifacts, edits the auto-generated notes,
-   and clicks Publish when ready.
+- `linux/amd64` and `linux/arm64` on Ubuntu (apt installs the GTK +
+  WebKit deps).
+- `darwin/amd64` and `darwin/arm64` on `macos-14` (Apple Silicon).
+- `windows/amd64` on `windows-latest`.
+
+All artifacts are combined into a single `release/` directory with a
+unified `SHA256SUMS.txt` and published as a **draft** GitHub Release.
 
 You can also dry-run the workflow against `main` via the Actions tab —
 the build jobs run but the release-publishing job is gated on a tag push.
 
+CLI binaries (`prlx`, `clef`, `parallaxkey`) are built and released from
+the main [parallax](https://github.com/ParallaxProtocol/parallax)
+repository.
+
 ## Architecture
 
 ```
-cmd/prlx-gui/
-  main.go            Wails bootstrap, window options, asset embedding.
-  app.go             App struct bound to the frontend (every exported
-                     method becomes a JS-callable function).
-  embed.go           Real //go:embed of frontend/dist, gated on the
-                     `embedfrontend` build tag.
-  embed_stub.go      Empty embed.FS fallback for non-tagged builds
-                     (used by `go test ./...` from CI).
-  backend/
-    config.go         GUIConfig persistence (~/.config/Parallax/gui.json).
-    node.go           NodeController: in-process node.Node + prl.Parallax
-                      lifecycle, status snapshot, bootnode wiring, DNS
-                      discovery defaults, RPC endpoint formatting,
-                      Peers() and RecentBlocks/Transactions() walkers.
-    logs.go           LogTail: GlogHandler tee'd to stderr + ring buffer
-                      + live frontend emitter. Verbosity defaults to Info.
-    metamask.go       Tiny localhost helper HTTP server that serves a
-                      Parallax-themed page calling wallet_addEthereumChain
-                      in the user's default browser.
-    crash.go          Crash report writer; installs a recover() hook.
-    types.go          Wails-serialisable structs shared with the frontend.
-  frontend/          React + Vite + TypeScript + Tailwind + motion.
-    src/
-      App.tsx           Top bar nav, route shell, AnimatePresence
-                        between pages, splash screen.
-      lib/api.ts        Typed wrappers around the bound App methods.
-      lib/format.ts     wei↔LAX, byte / duration / hash / ago helpers.
-      components/       SectionHeading, AnimatedNumber, StatusPill,
-                        ClientStatus, PageStagger, Toggle.
-      pages/
-        Dashboard.tsx   Client overview, status, latest blocks/txs,
-                        connect-wallet hint row.
-        Connect.tsx     One-click MetaMask flow + manual fallback.
-        Peers.tsx       Sortable peers list, expand-for-details rows.
-        Settings/       Curated + advanced settings, floating save bar,
-                        About card with prlx + desktop versions.
-        Logs.tsx        Live log tail, filter, pause/resume.
-        Onboarding/     5-step first-run wizard.
-      assets/           Logo (white version, from parallax-website).
+.
+├── main.go            Wails bootstrap, window options, asset embedding.
+├── app.go             App struct bound to the frontend (every exported
+│                      method becomes a JS-callable function).
+├── embed.go           Real //go:embed of frontend/dist, gated on the
+│                      `embedfrontend` build tag.
+├── embed_stub.go      Empty embed.FS fallback for non-tagged builds
+│                      (used by `go test ./...` from CI).
+├── backend/
+│   ├── config.go      GUIConfig persistence (~/.config/Parallax/gui.json).
+│   ├── node.go        NodeController: in-process node.Node + prl.Parallax
+│   │                  lifecycle, status snapshot, bootnode wiring, DNS
+│   │                  discovery defaults, RPC endpoint formatting,
+│   │                  Peers() and RecentBlocks/Transactions() walkers.
+│   ├── miner.go       MinerController: GPU pool mining (hashwarp) and
+│   │                  CPU solo mining, device detection, live stats.
+│   ├── logs.go        LogTail: GlogHandler tee'd to stderr + ring buffer
+│   │                  + live frontend emitter. Verbosity defaults to Info.
+│   ├── metamask.go    Tiny localhost helper HTTP server that serves a
+│   │                  Parallax-themed page calling wallet_addEthereumChain
+│   │                  in the user's default browser.
+│   ├── crash.go       Crash report writer; installs a recover() hook.
+│   └── types.go       Wails-serialisable structs shared with the frontend.
+└── frontend/          React + Vite + TypeScript + Tailwind + motion.
+    └── src/
+        ├── App.tsx           Top bar nav, route shell, AnimatePresence
+        │                     between pages, splash screen.
+        ├── lib/api.ts        Typed wrappers around the bound App methods.
+        ├── lib/format.ts     wei↔LAX, byte / duration / hash / ago helpers.
+        ├── components/       SectionHeading, AnimatedNumber, StatusPill,
+        │                     ClientStatus, PageStagger, Toggle.
+        ├── pages/
+        │   ├── Dashboard.tsx   Client overview, status, latest blocks/txs.
+        │   ├── Connect.tsx     One-click MetaMask flow + manual fallback.
+        │   ├── Mining.tsx      GPU/CPU mining controls, live stats.
+        │   ├── Peers.tsx       Sortable peers list, expand-for-details rows.
+        │   ├── Settings/       Curated + advanced settings, floating save bar,
+        │   │                   About card with prlx + desktop versions.
+        │   ├── Logs.tsx        Live log tail, filter, pause/resume.
+        │   └── Onboarding/     5-step first-run wizard.
+        └── assets/           Logo (white version, from parallax-website).
 ```
 
 ## Security defaults
