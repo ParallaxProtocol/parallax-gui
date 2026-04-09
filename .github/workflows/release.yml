@@ -165,6 +165,7 @@ jobs:
         shell: bash
         run: |
           choco install nsis -y --no-progress
+          export PATH="/c/Program Files (x86)/NSIS:$PATH"
           VERSION="${{ steps.version.outputs.version }}"
           makensis -DVERSION="$VERSION" \
                    -DBINDIR="$(pwd)/build/bin" \
@@ -182,11 +183,19 @@ jobs:
           APP_NAME="Parallax Client.app"
           DMG_NAME="Parallax-Client-${VERSION}-macos-${DISPLAY_ARCH}.dmg"
 
+          # Debug: show what wails produced
+          ls -lhR build/bin/
+
           # If hashwarp binary exists, embed it inside the .app bundle
           if [ -f "build/bin/hashwarp" ]; then
             mkdir -p "build/bin/${APP_NAME}/Contents/Resources"
             cp build/bin/hashwarp "build/bin/${APP_NAME}/Contents/Resources/"
           fi
+
+          # Stage the .app into its own directory for create-dmg
+          DMG_STAGE="build/dmg-stage"
+          mkdir -p "${DMG_STAGE}"
+          cp -a "build/bin/${APP_NAME}" "${DMG_STAGE}/"
 
           create-dmg \
             --volname "Parallax Client" \
@@ -197,7 +206,7 @@ jobs:
             --app-drop-link 450 185 \
             --no-internet-enable \
             "build/package/${DMG_NAME}" \
-            "build/bin/${APP_NAME}"
+            "${DMG_STAGE}"
           ls -lh build/package/
 
       - name: Upload GUI artifact
