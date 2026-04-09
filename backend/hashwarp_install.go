@@ -48,26 +48,34 @@ func (m *MinerController) InstallHashwarp(gpuType string, emit func(step string,
 	emit("finding", "Looking up latest release...")
 	log.Info("Installing hashwarp", "gpu", gpuType, "os", goos)
 
-	// 1. Fetch latest release metadata from GitHub.
+	// 1. Determine where to place the binary.
+	installDir, err := hashwarpInstallDir()
+	if err != nil {
+		return fmt.Errorf("install dir: %w", err)
+	}
+
+	// 2. Fetch latest release metadata from GitHub.
 	assetURL, assetName, err := findHashwarpAsset(gpuType, goos)
 	if err != nil {
 		return fmt.Errorf("find release: %w", err)
 	}
 	log.Info("Found hashwarp asset", "name", assetName, "url", assetURL)
 
-	// 2. Download the asset.
+	// 3. Download the asset into the install directory (not system temp)
+	// so that a single Defender exclusion covers both the archive and
+	// the extracted binary.
 	emit("downloading", assetName)
-	tmpFile, err := downloadFile(assetURL)
+	tmpFile, err := downloadFileTo(assetURL, installDir)
 	if err != nil {
+		// On Windows, a download failure with "virus" in the message means
+		// Defender quarantined the archive before we could extract it.
+		if goos == "windows" && isDefenderError(err) {
+			emit("av-blocked", "")
+			return fmt.Errorf("Windows Defender blocked the download — add an antivirus exclusion and try again")
+		}
 		return fmt.Errorf("download: %w", err)
 	}
 	defer os.Remove(tmpFile)
-
-	// 3. Determine where to place the binary.
-	installDir, err := hashwarpInstallDir()
-	if err != nil {
-		return fmt.Errorf("install dir: %w", err)
-	}
 
 	// 4. Extract the hashwarp binary from the archive.
 	emit("extracting", "")
@@ -87,6 +95,10 @@ func (m *MinerController) InstallHashwarp(gpuType string, emit func(step string,
 		extractErr = fmt.Errorf("unsupported archive format: %s", assetName)
 	}
 	if extractErr != nil {
+		if goos == "windows" && isDefenderError(extractErr) {
+			emit("av-blocked", "")
+			return fmt.Errorf("Windows Defender blocked the extraction — add an antivirus exclusion and try again")
+		}
 		return fmt.Errorf("extract: %w", extractErr)
 	}
 
@@ -167,8 +179,11 @@ func findHashwarpAsset(gpuType, goos string) (url, name string, err error) {
 	return "", "", fmt.Errorf("no matching asset found for gpu=%s os=%s (checked %d assets)", gpuType, goos, len(release.Assets))
 }
 
-// downloadFile downloads a URL to a temporary file and returns its path.
-func downloadFile(url string) (string, error) {
+// downloadFileTo downloads a URL to a temporary file in the given directory
+// and returns its path. Downloading into the install directory (rather than
+// system temp) ensures a single Defender exclusion covers both the archive
+// and the extracted binary.
+func downloadFileTo(url string, dir string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -179,7 +194,7 @@ func downloadFile(url string) (string, error) {
 		return "", fmt.Errorf("download returned %d", resp.StatusCode)
 	}
 
-	tmp, err := os.CreateTemp("", "hashwarp-download-*")
+	tmp, err := os.CreateTemp(dir, "hashwarp-download-*")
 	if err != nil {
 		return "", err
 	}
@@ -191,6 +206,13 @@ func downloadFile(url string) (string, error) {
 	}
 	tmp.Close()
 	return tmp.Name(), nil
+}
+
+// isDefenderError checks if an error message indicates Windows Defender
+// quarantined or blocked the file.
+func isDefenderError(err error) bool {
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "virus") || strings.Contains(msg, "unwanted software")
 }
 
 // hashwarpInstallDir returns the directory where hashwarp should be placed
