@@ -784,11 +784,12 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
       // Small delay so the user sees "Installed!" before transition
       setTimeout(() => onRetry(), 1000);
     } catch (e: any) {
-      // If it was an AV block, the avBlocked state is already set via event
+      // If it was an AV block, the avBlocked screen takes render priority.
+      // Otherwise show the error in the installing screen (which has a Back button).
+      // Don't set installing=false here — that would skip past the error display.
       if (!avBlockedRef.current) {
         setInstallErr(e?.message || String(e));
       }
-      setInstalling(false);
     }
   };
 
@@ -810,7 +811,6 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
       if (!avBlockedRef.current) {
         setInstallErr(e?.message || String(e));
       }
-      setInstalling(false);
     } finally {
       setFixingAv(false);
     }
