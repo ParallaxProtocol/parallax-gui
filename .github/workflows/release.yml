@@ -91,12 +91,6 @@ jobs:
             pkg-config \
             zip
 
-      - name: Install Windows zip
-        if: matrix.os == 'windows'
-        shell: pwsh
-        run: |
-          choco install zip -y --no-progress
-
       - name: Set version
         id: version
         shell: bash
@@ -114,10 +108,10 @@ jobs:
         run: |
           make prlx-gui-package GUI_TARGETS="${{ matrix.target }}" VERSION="$VERSION"
 
-      - name: Verify artifact exists
+      - name: Verify build output exists
         shell: bash
         run: |
-          ls -lh build/package/Parallax-Client-${{ steps.version.outputs.version }}-${{ matrix.display_os }}-${{ matrix.display_arch }}.zip
+          ls -lh build/bin/
 
       - name: Build Linux AppImage
         if: matrix.os == 'linux'

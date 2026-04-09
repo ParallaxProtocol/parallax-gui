@@ -107,18 +107,11 @@ prlx-gui-package:
 	  dispos="$$os"; \
 	  [ "$$dispos" = "darwin" ] && dispos="macos"; \
 	  bundle="Parallax-Client-$(VERSION)-$$dispos-$$disparch"; \
-	  out="$$PACKAGEDIR/$$bundle.zip"; \
-	  rm -f "$$out"; \
-	  ( cd "$$GUI_BIN" && zip -9 -r "$$out" . >/dev/null ); \
-	  echo "-> Packaged $$(basename "$$out")"; \
-	done; \
-	if ls "$$PACKAGEDIR"/Parallax-Client-*.zip >/dev/null 2>&1; then \
-	  if command -v shasum >/dev/null 2>&1; then \
-	    ( cd "$$PACKAGEDIR" && shasum -a 256 Parallax-Client-*.zip >> SHA256SUMS.txt ); \
-	  else \
-	    ( cd "$$PACKAGEDIR" && sha256sum Parallax-Client-*.zip >> SHA256SUMS.txt ); \
+	  if [ "$$os" = "windows" ]; then \
+	    cp "$$GUI_BIN/Parallax Client.exe" "$$PACKAGEDIR/$${bundle}.exe"; \
+	    echo "-> Copied portable $${bundle}.exe"; \
 	  fi; \
-	fi; \
+	done; \
 	echo "GUI bundles in $$PACKAGEDIR/"
 
 clean:
