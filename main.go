@@ -9,6 +9,8 @@ package main
 import (
 	_ "embed"
 	"log"
+	"os"
+	"runtime"
 
 	// Side-effect imports — register the JS and native tracer factories
 	// so debug_traceTransaction / debug_traceCall and friends actually
@@ -34,6 +36,15 @@ import (
 var appIcon []byte
 
 func main() {
+	// Work around WebKitGTK Wayland protocol errors on compositors like
+	// Hyprland by disabling the compositing mode. Only set when the user
+	// hasn't already provided a value.
+	if runtime.GOOS == "linux" {
+		if _, ok := os.LookupEnv("WEBKIT_DISABLE_COMPOSITING_MODE"); !ok {
+			os.Setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1")
+		}
+	}
+
 	app := NewApp()
 
 	err := wails.Run(&options.App{
