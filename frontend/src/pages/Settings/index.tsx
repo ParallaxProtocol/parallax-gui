@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { api, GUIConfig } from "../../lib/api";
+import { api, GUIConfig, UpdateInfo } from "../../lib/api";
 import SectionHeading from "../../components/SectionHeading";
 import { PageStagger, StaggerItem } from "../../components/PageStagger";
 import Toggle from "../../components/Toggle";
@@ -35,6 +35,8 @@ export default function Settings() {
   const [clientVersion, setClientVersion] = useState<string>("");
   const [checking, setChecking] = useState(false);
   const [checkResult, setCheckResult] = useState<string | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     api.getConfig().then((c) => {
@@ -345,13 +347,15 @@ export default function Settings() {
               onClick={async () => {
                 setChecking(true);
                 setCheckResult(null);
+                setUpdateInfo(null);
                 try {
                   const info = await api.checkForUpdate();
-                  setCheckResult(
-                    info
-                      ? `Update available: v${info.latestVersion}`
-                      : "You're up to date."
-                  );
+                  if (info) {
+                    setUpdateInfo(info);
+                    setCheckResult(`Update available: v${info.latestVersion}`);
+                  } else {
+                    setCheckResult("You're up to date.");
+                  }
                 } catch (e: any) {
                   setCheckResult(e?.message || "Check failed");
                 }
@@ -362,6 +366,24 @@ export default function Settings() {
             </button>
             {checkResult && (
               <span className="text-sm text-muted">{checkResult}</span>
+            )}
+            {updateInfo && (
+              <button
+                type="button"
+                className="btn-ghost shrink-0"
+                disabled={updating}
+                onClick={async () => {
+                  setUpdating(true);
+                  try {
+                    await api.applyUpdate();
+                  } catch (e: any) {
+                    setCheckResult(e?.message || "Update failed");
+                    setUpdating(false);
+                  }
+                }}
+              >
+                {updating ? "Updating…" : "Update now"}
+              </button>
             )}
           </div>
         </section>

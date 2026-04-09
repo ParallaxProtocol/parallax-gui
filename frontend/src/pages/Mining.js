@@ -11,7 +11,8 @@ export default function Mining() {
     const [nodeStatus, setNodeStatus] = useState(null);
     const [gpus, setGpus] = useState([]);
     const [pools, setPools] = useState([]);
-    const [selectedMode, setSelectedMode] = useState("pool");
+    const isMac = navigator.userAgent.includes("Mac");
+    const [selectedMode, setSelectedMode] = useState(isMac ? "solo" : "pool");
     const [err, setErr] = useState(null);
     const [starting, setStarting] = useState(false);
     const [stopping, setStopping] = useState(false);
@@ -186,12 +187,18 @@ export default function Mining() {
                             ["pool", "Pool (GPU)"],
                             ["sologpu", "Solo (GPU)"],
                             ["solo", "Solo (CPU)"],
-                        ].map(([mode, label]) => (_jsx("button", { className: `px-5 py-2.5 rounded-md text-sm font-medium transition-all ${selectedMode === mode
-                                ? "bg-gold text-gold-fg shadow-sm"
-                                : "text-muted hover:text-fg"}`, onClick: () => setSelectedMode(mode), children: label }, mode))) }), _jsxs("p", { className: "text-xs text-muted mt-3", children: [selectedMode === "pool" &&
+                        ].map(([mode, label]) => {
+                            const gpuMode = mode === "pool" || mode === "sologpu";
+                            const disabled = isMac && gpuMode;
+                            return (_jsx("button", { className: `px-5 py-2.5 rounded-md text-sm font-medium transition-all ${disabled
+                                    ? "text-muted/40 cursor-not-allowed"
+                                    : selectedMode === mode
+                                        ? "bg-gold text-gold-fg shadow-sm"
+                                        : "text-muted hover:text-fg"}`, onClick: () => !disabled && setSelectedMode(mode), disabled: disabled, title: disabled ? "GPU mining is not available on macOS" : undefined, children: label }, mode));
+                        }) }), _jsxs("p", { className: "text-xs text-muted mt-3", children: [selectedMode === "pool" &&
                                 "Mine through a pool — rewards are split among all miners. No node required.", selectedMode === "sologpu" &&
                                 "Mine solo with your GPU — you keep the full block reward. Requires a running, synced node.", selectedMode === "solo" &&
-                                "Mine solo with your CPU — lower hashrate but no GPU needed. Requires a running, synced node."] })] })), !isRunning && (selectedMode === "pool" || selectedMode === "sologpu") && hashwarpFound === false && (_jsx(StaggerItem, { children: _jsx(HashwarpSetupGuide, { onRetry: () => {
+                                "Mine solo with your CPU — lower hashrate but no GPU needed. Requires a running, synced node."] }), isMac && (_jsx("p", { className: "text-xs text-muted/60 mt-1", children: "GPU mining is not available on macOS. Use Solo (CPU) to mine with your processor." }))] })), !isRunning && (selectedMode === "pool" || selectedMode === "sologpu") && hashwarpFound === false && (_jsx(StaggerItem, { children: _jsx(HashwarpSetupGuide, { onRetry: () => {
                         setHashwarpFound(null);
                         api.hashwarpInstalled().then((found) => {
                             setHashwarpFound(found);
@@ -238,7 +245,7 @@ function HashwarpSetupGuide({ onRetry }) {
     const [step, setStep] = useState("");
     const [installErr, setInstallErr] = useState(null);
     const [done, setDone] = useState(false);
-    const [avBlocked, setAvBlocked] = useState(true); // TODO: revert to false
+    const [avBlocked, setAvBlocked] = useState(false);
     const [pendingGpu, setPendingGpu] = useState(null);
     const [fixingAv, setFixingAv] = useState(false);
     const isWindows = navigator.userAgent.includes("Windows");

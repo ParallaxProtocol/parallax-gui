@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 	"time"
 
 	"github.com/ParallaxProtocol/parallax-gui/backend"
@@ -213,7 +215,15 @@ func (a *App) DismissUpdate() {
 	a.updater.Dismiss()
 }
 
-// RestartApp quits the application so the user can relaunch with the new binary.
+// RestartApp launches the updated binary as a new process and then quits the
+// current instance, giving the user a seamless restart experience.
 func (a *App) RestartApp() {
+	exe, err := os.Executable()
+	if err == nil {
+		cmd := exec.Command(exe, os.Args[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Start()
+	}
 	wruntime.Quit(a.ctx)
 }
