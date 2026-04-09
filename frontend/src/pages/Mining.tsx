@@ -19,7 +19,8 @@ export default function Mining() {
   const [nodeStatus, setNodeStatus] = useState<NodeStatus | null>(null);
   const [gpus, setGpus] = useState<DeviceInfo[]>([]);
   const [pools, setPools] = useState<PoolInfo[]>([]);
-  const [selectedMode, setSelectedMode] = useState<"pool" | "sologpu" | "solo">("pool");
+  const isMac = navigator.userAgent.includes("Mac");
+  const [selectedMode, setSelectedMode] = useState<"pool" | "sologpu" | "solo">(isMac ? "solo" : "pool");
   const [err, setErr] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
@@ -235,18 +236,27 @@ export default function Mining() {
               ["pool", "Pool (GPU)"],
               ["sologpu", "Solo (GPU)"],
               ["solo", "Solo (CPU)"],
-            ] as const).map(([mode, label]) => (
-              <button
-                key={mode}
-                className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all ${selectedMode === mode
-                    ? "bg-gold text-gold-fg shadow-sm"
-                    : "text-muted hover:text-fg"
+            ] as const).map(([mode, label]) => {
+              const gpuMode = mode === "pool" || mode === "sologpu";
+              const disabled = isMac && gpuMode;
+              return (
+                <button
+                  key={mode}
+                  className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all ${
+                    disabled
+                      ? "text-muted/40 cursor-not-allowed"
+                      : selectedMode === mode
+                        ? "bg-gold text-gold-fg shadow-sm"
+                        : "text-muted hover:text-fg"
                   }`}
-                onClick={() => setSelectedMode(mode)}
-              >
-                {label}
-              </button>
-            ))}
+                  onClick={() => !disabled && setSelectedMode(mode)}
+                  disabled={disabled}
+                  title={disabled ? "GPU mining is not available on macOS" : undefined}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
           <p className="text-xs text-muted mt-3">
             {selectedMode === "pool" &&
@@ -256,6 +266,11 @@ export default function Mining() {
             {selectedMode === "solo" &&
               "Mine solo with your CPU — lower hashrate but no GPU needed. Requires a running, synced node."}
           </p>
+          {isMac && (
+            <p className="text-xs text-muted/60 mt-1">
+              GPU mining is not available on macOS. Use Solo (CPU) to mine with your processor.
+            </p>
+          )}
         </StaggerItem>
       )}
 
@@ -703,12 +718,19 @@ function HashwarpSetupGuide({ onRetry }: { onRetry: () => void }) {
   const [step, setStep] = useState("");
   const [installErr, setInstallErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [avBlocked, setAvBlocked] = useState(false);
+  const [pendingGpu, setPendingGpu] = useState<"cuda" | "opencl" | null>(null);
+  const [fixingAv, setFixingAv] = useState(false);
   const isWindows = navigator.userAgent.includes("Windows");
 
   useEffect(() => {
     const off = window.runtime.EventsOn(
       "hashwarp-install",
       (data: { step: string; detail: string }) => {
+        if (data.step === "av-blocked") {
+          setAvBlocked(true);
+          return;
+        }
         setStep(
           data.step === "finding"
             ? "Looking up latest release..."
@@ -729,18 +751,124 @@ function HashwarpSetupGuide({ onRetry }: { onRetry: () => void }) {
   const install = async (gpuType: "cuda" | "opencl") => {
     setInstalling(true);
     setInstallErr(null);
+    setAvBlocked(false);
     setStep("Starting...");
     setDone(false);
+    setPendingGpu(gpuType);
     try {
       await api.installHashwarp(gpuType);
       // Small delay so the user sees "Installed!" before transition
       setTimeout(() => onRetry(), 1000);
     } catch (e: any) {
-      setInstallErr(e?.message || String(e));
+      // If it was an AV block, the avBlocked state is already set via event
+      if (!avBlocked) {
+        setInstallErr(e?.message || String(e));
+      }
       setInstalling(false);
     }
   };
 
+  const fixAndRetry = async () => {
+    if (!pendingGpu) return;
+    setFixingAv(true);
+    try {
+      await api.addDefenderExclusion();
+      // Re-attempt install after exclusion is added
+      setAvBlocked(false);
+      setInstalling(true);
+      setInstallErr(null);
+      setStep("Starting...");
+      setDone(false);
+      await api.installHashwarp(pendingGpu);
+      setTimeout(() => onRetry(), 1000);
+    } catch (e: any) {
+      setInstallErr(e?.message || String(e));
+      setInstalling(false);
+    } finally {
+      setFixingAv(false);
+    }
+  };
+
+  // ── AV blocked screen ──
+  if (avBlocked) {
+    return (
+      <section className="card space-y-6">
+        <div>
+          <div className="eyebrow mb-3 text-danger">Antivirus Blocked Installation</div>
+          <p className="text-fg text-lg font-medium">
+            Windows Defender removed hashwarp.exe
+          </p>
+          <p className="text-muted mt-2 text-sm">
+            Mining software is often incorrectly flagged as a threat by antivirus programs.
+            This is a <strong className="text-fg">false positive</strong> — Hashwarp is open-source
+            and safe. You need to add an antivirus exclusion before installing.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {/* Automated fix */}
+          <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 space-y-3">
+            <div className="text-sm text-fg font-medium">Automatic fix</div>
+            <p className="text-xs text-muted">
+              Parallax Desktop can add a Windows Defender exclusion for you.
+              This will open a Windows permission prompt (UAC).
+            </p>
+            <button
+              className="btn-primary text-sm"
+              onClick={fixAndRetry}
+              disabled={fixingAv}
+            >
+              {fixingAv ? "Adding exclusion..." : "Add exclusion & retry"}
+            </button>
+          </div>
+
+          {/* Manual instructions */}
+          <div className="rounded-lg border border-border bg-bg-elev p-4 space-y-3">
+            <div className="text-sm text-fg font-medium">Or do it manually</div>
+            <ol className="text-xs text-muted space-y-2 list-decimal list-inside">
+              <li>
+                Open <strong className="text-fg">Windows Security</strong> (search
+                for it in the Start menu)
+              </li>
+              <li>
+                Go to <strong className="text-fg">Virus & threat protection</strong> →{" "}
+                <strong className="text-fg">Manage settings</strong>
+              </li>
+              <li>
+                Scroll down to <strong className="text-fg">Exclusions</strong> →{" "}
+                <strong className="text-fg">Add or remove exclusions</strong>
+              </li>
+              <li>
+                Click <strong className="text-fg">Add an exclusion</strong> → choose{" "}
+                <strong className="text-fg">Folder</strong> → select the Parallax
+                Desktop installation folder
+              </li>
+              <li>Come back here and click retry</li>
+            </ol>
+            <button className="btn-ghost text-sm" onClick={() => {
+              setAvBlocked(false);
+              if (pendingGpu) install(pendingGpu);
+            }}>
+              Retry installation
+            </button>
+          </div>
+        </div>
+
+        <button
+          className="btn-ghost text-sm"
+          onClick={() => {
+            setAvBlocked(false);
+            setInstalling(false);
+            setPendingGpu(null);
+          }}
+        >
+          Back
+        </button>
+      </section>
+    );
+  }
+
+  // ── Installing screen ──
   if (installing) {
     return (
       <section className="card space-y-6">
@@ -778,6 +906,7 @@ function HashwarpSetupGuide({ onRetry }: { onRetry: () => void }) {
     );
   }
 
+  // ── Initial setup screen ──
   return (
     <section className="card space-y-6">
       <div>
@@ -790,6 +919,17 @@ function HashwarpSetupGuide({ onRetry }: { onRetry: () => void }) {
           GPU mining software. Just pick your graphics card brand below.
         </p>
       </div>
+
+      {isWindows && (
+        <div className="rounded-lg border border-border bg-bg-elev px-4 py-3">
+          <p className="text-xs text-muted">
+            <strong className="text-fg">Note:</strong> Windows Defender may flag mining
+            software as a threat. This is a false positive. If the download is
+            blocked, Parallax Desktop can configure the exclusion automatically
+            for you, or you can do it manually.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <button

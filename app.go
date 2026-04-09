@@ -163,7 +163,8 @@ func (a *App) StopMining() error                          { return a.miner.Stop(
 func (a *App) MinerStatus() backend.MinerStatus           { return a.miner.Status() }
 func (a *App) DetectGPUs() ([]backend.DeviceInfo, error)  { return a.miner.DetectGPUs() }
 func (a *App) DefaultPools() []backend.PoolInfo           { return a.miner.DefaultPools() }
-func (a *App) HashwarpInstalled() bool { return a.miner.HashwarpInstalled() }
+func (a *App) HashwarpInstalled() bool                    { return a.miner.HashwarpInstalled() }
+func (a *App) AddDefenderExclusion() error                { return a.miner.AddDefenderExclusion() }
 func (a *App) InstallHashwarp(gpuType string) error {
 	return a.miner.InstallHashwarp(gpuType, func(step, detail string) {
 		wruntime.EventsEmit(a.ctx, "hashwarp-install", map[string]string{

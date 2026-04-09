@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/ParallaxProtocol/parallax/log"
 	"github.com/ulikunitz/xz"
@@ -97,9 +98,30 @@ func (m *MinerController) InstallHashwarp(gpuType string, emit func(step string,
 		}
 	}
 
+	// 6. Verify the binary was not removed by antivirus.
+	if goos == "windows" {
+		// Small delay to give real-time protection time to act.
+		time.Sleep(2 * time.Second)
+		if _, err := os.Stat(destPath); os.IsNotExist(err) {
+			emit("av-blocked", "")
+			return fmt.Errorf("hashwarp.exe was removed by antivirus — add an exclusion and try again")
+		}
+	}
+
 	emit("done", destPath)
 	log.Info("Hashwarp installed", "path", destPath)
 	return nil
+}
+
+// AddDefenderExclusion adds a Windows Defender exclusion for the hashwarp
+// install directory so the binary is not flagged as a mining threat.
+// This triggers a UAC elevation prompt on Windows.
+func (m *MinerController) AddDefenderExclusion() error {
+	installDir, err := hashwarpInstallDir()
+	if err != nil {
+		return fmt.Errorf("install dir: %w", err)
+	}
+	return addDefenderExclusion(installDir)
 }
 
 // findHashwarpAsset queries the GitHub releases API and returns the download

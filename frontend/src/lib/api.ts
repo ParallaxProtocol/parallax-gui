@@ -220,6 +220,7 @@ export const api = {
   defaultPools: () => call<PoolInfo[]>("DefaultPools"),
   hashwarpInstalled: () => call<boolean>("HashwarpInstalled"),
   installHashwarp: (gpuType: "cuda" | "opencl") => call<void>("InstallHashwarp", gpuType),
+  addDefenderExclusion: () => call<void>("AddDefenderExclusion"),
 
   version: () => call<string>("Version"),
   clientVersion: () => call<string>("ClientVersion"),

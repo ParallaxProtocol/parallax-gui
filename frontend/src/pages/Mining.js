@@ -238,9 +238,16 @@ function HashwarpSetupGuide({ onRetry }) {
     const [step, setStep] = useState("");
     const [installErr, setInstallErr] = useState(null);
     const [done, setDone] = useState(false);
+    const [avBlocked, setAvBlocked] = useState(true); // TODO: revert to false
+    const [pendingGpu, setPendingGpu] = useState(null);
+    const [fixingAv, setFixingAv] = useState(false);
     const isWindows = navigator.userAgent.includes("Windows");
     useEffect(() => {
         const off = window.runtime.EventsOn("hashwarp-install", (data) => {
+            if (data.step === "av-blocked") {
+                setAvBlocked(true);
+                return;
+            }
             setStep(data.step === "finding"
                 ? "Looking up latest release..."
                 : data.step === "downloading"
@@ -258,22 +265,64 @@ function HashwarpSetupGuide({ onRetry }) {
     const install = async (gpuType) => {
         setInstalling(true);
         setInstallErr(null);
+        setAvBlocked(false);
         setStep("Starting...");
         setDone(false);
+        setPendingGpu(gpuType);
         try {
             await api.installHashwarp(gpuType);
             // Small delay so the user sees "Installed!" before transition
             setTimeout(() => onRetry(), 1000);
         }
         catch (e) {
-            setInstallErr(e?.message || String(e));
+            // If it was an AV block, the avBlocked state is already set via event
+            if (!avBlocked) {
+                setInstallErr(e?.message || String(e));
+            }
             setInstalling(false);
         }
     };
+    const fixAndRetry = async () => {
+        if (!pendingGpu)
+            return;
+        setFixingAv(true);
+        try {
+            await api.addDefenderExclusion();
+            // Re-attempt install after exclusion is added
+            setAvBlocked(false);
+            setInstalling(true);
+            setInstallErr(null);
+            setStep("Starting...");
+            setDone(false);
+            await api.installHashwarp(pendingGpu);
+            setTimeout(() => onRetry(), 1000);
+        }
+        catch (e) {
+            setInstallErr(e?.message || String(e));
+            setInstalling(false);
+        }
+        finally {
+            setFixingAv(false);
+        }
+    };
+    // ── AV blocked screen ──
+    if (avBlocked) {
+        return (_jsxs("section", { className: "card space-y-6", children: [_jsxs("div", { children: [_jsx("div", { className: "eyebrow mb-3 text-danger", children: "Antivirus Blocked Installation" }), _jsx("p", { className: "text-fg text-lg font-medium", children: "Windows Defender removed hashwarp.exe" }), _jsxs("p", { className: "text-muted mt-2 text-sm", children: ["Mining software is often incorrectly flagged as a threat by antivirus programs. This is a ", _jsx("strong", { className: "text-fg", children: "false positive" }), " \u2014 Hashwarp is open-source and safe. You need to add an antivirus exclusion before installing."] })] }), _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "rounded-lg border border-gold/30 bg-gold/5 p-4 space-y-3", children: [_jsx("div", { className: "text-sm text-fg font-medium", children: "Automatic fix" }), _jsx("p", { className: "text-xs text-muted", children: "Parallax Desktop can add a Windows Defender exclusion for you. This will open a Windows permission prompt (UAC)." }), _jsx("button", { className: "btn-primary text-sm", onClick: fixAndRetry, disabled: fixingAv, children: fixingAv ? "Adding exclusion..." : "Add exclusion & retry" })] }), _jsxs("div", { className: "rounded-lg border border-border bg-bg-elev p-4 space-y-3", children: [_jsx("div", { className: "text-sm text-fg font-medium", children: "Or do it manually" }), _jsxs("ol", { className: "text-xs text-muted space-y-2 list-decimal list-inside", children: [_jsxs("li", { children: ["Open ", _jsx("strong", { className: "text-fg", children: "Windows Security" }), " (search for it in the Start menu)"] }), _jsxs("li", { children: ["Go to ", _jsx("strong", { className: "text-fg", children: "Virus & threat protection" }), " \u2192", " ", _jsx("strong", { className: "text-fg", children: "Manage settings" })] }), _jsxs("li", { children: ["Scroll down to ", _jsx("strong", { className: "text-fg", children: "Exclusions" }), " \u2192", " ", _jsx("strong", { className: "text-fg", children: "Add or remove exclusions" })] }), _jsxs("li", { children: ["Click ", _jsx("strong", { className: "text-fg", children: "Add an exclusion" }), " \u2192 choose", " ", _jsx("strong", { className: "text-fg", children: "Folder" }), " \u2192 select the Parallax Desktop installation folder"] }), _jsx("li", { children: "Come back here and click retry" })] }), _jsx("button", { className: "btn-ghost text-sm", onClick: () => {
+                                        setAvBlocked(false);
+                                        if (pendingGpu)
+                                            install(pendingGpu);
+                                    }, children: "Retry installation" })] })] }), _jsx("button", { className: "btn-ghost text-sm", onClick: () => {
+                        setAvBlocked(false);
+                        setInstalling(false);
+                        setPendingGpu(null);
+                    }, children: "Back" })] }));
+    }
+    // ── Installing screen ──
     if (installing) {
         return (_jsxs("section", { className: "card space-y-6", children: [_jsx("div", { className: "eyebrow", children: "Installing GPU Miner" }), _jsxs("div", { className: "flex items-center gap-4", children: [!done && !installErr && (_jsx("div", { className: "w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" })), done && (_jsx("div", { className: "w-5 h-5 rounded-full bg-success flex items-center justify-center text-xs text-bg font-bold", children: "\u2713" })), _jsx("span", { className: "text-fg text-sm", children: step })] }), !done && !installErr && (_jsx("div", { className: "progress-track", children: _jsx("div", { className: "progress-fill animate-pulse-soft w-full" }) })), installErr && (_jsxs("div", { className: "space-y-3", children: [_jsx("div", { className: "rounded-lg border border-danger/40 bg-danger/10 text-danger text-sm px-4 py-3", children: installErr }), _jsx("button", { className: "btn-ghost text-sm", onClick: () => setInstalling(false), children: "Back" })] }))] }));
     }
-    return (_jsxs("section", { className: "card space-y-6", children: [_jsxs("div", { children: [_jsx("div", { className: "eyebrow mb-3", children: "GPU Miner Setup" }), _jsx("p", { className: "text-fg text-lg font-medium", children: "Select your GPU brand to install the mining engine." }), _jsx("p", { className: "text-muted mt-2 text-sm", children: "Parallax Desktop will automatically download and set up Hashwarp, the GPU mining software. Just pick your graphics card brand below." })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4", children: [_jsxs("button", { className: "group rounded-lg border border-border bg-bg-elev p-5 text-left hover:border-gold/40 hover:shadow-[0_0_30px_rgb(247_147_26/0.08)] transition-all", onClick: () => install("cuda"), children: [_jsx("div", { className: "text-fg font-medium text-base mb-1", children: "NVIDIA" }), _jsx("div", { className: "text-xs text-muted", children: "GeForce GTX / RTX series" }), _jsx("div", { className: "text-xs text-gold mt-3 opacity-70 group-hover:opacity-100 transition-opacity", children: "Download CUDA version \u2192" })] }), _jsxs("button", { className: "group rounded-lg border border-border bg-bg-elev p-5 text-left hover:border-gold/40 hover:shadow-[0_0_30px_rgb(247_147_26/0.08)] transition-all", onClick: () => install("opencl"), children: [_jsx("div", { className: "text-fg font-medium text-base mb-1", children: "AMD" }), _jsx("div", { className: "text-xs text-muted", children: "Radeon RX series" }), _jsx("div", { className: "text-xs text-gold mt-3 opacity-70 group-hover:opacity-100 transition-opacity", children: "Download OpenCL version \u2192" })] })] }), !isWindows && (_jsxs("p", { className: "text-xs text-muted", children: ["Not sure which GPU you have? Run", " ", _jsx("code", { className: "text-fg bg-bg-elev px-1.5 py-0.5 rounded text-xs", children: "lspci | grep -i vga" }), " ", "in a terminal."] })), isWindows && (_jsx("p", { className: "text-xs text-muted", children: "Not sure which GPU you have? Check Device Manager under \"Display adapters\"." }))] }));
+    // ── Initial setup screen ──
+    return (_jsxs("section", { className: "card space-y-6", children: [_jsxs("div", { children: [_jsx("div", { className: "eyebrow mb-3", children: "GPU Miner Setup" }), _jsx("p", { className: "text-fg text-lg font-medium", children: "Select your GPU brand to install the mining engine." }), _jsx("p", { className: "text-muted mt-2 text-sm", children: "Parallax Desktop will automatically download and set up Hashwarp, the GPU mining software. Just pick your graphics card brand below." })] }), isWindows && (_jsx("div", { className: "rounded-lg border border-border bg-bg-elev px-4 py-3", children: _jsxs("p", { className: "text-xs text-muted", children: [_jsx("strong", { className: "text-fg", children: "Note:" }), " Windows Defender may flag mining software as a threat. This is a false positive. If the download is blocked, Parallax Desktop can configure the exclusion automatically for you, or you can do it manually."] }) })), _jsxs("div", { className: "grid grid-cols-2 gap-4", children: [_jsxs("button", { className: "group rounded-lg border border-border bg-bg-elev p-5 text-left hover:border-gold/40 hover:shadow-[0_0_30px_rgb(247_147_26/0.08)] transition-all", onClick: () => install("cuda"), children: [_jsx("div", { className: "text-fg font-medium text-base mb-1", children: "NVIDIA" }), _jsx("div", { className: "text-xs text-muted", children: "GeForce GTX / RTX series" }), _jsx("div", { className: "text-xs text-gold mt-3 opacity-70 group-hover:opacity-100 transition-opacity", children: "Download CUDA version \u2192" })] }), _jsxs("button", { className: "group rounded-lg border border-border bg-bg-elev p-5 text-left hover:border-gold/40 hover:shadow-[0_0_30px_rgb(247_147_26/0.08)] transition-all", onClick: () => install("opencl"), children: [_jsx("div", { className: "text-fg font-medium text-base mb-1", children: "AMD" }), _jsx("div", { className: "text-xs text-muted", children: "Radeon RX series" }), _jsx("div", { className: "text-xs text-gold mt-3 opacity-70 group-hover:opacity-100 transition-opacity", children: "Download OpenCL version \u2192" })] })] }), !isWindows && (_jsxs("p", { className: "text-xs text-muted", children: ["Not sure which GPU you have? Run", " ", _jsx("code", { className: "text-fg bg-bg-elev px-1.5 py-0.5 rounded text-xs", children: "lspci | grep -i vga" }), " ", "in a terminal."] })), isWindows && (_jsx("p", { className: "text-xs text-muted", children: "Not sure which GPU you have? Check Device Manager under \"Display adapters\"." }))] }));
 }
 function Stat({ label, children, }) {
     return (_jsxs("div", { children: [_jsx("div", { className: "stat-label mb-2", children: label }), children] }));

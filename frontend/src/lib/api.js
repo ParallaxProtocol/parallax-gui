@@ -42,6 +42,7 @@ export const api = {
     defaultPools: () => call("DefaultPools"),
     hashwarpInstalled: () => call("HashwarpInstalled"),
     installHashwarp: (gpuType) => call("InstallHashwarp", gpuType),
+    addDefenderExclusion: () => call("AddDefenderExclusion"),
     version: () => call("Version"),
     clientVersion: () => call("ClientVersion"),
     // Auto-update
