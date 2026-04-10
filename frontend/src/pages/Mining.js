@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, } from "../lib/api";
 import { formatHashrate, formatDuration, formatDifficulty } from "../lib/format";
 import SectionHeading from "../components/SectionHeading";
@@ -17,6 +17,8 @@ export default function Mining() {
     const [starting, setStarting] = useState(false);
     const [stopping, setStopping] = useState(false);
     const [hashwarpFound, setHashwarpFound] = useState(null); // null = loading
+    const [avBlocked, setAvBlocked] = useState(false); // Windows Defender blocked hashwarp
+    const isWindows = navigator.userAgent.includes("Windows");
     // Form state (kept in sync with config)
     const [wallet, setWallet] = useState("");
     const [worker, setWorker] = useState("");
@@ -100,7 +102,15 @@ export default function Mining() {
             await api.startMining(selectedMode);
         }
         catch (e) {
-            setErr(e?.message || String(e));
+            const msg = e?.message || String(e);
+            // If hashwarp is missing on Windows, it was likely deleted by Defender
+            if (isWindows && msg.toLowerCase().includes("hashwarp") && msg.toLowerCase().includes("not found")) {
+                setHashwarpFound(false);
+                setAvBlocked(true);
+            }
+            else {
+                setErr(msg);
+            }
         }
         finally {
             setStarting(false);
@@ -198,14 +208,15 @@ export default function Mining() {
                         }) }), _jsxs("p", { className: "text-xs text-muted mt-3", children: [selectedMode === "pool" &&
                                 "Mine through a pool — rewards are split among all miners. No node required.", selectedMode === "sologpu" &&
                                 "Mine solo with your GPU — you keep the full block reward. Requires a running, synced node.", selectedMode === "solo" &&
-                                "Mine solo with your CPU — lower hashrate but no GPU needed. Requires a running, synced node."] }), isMac && (_jsx("p", { className: "text-xs text-muted/60 mt-1", children: "GPU mining is not available on macOS. Use Solo (CPU) to mine with your processor." }))] })), !isRunning && (selectedMode === "pool" || selectedMode === "sologpu") && hashwarpFound === false && (_jsx(StaggerItem, { children: _jsx(HashwarpSetupGuide, { onRetry: () => {
+                                "Mine solo with your CPU — lower hashrate but no GPU needed. Requires a running, synced node."] }), isMac && (_jsx("p", { className: "text-xs text-muted/60 mt-1", children: "GPU mining is not available on macOS. Use Solo (CPU) to mine with your processor." }))] })), !isRunning && (selectedMode === "pool" || selectedMode === "sologpu") && (hashwarpFound === false || avBlocked) && (_jsx(StaggerItem, { children: _jsx(HashwarpSetupGuide, { avBlocked: avBlocked, setAvBlocked: setAvBlocked, onRetry: () => {
+                        setAvBlocked(false);
                         setHashwarpFound(null);
                         api.hashwarpInstalled().then((found) => {
                             setHashwarpFound(found);
                             if (found)
                                 api.detectGPUs().then(setGpus).catch(() => setGpus([]));
                         }).catch(() => setHashwarpFound(false));
-                    } }) })), !isRunning && !((selectedMode === "pool" || selectedMode === "sologpu") && hashwarpFound === false) && (_jsx(StaggerItem, { children: _jsxs("section", { className: "card space-y-6", children: [_jsx("div", { className: "eyebrow mb-2", children: "Configuration" }), _jsxs("div", { children: [_jsx("label", { className: "label", children: "Wallet address" }), _jsx("input", { type: "text", className: "input font-mono", placeholder: "0x...", value: wallet, onChange: (e) => setWallet(e.target.value) })] }), selectedMode === "pool" && (_jsxs(_Fragment, { children: [_jsxs("div", { children: [_jsx("label", { className: "label", children: "Worker name" }), _jsx("input", { type: "text", className: "input", placeholder: "my-rig", value: worker, onChange: (e) => setWorker(e.target.value) })] }), _jsxs("div", { children: [_jsx("label", { className: "label", children: "Mining pool" }), _jsx("select", { className: "input", value: poolUrl, onChange: (e) => setPoolUrl(e.target.value), children: pools.map((p) => (_jsxs("option", { value: p.url, children: [p.name, p.region ? ` (${p.region})` : ""] }, p.url))) }), _jsxs("div", { className: "flex items-center gap-3 mt-2", children: [_jsx("button", { className: "text-xs text-gold hover:text-gold/80 transition-colors", onClick: showCustomPool ? resetPoolForm : openAddPool, children: showCustomPool ? "Cancel" : "+ Add custom pool" }), (() => {
+                    } }) })), !isRunning && !avBlocked && !((selectedMode === "pool" || selectedMode === "sologpu") && hashwarpFound === false) && (_jsx(StaggerItem, { children: _jsxs("section", { className: "card space-y-6", children: [_jsx("div", { className: "eyebrow mb-2", children: "Configuration" }), _jsxs("div", { children: [_jsx("label", { className: "label", children: "Wallet address" }), _jsx("input", { type: "text", className: "input font-mono", placeholder: "0x...", value: wallet, onChange: (e) => setWallet(e.target.value) })] }), selectedMode === "pool" && (_jsxs(_Fragment, { children: [_jsxs("div", { children: [_jsx("label", { className: "label", children: "Worker name" }), _jsx("input", { type: "text", className: "input", placeholder: "my-rig", value: worker, onChange: (e) => setWorker(e.target.value) })] }), _jsxs("div", { children: [_jsx("label", { className: "label", children: "Mining pool" }), _jsx("select", { className: "input", value: poolUrl, onChange: (e) => setPoolUrl(e.target.value), children: pools.map((p) => (_jsxs("option", { value: p.url, children: [p.name, p.region ? ` (${p.region})` : ""] }, p.url))) }), _jsxs("div", { className: "flex items-center gap-3 mt-2", children: [_jsx("button", { className: "text-xs text-gold hover:text-gold/80 transition-colors", onClick: showCustomPool ? resetPoolForm : openAddPool, children: showCustomPool ? "Cancel" : "+ Add custom pool" }), (() => {
                                                     const selected = pools.find((p) => p.url === poolUrl);
                                                     if (!selected || selected.builtin)
                                                         return null;
@@ -240,18 +251,20 @@ export default function Mining() {
                 status?.devices &&
                 status.devices.length > 0 && (_jsx(StaggerItem, { children: _jsxs("section", { className: "card space-y-4", children: [_jsx("div", { className: "eyebrow mb-2", children: "GPU Devices" }), _jsx("div", { className: "grid gap-3", children: status.devices.map((d) => (_jsxs("div", { className: "flex items-center justify-between gap-4 rounded-lg border border-border bg-bg-elev px-5 py-3", children: [_jsxs("div", { className: "min-w-0", children: [_jsxs("div", { className: "text-sm font-medium text-fg truncate", children: ["#", d.index, " ", d.name] }), _jsxs("div", { className: "text-xs text-muted mt-0.5", children: [d.mode, " \u00B7 ", d.accepted, " accepted", d.rejected > 0 && ` · ${d.rejected} rejected`] })] }), _jsxs("div", { className: "flex items-center gap-6 text-sm shrink-0", children: [_jsx("span", { className: "font-mono text-fg", children: formatHashrate(d.hashrate) }), d.tempC > 0 && (_jsxs("span", { className: d.tempC > 80 ? "text-danger" : "text-muted", children: [d.tempC, "\u00B0C"] })), d.fanPct > 0 && (_jsxs("span", { className: "text-muted", children: [d.fanPct, "%"] })), d.powerW > 0 && (_jsxs("span", { className: "text-muted", children: [d.powerW.toFixed(0), "W"] }))] })] }, d.index))) })] }) })), isRunning && (_jsx(StaggerItem, { children: _jsx("button", { className: "btn-danger", onClick: stop, disabled: stopping, children: stopping ? "Stopping..." : "Stop Mining" }) }))] }));
 }
-function HashwarpSetupGuide({ onRetry }) {
+function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }) {
     const [installing, setInstalling] = useState(false);
     const [step, setStep] = useState("");
     const [installErr, setInstallErr] = useState(null);
     const [done, setDone] = useState(false);
-    const [avBlocked, setAvBlocked] = useState(false);
     const [pendingGpu, setPendingGpu] = useState(null);
     const [fixingAv, setFixingAv] = useState(false);
     const isWindows = navigator.userAgent.includes("Windows");
+    // Track whether the backend flagged AV during this install attempt
+    const avBlockedRef = useRef(false);
     useEffect(() => {
         const off = window.runtime.EventsOn("hashwarp-install", (data) => {
             if (data.step === "av-blocked") {
+                avBlockedRef.current = true;
                 setAvBlocked(true);
                 return;
             }
@@ -261,18 +274,21 @@ function HashwarpSetupGuide({ onRetry }) {
                     ? `Downloading ${data.detail}...`
                     : data.step === "extracting"
                         ? "Extracting..."
-                        : data.step === "done"
-                            ? "Installed!"
-                            : data.step);
+                        : data.step === "verifying"
+                            ? "Verifying installation..."
+                            : data.step === "done"
+                                ? "Installed!"
+                                : data.step);
             if (data.step === "done")
                 setDone(true);
         });
         return () => off();
-    }, []);
+    }, [setAvBlocked]);
     const install = async (gpuType) => {
         setInstalling(true);
         setInstallErr(null);
         setAvBlocked(false);
+        avBlockedRef.current = false;
         setStep("Starting...");
         setDone(false);
         setPendingGpu(gpuType);
@@ -282,11 +298,12 @@ function HashwarpSetupGuide({ onRetry }) {
             setTimeout(() => onRetry(), 1000);
         }
         catch (e) {
-            // If it was an AV block, the avBlocked state is already set via event
-            if (!avBlocked) {
+            // If it was an AV block, the avBlocked screen takes render priority.
+            // Otherwise show the error in the installing screen (which has a Back button).
+            // Don't set installing=false here — that would skip past the error display.
+            if (!avBlockedRef.current) {
                 setInstallErr(e?.message || String(e));
             }
-            setInstalling(false);
         }
     };
     const fixAndRetry = async () => {
@@ -297,6 +314,7 @@ function HashwarpSetupGuide({ onRetry }) {
             await api.addDefenderExclusion();
             // Re-attempt install after exclusion is added
             setAvBlocked(false);
+            avBlockedRef.current = false;
             setInstalling(true);
             setInstallErr(null);
             setStep("Starting...");
@@ -305,8 +323,9 @@ function HashwarpSetupGuide({ onRetry }) {
             setTimeout(() => onRetry(), 1000);
         }
         catch (e) {
-            setInstallErr(e?.message || String(e));
-            setInstalling(false);
+            if (!avBlockedRef.current) {
+                setInstallErr(e?.message || String(e));
+            }
         }
         finally {
             setFixingAv(false);

@@ -812,20 +812,34 @@ func (m *MinerController) pollSoloStats(stopCh <-chan struct{}) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-// hashwarpPath locates the hashwarp binary: first next to the running
-// executable, then in $PATH.
+// hashwarpPath locates the hashwarp binary: first in the install directory
+// (which accounts for AppImage), then next to the running executable, then
+// in $PATH.
 func (m *MinerController) hashwarpPath() (string, error) {
+	name := "hashwarp"
+	if runtime.GOOS == "windows" {
+		name = "hashwarp.exe"
+	}
+
+	// Check the canonical install directory first (handles AppImage case
+	// where the binary is stored in ~/.config/Parallax/bin/).
+	installDir, err := hashwarpInstallDir()
+	if err == nil {
+		p := filepath.Join(installDir, name)
+		if _, err := os.Stat(p); err == nil {
+			return p, nil
+		}
+	}
+
+	// Fall back to the directory containing the running executable.
 	exe, err := os.Executable()
 	if err == nil {
-		name := "hashwarp"
-		if runtime.GOOS == "windows" {
-			name = "hashwarp.exe"
-		}
 		p := filepath.Join(filepath.Dir(exe), name)
 		if _, err := os.Stat(p); err == nil {
 			return p, nil
 		}
 	}
+
 	p, err := exec.LookPath("hashwarp")
 	if err != nil {
 		return "", fmt.Errorf("%w (checked alongside prlx-gui and in $PATH)", ErrHashwarpNotFound)

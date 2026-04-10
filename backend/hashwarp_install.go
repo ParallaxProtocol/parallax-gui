@@ -215,9 +215,26 @@ func isDefenderError(err error) bool {
 	return strings.Contains(msg, "virus") || strings.Contains(msg, "unwanted software")
 }
 
-// hashwarpInstallDir returns the directory where hashwarp should be placed
-// (same directory as the running prlx-gui binary).
+// hashwarpInstallDir returns the directory where hashwarp should be placed.
+// On Linux AppImages the executable lives inside a read-only squashfs mount,
+// so we fall back to a writable directory under the user's config dir.
+// On other platforms (or non-AppImage Linux builds) the binary's own
+// directory is used directly.
 func hashwarpInstallDir() (string, error) {
+	// When running as an AppImage, APPIMAGE env var is set and the
+	// executable's directory is read-only. Use a dedicated writable path.
+	if runtime.GOOS == "linux" && os.Getenv("APPIMAGE") != "" {
+		dir, err := os.UserConfigDir()
+		if err != nil {
+			return "", err
+		}
+		installDir := filepath.Join(dir, "Parallax", "bin")
+		if err := os.MkdirAll(installDir, 0o755); err != nil {
+			return "", err
+		}
+		return installDir, nil
+	}
+
 	exe, err := os.Executable()
 	if err != nil {
 		return "", err
