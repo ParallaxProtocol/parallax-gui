@@ -211,6 +211,7 @@ func (m *MinerController) startPool(cfg GUIConfig, stopCh chan struct{}) error {
 
 	cmd := exec.Command(hwPath, args...)
 	cmd.Dir = filepath.Dir(hwPath)
+	hideChildWindow(cmd)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -292,6 +293,7 @@ func (m *MinerController) startSoloGPU(cfg GUIConfig, stopCh chan struct{}) erro
 
 	cmd := exec.Command(hwPath, args...)
 	cmd.Dir = filepath.Dir(hwPath)
+	hideChildWindow(cmd)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
