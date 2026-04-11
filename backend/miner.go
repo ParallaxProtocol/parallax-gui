@@ -425,7 +425,9 @@ func (m *MinerController) DetectGPUs() ([]DeviceInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, hwPath, "--list-devices").CombinedOutput()
+	cmd := exec.CommandContext(ctx, hwPath, "--list-devices")
+	hideChildWindow(cmd)
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("hashwarp --list-devices: %w\n%s", err, string(out))
 	}
