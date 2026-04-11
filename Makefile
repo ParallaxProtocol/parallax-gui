@@ -108,8 +108,7 @@ prlx-gui-package:
 	  [ "$$dispos" = "darwin" ] && dispos="macos"; \
 	  bundle="Parallax-Client-$(VERSION)-$$dispos-$$disparch"; \
 	  if [ "$$os" = "windows" ]; then \
-	    cp "$$GUI_BIN/Parallax Client.exe" "$$PACKAGEDIR/$${bundle}.exe"; \
-	    echo "-> Copied portable $${bundle}.exe"; \
+	    echo "-> Skipping standalone exe (NSIS setup is built separately)"; \
 	  fi; \
 	done; \
 	echo "GUI bundles in $$PACKAGEDIR/"
