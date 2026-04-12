@@ -135,6 +135,34 @@ CLI binaries (`prlx`, `clef`, `parallaxkey`) are built and released from
 the main [parallax](https://github.com/ParallaxProtocol/parallax)
 repository.
 
+## Contributing a localization
+
+Parallax Desktop ships with English, Deutsch, Français, Português
+(Brasil), Русский, 中文（新加坡）, and 中文（繁體）. All UI strings live in
+a single flat dictionary at
+[`frontend/src/i18n/translations.ts`](frontend/src/i18n/translations.ts),
+keyed with dot-notation (e.g. `nav.client`, `settings.rpc.title`).
+
+To add a new language:
+
+1. Add the BCP-47 tag to the `Lang` union and a display name to
+   `LANG_NAMES` at the top of `translations.ts`.
+2. Copy the `en` dictionary to a new `const xx: Dict = { … }` block and
+   translate each value. Leave `{placeholder}` tokens untouched — they
+   are substituted at runtime by `t(key, vars)`.
+3. Register the dictionary in the `TRANSLATIONS` map at the bottom of
+   the file.
+4. Extend the `detectInitial()` matcher and the saved-value guard in
+   [`frontend/src/i18n/index.tsx`](frontend/src/i18n/index.tsx) so the
+   new tag is recognised by `navigator.language` and persisted in
+   `localStorage`.
+5. Run `wails dev` and switch languages from **Settings → Language** (or
+   the onboarding picker) to verify the strings render and nothing
+   overflows.
+
+Missing keys automatically fall back to English, so partial translations
+are fine for a first pass — open a PR and we'll help fill the gaps.
+
 ## Architecture
 
 ```
