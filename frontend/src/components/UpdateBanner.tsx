@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { api, openExternal } from "../lib/api";
 import type { UpdateInfo, UpdateProgress } from "../lib/api";
+import { useT } from "../i18n";
 
 type BannerState =
   | { kind: "hidden" }
@@ -15,6 +16,7 @@ type BannerState =
 export default function UpdateBanner() {
   const [state, setState] = useState<BannerState>({ kind: "hidden" });
   const infoRef = useRef<UpdateInfo | null>(null);
+  const t = useT();
 
   // Check for updates on mount.
   useEffect(() => {
@@ -113,7 +115,7 @@ export default function UpdateBanner() {
               <div className="flex items-center gap-2 pl-1 pr-1">
                 <span className="live-dot-warn" />
                 <span className="text-xs text-fg">
-                  Update available:{" "}
+                  {t("updater.available")}{" "}
                   <span className="text-gold font-medium">v{state.info.latestVersion}</span>
                 </span>
               </div>
@@ -122,20 +124,20 @@ export default function UpdateBanner() {
                 onClick={() => openExternal(state.info.releaseURL)}
                 className="text-[11px] uppercase tracking-wider text-muted hover:text-fg transition-colors px-1"
               >
-                Notes
+                {t("updater.notes")}
               </button>
               <button
                 type="button"
                 onClick={handleUpdate}
                 className="btn-primary !py-1.5 !px-4"
               >
-                Update
+                {t("updater.update")}
               </button>
               <button
                 type="button"
                 onClick={handleDismiss}
                 className="text-muted hover:text-fg transition-colors px-1 text-sm leading-none"
-                aria-label="Dismiss"
+                aria-label={t("updater.dismiss")}
               >
                 &times;
               </button>
@@ -146,7 +148,7 @@ export default function UpdateBanner() {
             <>
               <div className="flex items-center gap-3 pl-1 pr-1 min-w-[180px]">
                 <span className="text-xs text-fg whitespace-nowrap">
-                  Downloading v{state.info.latestVersion}
+                  {t("updater.downloading", { version: state.info.latestVersion })}
                 </span>
                 <div className="flex-1 progress-track !h-1">
                   <div
@@ -164,14 +166,14 @@ export default function UpdateBanner() {
           {state.kind === "verifying" && (
             <div className="flex items-center gap-2 pl-1 pr-1">
               <span className="live-dot-warn" />
-              <span className="text-xs text-fg">Verifying integrity...</span>
+              <span className="text-xs text-fg">{t("updater.verifying")}</span>
             </div>
           )}
 
           {state.kind === "extracting" && (
             <div className="flex items-center gap-2 pl-1 pr-1">
               <span className="live-dot-warn" />
-              <span className="text-xs text-fg">Installing update...</span>
+              <span className="text-xs text-fg">{t("updater.installing")}</span>
             </div>
           )}
 
@@ -180,7 +182,7 @@ export default function UpdateBanner() {
               <div className="flex items-center gap-2 pl-1 pr-1">
                 <span className="live-dot-success" />
                 <span className="text-xs text-fg">
-                  v{state.info.latestVersion} installed
+                  {t("updater.installed", { version: state.info.latestVersion })}
                 </span>
               </div>
               <button
@@ -188,7 +190,7 @@ export default function UpdateBanner() {
                 onClick={handleRestart}
                 className="btn-primary !py-1.5 !px-4"
               >
-                Restart now
+                {t("updater.restartNow")}
               </button>
             </>
           )}
@@ -206,13 +208,13 @@ export default function UpdateBanner() {
                 onClick={handleRetry}
                 className="text-[11px] uppercase tracking-wider text-muted hover:text-fg transition-colors px-2"
               >
-                Retry
+                {t("updater.retry")}
               </button>
               <button
                 type="button"
                 onClick={handleDismiss}
                 className="text-muted hover:text-fg transition-colors px-1 text-sm leading-none"
-                aria-label="Dismiss"
+                aria-label={t("updater.dismiss")}
               >
                 &times;
               </button>

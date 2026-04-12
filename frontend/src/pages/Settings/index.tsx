@@ -5,6 +5,8 @@ import { api, GUIConfig, UpdateInfo } from "../../lib/api";
 import SectionHeading from "../../components/SectionHeading";
 import { PageStagger, StaggerItem } from "../../components/PageStagger";
 import Toggle from "../../components/Toggle";
+import { CONFIG_UPDATED_EVENT } from "../../App";
+import { useLang, useT, LANG_NAMES, Lang } from "../../i18n";
 
 // Fields that only take effect after a fresh node start. Touching any of
 // these flips `restartPending` so we can warn the user in the save bar.
@@ -37,6 +39,8 @@ export default function Settings() {
   const [checkResult, setCheckResult] = useState<string | null>(null);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [updating, setUpdating] = useState(false);
+  const { lang, setLang } = useLang();
+  const t = useT();
 
   useEffect(() => {
     api.getConfig().then((c) => {
@@ -66,6 +70,9 @@ export default function Settings() {
       setOrig(cfg);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      // Notify App so globally-applied flags (e.g. animation kill
+      // switch) re-read the latest config without a reload.
+      window.dispatchEvent(new Event(CONFIG_UPDATED_EVENT));
     } catch (e: any) {
       setErr(e?.message || String(e));
     }
@@ -94,16 +101,38 @@ export default function Settings() {
     <PageStagger className="space-y-12 max-w-3xl mx-auto">
       <StaggerItem>
         <SectionHeading
-          eyebrow="Settings"
-          title="Configuration."
+          eyebrow={t("settings.eyebrow")}
+          title={t("settings.title")}
         />
       </StaggerItem>
 
       <StaggerItem>
         <section className="card space-y-5">
-          <div className="card-title">Node</div>
+          <div className="card-title">{t("settings.language")}</div>
+          <p className="text-sm text-muted leading-relaxed">
+            {t("settings.language.desc")}
+          </p>
+          <Field label={t("settings.language.label")}>
+            <select
+              className="input"
+              value={lang}
+              onChange={(e) => setLang(e.target.value as Lang)}
+            >
+              {(Object.keys(LANG_NAMES) as Lang[]).map((l) => (
+                <option key={l} value={l}>
+                  {LANG_NAMES[l]}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </section>
+      </StaggerItem>
 
-          <Field label="Data directory">
+      <StaggerItem>
+        <section className="card space-y-5">
+          <div className="card-title">{t("settings.node")}</div>
+
+          <Field label={t("settings.dataDir")}>
             <input
               className="input font-mono"
               value={cfg.dataDir}
@@ -111,7 +140,7 @@ export default function Settings() {
             />
           </Field>
 
-          <Field label="Sync mode">
+          <Field label={t("settings.syncMode")}>
             <select
               className="input"
               value={cfg.syncMode}
@@ -119,12 +148,12 @@ export default function Settings() {
                 update({ syncMode: e.target.value as GUIConfig["syncMode"] })
               }
             >
-              <option value="snap">Snap (recommended)</option>
-              <option value="full">Full</option>
+              <option value="snap">{t("settings.syncMode.snap")}</option>
+              <option value="full">{t("settings.syncMode.full")}</option>
             </select>
           </Field>
 
-          <Field label="Max peers">
+          <Field label={t("settings.maxPeers")}>
             <input
               type="number"
               className="input"
@@ -135,7 +164,7 @@ export default function Settings() {
             />
           </Field>
 
-          <Field label="Auto-start node">
+          <Field label={t("settings.autoStart")}>
             <Toggle
               checked={cfg.autoStartNode}
               onChange={(v) => update({ autoStartNode: v })}
@@ -146,17 +175,27 @@ export default function Settings() {
 
       <StaggerItem>
         <section className="card space-y-5">
-          <div className="card-title">Networking</div>
+          <div className="card-title">{t("settings.appearance")}</div>
           <p className="text-sm text-muted leading-relaxed">
-            Allow other peers on the network to dial your node. When enabled,
-            the client opens a UPnP/PMP port mapping on your router so peers
-            can reach you. This makes the network healthier and gives you
-            faster block propagation, but also means your IP becomes
-            discoverable by other peers. Disable if you're behind a strict
-            firewall or want to stay outbound-only.
+            {t("settings.appearance.desc")}
+          </p>
+          <Field label={t("settings.disableAnimations")}>
+            <Toggle
+              checked={cfg.disableAnimations}
+              onChange={(v) => update({ disableAnimations: v })}
+            />
+          </Field>
+        </section>
+      </StaggerItem>
+
+      <StaggerItem>
+        <section className="card space-y-5">
+          <div className="card-title">{t("settings.networking")}</div>
+          <p className="text-sm text-muted leading-relaxed">
+            {t("settings.networking.desc")}
           </p>
 
-          <Field label="Allow inbound connections">
+          <Field label={t("settings.allowInbound")}>
             <Toggle
               checked={!cfg.blockInbound}
               onChange={(v) => update({ blockInbound: !v })}
@@ -167,14 +206,12 @@ export default function Settings() {
 
       <StaggerItem>
         <section className="card space-y-5">
-          <div className="card-title">Local apps · HTTP-RPC</div>
+          <div className="card-title">{t("settings.rpc.title")}</div>
           <p className="text-sm text-muted leading-relaxed">
-            Allow MetaMask and other local applications to connect to your node.
-            The server is bound to 127.0.0.1 only — never expose it to the public
-            internet.
+            {t("settings.rpc.desc")}
           </p>
 
-          <Field label="Enable HTTP-RPC">
+          <Field label={t("settings.rpc.enable")}>
             <Toggle
               checked={cfg.httpRpcEnabled}
               onChange={(v) => update({ httpRpcEnabled: v })}
@@ -189,7 +226,7 @@ export default function Settings() {
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 className="overflow-hidden"
               >
-                <Field label="Port">
+                <Field label={t("settings.rpc.port")}>
                   <input
                     type="number"
                     className="input"
@@ -209,26 +246,18 @@ export default function Settings() {
 
       <StaggerItem>
         <section className="card space-y-5">
-          <div className="card-title">Fee estimation</div>
+          <div className="card-title">{t("settings.fee.title")}</div>
           <p className="text-sm text-muted leading-relaxed">
-            The gas price oracle has two algorithms. The default uses a
-            percentile of recent block tips — fast and well-trodden. The
-            Smart Fee option ports Bitcoin Core's{" "}
+            {t("settings.fee.desc1a")}{" "}
             <span className="font-mono text-fg/80">estimateSmartFee</span>{" "}
-            algorithm, which buckets observed confirmations and back-solves
-            for a fee that hits a target confirmation depth.
+            {t("settings.fee.desc1b")}
           </p>
           <p className="text-sm text-muted leading-relaxed">
-            <span className="text-gold">Recommended: leave this off.</span>{" "}
-            Smart Fee needs a long, continuous window of observed
-            confirmations to produce accurate estimates. Parallax Desktop is
-            designed to be started and stopped on demand rather than left
-            running 24/7, so the oracle rarely accumulates enough data and
-            falls back to the default minimum. Always-on operators (CLI
-            nodes, validators) are the intended audience for this option.
+            <span className="text-gold">{t("settings.fee.recommended")}</span>{" "}
+            {t("settings.fee.desc2")}
           </p>
 
-          <Field label="Smart fee estimator">
+          <Field label={t("settings.smartFee")}>
             <Toggle
               checked={cfg.enableSmartFee}
               onChange={(v) => update({ enableSmartFee: v })}
@@ -239,14 +268,13 @@ export default function Settings() {
 
       <StaggerItem>
         <section className="card">
-          <div className="card-title mb-4">Diagnostics</div>
+          <div className="card-title mb-4">{t("settings.diagnostics")}</div>
           <div className="flex items-center justify-between gap-6">
             <p className="text-sm text-muted leading-relaxed max-w-md">
-              View the live tail of node and GUI logs. Useful for debugging
-              sync issues, peer discovery, or filing bug reports.
+              {t("settings.diagnostics.desc")}
             </p>
             <Link to="/logs" className="btn-ghost shrink-0">
-              Show logs
+              {t("settings.showLogs")}
             </Link>
           </div>
         </section>
@@ -258,7 +286,7 @@ export default function Settings() {
             className="btn-ghost"
             onClick={() => setAdvanced(!advanced)}
           >
-            {advanced ? "Hide" : "Show"} advanced settings
+            {advanced ? t("settings.advanced.hide") : t("settings.advanced.show")}
           </button>
 
           <AnimatePresence initial={false}>
@@ -271,7 +299,7 @@ export default function Settings() {
                 className="overflow-hidden"
               >
                 <div className="space-y-5 pt-4">
-                  <Field label="Database cache (MB)">
+                  <Field label={t("settings.dbCache")}>
                     <input
                       type="number"
                       className="input"
@@ -283,7 +311,7 @@ export default function Settings() {
                       }
                     />
                   </Field>
-                  <Field label="Trie clean cache (MB)">
+                  <Field label={t("settings.trieClean")}>
                     <input
                       type="number"
                       className="input"
@@ -295,7 +323,7 @@ export default function Settings() {
                       }
                     />
                   </Field>
-                  <Field label="Trie dirty cache (MB)">
+                  <Field label={t("settings.trieDirty")}>
                     <input
                       type="number"
                       className="input"
@@ -307,7 +335,7 @@ export default function Settings() {
                       }
                     />
                   </Field>
-                  <Field label="Snapshot cache (MB)">
+                  <Field label={t("settings.snapshotCache")}>
                     <input
                       type="number"
                       className="input"
@@ -328,13 +356,13 @@ export default function Settings() {
 
       <StaggerItem>
         <section className="card space-y-5">
-          <div className="card-title">About</div>
+          <div className="card-title">{t("settings.about")}</div>
           <dl className="grid grid-cols-3 gap-y-3 text-sm">
-            <dt className="eyebrow self-center">Client</dt>
+            <dt className="eyebrow self-center">{t("settings.about.client")}</dt>
             <dd className="col-span-2 font-mono text-fg">
               prlx {clientVersion || "—"}
             </dd>
-            <dt className="eyebrow self-center">Desktop</dt>
+            <dt className="eyebrow self-center">{t("settings.about.desktop")}</dt>
             <dd className="col-span-2 font-mono text-fg">
               {appVersion || "—"}
             </dd>
@@ -352,17 +380,21 @@ export default function Settings() {
                   const info = await api.checkForUpdate();
                   if (info) {
                     setUpdateInfo(info);
-                    setCheckResult(`Update available: v${info.latestVersion}`);
+                    setCheckResult(
+                      t("settings.about.updateAvailable", {
+                        version: info.latestVersion,
+                      }),
+                    );
                   } else {
-                    setCheckResult("You're up to date.");
+                    setCheckResult(t("settings.about.upToDate"));
                   }
                 } catch (e: any) {
-                  setCheckResult(e?.message || "Check failed");
+                  setCheckResult(e?.message || t("settings.about.checkFailed"));
                 }
                 setChecking(false);
               }}
             >
-              {checking ? "Checking…" : "Check for updates"}
+              {checking ? t("settings.about.checking") : t("settings.about.check")}
             </button>
             {checkResult && (
               <span className="text-sm text-muted">{checkResult}</span>
@@ -377,12 +409,12 @@ export default function Settings() {
                   try {
                     await api.applyUpdate();
                   } catch (e: any) {
-                    setCheckResult(e?.message || "Update failed");
+                    setCheckResult(e?.message || t("settings.about.updateFailed"));
                     setUpdating(false);
                   }
                 }}
               >
-                {updating ? "Updating…" : "Update now"}
+                {updating ? t("settings.about.updating") : t("settings.about.updateNow")}
               </button>
             )}
           </div>
@@ -431,6 +463,7 @@ function FloatingSaveBar({
   onDiscard: () => void;
   onRestart: () => void;
 }) {
+  const t = useT();
   const visible = dirty || saved || restartPending;
   return (
     <AnimatePresence>
@@ -446,10 +479,10 @@ function FloatingSaveBar({
           {dirty ? (
             <>
               <div className="flex flex-col pl-1 pr-1 leading-tight">
-                <span className="text-xs text-fg">Unsaved changes</span>
+                <span className="text-xs text-fg">{t("settings.save.unsaved")}</span>
                 {dirtyNeedsRestart && (
                   <span className="text-[10px] uppercase tracking-wider text-gold">
-                    Will require node restart
+                    {t("settings.save.needsRestart")}
                   </span>
                 )}
               </div>
@@ -458,14 +491,14 @@ function FloatingSaveBar({
                 onClick={onDiscard}
                 className="text-[11px] uppercase tracking-wider text-muted hover:text-fg transition-colors px-2"
               >
-                Discard
+                {t("common.discard")}
               </button>
               <button
                 type="button"
                 onClick={onSave}
                 className="btn-primary !py-1.5 !px-4"
               >
-                Save
+                {t("common.save")}
               </button>
             </>
           ) : restartPending ? (
@@ -473,7 +506,7 @@ function FloatingSaveBar({
               <div className="flex items-center gap-2 pl-1 pr-1">
                 <span className="live-dot-warn" />
                 <span className="text-xs text-fg">
-                  Restart required to apply changes
+                  {t("settings.save.restartRequired")}
                 </span>
               </div>
               <button
@@ -482,13 +515,13 @@ function FloatingSaveBar({
                 disabled={restarting}
                 className="btn-primary !py-1.5 !px-4"
               >
-                {restarting ? "Restarting…" : "Restart node"}
+                {restarting ? t("settings.save.restarting") : t("settings.save.restart")}
               </button>
             </>
           ) : (
             <span className="text-success text-sm flex items-center gap-2 px-2">
               <span className="live-dot-success" />
-              Saved
+              {t("settings.save.saved")}
             </span>
           )}
         </motion.div>
@@ -505,4 +538,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
-

@@ -33,6 +33,7 @@ export default {
 
         success: "oklch(0.696 0.17 162.48 / <alpha-value>)",
         danger: "oklch(0.704 0.191 22.216 / <alpha-value>)",
+        info: "oklch(0.68 0.16 240 / <alpha-value>)",
       },
       fontFamily: {
         sans: [

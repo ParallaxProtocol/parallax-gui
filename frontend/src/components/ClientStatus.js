@@ -1,13 +1,15 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { useT } from "../i18n";
 const VARIANTS = {
-    synced: { dot: "live-dot-success", label: "Synced" },
-    syncing: { dot: "live-dot-warn", label: "Syncing" },
-    stopped: { dot: "live-dot-err", label: "Stopped" },
+    synced: { dot: "live-dot-success", labelKey: "status.online" },
+    syncing: { dot: "live-dot-info", labelKey: "status.syncing" },
+    stopped: { dot: "live-dot-err", labelKey: "status.offline" },
 };
 export default function ClientStatus() {
     const [kind, setKind] = useState("stopped");
+    const t = useT();
     useEffect(() => {
         let alive = true;
         const refresh = async () => {
@@ -34,5 +36,5 @@ export default function ClientStatus() {
         };
     }, []);
     const v = VARIANTS[kind];
-    return (_jsxs("div", { className: "flex items-center gap-2.5", children: [_jsx("span", { className: v.dot }), _jsx("span", { className: "eyebrow", children: v.label })] }));
+    return (_jsxs("div", { className: "flex items-center gap-2.5", children: [_jsx("span", { className: v.dot }), _jsx("span", { className: "eyebrow", children: t(v.labelKey) })] }));
 }

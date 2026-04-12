@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { useT } from "../i18n";
 
 /**
  * ClientStatus is the live client-state indicator that lives in the TopBar.
@@ -7,20 +8,21 @@ import { api } from "../lib/api";
  * It polls node status on its own short interval (independent of any page)
  * so the badge stays accurate as you navigate around the app. Three states:
  *
- *   ● Synced     (green pulse)
- *   ● Syncing    (gold pulse)
- *   ● Stopped    (red, no pulse)
+ *   ● Online     (green pulse) — node running and synced
+ *   ● Syncing    (blue pulse)
+ *   ● Offline    (red, no pulse) — node not running
  */
 type Kind = "synced" | "syncing" | "stopped";
 
-const VARIANTS: Record<Kind, { dot: string; label: string }> = {
-  synced: { dot: "live-dot-success", label: "Synced" },
-  syncing: { dot: "live-dot-warn", label: "Syncing" },
-  stopped: { dot: "live-dot-err", label: "Stopped" },
+const VARIANTS: Record<Kind, { dot: string; labelKey: string }> = {
+  synced: { dot: "live-dot-success", labelKey: "status.online" },
+  syncing: { dot: "live-dot-info", labelKey: "status.syncing" },
+  stopped: { dot: "live-dot-err", labelKey: "status.offline" },
 };
 
 export default function ClientStatus() {
   const [kind, setKind] = useState<Kind>("stopped");
+  const t = useT();
 
   useEffect(() => {
     let alive = true;
@@ -50,7 +52,7 @@ export default function ClientStatus() {
   return (
     <div className="flex items-center gap-2.5">
       <span className={v.dot} />
-      <span className="eyebrow">{v.label}</span>
+      <span className="eyebrow">{t(v.labelKey)}</span>
     </div>
   );
 }

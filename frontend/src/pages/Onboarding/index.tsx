@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { api, GUIConfig } from "../../lib/api";
 import Toggle from "../../components/Toggle";
+import { useLang, useT, LANG_NAMES, Lang } from "../../i18n";
 import logo from "../../assets/logo.svg";
 
 type Step =
+  | "language"
   | "welcome"
   | "datadir"
   | "syncmode"
@@ -13,6 +15,7 @@ type Step =
   | "starting";
 
 const STEPS: Step[] = [
+  "language",
   "welcome",
   "datadir",
   "syncmode",
@@ -23,8 +26,10 @@ const STEPS: Step[] = [
 
 export default function Onboarding({ onFinished }: { onFinished: () => void }) {
   const [cfg, setCfg] = useState<GUIConfig | null>(null);
-  const [step, setStep] = useState<Step>("welcome");
+  const [step, setStep] = useState<Step>("language");
   const [error, setError] = useState<string | null>(null);
+  const { lang, setLang } = useLang();
+  const t = useT();
 
   useEffect(() => {
     api.getConfig().then(setCfg);
@@ -83,8 +88,8 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
             animate={{ scaleX: 1 }}
             transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
           />
-          <div className="eyebrow">Welcome</div>
-          <h1 className="display text-center">Parallax Desktop.</h1>
+          <div className="eyebrow">{t("onboarding.welcome")}</div>
+          <h1 className="display text-center">{t("onboarding.brand")}</h1>
         </motion.div>
 
         {/* Step indicator dots */}
@@ -125,27 +130,70 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
+            {step === "language" && (
+              <div className="card space-y-5">
+                <h2 className="display-sm">{t("onboarding.language.title")}</h2>
+                <p className="text-muted leading-relaxed">
+                  {t("onboarding.language.desc")}
+                </p>
+                <div className="space-y-3">
+                  {(Object.keys(LANG_NAMES) as Lang[]).map((l) => {
+                    const selected = lang === l;
+                    return (
+                      <button
+                        key={l}
+                        type="button"
+                        onClick={() => setLang(l)}
+                        className={`text-left rounded border p-4 w-full transition-all duration-300 ${
+                          selected
+                            ? "border-gold bg-gold-muted shadow-gold-glow"
+                            : "border-border hover:bg-bg-elev hover:border-fg/20"
+                        }`}
+                      >
+                        <div className="font-medium">{LANG_NAMES[l]}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    className="btn-primary"
+                    onClick={() => setStep("welcome")}
+                  >
+                    {t("common.continue")}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {step === "welcome" && (
               <div className="card space-y-5">
-                <h2 className="display-sm">Run your own Parallax node</h2>
+                <h2 className="display-sm">{t("onboarding.welcome.title")}</h2>
                 <p className="text-muted leading-relaxed">
-                  Parallax Desktop is a self-contained Parallax full node with a
-                  friendly UI. The wizard will set up your data directory and
-                  connect you to the network. Once running, you can also point
-                  MetaMask or any other EVM-compatible wallet at your local node.
+                  {t("onboarding.welcome.desc")}
                 </p>
-                <button className="btn-primary" onClick={() => setStep("datadir")}>
-                  Get started
-                </button>
+                <div className="flex justify-between">
+                  <button
+                    className="btn-ghost"
+                    onClick={() => setStep("language")}
+                  >
+                    {t("common.back")}
+                  </button>
+                  <button
+                    className="btn-primary"
+                    onClick={() => setStep("datadir")}
+                  >
+                    {t("onboarding.welcome.cta")}
+                  </button>
+                </div>
               </div>
             )}
 
             {step === "datadir" && (
               <div className="card space-y-5">
-                <h2 className="display-sm">Where should we keep your data?</h2>
+                <h2 className="display-sm">{t("onboarding.datadir.title")}</h2>
                 <p className="text-muted text-sm leading-relaxed">
-                  Snap-syncing the chain takes several gigabytes. Pick a location
-                  with plenty of free space.
+                  {t("onboarding.datadir.desc")}
                 </p>
                 <input
                   className="input font-mono"
@@ -157,13 +205,13 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
                     className="btn-ghost"
                     onClick={() => setStep("welcome")}
                   >
-                    Back
+                    {t("common.back")}
                   </button>
                   <button
                     className="btn-primary"
                     onClick={() => setStep("syncmode")}
                   >
-                    Continue
+                    {t("common.continue")}
                   </button>
                 </div>
               </div>
@@ -171,18 +219,18 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
 
             {step === "syncmode" && (
               <div className="card space-y-5">
-                <h2 className="display-sm">How should we sync?</h2>
+                <h2 className="display-sm">{t("onboarding.syncmode.title")}</h2>
                 <SyncOption
                   k="snap"
-                  title="Snap (recommended)"
-                  desc="Fastest first sync. Downloads recent state and verifies headers."
+                  title={t("onboarding.syncmode.snap.title")}
+                  desc={t("onboarding.syncmode.snap.desc")}
                   cfg={cfg}
                   update={update}
                 />
                 <SyncOption
                   k="full"
-                  title="Full"
-                  desc="Verifies every block from genesis. Slower but most rigorous."
+                  title={t("onboarding.syncmode.full.title")}
+                  desc={t("onboarding.syncmode.full.desc")}
                   cfg={cfg}
                   update={update}
                 />
@@ -191,13 +239,13 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
                     className="btn-ghost"
                     onClick={() => setStep("datadir")}
                   >
-                    Back
+                    {t("common.back")}
                   </button>
                   <button
                     className="btn-primary"
                     onClick={() => setStep("networking")}
                   >
-                    Continue
+                    {t("common.continue")}
                   </button>
                 </div>
               </div>
@@ -205,27 +253,21 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
 
             {step === "networking" && (
               <div className="card space-y-5">
-                <h2 className="display-sm">Help the network</h2>
+                <h2 className="display-sm">{t("onboarding.networking.title")}</h2>
                 <p className="text-muted leading-relaxed">
-                  Allow other peers on the Parallax network to dial your node.
-                  When enabled, your client opens a UPnP/PMP port mapping on
-                  your router so other peers can connect to you. This makes
-                  the network healthier and gives you faster block
-                  propagation.
+                  {t("onboarding.networking.desc")}
                 </p>
                 <p className="text-muted text-sm leading-relaxed">
-                  Your IP becomes discoverable by other peers when this is on.
-                  If you're behind a strict firewall or prefer to stay
-                  outbound-only, you can leave this off and still sync.
+                  {t("onboarding.networking.desc2")}
                 </p>
 
                 <div className="flex items-center justify-between rounded border border-border bg-bg-elev-2 px-4 py-3">
                   <div>
                     <div className="text-sm text-fg">
-                      Allow inbound connections
+                      {t("onboarding.networking.toggle")}
                     </div>
                     <div className="text-xs text-muted">
-                      Recommended
+                      {t("onboarding.networking.recommended")}
                     </div>
                   </div>
                   <Toggle
@@ -239,13 +281,13 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
                     className="btn-ghost"
                     onClick={() => setStep("syncmode")}
                   >
-                    Back
+                    {t("common.back")}
                   </button>
                   <button
                     className="btn-primary"
                     onClick={() => setStep("rpc")}
                   >
-                    Continue
+                    {t("common.continue")}
                   </button>
                 </div>
               </div>
@@ -253,30 +295,27 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
 
             {step === "rpc" && (
               <div className="card space-y-5">
-                <div className="eyebrow">Almost there</div>
-                <h2 className="display-sm">Local wallet access</h2>
+                <div className="eyebrow">{t("onboarding.rpc.eyebrow")}</div>
+                <h2 className="display-sm">{t("onboarding.rpc.title")}</h2>
                 <p className="text-muted leading-relaxed">
-                  Your node will expose a JSON-RPC endpoint on{" "}
+                  {t("onboarding.rpc.desc1")}{" "}
                   <span className="font-mono text-fg">
                     http://127.0.0.1:{cfg.httpRpcPort}
                   </span>{" "}
-                  so MetaMask and other EVM-compatible wallets can connect to
-                  it. The endpoint is bound to the loopback interface only —
-                  never reachable from the public internet.
+                  {t("onboarding.rpc.desc2")}
                 </p>
                 <p className="text-muted text-sm leading-relaxed">
-                  You can disable this later in Settings if you don't want any
-                  local app to connect.
+                  {t("onboarding.rpc.desc3")}
                 </p>
                 <div className="flex justify-between pt-2">
                   <button
                     className="btn-ghost"
                     onClick={() => setStep("networking")}
                   >
-                    Back
+                    {t("common.back")}
                   </button>
                   <button className="btn-primary" onClick={finish}>
-                    Start node
+                    {t("onboarding.rpc.cta")}
                   </button>
                 </div>
               </div>
@@ -289,9 +328,9 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
                 />
-                <div className="display-sm">Starting your node…</div>
+                <div className="display-sm">{t("onboarding.starting.title")}</div>
                 <p className="text-muted text-sm mt-3">
-                  This can take a minute on first launch.
+                  {t("onboarding.starting.desc")}
                 </p>
               </div>
             )}

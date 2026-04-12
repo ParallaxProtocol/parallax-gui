@@ -1,5 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { api } from "../lib/api";
 import SectionHeading from "../components/SectionHeading";
@@ -38,7 +39,7 @@ export default function Peers() {
     });
     const inCount = peers.filter((p) => p.inbound).length;
     const outCount = peers.length - inCount;
-    return (_jsxs(PageStagger, { className: "space-y-12 max-w-5xl mx-auto", children: [_jsx(StaggerItem, { children: _jsx(SectionHeading, { eyebrow: "Peers", title: "All connected peers.", subtitle: `${peers.length} total · ${inCount} inbound · ${outCount} outbound` }) }), error && (_jsx(StaggerItem, { children: _jsx("div", { className: "card border-danger/40 bg-danger/10 text-danger", children: error }) })), _jsx(StaggerItem, { children: _jsxs("section", { className: "card", children: [_jsxs("div", { className: "flex items-center justify-between mb-6", children: [_jsx("div", { className: "flex gap-2", children: ["all", "in", "out"].map((k) => (_jsx("button", { onClick: () => setFilter(k), className: `px-3.5 py-1.5 rounded text-[11px] uppercase tracking-wider transition-all duration-200 ${filter === k
+    return (_jsxs(PageStagger, { className: "space-y-12 max-w-5xl mx-auto", children: [_jsx(StaggerItem, { children: _jsx(Link, { to: "/", className: "inline-flex items-center gap-1.5 text-xs text-muted hover:text-fg transition-colors", children: "\u2190 Back to client" }) }), _jsx(StaggerItem, { children: _jsx(SectionHeading, { eyebrow: "Peers", title: "All connected peers.", subtitle: `${peers.length} total · ${inCount} inbound · ${outCount} outbound` }) }), error && (_jsx(StaggerItem, { children: _jsx("div", { className: "card border-danger/40 bg-danger/10 text-danger", children: error }) })), _jsx(StaggerItem, { children: _jsxs("section", { className: "card", children: [_jsxs("div", { className: "flex items-center justify-between mb-6", children: [_jsx("div", { className: "flex gap-2", children: ["all", "in", "out"].map((k) => (_jsx("button", { onClick: () => setFilter(k), className: `px-3.5 py-1.5 rounded text-[11px] uppercase tracking-wider transition-all duration-200 ${filter === k
                                             ? "bg-gold text-gold-fg shadow-gold-glow"
                                             : "border border-border-strong text-muted hover:text-fg hover:border-fg/30"}`, children: k === "all" ? "All" : k === "in" ? "Inbound" : "Outbound" }, k))) }), _jsxs("div", { className: "text-xs text-muted tabular-nums", children: ["Showing ", filtered.length, " of ", peers.length] })] }), filtered.length === 0 ? (_jsx("p", { className: "text-muted text-sm py-6", children: "No peers match this filter." })) : (_jsx("ul", { className: "divide-y divide-border", children: filtered.map((p) => {
                                 const isExpanded = expanded === p.fullId;

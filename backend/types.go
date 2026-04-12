@@ -23,6 +23,10 @@ type GUIConfig struct {
 	MaxPeers      int    `json:"maxPeers"`
 	Theme         string `json:"theme"` // "system" | "light" | "dark"
 	AutoStartNode bool   `json:"autoStartNode"`
+	// DisableAnimations turns off CSS keyframes, motion/react transitions
+	// and any decorative motion in the GUI. Useful on low-power systems
+	// or for users who find the dashboard's pulsing arcs distracting.
+	DisableAnimations bool `json:"disableAnimations"`
 
 	// EnableSmartFee turns on the Bitcoin Core-style smart fee estimator
 	// in the gas-price oracle (gasprice.Config.EnableSmartFeeEstimator).

@@ -43,6 +43,7 @@ export type GUIConfig = {
   maxPeers: number;
   theme: "system" | "light" | "dark";
   autoStartNode: boolean;
+  disableAnimations: boolean;
   enableSmartFee: boolean;
   databaseCacheMB: number;
   trieCleanCacheMB: number;
@@ -72,6 +73,27 @@ export type NodeStatus = {
   memUsedBytes: number;
   clientVersion: string;
   rpcEndpoint: string;
+};
+
+export type WalletStatus = {
+  connected: boolean;
+  lastSeenUnixMilli: number;
+};
+
+export type GeoLocation = {
+  ip: string;
+  lat: number;
+  lon: number;
+  city: string;
+  country: string;
+};
+
+export type PublicNode = {
+  lat: number;
+  lon: number;
+  city: string;
+  country: string;
+  countryCode: string;
 };
 
 export type LogLine = {
@@ -203,12 +225,17 @@ export const api = {
   startNode: () => call<void>("StartNode"),
   stopNode: () => call<void>("StopNode"),
   nodeStatus: () => call<NodeStatus>("NodeStatus"),
+  walletStatus: () => call<WalletStatus>("WalletStatus"),
   peers: () => call<PeerView[]>("Peers"),
   recentBlocks: (n: number) => call<BlockView[]>("RecentBlocks", n),
   recentTransactions: (n: number) => call<TxView[]>("RecentTransactions", n),
 
   getLogTail: (n: number) => call<LogLine[]>("GetLogTail", n),
   setLogVerbosity: (n: number) => call<void>("SetLogVerbosity", n),
+
+  geoSelf: () => call<GeoLocation>("GeoSelf"),
+  geoLookupPeers: () => call<GeoLocation[]>("GeoLookupPeers"),
+  publicNodes: () => call<PublicNode[]>("PublicNodes"),
 
   metaMaskHelperURL: () => call<string>("MetaMaskHelperURL"),
 

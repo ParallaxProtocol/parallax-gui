@@ -64,6 +64,50 @@ select option {
   }
 }
 
+/* User-controlled "disable animations" switch from Settings. We use
+   `none !important` rather than the usual 0.01ms reduced-motion trick
+   because at 0.01ms the browser still runs a single transition frame
+   — that produced visible flicker on toggles. Hard-disabling animation
+   and transition entirely is the only way to kill the in-between
+   paint. Motion/react components are handled separately in App.tsx. */
+.no-anim, .no-anim *, .no-anim *::before, .no-anim *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* World map animations                                                */
+/* ------------------------------------------------------------------ */
+
+/* Keyframes are intentionally outside @layer so the browser sees them as
+   plain CSS animations and promotes them to the compositor thread. Each
+   arc has its own randomized duration + delay applied via inline style;
+   only the keyframe definition is shared. */
+@keyframes arc-blink {
+  0%, 100% { stroke-opacity: 0.4; }
+  50%      { stroke-opacity: 0.15; }
+}
+.arc-blink {
+  animation-name: arc-blink;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  /* fill-mode none — duration/delay come from inline style */
+}
+
+/* Pin blink — paired with arc-blink and given the same per-peer
+   duration/delay so each peer's pin pulses in sync with its own line.
+   Animates `opacity` rather than fill-opacity so both the halo glow
+   and the solid dot dim together. */
+@keyframes pin-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.pin-blink {
+  animation-name: pin-blink;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
 /* ------------------------------------------------------------------ */
 /* Component primitives                                                */
 /* ------------------------------------------------------------------ */
@@ -190,14 +234,18 @@ select option {
   }
   .pill-ok    { @apply pill bg-success/15 text-success; }
   .pill-warn  { @apply pill bg-gold-muted text-gold; }
+  .pill-info  { @apply pill bg-info/15 text-info; }
   .pill-err   { @apply pill bg-danger/15 text-danger; }
+  .pill-muted { @apply pill bg-fg/5 text-muted; }
 
   .live-dot {
     @apply inline-block w-1.5 h-1.5 rounded-full;
   }
   .live-dot-warn    { @apply live-dot bg-gold animate-pulse-soft; }
   .live-dot-success { @apply live-dot bg-success animate-pulse-soft; }
+  .live-dot-info    { @apply live-dot bg-info animate-pulse-soft; }
   .live-dot-err     { @apply live-dot bg-danger; }
+  .live-dot-muted   { @apply live-dot bg-muted; }
 
   /* Subtle divider used between page sections. */
   .hairline {

@@ -4,12 +4,14 @@ import { motion } from "motion/react";
 import { api, LogLine } from "../lib/api";
 import SectionHeading from "../components/SectionHeading";
 import { PageStagger, StaggerItem } from "../components/PageStagger";
+import { useT } from "../i18n";
 
 export default function Logs() {
   const [lines, setLines] = useState<LogLine[]>([]);
   const [filter, setFilter] = useState("");
   const [paused, setPaused] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT();
 
   useEffect(() => {
     api.getLogTail(500).then(setLines);
@@ -37,9 +39,9 @@ export default function Logs() {
     <PageStagger className="space-y-10 max-w-6xl mx-auto h-full flex flex-col">
       <StaggerItem>
         <SectionHeading
-          eyebrow="Logs"
-          title="Live tail."
-          subtitle="Streaming directly from the embedded node, level INFO and above."
+          eyebrow={t("logs.eyebrow")}
+          title={t("logs.title")}
+          subtitle={t("logs.subtitle")}
           trailing={
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-2 text-xs text-muted">
@@ -48,10 +50,10 @@ export default function Logs() {
                     paused ? "live-dot bg-muted" : "live-dot-success"
                   }
                 />
-                {paused ? "Paused" : "Live"}
+                {paused ? t("logs.paused") : t("logs.live")}
               </span>
               <Link to="/settings" className="btn-ghost">
-                ← Back
+                {t("logs.back")}
               </Link>
             </div>
           }
@@ -62,7 +64,7 @@ export default function Logs() {
         <div className="flex gap-2 mb-4">
           <input
             className="input flex-1"
-            placeholder="Filter…"
+            placeholder={t("logs.filter")}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
@@ -70,7 +72,7 @@ export default function Logs() {
             className="btn-ghost"
             onClick={() => setPaused((p) => !p)}
           >
-            {paused ? "Resume" : "Pause"}
+            {paused ? t("logs.resume") : t("logs.pause")}
           </button>
           <button
             className="btn-ghost"
@@ -78,7 +80,7 @@ export default function Logs() {
               navigator.clipboard.writeText(visible.map((l) => l.msg).join("\n"))
             }
           >
-            Copy
+            {t("common.copy")}
           </button>
         </div>
 
@@ -90,7 +92,7 @@ export default function Logs() {
           transition={{ duration: 0.5 }}
         >
           {visible.length === 0 ? (
-            <p className="text-muted not-italic">No log lines yet.</p>
+            <p className="text-muted not-italic">{t("logs.empty")}</p>
           ) : (
             visible.map((l, i) => (
               <div key={i} className="grid grid-cols-[60px_1fr] gap-3 py-0.5">

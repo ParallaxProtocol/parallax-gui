@@ -12,8 +12,10 @@ import { formatHashrate, formatDuration, formatDifficulty } from "../lib/format"
 import SectionHeading from "../components/SectionHeading";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { PageStagger, StaggerItem } from "../components/PageStagger";
+import { useT } from "../i18n";
 
 export default function Mining() {
+  const t = useT();
   const [cfg, setCfg] = useState<GUIConfig | null>(null);
   const [status, setStatus] = useState<MinerStatus | null>(null);
   const [nodeStatus, setNodeStatus] = useState<NodeStatus | null>(null);
@@ -210,14 +212,12 @@ export default function Mining() {
     <PageStagger className="space-y-14 max-w-5xl mx-auto">
       <StaggerItem>
         <SectionHeading
-          eyebrow="Mining"
-          title="Earn LAX with your hardware."
-          subtitle="Mine to a pool with your GPU, or solo mine with your CPU through the local node."
+          eyebrow={t("mining.eyebrow")}
+          title={t("mining.title")}
+          subtitle={t("mining.subtitle")}
         />
         <p className="text-muted text-sm mt-5 max-w-2xl">
-          By mining, you help decentralize the Parallax network and secure every
-          transaction on the blockchain. The more miners participate, the
-          stronger and more censorship-resistant the network becomes.
+          {t("mining.intro")}
         </p>
       </StaggerItem>
 
@@ -242,9 +242,9 @@ export default function Mining() {
         <StaggerItem>
           <div className="flex gap-2 p-1 rounded-lg bg-bg-elev border border-border w-fit">
             {([
-              ["pool", "Pool (GPU)"],
-              ["sologpu", "Solo (GPU)"],
-              ["solo", "Solo (CPU)"],
+              ["pool", t("mining.mode.pool")],
+              ["sologpu", t("mining.mode.sologpu")],
+              ["solo", t("mining.mode.solo")],
             ] as const).map(([mode, label]) => {
               const gpuMode = mode === "pool" || mode === "sologpu";
               const disabled = isMac && gpuMode;
@@ -260,7 +260,7 @@ export default function Mining() {
                   }`}
                   onClick={() => !disabled && setSelectedMode(mode)}
                   disabled={disabled}
-                  title={disabled ? "GPU mining is not available on macOS" : undefined}
+                  title={disabled ? t("mining.mac.disabled") : undefined}
                 >
                   {label}
                 </button>
@@ -268,16 +268,13 @@ export default function Mining() {
             })}
           </div>
           <p className="text-xs text-muted mt-3">
-            {selectedMode === "pool" &&
-              "Mine through a pool — rewards are split among all miners. No node required."}
-            {selectedMode === "sologpu" &&
-              "Mine solo with your GPU — you keep the full block reward. Requires a running, synced node."}
-            {selectedMode === "solo" &&
-              "Mine solo with your CPU — lower hashrate but no GPU needed. Requires a running, synced node."}
+            {selectedMode === "pool" && t("mining.mode.pool.desc")}
+            {selectedMode === "sologpu" && t("mining.mode.sologpu.desc")}
+            {selectedMode === "solo" && t("mining.mode.solo.desc")}
           </p>
           {isMac && (
             <p className="text-xs text-muted/60 mt-1">
-              GPU mining is not available on macOS. Use Solo (CPU) to mine with your processor.
+              {t("mining.mac.help")}
             </p>
           )}
         </StaggerItem>
@@ -305,15 +302,15 @@ export default function Mining() {
       {!isRunning && !avBlocked && !((selectedMode === "pool" || selectedMode === "sologpu") && hashwarpFound === false) && (
         <StaggerItem>
           <section className="card space-y-6">
-            <div className="eyebrow mb-2">Configuration</div>
+            <div className="eyebrow mb-2">{t("mining.config")}</div>
 
             {/* Wallet (both modes) */}
             <div>
-              <label className="label">Wallet address</label>
+              <label className="label">{t("mining.wallet")}</label>
               <input
                 type="text"
                 className="input font-mono"
-                placeholder="0x..."
+                placeholder={t("mining.ph.wallet")}
                 value={wallet}
                 onChange={(e) => setWallet(e.target.value)}
               />
@@ -323,18 +320,18 @@ export default function Mining() {
             {selectedMode === "pool" && (
               <>
                 <div>
-                  <label className="label">Worker name</label>
+                  <label className="label">{t("mining.worker")}</label>
                   <input
                     type="text"
                     className="input"
-                    placeholder="my-rig"
+                    placeholder={t("mining.ph.worker")}
                     value={worker}
                     onChange={(e) => setWorker(e.target.value)}
                   />
                 </div>
 
                 <div>
-                  <label className="label">Mining pool</label>
+                  <label className="label">{t("mining.pool")}</label>
                   <select
                     className="input"
                     value={poolUrl}
@@ -352,7 +349,7 @@ export default function Mining() {
                       className="text-xs text-gold hover:text-gold/80 transition-colors"
                       onClick={showCustomPool ? resetPoolForm : openAddPool}
                     >
-                      {showCustomPool ? "Cancel" : "+ Add custom pool"}
+                      {showCustomPool ? t("common.cancel") : t("mining.addPool")}
                     </button>
                     {(() => {
                       const selected = pools.find((p) => p.url === poolUrl);
@@ -363,13 +360,13 @@ export default function Mining() {
                             className="text-xs text-muted hover:text-fg transition-colors"
                             onClick={() => openEditPool(selected)}
                           >
-                            Edit
+                            {t("mining.edit")}
                           </button>
                           <button
                             className="text-xs text-danger/70 hover:text-danger transition-colors"
                             onClick={() => deletePool(selected.url)}
                           >
-                            Remove
+                            {t("mining.remove")}
                           </button>
                         </>
                       );
@@ -381,32 +378,32 @@ export default function Mining() {
                   <div className="rounded-lg border border-border bg-bg-elev p-4 space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="label">Pool name</label>
+                        <label className="label">{t("mining.poolName")}</label>
                         <input
                           type="text"
                           className="input"
-                          placeholder="My Pool"
+                          placeholder={t("mining.ph.poolName")}
                           value={customName}
                           onChange={(e) => setCustomName(e.target.value)}
                         />
                       </div>
                       <div>
-                        <label className="label">Region (optional)</label>
+                        <label className="label">{t("mining.region")}</label>
                         <input
                           type="text"
                           className="input"
-                          placeholder="US"
+                          placeholder={t("mining.ph.region")}
                           value={customRegion}
                           onChange={(e) => setCustomRegion(e.target.value)}
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="label">Stratum URL</label>
+                      <label className="label">{t("mining.stratumUrl")}</label>
                       <input
                         type="text"
                         className="input font-mono"
-                        placeholder="stratum1+tcp://pool.example.com:4444"
+                        placeholder={t("mining.ph.stratum")}
                         value={customUrl}
                         onChange={(e) => setCustomUrl(e.target.value)}
                       />
@@ -417,10 +414,10 @@ export default function Mining() {
                         onClick={savePool}
                         disabled={!customName || !customUrl}
                       >
-                        {editingPoolUrl ? "Save changes" : "Add pool"}
+                        {editingPoolUrl ? t("mining.saveChanges") : t("mining.addPoolCta")}
                       </button>
                       <button className="btn-ghost" onClick={resetPoolForm}>
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                     </div>
                   </div>
@@ -433,7 +430,7 @@ export default function Mining() {
               <>
                 {gpus.length > 0 && (
                   <div>
-                    <label className="label">GPU devices</label>
+                    <label className="label">{t("mining.gpuDevices")}</label>
                     <div className="space-y-2 mt-1">
                       {gpus.map((g) => (
                         <label
@@ -464,7 +461,7 @@ export default function Mining() {
                     </div>
                     {selectedDevices.length === 0 && (
                       <p className="text-xs text-muted mt-1">
-                        All devices selected by default.
+                        {t("mining.gpu.allDefault")}
                       </p>
                     )}
                   </div>
@@ -472,8 +469,7 @@ export default function Mining() {
                 {gpus.length === 0 && (
                   <div className="rounded-lg border border-border bg-bg-elev px-4 py-3">
                     <p className="text-sm text-muted">
-                      No GPUs detected. Make sure hashwarp is installed. You can
-                      still use Solo (CPU) mode.
+                      {t("mining.gpu.none")}
                     </p>
                   </div>
                 )}
@@ -489,10 +485,10 @@ export default function Mining() {
                   />
                   <span className="text-sm">
                     {!nodeStatus?.running
-                      ? "Node is not running."
+                      ? t("mining.node.notRunning")
                       : nodeStatus.syncing
-                        ? "Node is syncing. Solo mining requires a fully synced node."
-                        : "Node is synced and ready for solo mining."}
+                        ? t("mining.node.syncing")
+                        : t("mining.node.ready")}
                   </span>
                 </div>
                 {!nodeStatus?.running && (
@@ -506,7 +502,7 @@ export default function Mining() {
                       }
                     }}
                   >
-                    Start node
+                    {t("mining.startNode")}
                   </button>
                 )}
               </div>
@@ -516,7 +512,7 @@ export default function Mining() {
             {selectedMode === "solo" && (
               <div>
                 <label className="label">
-                  CPU threads ({threads} of {maxThreads})
+                  {t("mining.cpuThreads")} ({threads} / {maxThreads})
                 </label>
                 <input
                   type="range"
@@ -541,12 +537,12 @@ export default function Mining() {
               }
             >
               {starting
-                ? "Starting..."
+                ? t("mining.starting")
                 : selectedMode === "pool"
-                  ? "Start Pool Mining"
+                  ? t("mining.start.pool")
                   : selectedMode === "sologpu"
-                    ? "Start Solo GPU Mining"
-                    : "Start Solo CPU Mining"}
+                    ? t("mining.start.sologpu")
+                    : t("mining.start.solo")}
             </button>
           </section>
         </StaggerItem>
@@ -557,10 +553,10 @@ export default function Mining() {
         <StaggerItem>
           <section className="card-featured">
             <div className="flex items-center justify-between mb-7">
-              <div className="eyebrow">Live Stats</div>
+              <div className="eyebrow">{t("mining.liveStats")}</div>
               <span className="pill-ok">
                 <span className="live-dot-success" />
-                {status.generatingDag ? "Generating DAG" : "Mining"}
+                {status.generatingDag ? t("mining.generatingDag") : t("mining.mining")}
               </span>
             </div>
 
@@ -568,7 +564,7 @@ export default function Mining() {
             {status.generatingDag && (
               <div className="mb-6">
                 <div className="flex justify-between eyebrow mb-3">
-                  <span>Generating DAG for epoch {status.epoch}</span>
+                  <span>{t("mining.genDagEpoch")} {status.epoch}</span>
                 </div>
                 <div className="progress-track">
                   <div className="progress-fill animate-pulse-soft w-full" />
@@ -577,7 +573,7 @@ export default function Mining() {
             )}
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-6">
-              <Stat label="Hashrate">
+              <Stat label={t("mining.hashrate")}>
                 <AnimatedNumber
                   value={status.hashrate}
                   format={formatHashrate}
@@ -586,7 +582,7 @@ export default function Mining() {
               </Stat>
 
               {(status.mode === "pool" || status.mode === "sologpu") && (
-                <Stat label="Shares">
+                <Stat label={t("mining.shares")}>
                   <span className="stat-value">
                     {status.sharesAccepted.toLocaleString()}
                     {status.sharesRejected > 0 && (
@@ -604,21 +600,21 @@ export default function Mining() {
               )}
 
               {status.mode === "solo" && (
-                <Stat label="Difficulty">
+                <Stat label={t("mining.difficulty")}>
                   <span className="stat-value">
                     {formatDifficulty(status.soloDifficulty || "0")}
                   </span>
                 </Stat>
               )}
 
-              <Stat label="Uptime">
+              <Stat label={t("mining.uptime")}>
                 <span className="stat-value">
                   {formatDuration(status.uptimeSeconds)}
                 </span>
               </Stat>
 
               {status.mode === "pool" && (
-                <Stat label="Pool">
+                <Stat label={t("mining.poolLabel")}>
                   <span className="stat-value text-sm">
                     <span
                       className={
@@ -627,13 +623,13 @@ export default function Mining() {
                           : "live-dot-err"
                       }
                     />{" "}
-                    {status.poolConnected ? "Connected" : "Disconnected"}
+                    {status.poolConnected ? t("mining.connected") : t("mining.disconnected")}
                   </span>
                 </Stat>
               )}
 
               {status.mode === "sologpu" && (
-                <Stat label="Node">
+                <Stat label={t("mining.nodeLabel")}>
                   <span className="stat-value text-sm">
                     <span
                       className={
@@ -642,13 +638,13 @@ export default function Mining() {
                           : "live-dot-err"
                       }
                     />{" "}
-                    {status.poolConnected ? "Connected" : "Disconnected"}
+                    {status.poolConnected ? t("mining.connected") : t("mining.disconnected")}
                   </span>
                 </Stat>
               )}
 
               {status.mode === "solo" && (
-                <Stat label="Blocks Found">
+                <Stat label={t("mining.blocksFound")}>
                   <span className="stat-value">
                     {status.soloBlocksFound.toLocaleString()}
                   </span>
@@ -666,7 +662,7 @@ export default function Mining() {
         status.devices.length > 0 && (
           <StaggerItem>
             <section className="card space-y-4">
-              <div className="eyebrow mb-2">GPU Devices</div>
+              <div className="eyebrow mb-2">{t("mining.gpuDevicesStat")}</div>
               <div className="grid gap-3">
                 {status.devices.map((d) => (
                   <div
@@ -678,8 +674,8 @@ export default function Mining() {
                         #{d.index} {d.name}
                       </div>
                       <div className="text-xs text-muted mt-0.5">
-                        {d.mode} · {d.accepted} accepted
-                        {d.rejected > 0 && ` · ${d.rejected} rejected`}
+                        {d.mode} · {d.accepted} {t("mining.accepted")}
+                        {d.rejected > 0 && ` · ${d.rejected} ${t("mining.rejected")}`}
                       </div>
                     </div>
                     <div className="flex items-center gap-6 text-sm shrink-0">
@@ -719,7 +715,7 @@ export default function Mining() {
             onClick={stop}
             disabled={stopping}
           >
-            {stopping ? "Stopping..." : "Stop Mining"}
+            {stopping ? t("mining.stopping") : t("mining.stop")}
           </button>
         </StaggerItem>
       )}
@@ -732,6 +728,7 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
   avBlocked: boolean;
   setAvBlocked: (v: boolean) => void;
 }) {
+  const t = useT();
   const [installing, setInstalling] = useState(false);
   const [step, setStep] = useState("");
   const [installErr, setInstallErr] = useState<string | null>(null);
@@ -754,39 +751,35 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
         }
         setStep(
           data.step === "finding"
-            ? "Looking up latest release..."
+            ? t("hashwarp.step.finding")
             : data.step === "downloading"
-              ? `Downloading ${data.detail}...`
+              ? t("hashwarp.step.downloading", { detail: data.detail })
               : data.step === "extracting"
-                ? "Extracting..."
+                ? t("hashwarp.step.extracting")
                 : data.step === "verifying"
-                  ? "Verifying installation..."
+                  ? t("hashwarp.step.verifying")
                   : data.step === "done"
-                    ? "Installed!"
+                    ? t("hashwarp.step.done")
                     : data.step,
         );
         if (data.step === "done") setDone(true);
       },
     );
     return () => off();
-  }, [setAvBlocked]);
+  }, [setAvBlocked, t]);
 
   const install = async (gpuType: "cuda" | "opencl") => {
     setInstalling(true);
     setInstallErr(null);
     setAvBlocked(false);
     avBlockedRef.current = false;
-    setStep("Starting...");
+    setStep(t("hashwarp.step.starting"));
     setDone(false);
     setPendingGpu(gpuType);
     try {
       await api.installHashwarp(gpuType);
-      // Small delay so the user sees "Installed!" before transition
       setTimeout(() => onRetry(), 1000);
     } catch (e: any) {
-      // If it was an AV block, the avBlocked screen takes render priority.
-      // Otherwise show the error in the installing screen (which has a Back button).
-      // Don't set installing=false here — that would skip past the error display.
       if (!avBlockedRef.current) {
         setInstallErr(e?.message || String(e));
       }
@@ -798,12 +791,11 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
     setFixingAv(true);
     try {
       await api.addDefenderExclusion();
-      // Re-attempt install after exclusion is added
       setAvBlocked(false);
       avBlockedRef.current = false;
       setInstalling(true);
       setInstallErr(null);
-      setStep("Starting...");
+      setStep(t("hashwarp.step.starting"));
       setDone(false);
       await api.installHashwarp(pendingGpu);
       setTimeout(() => onRetry(), 1000);
@@ -821,62 +813,66 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
     return (
       <section className="card space-y-6">
         <div>
-          <div className="eyebrow mb-3 text-danger">Antivirus Blocked Installation</div>
+          <div className="eyebrow mb-3 text-danger">{t("hashwarp.av.eyebrow")}</div>
           <p className="text-fg text-lg font-medium">
-            Windows Defender removed hashwarp.exe
+            {t("hashwarp.av.title")}
           </p>
           <p className="text-muted mt-2 text-sm">
-            Mining software is often incorrectly flagged as a threat by antivirus programs.
-            This is a <strong className="text-fg">false positive</strong> — Hashwarp is open-source
-            and safe. You need to add an antivirus exclusion before installing.
+            {t("hashwarp.av.desc1")}{" "}
+            <strong className="text-fg">{t("hashwarp.av.falsePositive")}</strong>{" "}
+            {t("hashwarp.av.desc2")}
           </p>
         </div>
 
         <div className="space-y-4">
           {/* Automated fix */}
           <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 space-y-3">
-            <div className="text-sm text-fg font-medium">Automatic fix</div>
+            <div className="text-sm text-fg font-medium">{t("hashwarp.av.autoTitle")}</div>
             <p className="text-xs text-muted">
-              Parallax Desktop can add a Windows Defender exclusion for you.
-              This will open a Windows permission prompt (UAC).
+              {t("hashwarp.av.autoDesc")}
             </p>
             <button
               className="btn-primary text-sm"
               onClick={fixAndRetry}
               disabled={fixingAv}
             >
-              {fixingAv ? "Adding exclusion..." : "Add exclusion & retry"}
+              {fixingAv ? t("hashwarp.av.adding") : t("hashwarp.av.addAndRetry")}
             </button>
           </div>
 
           {/* Manual instructions */}
           <div className="rounded-lg border border-border bg-bg-elev p-4 space-y-3">
-            <div className="text-sm text-fg font-medium">Or do it manually</div>
+            <div className="text-sm text-fg font-medium">{t("hashwarp.av.manualTitle")}</div>
             <ol className="text-xs text-muted space-y-2 list-decimal list-inside">
               <li>
-                Open <strong className="text-fg">Windows Security</strong> (search
-                for it in the Start menu)
+                {t("hashwarp.av.step1a")}{" "}
+                <strong className="text-fg">{t("hashwarp.av.step1b")}</strong>{" "}
+                {t("hashwarp.av.step1c")}
               </li>
               <li>
-                Go to <strong className="text-fg">Virus & threat protection</strong> →{" "}
-                <strong className="text-fg">Manage settings</strong>
+                {t("hashwarp.av.step2a")}{" "}
+                <strong className="text-fg">{t("hashwarp.av.step2b")}</strong> →{" "}
+                <strong className="text-fg">{t("hashwarp.av.step2c")}</strong>
               </li>
               <li>
-                Scroll down to <strong className="text-fg">Exclusions</strong> →{" "}
-                <strong className="text-fg">Add or remove exclusions</strong>
+                {t("hashwarp.av.step3a")}{" "}
+                <strong className="text-fg">{t("hashwarp.av.step3b")}</strong> →{" "}
+                <strong className="text-fg">{t("hashwarp.av.step3c")}</strong>
               </li>
               <li>
-                Click <strong className="text-fg">Add an exclusion</strong> → choose{" "}
-                <strong className="text-fg">Folder</strong> → select the Parallax
-                Desktop installation folder
+                {t("hashwarp.av.step4a")}{" "}
+                <strong className="text-fg">{t("hashwarp.av.step4b")}</strong> →{" "}
+                {t("hashwarp.av.step4c")}{" "}
+                <strong className="text-fg">{t("hashwarp.av.step4d")}</strong> →{" "}
+                {t("hashwarp.av.step4e")}
               </li>
-              <li>Come back here and click retry</li>
+              <li>{t("hashwarp.av.step5")}</li>
             </ol>
             <button className="btn-ghost text-sm" onClick={() => {
               setAvBlocked(false);
               if (pendingGpu) install(pendingGpu);
             }}>
-              Retry installation
+              {t("hashwarp.av.retry")}
             </button>
           </div>
         </div>
@@ -889,7 +885,7 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
             setPendingGpu(null);
           }}
         >
-          Back
+          {t("hashwarp.av.back")}
         </button>
       </section>
     );
@@ -899,7 +895,7 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
   if (installing) {
     return (
       <section className="card space-y-6">
-        <div className="eyebrow">Installing GPU Miner</div>
+        <div className="eyebrow">{t("hashwarp.installing.eyebrow")}</div>
         <div className="flex items-center gap-4">
           {!done && !installErr && (
             <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
@@ -925,7 +921,7 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
               className="btn-ghost text-sm"
               onClick={() => setInstalling(false)}
             >
-              Back
+              {t("hashwarp.installing.back")}
             </button>
           </div>
         )}
@@ -937,23 +933,20 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
   return (
     <section className="card space-y-6">
       <div>
-        <div className="eyebrow mb-3">GPU Miner Setup</div>
+        <div className="eyebrow mb-3">{t("hashwarp.setup.eyebrow")}</div>
         <p className="text-fg text-lg font-medium">
-          Select your GPU brand to install the mining engine.
+          {t("hashwarp.setup.title")}
         </p>
         <p className="text-muted mt-2 text-sm">
-          Parallax Desktop will automatically download and set up Hashwarp, the
-          GPU mining software. Just pick your graphics card brand below.
+          {t("hashwarp.setup.desc")}
         </p>
       </div>
 
       {isWindows && (
         <div className="rounded-lg border border-border bg-bg-elev px-4 py-3">
           <p className="text-xs text-muted">
-            <strong className="text-fg">Note:</strong> Windows Defender may flag mining
-            software as a threat. This is a false positive. If the download is
-            blocked, Parallax Desktop can configure the exclusion automatically
-            for you, or you can do it manually.
+            <strong className="text-fg">{t("hashwarp.setup.winNoteBold")}</strong>{" "}
+            {t("hashwarp.setup.winNote")}
           </p>
         </div>
       )}
@@ -965,10 +958,10 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
         >
           <div className="text-fg font-medium text-base mb-1">NVIDIA</div>
           <div className="text-xs text-muted">
-            GeForce GTX / RTX series
+            {t("hashwarp.setup.nvidiaSeries")}
           </div>
           <div className="text-xs text-gold mt-3 opacity-70 group-hover:opacity-100 transition-opacity">
-            Download CUDA version →
+            {t("hashwarp.setup.downloadCuda")}
           </div>
         </button>
         <button
@@ -977,27 +970,26 @@ function HashwarpSetupGuide({ onRetry, avBlocked, setAvBlocked }: {
         >
           <div className="text-fg font-medium text-base mb-1">AMD</div>
           <div className="text-xs text-muted">
-            Radeon RX series
+            {t("hashwarp.setup.amdSeries")}
           </div>
           <div className="text-xs text-gold mt-3 opacity-70 group-hover:opacity-100 transition-opacity">
-            Download OpenCL version →
+            {t("hashwarp.setup.downloadOpenCl")}
           </div>
         </button>
       </div>
 
       {!isWindows && (
         <p className="text-xs text-muted">
-          Not sure which GPU you have? Run{" "}
+          {t("hashwarp.setup.linuxHintA")}{" "}
           <code className="text-fg bg-bg-elev px-1.5 py-0.5 rounded text-xs">
             lspci | grep -i vga
           </code>{" "}
-          in a terminal.
+          {t("hashwarp.setup.linuxHintB")}
         </p>
       )}
       {isWindows && (
         <p className="text-xs text-muted">
-          Not sure which GPU you have? Check Device Manager under "Display
-          adapters".
+          {t("hashwarp.setup.winHint")}
         </p>
       )}
     </section>
