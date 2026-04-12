@@ -158,7 +158,7 @@ export default function Dashboard() {
           selfLoc={selfLoc}
           selfRunning={!!status?.running}
           peers={status?.running ? peerMarkers : []}
-          publicNodes={status?.running ? publicNodes : []}
+          publicNodes={publicNodes}
         />
       </div>
 

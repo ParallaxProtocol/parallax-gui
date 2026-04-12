@@ -5,15 +5,43 @@ const STORAGE_KEY = "parallax-lang";
 function detectInitial() {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved === "en" || saved === "pt-BR")
+        if (saved === "en" ||
+            saved === "de" ||
+            saved === "fr" ||
+            saved === "pt-BR" ||
+            saved === "ru" ||
+            saved === "zh-SG" ||
+            saved === "zh-TW") {
             return saved;
+        }
     }
     catch {
         /* localStorage unavailable — fall through */
     }
     const nav = typeof navigator !== "undefined" ? navigator.language : "en";
-    if (nav && nav.toLowerCase().startsWith("pt"))
+    const lower = nav?.toLowerCase() ?? "";
+    if (lower.startsWith("pt"))
         return "pt-BR";
+    if (lower.startsWith("de"))
+        return "de";
+    if (lower.startsWith("fr"))
+        return "fr";
+    if (lower.startsWith("ru"))
+        return "ru";
+    // Traditional Chinese locales (Taiwan, Hong Kong, Macau) map to zh-TW.
+    if (lower.startsWith("zh-tw") ||
+        lower.startsWith("zh-hk") ||
+        lower.startsWith("zh-mo") ||
+        lower.startsWith("zh-hant")) {
+        return "zh-TW";
+    }
+    // Simplified Chinese locales map to zh-SG.
+    if (lower === "zh" ||
+        lower.startsWith("zh-cn") ||
+        lower.startsWith("zh-sg") ||
+        lower.startsWith("zh-hans")) {
+        return "zh-SG";
+    }
     return "en";
 }
 const LanguageContext = createContext(null);
