@@ -14,12 +14,14 @@ const STORAGE_KEY = "parallax-lang";
 function detectInitial(): Lang {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "en" || saved === "pt-BR") return saved;
+    if (saved === "en" || saved === "fr" || saved === "pt-BR") return saved;
   } catch {
     /* localStorage unavailable — fall through */
   }
   const nav = typeof navigator !== "undefined" ? navigator.language : "en";
-  if (nav && nav.toLowerCase().startsWith("pt")) return "pt-BR";
+  const lower = nav?.toLowerCase() ?? "";
+  if (lower.startsWith("pt")) return "pt-BR";
+  if (lower.startsWith("fr")) return "fr";
   return "en";
 }
 
