@@ -342,6 +342,7 @@ const en: Dict = {
   "updater.installing": "Installing update...",
   "updater.installed": "v{version} installed",
   "updater.restartNow": "Restart now",
+  "updater.dragToApplications": "v{version} ready — drag Parallax Client to Applications.",
   "updater.retry": "Retry",
 };
 
@@ -665,6 +666,7 @@ const ptBR: Dict = {
   "updater.installing": "Instalando atualização...",
   "updater.installed": "v{version} instalada",
   "updater.restartNow": "Reiniciar agora",
+  "updater.dragToApplications": "v{version} pronta — arraste o Parallax Client para Aplicativos.",
   "updater.retry": "Tentar de novo",
 };
 
@@ -988,6 +990,7 @@ const fr: Dict = {
   "updater.installing": "Installation de la mise à jour...",
   "updater.installed": "v{version} installée",
   "updater.restartNow": "Redémarrer",
+  "updater.dragToApplications": "v{version} prête — glissez Parallax Client vers Applications.",
   "updater.retry": "Réessayer",
 };
 
@@ -1311,6 +1314,7 @@ const ru: Dict = {
   "updater.installing": "Установка обновления...",
   "updater.installed": "v{version} установлена",
   "updater.restartNow": "Перезапустить",
+  "updater.dragToApplications": "v{version} готова — перетащите Parallax Client в Программы.",
   "updater.retry": "Повторить",
 };
 
@@ -1634,6 +1638,7 @@ const zhSG: Dict = {
   "updater.installing": "正在安装更新...",
   "updater.installed": "v{version} 已安装",
   "updater.restartNow": "立即重启",
+  "updater.dragToApplications": "v{version} 已就绪 — 请将 Parallax Client 拖入「应用程序」。",
   "updater.retry": "重试",
 };
 
@@ -1957,6 +1962,7 @@ const zhTW: Dict = {
   "updater.installing": "正在安裝更新...",
   "updater.installed": "v{version} 已安裝",
   "updater.restartNow": "立即重新啟動",
+  "updater.dragToApplications": "v{version} 已就緒 — 請將 Parallax Client 拖入「應用程式」。",
   "updater.retry": "重試",
 };
 
@@ -2280,6 +2286,7 @@ const de: Dict = {
   "updater.installing": "Update wird installiert...",
   "updater.installed": "v{version} installiert",
   "updater.restartNow": "Jetzt neu starten",
+  "updater.dragToApplications": "v{version} bereit — ziehe Parallax Client in den Programme-Ordner.",
   "updater.retry": "Erneut versuchen",
 };
 

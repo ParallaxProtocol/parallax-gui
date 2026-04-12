@@ -249,11 +249,19 @@ func (a *App) DismissUpdate() {
 }
 
 // RestartApp launches the updated binary as a new process and then quits the
-// current instance, giving the user a seamless restart experience.
+// current instance, giving the user a seamless restart experience. On Linux
+// we relaunch via $APPIMAGE (set by the AppImage runtime) so the freshly
+// installed AppImage runs instead of the stale binary still mapped inside
+// the previous FUSE mount.
 func (a *App) RestartApp() {
-	exe, err := os.Executable()
-	if err == nil {
-		cmd := exec.Command(exe, os.Args[1:]...)
+	target := ""
+	if appimg := os.Getenv("APPIMAGE"); appimg != "" {
+		target = appimg
+	} else if exe, err := os.Executable(); err == nil {
+		target = exe
+	}
+	if target != "" {
+		cmd := exec.Command(target, os.Args[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Start()

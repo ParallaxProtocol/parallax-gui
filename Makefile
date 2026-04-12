@@ -58,7 +58,8 @@ prlx-gui-cross: $(GUI_DIST_PLACEHOLDER)
 	@echo "Done cross-building Parallax Desktop."
 
 # prlx-gui-package builds the desktop GUI for every entry in GUI_TARGETS
-# and writes one parallax-gui-<os>-<arch>.zip per target into PACKAGEDIR.
+# and stages the platform artifact (portable .exe on Windows; the AppImage
+# and DMG are built separately by CI) into PACKAGEDIR.
 GUI_TARGETS ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64
 
 REPO_ROOT  := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -108,7 +109,8 @@ prlx-gui-package:
 	  [ "$$dispos" = "darwin" ] && dispos="macos"; \
 	  bundle="Parallax-Client-$(VERSION)-$$dispos-$$disparch"; \
 	  if [ "$$os" = "windows" ]; then \
-	    echo "-> Skipping standalone exe (NSIS setup is built separately)"; \
+	    cp "$$GUI_BIN/Parallax Client.exe" "$$PACKAGEDIR/$${bundle}.exe"; \
+	    echo "-> Copied portable $${bundle}.exe"; \
 	  fi; \
 	done; \
 	echo "GUI bundles in $$PACKAGEDIR/"

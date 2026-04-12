@@ -170,7 +170,7 @@ jobs:
           makensis -DVERSION="$VERSION" \
                    -DBINDIR="$(pwd)/build/bin" \
                    build/windows/installer.nsi
-          mv "build/windows/Parallax-Client-${VERSION}-windows-x86_64.exe" build/package/
+          mv "build/windows/Parallax-Client-${VERSION}-windows-x86_64-setup.exe" build/package/
           ls -lh build/package/
 
       - name: Build macOS DMG

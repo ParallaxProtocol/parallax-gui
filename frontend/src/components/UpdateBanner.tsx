@@ -11,6 +11,7 @@ type BannerState =
   | { kind: "verifying"; info: UpdateInfo }
   | { kind: "extracting"; info: UpdateInfo }
   | { kind: "ready"; info: UpdateInfo }
+  | { kind: "ready-manual"; info: UpdateInfo }
   | { kind: "error"; info: UpdateInfo; message: string };
 
 export default function UpdateBanner() {
@@ -62,6 +63,9 @@ export default function UpdateBanner() {
           break;
         case "ready":
           setState({ kind: "ready", info });
+          break;
+        case "ready-manual":
+          setState({ kind: "ready-manual", info });
           break;
         case "error":
           setState({ kind: "error", info, message: p.detail });
@@ -191,6 +195,25 @@ export default function UpdateBanner() {
                 className="btn-primary !py-1.5 !px-4"
               >
                 {t("updater.restartNow")}
+              </button>
+            </>
+          )}
+
+          {state.kind === "ready-manual" && (
+            <>
+              <div className="flex items-center gap-2 pl-1 pr-1">
+                <span className="live-dot-success" />
+                <span className="text-xs text-fg max-w-[320px]">
+                  {t("updater.dragToApplications", { version: state.info.latestVersion })}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleDismiss}
+                className="text-muted hover:text-fg transition-colors px-1 text-sm leading-none"
+                aria-label={t("updater.dismiss")}
+              >
+                &times;
               </button>
             </>
           )}

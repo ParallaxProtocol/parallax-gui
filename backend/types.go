@@ -216,7 +216,14 @@ type UpdateInfo struct {
 
 // UpdateProgress is broadcast over the "update-progress" Wails event channel.
 type UpdateProgress struct {
-	Step    string `json:"step"`    // "downloading" | "verifying" | "extracting" | "ready" | "error"
+	// Step is one of:
+	//   downloading | verifying | extracting | ready | ready-manual | error
+	//
+	// "ready" means the new binary is staged in place and the app can be
+	// restarted automatically. "ready-manual" means the artifact has been
+	// opened (e.g. macOS DMG mounted in Finder) and the user has to finish
+	// the install themselves.
+	Step    string `json:"step"`
 	Percent int    `json:"percent"` // 0-100 for downloading
 	Detail  string `json:"detail"`
 }

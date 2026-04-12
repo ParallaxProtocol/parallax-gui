@@ -4,7 +4,6 @@
 package backend
 
 import (
-	"archive/zip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -184,8 +184,14 @@ func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
 		return nil, nil
 	}
 
-	// Find the matching asset for this OS/arch.
-	wantName := fmt.Sprintf("parallax-gui-%s-%s.zip", runtime.GOOS, runtime.GOARCH)
+	// Find the matching asset for this OS/arch. The release publishes one
+	// native artifact per platform: AppImage on Linux, DMG on macOS,
+	// portable .exe on Windows (the NSIS installer is uploaded separately
+	// and is not what the in-app updater consumes).
+	wantName := desiredAssetName(latestVersion)
+	if wantName == "" {
+		return nil, fmt.Errorf("auto-update unsupported on %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
 	var assetURL string
 	var assetName string
 	var assetSize int64
@@ -227,7 +233,8 @@ func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
 }
 
 // DownloadAndInstall downloads the latest release, verifies its SHA256, and
-// replaces the running binary. Progress is streamed via the emitter.
+// hands the artifact to the OS-specific installer. Progress is streamed via
+// the emitter.
 func (u *Updater) DownloadAndInstall(ctx context.Context) error {
 	u.mu.Lock()
 	if u.downloading {
@@ -248,32 +255,71 @@ func (u *Updater) DownloadAndInstall(ctx context.Context) error {
 		return fmt.Errorf("no update available")
 	}
 
-	// 1. Download the ZIP with progress.
+	// 1. Download the artifact with progress.
 	u.emit(UpdateProgress{Step: "downloading", Percent: 0, Detail: info.AssetName})
-	tmpZip, err := u.downloadWithProgress(ctx, info.AssetURL, info.AssetSize)
+	tmpFile, err := u.downloadWithProgress(ctx, info.AssetURL, info.AssetSize)
 	if err != nil {
 		u.emit(UpdateProgress{Step: "error", Detail: fmt.Sprintf("Download failed: %v", err)})
 		return fmt.Errorf("download: %w", err)
 	}
-	defer os.Remove(tmpZip)
+	keepDownload := false
+	defer func() {
+		if !keepDownload {
+			os.Remove(tmpFile)
+		}
+	}()
 
 	// 2. Verify SHA256.
 	u.emit(UpdateProgress{Step: "verifying", Detail: "Checking integrity..."})
-	if err := u.verifySHA256(info, tmpZip); err != nil {
+	if err := u.verifySHA256(info, tmpFile); err != nil {
 		u.emit(UpdateProgress{Step: "error", Detail: fmt.Sprintf("Verification failed: %v", err)})
 		return fmt.Errorf("verify: %w", err)
 	}
 
-	// 3. Extract and replace binary.
+	// 3. Install per platform.
 	u.emit(UpdateProgress{Step: "extracting", Detail: "Installing update..."})
-	if err := replaceBinary(tmpZip); err != nil {
+	manual, err := installArtifact(tmpFile, info.AssetName)
+	if err != nil {
 		u.emit(UpdateProgress{Step: "error", Detail: fmt.Sprintf("Install failed: %v", err)})
-		return fmt.Errorf("replace binary: %w", err)
+		return fmt.Errorf("install: %w", err)
 	}
 
-	u.emit(UpdateProgress{Step: "ready", Detail: "Update installed. Restart to apply."})
-	log.Info("Update installed, restart required", "version", info.LatestVersion)
+	if manual {
+		// macOS DMG: leave the file on disk so the user can finish in Finder.
+		keepDownload = true
+		u.emit(UpdateProgress{Step: "ready-manual", Detail: "Drag Parallax Client to Applications."})
+	} else {
+		u.emit(UpdateProgress{Step: "ready", Detail: "Update installed. Restart to apply."})
+	}
+	log.Info("Update installed", "version", info.LatestVersion, "manual", manual)
 	return nil
+}
+
+// desiredAssetName returns the release artifact filename the in-app updater
+// expects for the running platform/architecture, or "" if auto-update is not
+// supported here.
+func desiredAssetName(version string) string {
+	dispArch := ""
+	switch runtime.GOARCH {
+	case "amd64":
+		dispArch = "x86_64"
+	case "arm64":
+		dispArch = "arm64"
+	default:
+		return ""
+	}
+	switch runtime.GOOS {
+	case "linux":
+		return fmt.Sprintf("Parallax-Client-%s-linux-%s.AppImage", version, dispArch)
+	case "darwin":
+		return fmt.Sprintf("Parallax-Client-%s-macos-%s.dmg", version, dispArch)
+	case "windows":
+		if runtime.GOARCH != "amd64" {
+			return ""
+		}
+		return fmt.Sprintf("Parallax-Client-%s-windows-x86_64.exe", version)
+	}
+	return ""
 }
 
 // downloadWithProgress downloads a URL to a temp file, emitting progress
@@ -403,94 +449,137 @@ func (u *Updater) verifySHA256(info *UpdateInfo, zipPath string) error {
 	return nil
 }
 
-// replaceBinary extracts the binary from the downloaded ZIP and replaces the
-// running executable using the rename strategy.
-func replaceBinary(zipPath string) error {
-	currentExe, err := os.Executable()
+// installArtifact installs a downloaded release artifact for the running
+// platform. It returns manual=true when the install requires user action to
+// finish (currently: macOS DMG, where the user has to drag the .app to
+// /Applications themselves).
+func installArtifact(downloadPath, assetName string) (manual bool, err error) {
+	switch runtime.GOOS {
+	case "windows":
+		target, terr := currentBinaryPath()
+		if terr != nil {
+			return false, terr
+		}
+		return false, replaceFileInPlace(downloadPath, target, false)
+	case "linux":
+		target, terr := currentBinaryPath()
+		if terr != nil {
+			return false, terr
+		}
+		return false, replaceFileInPlace(downloadPath, target, true)
+	case "darwin":
+		// We can't safely modify the running .app bundle in place
+		// (codesigning + Gatekeeper). Open the DMG in Finder; the user
+		// drags Parallax Client.app to /Applications.
+		stableDir := filepath.Dir(downloadPath)
+		stable := filepath.Join(stableDir, assetName)
+		if stable != downloadPath {
+			if err := os.Rename(downloadPath, stable); err == nil {
+				downloadPath = stable
+			}
+		}
+		cmd := exec.Command("open", downloadPath)
+		if err := cmd.Run(); err != nil {
+			return true, fmt.Errorf("open dmg: %w", err)
+		}
+		return true, nil
+	}
+	return false, fmt.Errorf("unsupported platform %s", runtime.GOOS)
+}
+
+// currentBinaryPath returns the on-disk path of the artifact that should be
+// replaced when an update is installed. On Linux this is the AppImage file
+// (read from $APPIMAGE) — os.Executable() points inside the read-only FUSE
+// mount, which is not what we want to overwrite.
+func currentBinaryPath() (string, error) {
+	if runtime.GOOS == "linux" {
+		if appimg := os.Getenv("APPIMAGE"); appimg != "" {
+			abs, err := filepath.Abs(appimg)
+			if err != nil {
+				return "", fmt.Errorf("resolve APPIMAGE: %w", err)
+			}
+			return abs, nil
+		}
+		return "", fmt.Errorf("not running from an AppImage ($APPIMAGE unset); auto-update is only supported for AppImage builds")
+	}
+	exe, err := os.Executable()
 	if err != nil {
-		return fmt.Errorf("resolve executable: %w", err)
+		return "", fmt.Errorf("resolve executable: %w", err)
 	}
-	currentExe, err = filepath.EvalSymlinks(currentExe)
+	exe, err = filepath.EvalSymlinks(exe)
 	if err != nil {
-		return fmt.Errorf("eval symlinks: %w", err)
+		return "", fmt.Errorf("eval symlinks: %w", err)
+	}
+	return exe, nil
+}
+
+// replaceFileInPlace performs the rename dance to swap target with src:
+// move src → target.new, target → target.old, target.new → target. The
+// running process keeps its open .old handle (works on Windows because the
+// rename happens before any deletion of the in-use file).
+func replaceFileInPlace(src, target string, makeExecutable bool) error {
+	newPath := target + ".new"
+	oldPath := target + ".old"
+
+	// Move the downloaded file next to the target so the final rename is
+	// guaranteed to be on the same filesystem (avoids EXDEV).
+	_ = os.Remove(newPath)
+	if err := os.Rename(src, newPath); err != nil {
+		// Cross-device fallback: copy.
+		if err := copyFile(src, newPath); err != nil {
+			return fmt.Errorf("stage update: %w", err)
+		}
+		_ = os.Remove(src)
 	}
 
-	exeName := filepath.Base(currentExe)
-	newPath := currentExe + ".new"
-	oldPath := currentExe + ".old"
-
-	// Extract the binary from the ZIP to a .new path.
-	if err := extractZipFileTo(zipPath, exeName, newPath); err != nil {
-		return fmt.Errorf("extract binary %q from zip: %w", exeName, err)
-	}
-
-	// Set executable permission on Unix.
-	if runtime.GOOS != "windows" {
+	if makeExecutable {
 		if err := os.Chmod(newPath, 0o755); err != nil {
 			os.Remove(newPath)
 			return fmt.Errorf("chmod: %w", err)
 		}
 	}
 
-	// Rename dance: current -> .old, .new -> current.
-	_ = os.Remove(oldPath) // clean up any previous .old
+	_ = os.Remove(oldPath)
 
-	if err := os.Rename(currentExe, oldPath); err != nil {
+	if err := os.Rename(target, oldPath); err != nil {
 		os.Remove(newPath)
 		return fmt.Errorf("backup current binary: %w", err)
 	}
 
-	if err := os.Rename(newPath, currentExe); err != nil {
-		// Rollback: restore the old binary.
-		_ = os.Rename(oldPath, currentExe)
+	if err := os.Rename(newPath, target); err != nil {
+		_ = os.Rename(oldPath, target)
 		return fmt.Errorf("install new binary: %w", err)
 	}
 
-	log.Info("Binary replaced", "path", currentExe)
+	log.Info("Binary replaced", "path", target)
 	return nil
 }
 
-// extractZipFileTo extracts a named file from a zip archive to a specific
-// destination path.
-func extractZipFileTo(zipPath, fileName, destPath string) error {
-	r, err := zip.OpenReader(zipPath)
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	defer r.Close()
-
-	for _, f := range r.File {
-		if filepath.Base(f.Name) == fileName {
-			rc, err := f.Open()
-			if err != nil {
-				return err
-			}
-			defer rc.Close()
-
-			out, err := os.Create(destPath)
-			if err != nil {
-				return err
-			}
-			defer out.Close()
-
-			_, err = io.Copy(out, rc)
-			return err
-		}
+	defer in.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("%s not found in zip archive", fileName)
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
+		os.Remove(dst)
+		return err
+	}
+	return out.Close()
 }
 
 // CleanupOldBinary removes any leftover .old binary from a previous update.
 func CleanupOldBinary() {
-	exe, err := os.Executable()
+	target, err := currentBinaryPath()
 	if err != nil {
 		return
 	}
-	exe, err = filepath.EvalSymlinks(exe)
-	if err != nil {
-		return
-	}
-	oldPath := exe + ".old"
+	oldPath := target + ".old"
 	if _, err := os.Stat(oldPath); err == nil {
 		if err := os.Remove(oldPath); err != nil {
 			log.Warn("Failed to clean up old binary", "path", oldPath, "err", err)

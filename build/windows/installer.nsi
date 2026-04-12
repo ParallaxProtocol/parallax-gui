@@ -15,7 +15,7 @@
 !endif
 
 Name "${PRODUCT_NAME} ${VERSION}"
-OutFile "Parallax-Client-${VERSION}-windows-x86_64.exe"
+OutFile "Parallax-Client-${VERSION}-windows-x86_64-setup.exe"
 InstallDir "$LOCALAPPDATA\${INSTALL_DIR_NAME}"
 InstallDirRegKey HKCU "Software\${INSTALL_DIR_NAME}" "InstallDir"
 RequestExecutionLevel user

@@ -192,7 +192,7 @@ export type UpdateInfo = {
 };
 
 export type UpdateProgress = {
-  step: "downloading" | "verifying" | "extracting" | "ready" | "error";
+  step: "downloading" | "verifying" | "extracting" | "ready" | "ready-manual" | "error";
   percent: number;
   detail: string;
 };
