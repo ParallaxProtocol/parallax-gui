@@ -253,8 +253,8 @@ export default function WorldMap({ selfLoc, selfRunning, peers, publicNodes, }) 
 const CountryLayer = memo(function CountryLayer() {
     return (_jsx(Geographies, { geography: worldData, children: ({ geographies }) => {
             const base = {
-                fill: "oklch(0.11 0.012 265)",
-                stroke: "oklch(1 0 0 / 0.07)",
+                fill: "oklch(0.17 0.012 265)",
+                stroke: "oklch(1 0 0 / 0.18)",
                 strokeWidth: 0.5,
                 outline: "none",
                 pointerEvents: "none",
