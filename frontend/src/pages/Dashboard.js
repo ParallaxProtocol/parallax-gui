@@ -1,17 +1,28 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { api } from "../lib/api";
 import { formatDuration } from "../lib/format";
 import StatusPill from "../components/StatusPill";
 import WorldMap from "../components/WorldMap";
+import NetworkGlobe from "../components/NetworkGlobe";
 import PeersModal from "../components/PeersModal";
+import { webglAvailable } from "../lib/webgl";
 import { useT } from "../i18n";
+// Probe once at module load — WebGL support can't change within a run.
+// Without it (e.g. WebKitGTK builds with GL disabled) we fall back to
+// the flat SVG map instead of rendering a dead canvas.
+const HAS_WEBGL = webglAvailable();
 export default function Dashboard() {
     const t = useT();
     const [status, setStatus] = useState(null);
     const [starting, setStarting] = useState(false);
     const [error, setError] = useState(null);
+    // Set when the globe reports hopeless sustained FPS — we then swap in
+    // the flat SVG map for the rest of the session. Not persisted, so a
+    // driver/compositor improvement is picked up on the next launch.
+    const [globeTooSlow, setGlobeTooSlow] = useState(false);
+    const demoteGlobe = useCallback(() => setGlobeTooSlow(true), []);
     const [selfLoc, setSelfLoc] = useState(null);
     const [peerMarkers, setPeerMarkers] = useState([]);
     const [publicNodes, setPublicNodes] = useState([]);
@@ -148,7 +159,7 @@ export default function Dashboard() {
     return (
     // Break out of the main element's px-12 py-14 padding so the map can
     // run edge-to-edge below the fixed top bar (h-20).
-    _jsxs("div", { className: "fixed left-0 right-0 top-20 bottom-0 overflow-hidden bg-bg", children: [_jsx("div", { className: "absolute inset-0", children: _jsx(WorldMap, { selfLoc: selfLoc, selfRunning: !!status?.running, peers: status?.running ? peerMarkers : [], publicNodes: publicNodes }) }), _jsx("div", { className: "pointer-events-none absolute inset-0", style: {
+    _jsxs("div", { className: "fixed left-0 right-0 top-20 bottom-0 overflow-hidden bg-bg", children: [_jsx("div", { className: "absolute inset-0", children: HAS_WEBGL && !globeTooSlow ? (_jsx(NetworkGlobe, { selfLoc: selfLoc, selfRunning: !!status?.running, peers: status?.running ? peerMarkers : [], publicNodes: publicNodes, onPerformancePoor: demoteGlobe })) : (_jsx(WorldMap, { selfLoc: selfLoc, selfRunning: !!status?.running, peers: status?.running ? peerMarkers : [], publicNodes: publicNodes })) }), _jsx("div", { className: "pointer-events-none absolute inset-0", style: {
                     background: "radial-gradient(ellipse at center, transparent 40%, oklch(0.06 0.015 265 / 0.55) 100%)",
                 } }), _jsxs(motion.div, { initial: { opacity: 0, y: -8 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }, className: "absolute top-8 left-10 max-w-md", children: [_jsx("div", { className: "eyebrow mb-2", children: t("dashboard.eyebrow") }), _jsx("h1", { className: "font-serif text-3xl text-fg leading-tight mb-3", children: t("dashboard.title") }), _jsxs("div", { className: "flex items-center gap-2 flex-wrap", children: [_jsx(StatusPill, { kind: statusKind }), status?.running && (_jsxs("span", { className: isOnline ? "pill-ok" : "pill-err", children: [_jsx("span", { className: isOnline ? "live-dot-success" : "live-dot-err" }), isOnline ? t("status.online") : t("status.offline")] })), status?.running && (_jsxs("span", { className: "text-xs text-muted tabular-nums ml-1", children: [status.peers, " ", status.peers === 1 ? t("dashboard.peer") : t("dashboard.peers"), " \u00B7", " ", formatDuration(status.uptimeSeconds)] }))] }), status?.running && (_jsxs("div", { className: "mt-4 w-80 rounded border border-border bg-bg-elev/70 backdrop-blur px-4 py-3", children: [_jsxs("div", { className: "flex items-baseline justify-between gap-3 mb-1", children: [_jsx("span", { className: "eyebrow", children: t("dashboard.blockHeight") }), _jsx("span", { className: "font-mono text-xs text-muted tabular-nums", children: t("dashboard.localNetwork") })] }), _jsxs("div", { className: "font-mono text-sm text-fg tabular-nums", children: [status.currentBlock.toLocaleString(), _jsx("span", { className: "text-muted", children: " / " }), status.highestBlock > 0
                                         ? status.highestBlock.toLocaleString()

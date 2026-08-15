@@ -8,15 +8,17 @@ import {
 } from "react-simple-maps";
 import { geoEqualEarth } from "d3-geo";
 import worldData from "world-atlas/countries-110m.json";
-import { GeoLocation, PeerView, PublicNode } from "../lib/api";
-import { useT } from "../i18n";
+import { GeoLocation, PublicNode } from "../lib/api";
+import {
+  ConnectedPeerBody,
+  INBOUND_COLOR,
+  OUTBOUND_COLOR,
+  PeerMarker,
+  PublicNodeBody,
+  SELF_COLOR,
+} from "./MapShared";
 
-// PeerMarker pairs a resolved geo location with the matching peer record
-// so the tooltip can show the same fields the Peers screen does.
-export type PeerMarker = {
-  geo: GeoLocation;
-  peer?: PeerView;
-};
+export type { PeerMarker } from "./MapShared";
 
 // Internal viewBox dimensions. The map scales fluidly to its container —
 // these only set the projection's aspect ratio and the resolution of the
@@ -27,14 +29,6 @@ const VB_H = 560;
 const projection = geoEqualEarth()
   .scale(190)
   .translate([VB_W / 2, VB_H / 2 + 20]);
-
-// Connection direction colours. Match the Peers screen pills so the two
-// views agree at a glance: outbound (we dialed) is success-green, inbound
-// (peer dialed us) is gold. Self is the syncing-blue accent so it never
-// collides with either peer direction.
-const OUTBOUND_COLOR = "oklch(0.696 0.17 162.48)";
-const INBOUND_COLOR = "rgb(247 147 26)";
-const SELF_COLOR = "oklch(0.68 0.16 240)";
 
 type LngLat = [number, number];
 
@@ -493,61 +487,3 @@ const CountryLayer = memo(function CountryLayer() {
   );
 });
 
-function ConnectedPeerBody({ marker }: { marker: PeerMarker }) {
-  const t = useT();
-  const { geo, peer } = marker;
-  const location =
-    [geo.city, geo.country].filter(Boolean).join(", ") || t("worldmap.unknownLocation");
-  return (
-    <>
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <span className={peer?.inbound ? "pill-warn" : "pill-ok"}>
-          <span
-            className={peer?.inbound ? "live-dot-warn" : "live-dot-success"}
-          />
-          {peer?.inbound ? t("peers.in") : t("peers.out")}
-        </span>
-        <span className="font-mono text-[11px] text-muted truncate">
-          {peer?.id || "—"}
-        </span>
-      </div>
-      <div className="text-sm text-fg truncate mb-1">
-        {peer?.name || t("worldmap.unknownPeer")}
-      </div>
-      <div className="text-xs text-muted truncate">{location}</div>
-      <div className="font-mono text-[11px] text-muted truncate mt-1">
-        {geo.ip}
-      </div>
-      {peer?.caps && peer.caps.length > 0 && (
-        <div className="font-mono text-[11px] text-muted truncate mt-2 pt-2 border-t border-border">
-          {peer.caps.join(", ")}
-        </div>
-      )}
-    </>
-  );
-}
-
-function PublicNodeBody({ node }: { node: PublicNode }) {
-  const t = useT();
-  const location =
-    [node.city, node.country].filter(Boolean).join(", ") || t("worldmap.unknownLocation");
-  return (
-    <>
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <span className="pill-muted">
-          <span className="live-dot-muted" />
-          {t("worldmap.notConnected")}
-        </span>
-        {node.countryCode && (
-          <span className="font-mono text-[11px] text-muted">
-            {node.countryCode}
-          </span>
-        )}
-      </div>
-      <div className="text-sm text-fg truncate">{location}</div>
-      <div className="text-[11px] text-muted mt-1">
-        {t("worldmap.publicKnown")}
-      </div>
-    </>
-  );
-}

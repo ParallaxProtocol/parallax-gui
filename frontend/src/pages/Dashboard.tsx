@@ -1,17 +1,31 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { api, GeoLocation, NodeStatus, PeerView, PublicNode } from "../lib/api";
 import { formatDuration } from "../lib/format";
 import StatusPill, { StatusKind } from "../components/StatusPill";
-import WorldMap, { PeerMarker } from "../components/WorldMap";
+import WorldMap from "../components/WorldMap";
+import NetworkGlobe from "../components/NetworkGlobe";
+import { PeerMarker } from "../components/MapShared";
 import PeersModal from "../components/PeersModal";
+import { webglAvailable } from "../lib/webgl";
 import { useT } from "../i18n";
+
+// Probe once at module load — WebGL support can't change within a run.
+// Without it (e.g. WebKitGTK builds with GL disabled) we fall back to
+// the flat SVG map instead of rendering a dead canvas.
+const HAS_WEBGL = webglAvailable();
 
 export default function Dashboard() {
   const t = useT();
   const [status, setStatus] = useState<NodeStatus | null>(null);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Set when the globe reports hopeless sustained FPS — we then swap in
+  // the flat SVG map for the rest of the session. Not persisted, so a
+  // driver/compositor improvement is picked up on the next launch.
+  const [globeTooSlow, setGlobeTooSlow] = useState(false);
+  const demoteGlobe = useCallback(() => setGlobeTooSlow(true), []);
 
   const [selfLoc, setSelfLoc] = useState<GeoLocation | null>(null);
   const [peerMarkers, setPeerMarkers] = useState<PeerMarker[]>([]);
@@ -154,12 +168,22 @@ export default function Dashboard() {
     // run edge-to-edge below the fixed top bar (h-20).
     <div className="fixed left-0 right-0 top-20 bottom-0 overflow-hidden bg-bg">
       <div className="absolute inset-0">
-        <WorldMap
-          selfLoc={selfLoc}
-          selfRunning={!!status?.running}
-          peers={status?.running ? peerMarkers : []}
-          publicNodes={publicNodes}
-        />
+        {HAS_WEBGL && !globeTooSlow ? (
+          <NetworkGlobe
+            selfLoc={selfLoc}
+            selfRunning={!!status?.running}
+            peers={status?.running ? peerMarkers : []}
+            publicNodes={publicNodes}
+            onPerformancePoor={demoteGlobe}
+          />
+        ) : (
+          <WorldMap
+            selfLoc={selfLoc}
+            selfRunning={!!status?.running}
+            peers={status?.running ? peerMarkers : []}
+            publicNodes={publicNodes}
+          />
+        )}
       </div>
 
       {/* Vignette for legibility of overlays */}

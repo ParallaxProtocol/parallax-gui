@@ -186,6 +186,7 @@ const en = {
     "worldmap.notConnected": "NOT CONNECTED",
     "worldmap.publicKnown": "Known peer on the public Parallax network",
     "worldmap.unknownPeer": "unknown peer",
+    "worldmap.you": "THIS NODE",
     // Logs
     "logs.eyebrow": "Logs",
     "logs.title": "Live tail.",
@@ -496,6 +497,7 @@ const ptBR = {
     "worldmap.notConnected": "NÃO CONECTADO",
     "worldmap.publicKnown": "Peer conhecido na rede pública Parallax",
     "worldmap.unknownPeer": "peer desconhecido",
+    "worldmap.you": "ESTE NÓ",
     // Logs
     "logs.eyebrow": "Logs",
     "logs.title": "Em tempo real.",
@@ -806,6 +808,7 @@ const fr = {
     "worldmap.notConnected": "NON CONNECTÉ",
     "worldmap.publicKnown": "Peer connu sur le réseau public Parallax",
     "worldmap.unknownPeer": "peer inconnu",
+    "worldmap.you": "CE NŒUD",
     // Logs
     "logs.eyebrow": "Logs",
     "logs.title": "En direct.",
@@ -1116,6 +1119,7 @@ const ru = {
     "worldmap.notConnected": "НЕ ПОДКЛЮЧЕНО",
     "worldmap.publicKnown": "Известный пир в публичной сети Parallax",
     "worldmap.unknownPeer": "неизвестный пир",
+    "worldmap.you": "ЭТОТ УЗЕЛ",
     // Logs
     "logs.eyebrow": "Логи",
     "logs.title": "В реальном времени.",
@@ -1426,6 +1430,7 @@ const zhSG = {
     "worldmap.notConnected": "未连接",
     "worldmap.publicKnown": "Parallax 公网上的已知节点",
     "worldmap.unknownPeer": "未知节点",
+    "worldmap.you": "本节点",
     // Logs
     "logs.eyebrow": "日志",
     "logs.title": "实时输出。",
@@ -1736,6 +1741,7 @@ const zhTW = {
     "worldmap.notConnected": "未連線",
     "worldmap.publicKnown": "Parallax 公開網路上的已知節點",
     "worldmap.unknownPeer": "未知節點",
+    "worldmap.you": "本節點",
     // Logs
     "logs.eyebrow": "日誌",
     "logs.title": "即時輸出。",
@@ -2046,6 +2052,7 @@ const de = {
     "worldmap.notConnected": "NICHT VERBUNDEN",
     "worldmap.publicKnown": "Bekannter Peer im öffentlichen Parallax-Netzwerk",
     "worldmap.unknownPeer": "unbekannter Peer",
+    "worldmap.you": "DIESER NODE",
     // Logs
     "logs.eyebrow": "Logs",
     "logs.title": "Live-Ansicht.",

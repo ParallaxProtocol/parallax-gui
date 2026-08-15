@@ -207,6 +207,7 @@ const en: Dict = {
   "worldmap.notConnected": "NOT CONNECTED",
   "worldmap.publicKnown": "Known peer on the public Parallax network",
   "worldmap.unknownPeer": "unknown peer",
+  "worldmap.you": "THIS NODE",
 
   // Logs
   "logs.eyebrow": "Logs",
@@ -531,6 +532,7 @@ const ptBR: Dict = {
   "worldmap.notConnected": "NÃO CONECTADO",
   "worldmap.publicKnown": "Peer conhecido na rede pública Parallax",
   "worldmap.unknownPeer": "peer desconhecido",
+  "worldmap.you": "ESTE NÓ",
 
   // Logs
   "logs.eyebrow": "Logs",
@@ -855,6 +857,7 @@ const fr: Dict = {
   "worldmap.notConnected": "NON CONNECTÉ",
   "worldmap.publicKnown": "Peer connu sur le réseau public Parallax",
   "worldmap.unknownPeer": "peer inconnu",
+  "worldmap.you": "CE NŒUD",
 
   // Logs
   "logs.eyebrow": "Logs",
@@ -1179,6 +1182,7 @@ const ru: Dict = {
   "worldmap.notConnected": "НЕ ПОДКЛЮЧЕНО",
   "worldmap.publicKnown": "Известный пир в публичной сети Parallax",
   "worldmap.unknownPeer": "неизвестный пир",
+  "worldmap.you": "ЭТОТ УЗЕЛ",
 
   // Logs
   "logs.eyebrow": "Логи",
@@ -1503,6 +1507,7 @@ const zhSG: Dict = {
   "worldmap.notConnected": "未连接",
   "worldmap.publicKnown": "Parallax 公网上的已知节点",
   "worldmap.unknownPeer": "未知节点",
+  "worldmap.you": "本节点",
 
   // Logs
   "logs.eyebrow": "日志",
@@ -1827,6 +1832,7 @@ const zhTW: Dict = {
   "worldmap.notConnected": "未連線",
   "worldmap.publicKnown": "Parallax 公開網路上的已知節點",
   "worldmap.unknownPeer": "未知節點",
+  "worldmap.you": "本節點",
 
   // Logs
   "logs.eyebrow": "日誌",
@@ -2151,6 +2157,7 @@ const de: Dict = {
   "worldmap.notConnected": "NICHT VERBUNDEN",
   "worldmap.publicKnown": "Bekannter Peer im öffentlichen Parallax-Netzwerk",
   "worldmap.unknownPeer": "unbekannter Peer",
+  "worldmap.you": "DIESER NODE",
 
   // Logs
   "logs.eyebrow": "Logs",

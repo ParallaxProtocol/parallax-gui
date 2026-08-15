@@ -3,7 +3,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup, } from "react-simple-maps";
 import { geoEqualEarth } from "d3-geo";
 import worldData from "world-atlas/countries-110m.json";
-import { useT } from "../i18n";
+import { ConnectedPeerBody, INBOUND_COLOR, OUTBOUND_COLOR, PublicNodeBody, SELF_COLOR, } from "./MapShared";
 // Internal viewBox dimensions. The map scales fluidly to its container —
 // these only set the projection's aspect ratio and the resolution of the
 // great-circle math.
@@ -12,13 +12,6 @@ const VB_H = 560;
 const projection = geoEqualEarth()
     .scale(190)
     .translate([VB_W / 2, VB_H / 2 + 20]);
-// Connection direction colours. Match the Peers screen pills so the two
-// views agree at a glance: outbound (we dialed) is success-green, inbound
-// (peer dialed us) is gold. Self is the syncing-blue accent so it never
-// collides with either peer direction.
-const OUTBOUND_COLOR = "oklch(0.696 0.17 162.48)";
-const INBOUND_COLOR = "rgb(247 147 26)";
-const SELF_COLOR = "oklch(0.68 0.16 240)";
 function arcPath(from, to) {
     const a = projection(from);
     const b = projection(to);
@@ -263,14 +256,3 @@ const CountryLayer = memo(function CountryLayer() {
             return geographies.map((geo) => (_jsx(Geography, { geography: geo, style: { default: base, hover: base, pressed: base } }, geo.rsmKey)));
         } }));
 });
-function ConnectedPeerBody({ marker }) {
-    const t = useT();
-    const { geo, peer } = marker;
-    const location = [geo.city, geo.country].filter(Boolean).join(", ") || t("worldmap.unknownLocation");
-    return (_jsxs(_Fragment, { children: [_jsxs("div", { className: "flex items-center justify-between gap-3 mb-2", children: [_jsxs("span", { className: peer?.inbound ? "pill-warn" : "pill-ok", children: [_jsx("span", { className: peer?.inbound ? "live-dot-warn" : "live-dot-success" }), peer?.inbound ? t("peers.in") : t("peers.out")] }), _jsx("span", { className: "font-mono text-[11px] text-muted truncate", children: peer?.id || "—" })] }), _jsx("div", { className: "text-sm text-fg truncate mb-1", children: peer?.name || t("worldmap.unknownPeer") }), _jsx("div", { className: "text-xs text-muted truncate", children: location }), _jsx("div", { className: "font-mono text-[11px] text-muted truncate mt-1", children: geo.ip }), peer?.caps && peer.caps.length > 0 && (_jsx("div", { className: "font-mono text-[11px] text-muted truncate mt-2 pt-2 border-t border-border", children: peer.caps.join(", ") }))] }));
-}
-function PublicNodeBody({ node }) {
-    const t = useT();
-    const location = [node.city, node.country].filter(Boolean).join(", ") || t("worldmap.unknownLocation");
-    return (_jsxs(_Fragment, { children: [_jsxs("div", { className: "flex items-center justify-between gap-3 mb-2", children: [_jsxs("span", { className: "pill-muted", children: [_jsx("span", { className: "live-dot-muted" }), t("worldmap.notConnected")] }), node.countryCode && (_jsx("span", { className: "font-mono text-[11px] text-muted", children: node.countryCode }))] }), _jsx("div", { className: "text-sm text-fg truncate", children: location }), _jsx("div", { className: "text-[11px] text-muted mt-1", children: t("worldmap.publicKnown") })] }));
-}

@@ -32,6 +32,17 @@ import (
 // list is intentionally narrow — every entry here costs the user GPU
 // acceleration on the dashboard, so we only add a compositor when we
 // have an actual reproduction.
+// webkitAtLeast reports whether the linked WebKitGTK is at least
+// major.minor. Unknown (non-Linux builds, or version probe unavailable)
+// counts as "older" so conservative workarounds stay in place.
+func webkitAtLeast(major, minor uint) bool {
+	gotMajor, gotMinor := webkitVersion()
+	if gotMajor == 0 {
+		return false
+	}
+	return gotMajor > major || (gotMajor == major && gotMinor >= minor)
+}
+
 func isBrokenWaylandCompositor() bool {
 	if os.Getenv("HYPRLAND_INSTANCE_SIGNATURE") != "" {
 		return true
@@ -61,12 +72,14 @@ func main() {
 	//
 	// The exception is a small set of Wayland compositors that hit
 	// known WebKitGTK protocol bugs (Hyprland in particular) and crash
-	// the renderer when compositing is on. We detect those at startup
-	// and fall back to software mode for them only. Users can override
-	// either way by setting WEBKIT_DISABLE_COMPOSITING_MODE explicitly.
+	// the renderer when compositing is on. The crash we reproduced was
+	// on WebKitGTK < 2.52; 2.52.5 was verified to start and composite
+	// fine on Hyprland (2026-08), so the workaround only applies to
+	// older library versions. Users can override either way by setting
+	// WEBKIT_DISABLE_COMPOSITING_MODE explicitly.
 	if runtime.GOOS == "linux" {
 		if _, ok := os.LookupEnv("WEBKIT_DISABLE_COMPOSITING_MODE"); !ok {
-			if isBrokenWaylandCompositor() {
+			if isBrokenWaylandCompositor() && !webkitAtLeast(2, 52) {
 				os.Setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1")
 			}
 		}
