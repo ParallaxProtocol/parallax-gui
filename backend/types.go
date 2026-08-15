@@ -29,10 +29,10 @@ type GUIConfig struct {
 	DisableAnimations bool `json:"disableAnimations"`
 
 	// EnableSmartFee turns on the Bitcoin Core-style smart fee estimator
-	// in the gas-price oracle (gasprice.Config.EnableSmartFeeEstimator).
-	// Off by default — same default as the CLI's --gpo.smartfee flag.
-	// Requires a node restart to take effect because the oracle is built
-	// once at prl.New() time.
+	// in the gas-price oracle (fees.Config.EnableSmartFeeEstimator).
+	// On by default for fresh installs — same default as the v2.0.0 CLI's
+	// --gpo.smartfee flag. Requires a node restart to take effect because
+	// the oracle is built once at protocol.New() time.
 	EnableSmartFee bool `json:"enableSmartFee"`
 
 	// Advanced (only meaningful when AdvancedUnlocked is true in the UI).

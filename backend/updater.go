@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ParallaxProtocol/parallax/log"
+	"github.com/ParallaxProtocol/parallax/logging"
 )
 
 const (
@@ -70,7 +70,7 @@ func (u *Updater) StartPeriodicCheck(interval time.Duration) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Error("Updater panic", "err", r)
+				logging.Error("Updater panic", "err", r)
 			}
 		}()
 
@@ -82,7 +82,7 @@ func (u *Updater) StartPeriodicCheck(interval time.Duration) {
 		}
 
 		if _, err := u.CheckForUpdate(); err != nil {
-			log.Warn("Auto-update check failed", "err", err)
+			logging.Warn("Auto-update check failed", "err", err)
 		}
 
 		ticker := time.NewTicker(interval)
@@ -91,7 +91,7 @@ func (u *Updater) StartPeriodicCheck(interval time.Duration) {
 			select {
 			case <-ticker.C:
 				if _, err := u.CheckForUpdate(); err != nil {
-					log.Warn("Auto-update check failed", "err", err)
+					logging.Warn("Auto-update check failed", "err", err)
 				}
 			case <-u.stopCh:
 				return
@@ -139,7 +139,7 @@ func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
 	u.lastCheck = time.Now()
 	u.mu.Unlock()
 
-	log.Info("Checking for updates", "current", GUIVersion)
+	logging.Info("Checking for updates", "current", GUIVersion)
 
 	resp, err := http.Get(guiReleasesAPI)
 	if err != nil {
@@ -169,7 +169,7 @@ func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
 
 	// Skip drafts and prereleases.
 	if release.Draft || release.Prerelease {
-		log.Debug("Latest release is draft/prerelease, skipping", "tag", release.TagName)
+		logging.Debug("Latest release is draft/prerelease, skipping", "tag", release.TagName)
 		return nil, nil
 	}
 
@@ -177,7 +177,7 @@ func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
 	latestVersion := strings.TrimPrefix(release.TagName, "v")
 
 	if !semverNewer(GUIVersion, latestVersion) {
-		log.Info("Already up to date", "current", GUIVersion, "latest", latestVersion)
+		logging.Info("Already up to date", "current", GUIVersion, "latest", latestVersion)
 		u.mu.Lock()
 		u.latest = nil
 		u.mu.Unlock()
@@ -222,13 +222,13 @@ func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
 	u.mu.Lock()
 	if u.dismissed == latestVersion {
 		u.mu.Unlock()
-		log.Info("Update available but dismissed by user", "version", latestVersion)
+		logging.Info("Update available but dismissed by user", "version", latestVersion)
 		return nil, nil
 	}
 	u.latest = info
 	u.mu.Unlock()
 
-	log.Info("Update available", "current", GUIVersion, "latest", latestVersion)
+	logging.Info("Update available", "current", GUIVersion, "latest", latestVersion)
 	return info, nil
 }
 
@@ -291,7 +291,7 @@ func (u *Updater) DownloadAndInstall(ctx context.Context) error {
 	} else {
 		u.emit(UpdateProgress{Step: "ready", Detail: "Update installed. Restart to apply."})
 	}
-	log.Info("Update installed", "version", info.LatestVersion, "manual", manual)
+	logging.Info("Update installed", "version", info.LatestVersion, "manual", manual)
 	return nil
 }
 
@@ -399,13 +399,13 @@ func (u *Updater) verifySHA256(info *UpdateInfo, zipPath string) error {
 
 	resp, err := http.Get(sumsURL)
 	if err != nil {
-		log.Warn("Could not fetch SHA256SUMS.txt, skipping verification", "err", err)
+		logging.Warn("Could not fetch SHA256SUMS.txt, skipping verification", "err", err)
 		return nil
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		log.Warn("SHA256SUMS.txt not found, skipping verification", "status", resp.StatusCode)
+		logging.Warn("SHA256SUMS.txt not found, skipping verification", "status", resp.StatusCode)
 		return nil
 	}
 
@@ -425,7 +425,7 @@ func (u *Updater) verifySHA256(info *UpdateInfo, zipPath string) error {
 	}
 
 	if expectedHash == "" {
-		log.Warn("Asset not found in SHA256SUMS.txt, skipping verification", "asset", info.AssetName)
+		logging.Warn("Asset not found in SHA256SUMS.txt, skipping verification", "asset", info.AssetName)
 		return nil
 	}
 
@@ -445,7 +445,7 @@ func (u *Updater) verifySHA256(info *UpdateInfo, zipPath string) error {
 		return fmt.Errorf("SHA256 mismatch: expected %s, got %s", expectedHash, actualHash)
 	}
 
-	log.Info("SHA256 verification passed", "hash", actualHash)
+	logging.Info("SHA256 verification passed", "hash", actualHash)
 	return nil
 }
 
@@ -551,7 +551,7 @@ func replaceFileInPlace(src, target string, makeExecutable bool) error {
 		return fmt.Errorf("install new binary: %w", err)
 	}
 
-	log.Info("Binary replaced", "path", target)
+	logging.Info("Binary replaced", "path", target)
 	return nil
 }
 
@@ -582,9 +582,9 @@ func CleanupOldBinary() {
 	oldPath := target + ".old"
 	if _, err := os.Stat(oldPath); err == nil {
 		if err := os.Remove(oldPath); err != nil {
-			log.Warn("Failed to clean up old binary", "path", oldPath, "err", err)
+			logging.Warn("Failed to clean up old binary", "path", oldPath, "err", err)
 		} else {
-			log.Info("Cleaned up old binary", "path", oldPath)
+			logging.Info("Cleaned up old binary", "path", oldPath)
 		}
 	}
 }

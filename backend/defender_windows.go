@@ -10,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/ParallaxProtocol/parallax/log"
+	"github.com/ParallaxProtocol/parallax/logging"
 )
 
 // addDefenderExclusion adds a Windows Defender exclusion for the given path.
@@ -20,7 +20,7 @@ import (
 func addDefenderExclusion(path string) error {
 	// Check if the exclusion already exists (no elevation needed).
 	if hasDefenderExclusion(path) {
-		log.Info("Defender exclusion already exists", "path", path)
+		logging.Info("Defender exclusion already exists", "path", path)
 		return nil
 	}
 
@@ -57,7 +57,7 @@ func addDefenderExclusion(path string) error {
 		return fmt.Errorf("exclusion was not added — the UAC prompt may have been denied")
 	}
 
-	log.Info("Added Defender exclusion", "path", path)
+	logging.Info("Added Defender exclusion", "path", path)
 	return nil
 }
 

@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ParallaxProtocol/parallax/log"
+	"github.com/ParallaxProtocol/parallax/logging"
 	"github.com/ulikunitz/xz"
 )
 
@@ -46,7 +46,7 @@ func (m *MinerController) InstallHashwarp(gpuType string, emit func(step string,
 	}
 
 	emit("finding", "Looking up latest release...")
-	log.Info("Installing hashwarp", "gpu", gpuType, "os", goos)
+	logging.Info("Installing hashwarp", "gpu", gpuType, "os", goos)
 
 	// 1. Determine where to place the binary.
 	installDir, err := hashwarpInstallDir()
@@ -59,7 +59,7 @@ func (m *MinerController) InstallHashwarp(gpuType string, emit func(step string,
 	if err != nil {
 		return fmt.Errorf("find release: %w", err)
 	}
-	log.Info("Found hashwarp asset", "name", assetName, "url", assetURL)
+	logging.Info("Found hashwarp asset", "name", assetName, "url", assetURL)
 
 	// 3. Download the asset into the install directory (not system temp)
 	// so that a single Defender exclusion covers both the archive and
@@ -124,7 +124,7 @@ func (m *MinerController) InstallHashwarp(gpuType string, emit func(step string,
 	}
 
 	emit("done", destPath)
-	log.Info("Hashwarp installed", "path", destPath)
+	logging.Info("Hashwarp installed", "path", destPath)
 	return nil
 }
 

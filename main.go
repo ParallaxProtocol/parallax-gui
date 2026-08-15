@@ -15,11 +15,11 @@ import (
 
 	// Side-effect imports — register the JS and native tracer factories
 	// so debug_traceTransaction / debug_traceCall and friends actually
-	// have tracers available over RPC. cmd/prlx does the same thing in
-	// cmd/prlx/main.go; without these the tracer namespace registers but
+	// have tracers available over RPC. cmd/parallaxd does the same thing in
+	// cmd/parallaxd/main.go; without these the tracer namespace registers but
 	// every call returns "tracer not found".
-	_ "github.com/ParallaxProtocol/parallax/prl/tracers/js"
-	_ "github.com/ParallaxProtocol/parallax/prl/tracers/native"
+	_ "github.com/ParallaxProtocol/parallax/node/fullnode/tracers/js"
+	_ "github.com/ParallaxProtocol/parallax/node/fullnode/tracers/native"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ParallaxProtocol/parallax/log"
+	"github.com/ParallaxProtocol/parallax/logging"
 )
 
 // LogTail captures a ring buffer of recent log entries and (optionally)
@@ -22,7 +22,7 @@ type LogTail struct {
 	mu      sync.RWMutex
 	buf     []LogLine
 	emitter func(LogLine)
-	glogger *log.GlogHandler
+	glogger *logging.GlogHandler
 }
 
 // NewLogTail constructs a tail with the given capacity.
@@ -38,7 +38,7 @@ func NewLogTail(capacity int) *LogTail {
 // the in-app Logs pane. Verbosity defaults to Info (level 3) — matching the
 // CLI's default — and can be changed at runtime with SetVerbosity.
 func (l *LogTail) Install() {
-	tail := log.FuncHandler(func(r *log.Record) error {
+	tail := logging.FuncHandler(func(r *logging.Record) error {
 		l.append(LogLine{
 			Timestamp: r.Time.Unix(),
 			Level:     r.Lvl.AlignedString(),
@@ -46,16 +46,16 @@ func (l *LogTail) Install() {
 		})
 		return nil
 	})
-	stream := log.StreamHandler(os.Stderr, log.TerminalFormat(false))
+	stream := logging.StreamHandler(os.Stderr, logging.TerminalFormat(false))
 
-	glogger := log.NewGlogHandler(log.MultiHandler(stream, tail))
-	glogger.Verbosity(log.LvlInfo)
+	glogger := logging.NewGlogHandler(logging.MultiHandler(stream, tail))
+	glogger.Verbosity(logging.LvlInfo)
 
 	l.mu.Lock()
 	l.glogger = glogger
 	l.mu.Unlock()
 
-	log.Root().SetHandler(glogger)
+	logging.Root().SetHandler(glogger)
 }
 
 // SetVerbosity changes the active log level. Valid values are 0 (silent)
@@ -65,7 +65,7 @@ func (l *LogTail) SetVerbosity(level int) {
 	g := l.glogger
 	l.mu.RUnlock()
 	if g != nil {
-		g.Verbosity(log.Lvl(level))
+		g.Verbosity(logging.Lvl(level))
 	}
 }
 
@@ -103,7 +103,7 @@ func (l *LogTail) Tail(n int) []LogLine {
 // which travel as separate fields on LogLine). Without this, the in-app log
 // pane would show "Imported new chain segment" with all the structured
 // context — block numbers, tx counts, gas, etc. — silently dropped.
-func formatRecord(r *log.Record) string {
+func formatRecord(r *logging.Record) string {
 	if len(r.Ctx) == 0 {
 		return r.Msg
 	}

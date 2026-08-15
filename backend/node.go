@@ -8,37 +8,42 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/ParallaxProtocol/parallax/accounts/keystore"
-	"github.com/ParallaxProtocol/parallax/common"
-	"github.com/ParallaxProtocol/parallax/consensus/xhash"
-	"github.com/ParallaxProtocol/parallax/core/types"
-	"github.com/ParallaxProtocol/parallax/log"
-	"github.com/ParallaxProtocol/parallax/metrics"
+	parallaxpkg "github.com/ParallaxProtocol/parallax"
+	"github.com/ParallaxProtocol/parallax/kernel/chainparams"
+	"github.com/ParallaxProtocol/parallax/kernel/xhash"
+	"github.com/ParallaxProtocol/parallax/logging"
 	"github.com/ParallaxProtocol/parallax/node"
+	protocol "github.com/ParallaxProtocol/parallax/node/fullnode"
+	"github.com/ParallaxProtocol/parallax/node/fullnode/downloader"
+	"github.com/ParallaxProtocol/parallax/node/fullnode/tracers"
+	"github.com/ParallaxProtocol/parallax/node/nodeconfig"
 	"github.com/ParallaxProtocol/parallax/p2p/enode"
 	"github.com/ParallaxProtocol/parallax/p2p/nat"
-	"github.com/ParallaxProtocol/parallax/params"
-	"github.com/ParallaxProtocol/parallax/prl"
-	"github.com/ParallaxProtocol/parallax/prl/downloader"
-	"github.com/ParallaxProtocol/parallax/prl/prlconfig"
-	"github.com/ParallaxProtocol/parallax/prl/tracers"
+	"github.com/ParallaxProtocol/parallax/p2p/netparams"
+	"github.com/ParallaxProtocol/parallax/primitives/types"
+	"github.com/ParallaxProtocol/parallax/support/metrics"
+	"github.com/ParallaxProtocol/parallax/util"
+	"github.com/ParallaxProtocol/parallax/wallet/keystore"
 )
 
-// NodeController owns the embedded node.Node + prl.Parallax instance and
+// NodeController owns the embedded node.Node + protocol.Parallax instance and
 // drives its lifecycle from the GUI. It is safe for concurrent use.
 type NodeController struct {
 	cfg *ConfigStore
 
 	mu            sync.RWMutex
 	stack         *node.Node
-	parallax      *prl.Parallax
+	parallax      *protocol.Parallax
 	startedAt     time.Time
 	stopCh        chan struct{} // closed by Stop() so background goroutines exit
 	walletMonitor *WalletMonitor
@@ -75,7 +80,7 @@ func (n *NodeController) emit(kind string, payload interface{}) {
 
 // Parallax returns the running prl backend, or nil if the node is stopped.
 // Other backend services use this to read chain state directly.
-func (n *NodeController) Parallax() *prl.Parallax {
+func (n *NodeController) Parallax() *protocol.Parallax {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 	return n.parallax
@@ -91,12 +96,12 @@ func (n *NodeController) Stack() *node.Node {
 // Start brings up the in-process node. It is idempotent: calling Start while
 // already running returns nil.
 //
-// The startup sequence mirrors cmd/prlx so the embedded node behaves like a
+// The startup sequence mirrors cmd/parallaxd so the embedded node behaves like a
 // first-class CLI install:
 //
 //  1. node.New(cfg)
 //  2. attach a keystore backend (so AccountManager has at least one backend)
-//  3. prl.New(stack, cfg) — registers the prl service
+//  3. protocol.New(stack, cfg) — registers the prl service
 //  4. stack.RegisterAPIs(tracers.APIs(...)) — debug_* tracer namespace
 //  5. stack.Start()
 //  6. spawn process metrics collector (once per process)
@@ -140,7 +145,7 @@ func (n *NodeController) Start(ctx context.Context) error {
 		return err
 	}
 
-	parallax, err := prl.New(stack, &prlCfg)
+	parallax, err := protocol.New(stack, &prlCfg)
 	if err != nil {
 		stack.Close()
 		return fmt.Errorf("register parallax service: %w", err)
@@ -162,7 +167,7 @@ func (n *NodeController) Start(ctx context.Context) error {
 	// monitoring rather than tearing the node back down.
 	if walletMon != nil {
 		if err := walletMon.Start(); err != nil {
-			log.Warn("wallet monitor proxy failed to start", "err", err)
+			logging.Warn("wallet monitor proxy failed to start", "err", err)
 			walletMon = nil
 		}
 	}
@@ -176,7 +181,7 @@ func (n *NodeController) Start(ctx context.Context) error {
 	n.walletMonitor = walletMon
 	n.mu.Unlock()
 
-	// Process metrics: cmd/prlx calls this exactly once in prepare(). It
+	// Process metrics: cmd/parallaxd calls this exactly once in prepare(). It
 	// runs forever, so we wrap it in sync.Once and let restarts share the
 	// single collector.
 	processMetricsOnce.Do(func() {
@@ -192,9 +197,9 @@ func (n *NodeController) Start(ctx context.Context) error {
 	}
 
 	// Legacy receipts warning. This is purely informational — the chain
-	// will run with legacy receipts, but `prlx db freezer-migrate` is the
+	// will run with legacy receipts, but `parallaxd db freezer-migrate` is the
 	// recommended path forward. We log it once at startup to mirror the
-	// CLI's behaviour at cmd/prlx/config.go:165.
+	// CLI's behaviour at cmd/parallaxd/config.go.
 	go n.warnIfLegacyReceipts(parallax)
 
 	n.emit("started", nil)
@@ -242,9 +247,9 @@ func (n *NodeController) WalletStatus() WalletStatus {
 }
 
 // ClientVersion returns the underlying parallax client version string —
-// the same value `prlx version` would print, e.g. "1.1.2-unstable".
+// the same value `parallaxd version` would print, e.g. "2.0.0-unstable".
 func (n *NodeController) ClientVersion() string {
-	return params.VersionWithMeta
+	return parallaxpkg.VersionWithMeta
 }
 
 // Status returns the dashboard snapshot.
@@ -258,7 +263,7 @@ func (n *NodeController) Status() NodeStatus {
 	guiCfg := n.cfg.Get()
 	st := NodeStatus{
 		DataDir:       guiCfg.DataDir,
-		ChainID:       params.MainnetChainConfig.ChainID.Uint64(),
+		ChainID:       chainparams.MainnetChainConfig.ChainID.Uint64(),
 		NetworkID:     2110,
 		ClientVersion: "Parallax/" + GUIVersion,
 	}
@@ -310,19 +315,19 @@ func (n *NodeController) Status() NodeStatus {
 	return st
 }
 
-// buildConfigs translates GUIConfig into a node.Config + prlconfig.Config pair.
-func buildConfigs(g GUIConfig) (node.Config, prlconfig.Config, error) {
+// buildConfigs translates GUIConfig into a node.Config + nodeconfig.Config pair.
+func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 	nodeCfg := node.DefaultConfig
 	nodeCfg.Name = "ParallaxGUI"
 	nodeCfg.Version = GUIVersion
 	nodeCfg.DataDir = g.DataDir
-	nodeCfg.IPCPath = "prlx.ipc"
+	nodeCfg.IPCPath = "parallax.ipc"
 
 	// Augment (don't replace) the default module lists from
 	// node/defaults.go: DefaultConfig provides {"net", "web3"} — we add
 	// "eth" so JSON-RPC clients (MetaMask, ethers, web3.js) can hit the
 	// chain namespace, plus "debug" so the tracer APIs we register in
-	// Start() are reachable. Same modules cmd/prlx ends up with after
+	// Start() are reachable. Same modules cmd/parallaxd ends up with after
 	// utils.SetNodeConfig + flag application.
 	nodeCfg.HTTPModules = append(nodeCfg.HTTPModules, "eth", "debug")
 	nodeCfg.WSModules = append(nodeCfg.WSModules, "eth", "debug")
@@ -359,11 +364,15 @@ func buildConfigs(g GUIConfig) (node.Config, prlconfig.Config, error) {
 
 	// Without bootstrap nodes the embedded node has nothing to dial; the
 	// CLI binary wires these up via cmd/utils/flags.go. We replicate that
-	// here so the GUI can actually find peers on a fresh install.
-	nodeCfg.P2P.BootstrapNodes = parseEnodes(params.MainnetBootnodes)
-	nodeCfg.P2P.BootstrapNodesV5 = parseEnodes(params.V5Bootnodes)
+	// here so the GUI can actually find peers on a fresh install. v2 splits
+	// bootstrapping into three paths: enode:// URLs feeding the legacy
+	// discv4 table, plain ip:port endpoints for the BIP324-style v2
+	// handshake, and DNS seeds resolved on a 24h cadence into addrman.
+	nodeCfg.P2P.BootstrapNodes = parseEnodes(netparams.MainnetBootnodes)
+	nodeCfg.P2P.BootstrapNodesV2 = parseV2Bootnodes(netparams.MainnetBootnodesV2)
+	nodeCfg.P2P.DNSSeeds = netparams.MainnetDNSSeeds
 
-	prlCfg := prlconfig.Defaults
+	prlCfg := nodeconfig.Defaults
 	switch g.SyncMode {
 	case "full":
 		prlCfg.SyncMode = downloader.FullSync
@@ -385,17 +394,18 @@ func buildConfigs(g GUIConfig) (node.Config, prlconfig.Config, error) {
 		prlCfg.SnapshotCache = g.SnapshotCacheMB
 	}
 
-	// Smart fee estimator toggle. Mirrors --gpo.smartfee on the CLI: when
-	// enabled the gas-price oracle uses the Bitcoin Core-style algorithm
-	// instead of the legacy percentile estimator. The oracle is constructed
-	// once inside prl.New(), so this only takes effect after a fresh node
+	// Smart fee estimator toggle. Mirrors --gpo.smartfee on the CLI (on by
+	// default since v2.0.0): when enabled the gas-price oracle uses the
+	// Bitcoin Core-style algorithm instead of the legacy percentile
+	// estimator. The oracle is constructed
+	// once inside protocol.New(), so this only takes effect after a fresh node
 	// start — the Settings UI flags it as restart-required.
 	prlCfg.GPO.EnableSmartFeeEstimator = g.EnableSmartFee
 
 	// DNS discovery: same default the CLI applies for mainnet. Without
 	// these URLs the prl handler does not bootstrap a discovery iterator,
 	// so peers are only ever found via the static bootstrap nodes above.
-	if url := params.KnownDNSNetwork(params.MainnetGenesisHash, "all"); url != "" {
+	if url := netparams.KnownDNSNetwork(chainparams.MainnetGenesisHash, "all"); url != "" {
 		prlCfg.ParallaxDiscoveryURLs = []string{url}
 		prlCfg.SnapDiscoveryURLs = []string{url}
 	}
@@ -422,14 +432,14 @@ func (n *NodeController) monitorFreeDiskSpace(path string, criticalBytes uint64,
 	check := func() bool {
 		free, err := getFreeDiskSpace(path)
 		if err != nil {
-			log.Warn("Failed to get free disk space", "path", path, "err", err)
+			logging.Warn("Failed to get free disk space", "path", path, "err", err)
 			return true // keep polling — transient errors shouldn't kill the monitor
 		}
 		if free <= criticalBytes {
-			log.Error(
+			logging.Error(
 				"Low disk space. Gracefully shutting down Parallax to prevent database corruption.",
-				"available", common.StorageSize(free),
-				"critical", common.StorageSize(criticalBytes),
+				"available", util.StorageSize(free),
+				"critical", util.StorageSize(criticalBytes),
 			)
 			// Detach the shutdown so we don't deadlock against Stop() racing
 			// with this goroutine waking up.
@@ -437,10 +447,10 @@ func (n *NodeController) monitorFreeDiskSpace(path string, criticalBytes uint64,
 			return false
 		}
 		if free <= 2*criticalBytes {
-			log.Warn(
+			logging.Warn(
 				"Disk space is running low. Parallax will shut down if it crosses the critical threshold.",
-				"available", common.StorageSize(free),
-				"critical", common.StorageSize(criticalBytes),
+				"available", util.StorageSize(free),
+				"critical", util.StorageSize(criticalBytes),
 			)
 		}
 		return true
@@ -465,13 +475,13 @@ func (n *NodeController) monitorFreeDiskSpace(path string, criticalBytes uint64,
 
 // warnIfLegacyReceipts logs a one-shot warning if the chain database
 // contains receipts in the pre-migration format. The CLI does the same in
-// cmd/prlx/config.go after registering the parallax service.
-func (n *NodeController) warnIfLegacyReceipts(parallax *prl.Parallax) {
+// cmd/parallaxd/config.go after registering the parallax service.
+func (n *NodeController) warnIfLegacyReceipts(parallax *protocol.Parallax) {
 	defer func() {
 		// This walks the freezer at startup; if anything panics we don't
 		// want to take down the GUI's startup goroutine with it.
 		if r := recover(); r != nil {
-			log.Debug("legacy receipts check failed", "panic", r)
+			logging.Debug("legacy receipts check failed", "panic", r)
 		}
 	}()
 
@@ -481,9 +491,9 @@ func (n *NodeController) warnIfLegacyReceipts(parallax *prl.Parallax) {
 		return
 	}
 
-	// Skip the empty-block prefix on mainnet (matches cmd/prlx/config.go).
+	// Skip the empty-block prefix on mainnet (matches cmd/parallaxd/config.go).
 	firstIdx := uint64(0)
-	if rawhash := parallax.BlockChain().Genesis().Hash(); rawhash == params.MainnetGenesisHash {
+	if rawhash := parallax.BlockChain().Genesis().Hash(); rawhash == chainparams.MainnetGenesisHash {
 		firstIdx = 7661
 	}
 	if firstIdx >= numAncients {
@@ -501,7 +511,7 @@ func (n *NodeController) warnIfLegacyReceipts(parallax *prl.Parallax) {
 			// lists. We just need to spot a non-empty one to confirm there
 			// is data; the actual format detection happens in db
 			// freezer-migrate. Bail after the first hit.
-			log.Warn("Database may contain legacy receipts. Run `prlx db freezer-migrate` if you upgraded from an older release.")
+			logging.Warn("Database may contain legacy receipts. Run `parallaxd db freezer-migrate` if you upgraded from an older release.")
 			return
 		}
 		break
@@ -518,10 +528,41 @@ func parseEnodes(urls []string) []*enode.Node {
 		}
 		n, err := enode.Parse(enode.ValidSchemes, url)
 		if err != nil {
-			log.Error("invalid bootstrap enode", "enode", url, "err", err)
+			logging.Error("invalid bootstrap enode", "enode", url, "err", err)
 			continue
 		}
 		out = append(out, n)
+	}
+	return out
+}
+
+// parseV2Bootnodes converts plain "ip:port" bootstrap entries (the v2
+// handshake path, netparams.MainnetBootnodesV2) into TCP addresses,
+// skipping (and logging) malformed entries instead of crashing the GUI.
+// Mirrors cmd/utils/flags.go setBootstrapNodes.
+func parseV2Bootnodes(entries []string) []*net.TCPAddr {
+	out := make([]*net.TCPAddr, 0, len(entries))
+	for _, raw := range entries {
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
+			continue
+		}
+		host, portStr, err := net.SplitHostPort(raw)
+		if err != nil {
+			logging.Error("invalid v2 bootstrap entry (expected ip:port)", "entry", raw, "err", err)
+			continue
+		}
+		ip := net.ParseIP(host)
+		if ip == nil {
+			logging.Error("v2 bootstrap entry has invalid IP", "entry", raw, "host", host)
+			continue
+		}
+		port, err := strconv.ParseUint(portStr, 10, 16)
+		if err != nil || port == 0 {
+			logging.Error("v2 bootstrap entry has invalid port", "entry", raw, "port", portStr)
+			continue
+		}
+		out = append(out, &net.TCPAddr{IP: ip, Port: int(port)})
 	}
 	return out
 }
@@ -561,10 +602,30 @@ func (n *NodeController) Peers() []PeerView {
 	out := make([]PeerView, 0, len(peers))
 	for _, p := range peers {
 		info := p.Info()
+		// v2-handshake peers carry no persistent node identity (ID, Enode
+		// and ENR marshal as null), so fall back to the remote endpoint as
+		// a stable unique key — the same way operators are expected to
+		// correlate v2 peers. The short id doubles as a "v2" badge.
+		fullID := ""
+		if info.ID != nil {
+			fullID = *info.ID
+		}
+		enodeURL := ""
+		if info.Enode != nil {
+			enodeURL = *info.Enode
+		}
+		shortID := fullID
+		if len(shortID) > 8 {
+			shortID = shortID[:8]
+		}
+		if fullID == "" {
+			fullID = "v2@" + info.Network.RemoteAddress
+			shortID = "v2"
+		}
 		out = append(out, PeerView{
-			ID:         info.ID[:8],
-			FullID:     info.ID,
-			Enode:      info.Enode,
+			ID:         shortID,
+			FullID:     fullID,
+			Enode:      enodeURL,
 			Name:       info.Name,
 			RemoteAddr: info.Network.RemoteAddress,
 			LocalAddr:  info.Network.LocalAddress,

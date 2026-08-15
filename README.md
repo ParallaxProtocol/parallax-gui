@@ -131,7 +131,7 @@ unified `SHA256SUMS.txt` and published as a **draft** GitHub Release.
 You can also dry-run the workflow against `main` via the Actions tab —
 the build jobs run but the release-publishing job is gated on a tag push.
 
-CLI binaries (`prlx`, `clef`, `parallaxkey`) are built and released from
+CLI binaries (`parallaxd`, `parallax-cli`, `parallax-wallet`, `clef`) are built and released from
 the main [parallax](https://github.com/ParallaxProtocol/parallax)
 repository.
 

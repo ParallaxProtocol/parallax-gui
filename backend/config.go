@@ -92,7 +92,7 @@ func defaultGUIConfig() GUIConfig {
 	// (50% db, 15% trie clean, 25% trie dirty, 10% snapshot). The CLI bumps
 	// from its 1024 MB default to 4096 MB whenever syncmode != light AND no
 	// explicit --cache flag is provided AND we're on mainnet — see
-	// cmd/prlx/main.go:prepare(). Without this bump the GUI would sync
+	// cmd/parallaxd/main.go:prepare(). Without this bump the GUI would sync
 	// roughly four times slower than the CLI.
 	const cacheTotalMB = 4096
 	return GUIConfig{
@@ -105,7 +105,7 @@ func defaultGUIConfig() GUIConfig {
 		MaxPeers:         100,
 		Theme:            "system",
 		AutoStartNode:    true,
-		EnableSmartFee:   false,                   // opt-in via Settings → Fee estimation.
+		EnableSmartFee:   true,                    // matches the v2.0.0 CLI default (--gpo.smartfee).
 		DatabaseCacheMB:  cacheTotalMB * 50 / 100, // 2048 MB
 		TrieCleanCacheMB: cacheTotalMB * 15 / 100, //  614 MB
 		TrieDirtyCacheMB: cacheTotalMB * 25 / 100, // 1024 MB

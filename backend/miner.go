@@ -22,8 +22,8 @@ import (
 
 	"errors"
 
-	"github.com/ParallaxProtocol/parallax/common"
-	"github.com/ParallaxProtocol/parallax/log"
+	"github.com/ParallaxProtocol/parallax/logging"
+	"github.com/ParallaxProtocol/parallax/util"
 )
 
 // ErrHashwarpNotFound is returned when the hashwarp binary cannot be located.
@@ -231,7 +231,7 @@ func (m *MinerController) startPool(cfg GUIConfig, stopCh chan struct{}) error {
 	go m.pollAPI(stopCh)
 	go m.waitProcess(stopCh)
 
-	log.Info("Pool mining started", "pid", cmd.Process.Pid, "uri", connURI, "api", apiPort)
+	logging.Info("Pool mining started", "pid", cmd.Process.Pid, "uri", connURI, "api", apiPort)
 	return nil
 }
 
@@ -252,7 +252,7 @@ func (m *MinerController) startSoloGPU(cfg GUIConfig, stopCh chan struct{}) erro
 	// Set coinbase and start the node's miner with 1 thread so the worker
 	// continuously builds and refreshes block templates for hashwarp to
 	// consume via eth_getWork.
-	addr := common.HexToAddress(cfg.MiningWallet)
+	addr := util.HexToAddress(cfg.MiningWallet)
 	prl.SetCoinbase(addr)
 	if err := prl.StartMining(1); err != nil {
 		return fmt.Errorf("start node miner: %w", err)
@@ -313,7 +313,7 @@ func (m *MinerController) startSoloGPU(cfg GUIConfig, stopCh chan struct{}) erro
 	go m.pollAPI(stopCh)
 	go m.waitProcess(stopCh)
 
-	log.Info("Solo GPU mining started", "pid", cmd.Process.Pid, "uri", connURI, "api", apiPort)
+	logging.Info("Solo GPU mining started", "pid", cmd.Process.Pid, "uri", connURI, "api", apiPort)
 	return nil
 }
 
@@ -328,7 +328,7 @@ func (m *MinerController) startSolo(cfg GUIConfig, stopCh chan struct{}) error {
 		return fmt.Errorf("wallet address is required for solo mining (coinbase)")
 	}
 
-	addr := common.HexToAddress(cfg.MiningWallet)
+	addr := util.HexToAddress(cfg.MiningWallet)
 	prl.SetCoinbase(addr)
 
 	threads := cfg.MiningThreads
@@ -345,7 +345,7 @@ func (m *MinerController) startSolo(cfg GUIConfig, stopCh chan struct{}) error {
 
 	go m.pollSoloStats(stopCh)
 
-	log.Info("Solo mining started", "threads", threads, "coinbase", addr.Hex())
+	logging.Info("Solo mining started", "threads", threads, "coinbase", addr.Hex())
 	return nil
 }
 
@@ -407,7 +407,7 @@ func (m *MinerController) Stop() error {
 	m.mu.Unlock()
 
 	m.emit("stopped", nil)
-	log.Info("Mining stopped", "mode", mode)
+	logging.Info("Mining stopped", "mode", mode)
 	return nil
 }
 
@@ -529,7 +529,7 @@ func (m *MinerController) parseOutput(r io.Reader, stopCh <-chan struct{}) {
 		line := scanner.Text()
 
 		// Forward to GUI log system.
-		log.Debug("hashwarp", "msg", line)
+		logging.Debug("hashwarp", "msg", line)
 
 		if strings.Contains(line, "Generating") && strings.Contains(line, "DAG") {
 			m.mu.Lock()
@@ -754,7 +754,7 @@ func (m *MinerController) waitProcess(stopCh <-chan struct{}) {
 	m.mu.Unlock()
 
 	m.emit("error", errMsg)
-	log.Error("hashwarp exited unexpectedly", "err", err)
+	logging.Error("hashwarp exited unexpectedly", "err", err)
 }
 
 // ---------------------------------------------------------------------------
