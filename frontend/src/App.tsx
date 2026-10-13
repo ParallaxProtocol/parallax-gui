@@ -1,52 +1,62 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, NavLink, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { api } from "./lib/api";
-import Dashboard from "./pages/Dashboard";
-import Connect from "./pages/Connect";
+import { applyTheme } from "./lib/theme";
+import { AnimationsOff } from "./lib/prefs";
+import { LiveProvider } from "./lib/live";
+import { FADE_OUT } from "./lib/motion";
+import Overview from "./pages/Overview";
+import WalletPage from "./pages/Wallet";
 import Mining from "./pages/Mining";
 import Settings from "./pages/Settings";
-import Logs from "./pages/Logs";
 import Onboarding from "./pages/Onboarding";
-import ClientStatus from "./components/ClientStatus";
+import Sidebar from "./components/shell/Sidebar";
+import TopBar from "./components/shell/TopBar";
 import UpdateBanner from "./components/UpdateBanner";
-import { useWalletStatus } from "./lib/useWalletStatus";
+import { Label } from "./components/ui/Plate";
 import { useT } from "./i18n";
 import logo from "./assets/logo.svg";
 
 // Custom event the Settings page dispatches whenever it persists a new
-// config. App listens for it so the disable-animations flag (and any
-// other globally-applied config flag) updates instantly without a
-// reload, instead of being polled on a timer.
+// config. App listens for it so globally-applied flags (animations, theme)
+// update instantly without a reload, instead of being polled on a timer.
 export const CONFIG_UPDATED_EVENT = "parallax:config-updated";
 
 export default function App() {
   const [bootChecked, setBootChecked] = useState(false);
   const [needsBootstrap, setNeedsBootstrap] = useState(false);
   const [animationsDisabled, setAnimationsDisabled] = useState(false);
+  const [version, setVersion] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
-    api
-      .bootstrapNeeded()
-      .then((needs) => {
-        if (cancelled) return;
-        setNeedsBootstrap(needs);
-        setBootChecked(true);
-        if (needs) navigate("/onboarding", { replace: true });
-      })
-      .catch(() => {
-        // Backend not yet ready (dev mode reload). Try again shortly.
-        setTimeout(() => setBootChecked(false), 250);
-      });
+    let timer: ReturnType<typeof setTimeout>;
+    const check = () => {
+      api
+        .bootstrapNeeded()
+        .then((needs) => {
+          if (cancelled) return;
+          setNeedsBootstrap(needs);
+          setBootChecked(true);
+          if (needs) navigate("/onboarding", { replace: true });
+        })
+        .catch(() => {
+          // Backend not ready yet (dev mode reload): try again shortly
+          timer = setTimeout(check, 250);
+        });
+    };
+    check();
+    api.version().then((v) => !cancelled && setVersion(v)).catch(() => {});
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Read the disable-animations flag on mount and whenever Settings
+  // Read the globally-applied flags on mount and whenever Settings
   // dispatches a config-updated event.
   useEffect(() => {
     let alive = true;
@@ -54,10 +64,12 @@ export default function App() {
       api
         .getConfig()
         .then((c) => {
-          if (alive) setAnimationsDisabled(!!c.disableAnimations);
+          if (!alive) return;
+          setAnimationsDisabled(!!c.disableAnimations);
+          applyTheme(c.theme || "system");
         })
         .catch(() => {
-          /* ignore — backend may not be ready yet */
+          /* backend may not be ready yet */
         });
     };
     refresh();
@@ -68,19 +80,17 @@ export default function App() {
     };
   }, []);
 
-  // Apply the kill switch to <body> so the global CSS rule scopes from
-  // there. Using <body> rather than the React root means it survives
-  // route transitions and onboarding-mode renders.
+  // The kill switch goes on <body> so the global CSS rule scopes from there,
+  // surviving route transitions and onboarding-mode renders.
   useEffect(() => {
     document.body.classList.toggle("no-anim", animationsDisabled);
   }, [animationsDisabled]);
 
+  let content;
   if (!bootChecked) {
-    return <SplashScreen />;
-  }
-
-  if (needsBootstrap) {
-    return (
+    content = <SplashScreen />;
+  } else if (needsBootstrap) {
+    content = (
       <Routes>
         <Route
           path="/onboarding"
@@ -96,19 +106,30 @@ export default function App() {
         <Route path="*" element={<Navigate to="/onboarding" replace />} />
       </Routes>
     );
+  } else {
+    content = (
+      <LiveProvider>
+        <div className="flex h-full">
+          <Sidebar version={version} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar />
+            <RoutedContent animationsDisabled={animationsDisabled} />
+          </div>
+        </div>
+        <UpdateBanner />
+      </LiveProvider>
+    );
   }
 
   return (
-    <MotionConfig
-      reducedMotion={animationsDisabled ? "always" : "never"}
-      transition={animationsDisabled ? { duration: 0 } : undefined}
-    >
-      <div className="flex flex-col h-full">
-        <TopBar />
-        <RoutedContent animationsDisabled={animationsDisabled} />
-        <UpdateBanner />
-      </div>
-    </MotionConfig>
+    <AnimationsOff.Provider value={animationsDisabled}>
+      <MotionConfig
+        reducedMotion={animationsDisabled ? "always" : "never"}
+        transition={animationsDisabled ? { duration: 0 } : undefined}
+      >
+        {content}
+      </MotionConfig>
+    </AnimationsOff.Provider>
   );
 }
 
@@ -116,137 +137,61 @@ function RoutedContent({ animationsDisabled }: { animationsDisabled: boolean }) 
   const location = useLocation();
   const routes = (
     <Routes location={location}>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/connect" element={<Connect />} />
+      <Route path="/" element={<Overview />} />
+      <Route path="/wallet" element={<WalletPage />} />
       <Route path="/mining" element={<Mining />} />
-      <Route path="/logs" element={<Logs />} />
       <Route path="/settings" element={<Settings />} />
+      {/* Older routes, from before the redesign */}
+      <Route path="/connect" element={<Navigate to="/wallet" replace />} />
+      <Route path="/logs" element={<Navigate to="/settings" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 
-  // When animations are disabled, drop the AnimatePresence + motion.div
-  // wrapper entirely. Motion's `initial={{ opacity: 0 }}` is committed
-  // for one frame even with duration:0, which is what produced the
-  // route-transition flicker the user was seeing. Rendering the routes
-  // bare avoids that initial paint.
-  if (animationsDisabled) {
-    return (
-      <main className="flex-1 overflow-y-auto px-12 py-14">{routes}</main>
-    );
-  }
-
   return (
-    <main className="flex-1 overflow-y-auto px-12 py-14">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={location.pathname}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {routes}
-        </motion.div>
-      </AnimatePresence>
-    </main>
-  );
-}
-
-function TopBar() {
-  const t = useT();
-  return (
-    <motion.header
-      className="shrink-0 border-b border-border bg-bg sticky top-0 z-50"
-      initial={{ opacity: 0, y: -12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="max-w-[1400px] mx-auto px-10 h-20 flex items-center justify-between gap-10">
-        {/* Brand */}
-        <a
-          href="#/"
-          className="group flex items-center gap-3 transition-opacity hover:opacity-90"
-        >
-          <img
-            src={logo}
-            className="h-9 w-9 transition-transform duration-500 ease-out group-hover:rotate-[8deg]"
-            alt="Parallax"
-          />
-          <span className="text-xl font-medium tracking-tight text-fg">
-            Parallax
-          </span>
-        </a>
-
-        {/* Centered nav */}
-        <nav className="flex items-center gap-1">
-          <TopLink to="/">{t("nav.client")}</TopLink>
-          <WalletTopLink />
-          <TopLink to="/mining">{t("nav.mining")}</TopLink>
-          <TopLink to="/settings">{t("nav.settings")}</TopLink>
-        </nav>
-
-        {/* Right-side live client status */}
-        <ClientStatus />
-      </div>
-    </motion.header>
-  );
-}
-
-function TopLink({ to, children }: { to: string; children: React.ReactNode }) {
-  return (
-    <NavLink
-      to={to}
-      end={to === "/"}
-      className={({ isActive }) =>
-        `top-nav-link ${isActive ? "top-nav-link-active" : ""}`
-      }
-    >
-      {children}
-    </NavLink>
-  );
-}
-
-// WalletTopLink wraps the standard /connect nav link with a small green
-// presence dot that lights up whenever a wallet is currently talking to
-// our local RPC. The dot is rendered inside the link so click target +
-// hover affordance stay identical to the other top-nav entries.
-function WalletTopLink() {
-  const wallet = useWalletStatus();
-  const t = useT();
-  return (
-    <NavLink
-      to="/connect"
-      className={({ isActive }) =>
-        `top-nav-link ${isActive ? "top-nav-link-active" : ""}`
-      }
-    >
-      <span className="inline-flex items-center gap-2">
-        {t("nav.wallet")}
-        {wallet.connected && (
-          <span
-            className="live-dot-success"
-            title={t("nav.walletConnected")}
-          />
+    <main className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto max-w-[1180px] px-10 pt-8 pb-16">
+        {animationsDisabled ? (
+          // Without animations the wrapper goes entirely: Motion commits
+          // `initial` for one frame even at duration 0, which flickered
+          routes
+        ) : (
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, transition: FADE_OUT }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {routes}
+            </motion.div>
+          </AnimatePresence>
         )}
-      </span>
-    </NavLink>
+      </div>
+    </main>
   );
 }
 
 function SplashScreen() {
   const t = useT();
   return (
-    <div className="h-full grid place-items-center">
+    <div className="grid h-full place-items-center">
       <motion.div
-        className="text-center"
+        className="flex flex-col items-center"
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
-        <img src={logo} className="h-20 w-20 mx-auto mb-6" alt="Parallax" />
-        <div className="font-serif text-2xl text-fg">Parallax</div>
-        <div className="eyebrow mt-2">{t("splash.loading")}</div>
+        <motion.img
+          src={logo}
+          className="mb-6 size-16"
+          alt="Parallax"
+          animate={{ rotate: [0, 60, 60, 120] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: [0.65, 0, 0.35, 1], times: [0, 0.35, 0.5, 0.85] }}
+        />
+        <div className="text-2xl font-semibold tracking-tight">Parallax</div>
+        <Label className="mt-2">{t("splash.loading")}</Label>
       </motion.div>
     </div>
   );

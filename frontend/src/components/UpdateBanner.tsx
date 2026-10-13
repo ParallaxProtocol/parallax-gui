@@ -1,8 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { Download, X } from "lucide-react";
 import { api, openExternal } from "../lib/api";
 import type { UpdateInfo, UpdateProgress } from "../lib/api";
+import { SPRING } from "../lib/motion";
 import { useT } from "../i18n";
+import { Indicator } from "./ui/Indicator";
+import { Meter } from "./ui/bits";
 
 type BannerState =
   | { kind: "hidden" }
@@ -14,28 +18,30 @@ type BannerState =
   | { kind: "ready-manual"; info: UpdateInfo }
   | { kind: "error"; info: UpdateInfo; message: string };
 
+/**
+ * UpdateBanner is a toast in the bottom-right corner that offers a new
+ * release and follows its download, verification and install.
+ */
 export default function UpdateBanner() {
   const [state, setState] = useState<BannerState>({ kind: "hidden" });
   const infoRef = useRef<UpdateInfo | null>(null);
   const t = useT();
 
-  // Check for updates on mount.
   useEffect(() => {
     let cancelled = false;
-
     const check = () => {
-      api.getLatestUpdate().then((info) => {
-        if (cancelled) return;
-        if (info) {
+      api
+        .getLatestUpdate()
+        .then((info) => {
+          if (cancelled || !info) return;
           infoRef.current = info;
-          setState({ kind: "available", info });
-        }
-      }).catch(() => {});
+          // A poll must not knock an install in progress back to the offer
+          setState((s) => (s.kind === "hidden" ? { kind: "available", info } : s));
+        })
+        .catch(() => {});
     };
-
     check();
-
-    // Re-check periodically (in case the background check found something).
+    // Re-check periodically, in case the background check found something
     const id = setInterval(check, 60_000);
     return () => {
       cancelled = true;
@@ -43,14 +49,11 @@ export default function UpdateBanner() {
     };
   }, []);
 
-  // Subscribe to update-progress events from the backend.
   useEffect(() => {
     if (!window.runtime?.EventsOn) return;
-
-    const unsub = window.runtime.EventsOn("update-progress", (p: UpdateProgress) => {
+    return window.runtime.EventsOn("update-progress", (p: UpdateProgress) => {
       const info = infoRef.current;
       if (!info) return;
-
       switch (p.step) {
         case "downloading":
           setState({ kind: "downloading", info, percent: p.percent });
@@ -72,176 +75,117 @@ export default function UpdateBanner() {
           break;
       }
     });
-
-    return unsub;
   }, []);
 
-  const handleUpdate = () => {
+  const update = () => {
     api.applyUpdate().catch((err) => {
       const info = infoRef.current;
-      if (info) {
-        setState({ kind: "error", info, message: String(err) });
-      }
+      if (info) setState({ kind: "error", info, message: String(err) });
     });
   };
 
-  const handleDismiss = () => {
+  const dismiss = () => {
     api.dismissUpdate().catch(() => {});
     setState({ kind: "hidden" });
   };
 
-  const handleRestart = () => {
-    api.restartApp().catch(() => {});
-  };
-
-  const handleRetry = () => {
-    const info = infoRef.current;
-    if (info) {
-      setState({ kind: "available", info });
-    }
-  };
-
-  const visible = state.kind !== "hidden";
+  const Close = () => (
+    <button type="button" onClick={dismiss} className="btn btn-ghost btn-sm -mr-1 px-1.5" aria-label={t("updater.dismiss")}>
+      <X className="size-4" />
+    </button>
+  );
 
   return (
     <AnimatePresence>
-      {visible && (
+      {state.kind !== "hidden" && (
         <motion.div
           key="update-banner"
-          className="fixed bottom-8 left-8 z-40 flex items-center gap-3 rounded-full border border-border-strong bg-bg-elev/95 backdrop-blur px-4 py-2.5 shadow-2xl max-w-[90vw]"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed right-6 bottom-6 z-50 w-[360px] rounded-md border border-border-strong bg-surface-elevated p-4 shadow-2xl"
+          initial={{ opacity: 0, y: 24, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 24 }}
+          transition={SPRING}
+          role="status"
         >
           {state.kind === "available" && (
-            <>
-              <div className="flex items-center gap-2 pl-1 pr-1">
-                <span className="live-dot-warn" />
-                <span className="text-xs text-fg">
-                  {t("updater.available")}{" "}
-                  <span className="text-gold font-medium">v{state.info.latestVersion}</span>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start gap-3">
+                <span className="brand-gradient grid size-8 shrink-0 place-items-center rounded-md text-brand-foreground">
+                  <Download className="size-4" />
                 </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => openExternal(state.info.releaseURL)}
-                className="text-[11px] uppercase tracking-wider text-muted hover:text-fg transition-colors px-1"
-              >
-                {t("updater.notes")}
-              </button>
-              <button
-                type="button"
-                onClick={handleUpdate}
-                className="btn-primary !py-1.5 !px-4"
-              >
-                {t("updater.update")}
-              </button>
-              <button
-                type="button"
-                onClick={handleDismiss}
-                className="text-muted hover:text-fg transition-colors px-1 text-sm leading-none"
-                aria-label={t("updater.dismiss")}
-              >
-                &times;
-              </button>
-            </>
-          )}
-
-          {state.kind === "downloading" && (
-            <>
-              <div className="flex items-center gap-3 pl-1 pr-1 min-w-[180px]">
-                <span className="text-xs text-fg whitespace-nowrap">
-                  {t("updater.downloading", { version: state.info.latestVersion })}
-                </span>
-                <div className="flex-1 progress-track !h-1">
-                  <div
-                    className="progress-fill"
-                    style={{ width: `${state.percent}%` }}
-                  />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium">{t("updater.available")}</div>
+                  <div className="font-mono text-xs text-brand">v{state.info.latestVersion}</div>
                 </div>
-                <span className="text-xs text-muted tabular-nums w-8 text-right">
-                  {state.percent}%
-                </span>
+                <Close />
               </div>
-            </>
-          )}
-
-          {state.kind === "verifying" && (
-            <div className="flex items-center gap-2 pl-1 pr-1">
-              <span className="live-dot-warn" />
-              <span className="text-xs text-fg">{t("updater.verifying")}</span>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => openExternal(state.info.releaseURL)} className="btn btn-ghost btn-sm">
+                  {t("updater.notes")}
+                </button>
+                <button type="button" onClick={update} className="btn btn-primary btn-sm">
+                  {t("updater.update")}
+                </button>
+              </div>
             </div>
           )}
 
-          {state.kind === "extracting" && (
-            <div className="flex items-center gap-2 pl-1 pr-1">
-              <span className="live-dot-warn" />
-              <span className="text-xs text-fg">{t("updater.installing")}</span>
+          {state.kind === "downloading" && (
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span>{t("updater.downloading", { version: state.info.latestVersion })}</span>
+                <span className="font-mono text-xs text-muted-foreground tabular-nums">{state.percent}%</span>
+              </div>
+              <Meter value={state.percent / 100} active />
+            </div>
+          )}
+
+          {(state.kind === "verifying" || state.kind === "extracting") && (
+            <div className="flex flex-col gap-2.5">
+              <span className="text-sm">
+                {state.kind === "verifying" ? t("updater.verifying") : t("updater.installing")}
+              </span>
+              <Meter />
             </div>
           )}
 
           {state.kind === "ready" && (
-            <>
-              <div className="flex items-center gap-2 pl-1 pr-1">
-                <span className="live-dot-success" />
-                <span className="text-xs text-fg">
-                  {t("updater.installed", { version: state.info.latestVersion })}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleRestart}
-                className="btn-primary !py-1.5 !px-4"
-              >
+            <div className="flex items-center gap-3">
+              <Indicator grade="good" ping />
+              <span className="flex-1 text-sm">{t("updater.installed", { version: state.info.latestVersion })}</span>
+              <button type="button" onClick={() => api.restartApp().catch(() => {})} className="btn btn-primary btn-sm">
                 {t("updater.restartNow")}
               </button>
-            </>
+            </div>
           )}
 
           {state.kind === "ready-manual" && (
-            <>
-              <div className="flex items-center gap-2 pl-1 pr-1">
-                <span className="live-dot-success" />
-                <span className="text-xs text-fg max-w-[320px]">
-                  {t("updater.dragToApplications", { version: state.info.latestVersion })}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleDismiss}
-                className="text-muted hover:text-fg transition-colors px-1 text-sm leading-none"
-                aria-label={t("updater.dismiss")}
-              >
-                &times;
-              </button>
-            </>
+            <div className="flex items-start gap-3">
+              <Indicator grade="good" className="mt-1.5" />
+              <span className="flex-1 text-sm">{t("updater.dragToApplications", { version: state.info.latestVersion })}</span>
+              <Close />
+            </div>
           )}
 
           {state.kind === "error" && (
-            <>
-              <div className="flex items-center gap-2 pl-1 pr-1">
-                <span className="live-dot-err" />
-                <span className="text-xs text-danger max-w-[260px] truncate">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start gap-3">
+                <Indicator grade="critical" className="mt-1.5" />
+                <span className="line-clamp-3 flex-1 text-sm text-critical-ink" title={state.message}>
                   {state.message}
                 </span>
+                <Close />
               </div>
-              <button
-                type="button"
-                onClick={handleRetry}
-                className="text-[11px] uppercase tracking-wider text-muted hover:text-fg transition-colors px-2"
-              >
-                {t("updater.retry")}
-              </button>
-              <button
-                type="button"
-                onClick={handleDismiss}
-                className="text-muted hover:text-fg transition-colors px-1 text-sm leading-none"
-                aria-label={t("updater.dismiss")}
-              >
-                &times;
-              </button>
-            </>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => infoRef.current && setState({ kind: "available", info: infoRef.current })}
+                  className="btn btn-secondary btn-sm"
+                >
+                  {t("updater.retry")}
+                </button>
+              </div>
+            </div>
           )}
         </motion.div>
       )}

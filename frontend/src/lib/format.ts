@@ -94,3 +94,39 @@ export function formatDuration(seconds: number): string {
   if (m) return `${m}m`;
   return `${s}s`;
 }
+
+const intFormat = new Intl.NumberFormat("en-US");
+
+/** formatInt groups thousands: 59,707. */
+export function formatInt(n: number): string {
+  return intFormat.format(Math.round(n));
+}
+
+/** formatClock renders an elapsed time to the second: 45 s, 8 min 03 s, 2 h 05 min. */
+export function formatClock(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  if (s < 60) return `${s} s`;
+  if (s < 3600) return `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} s`;
+  if (s < 86_400) return `${Math.floor(s / 3600)} h ${String(Math.floor((s % 3600) / 60)).padStart(2, "0")} min`;
+  return `${Math.floor(s / 86_400)} d ${Math.floor((s % 86_400) / 3600)} h`;
+}
+
+/** formatPercent renders a 0..1 share: 42%, 7.5%, 0.3%. */
+export function formatPercent(share: number): string {
+  const pct = share * 100;
+  if (pct === 0 || pct >= 10) return `${Math.round(pct)}%`;
+  return `${pct.toFixed(1)}%`;
+}
+
+/** sameAddress compares two hex addresses, ignoring checksum case. */
+export function sameAddress(a?: string, b?: string): boolean {
+  return !!a && !!b && a.toLowerCase() === b.toLowerCase();
+}
+
+/** isAddress reports whether s looks like a 20-byte hex address. */
+export function isAddress(s: string): boolean {
+  return /^0x[0-9a-fA-F]{40}$/.test(s.trim());
+}
+
+/** Seconds per block the protocol aims for. */
+export const TARGET_BLOCK_SECONDS = 600;

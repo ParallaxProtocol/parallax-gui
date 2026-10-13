@@ -8,29 +8,28 @@ platform's native webview. One binary, no sidecars.
 ## Features
 
 - One binary that runs a Parallax full node — no sidecars.
-- First-run wizard for picking a data directory, sync mode, and inbound
-  NAT policy.
-- **Client** dashboard with sync progress, peer count, uptime, disk
-  usage, latest blocks (with miner / reward / size / gas-fill), and
-  latest transactions.
-- **Mining** with GPU pool mining (via hashwarp) and CPU solo mining,
-  device detection, and live hashrate/stats.
-- **Connect** page with a one-click *Add to MetaMask* button (powered by
-  an embedded localhost helper that calls
-  `wallet_addEthereumChain` in the user's default browser) plus manual
-  fields for non-MetaMask wallets. Detects when the user is already on
-  the Parallax network and reflects it in the UI.
-- **Peers** page that lists every connected peer, sortable, click-to-
-  expand for full enode URL, addresses, capabilities, and per-protocol
-  metadata.
-- **Settings** with curated and advanced sections (cache sizes, peer
-  limit, HTTP-RPC toggle + port, inbound-connection toggle), a
-  spring-animated save bar that warns when changes require a node
-  restart, and a one-click *Restart node* action.
-- **Logs** screen (linked from Settings → Diagnostics) with live tail,
-  level filter, pause/resume, and copy-to-clipboard.
-- TopBar live client-status indicator that polls the node every 3 s and
-  flips between *Synced*, *Syncing*, and *Stopped* with a pulsing dot.
+- First-run wizard for picking a language, data directory, sync mode and
+  inbound NAT policy.
+- A sidebar shell with the node's heartbeat pinned at the bottom (state,
+  block height, peers, uptime, sync progress and a power switch), and
+  live chips in the top bar while a wallet is connected or the miner runs.
+- **Overview**: the block clock (best block and the wait since, against
+  the 10 minute target), sync progress while catching up, node figures,
+  the latest blocks (blocks your mining address found are marked) and a
+  slide-over list of connected peers.
+- **Wallet**: a step-by-step MetaMask connection (node, local RPC,
+  one-click *Add network*, live connection) with manual values for any
+  EVM wallet, and a watched address: balance, blocks mined and
+  transactions over the last week, all read from the local node.
+- **Mining**: GPU pool, GPU solo and CPU solo modes, hashwarp install
+  with Windows Defender recovery, custom pools, device selection, and a
+  live view with a hashrate chart, shares and per-GPU stats.
+- **Settings**: grouped sections with a scroll-tracking index, light /
+  dark / system theme, a save bar that flags changes needing a node
+  restart, cache sizes, the live log tail, and update checks.
+- Light and dark themes in the design language of
+  [status.parallaxprotocol.org](https://status.parallaxprotocol.org),
+  fonts bundled so the app makes no third-party requests to render.
 - Local-only crash reports written to the user's config directory.
 
 ## Building
@@ -141,7 +140,7 @@ Parallax Desktop ships with English, Deutsch, Français, Português
 (Brasil), Русский, 中文（新加坡）, and 中文（繁體）. All UI strings live in
 a single flat dictionary at
 [`frontend/src/i18n/translations.ts`](frontend/src/i18n/translations.ts),
-keyed with dot-notation (e.g. `nav.client`, `settings.rpc.title`).
+keyed with dot-notation (e.g. `nav.overview`, `settings.rpc.enable`).
 
 To add a new language:
 
@@ -156,7 +155,7 @@ To add a new language:
    [`frontend/src/i18n/index.tsx`](frontend/src/i18n/index.tsx) so the
    new tag is recognised by `navigator.language` and persisted in
    `localStorage`.
-5. Run `wails dev` and switch languages from **Settings → Language** (or
+5. Run `wails dev` and switch languages from **Settings → General** (or
    the onboarding picker) to verify the strings render and nothing
    overflows.
 
@@ -189,48 +188,51 @@ are fine for a first pass — open a PR and we'll help fill the gaps.
 │   │                  in the user's default browser.
 │   ├── crash.go       Crash report writer; installs a recover() hook.
 │   └── types.go       Wails-serialisable structs shared with the frontend.
-└── frontend/          React + Vite + TypeScript + Tailwind + motion.
+└── frontend/          React + Vite + TypeScript + Tailwind v4 + motion.
     └── src/
-        ├── App.tsx           Top bar nav, route shell, AnimatePresence
-        │                     between pages, splash screen.
+        ├── App.tsx           Shell: sidebar, top bar, routes and their
+        │                     transitions, splash screen.
+        ├── styles.css        Design tokens (dark + light) and primitives.
         ├── lib/api.ts        Typed wrappers around the bound App methods.
-        ├── lib/format.ts     wei↔LAX, byte / duration / hash / ago helpers.
-        ├── components/       SectionHeading, AnimatedNumber, StatusPill,
-        │                     ClientStatus, PageStagger, Toggle.
+        ├── lib/live.tsx      One poller for node, miner and wallet status,
+        │                     latest blocks and chart histories.
+        ├── lib/format.ts     wei↔LAX, byte / duration / hash helpers.
+        ├── components/
+        │   ├── shell/        Sidebar (with the node dock) and TopBar.
+        │   └── ui/           Plate, Tile, Rolling digits, Indicator,
+        │                     charts, Drawer, Segmented, Toggle.
         ├── pages/
-        │   ├── Dashboard.tsx   Client overview, status, latest blocks/txs.
-        │   ├── Connect.tsx     One-click MetaMask flow + manual fallback.
-        │   ├── Mining.tsx      GPU/CPU mining controls, live stats.
-        │   ├── Peers.tsx       Sortable peers list, expand-for-details rows.
-        │   ├── Settings/       Curated + advanced settings, floating save bar,
-        │   │                   About card with prlx + desktop versions.
-        │   ├── Logs.tsx        Live log tail, filter, pause/resume.
-        │   └── Onboarding/     5-step first-run wizard.
-        └── assets/           Logo (white version, from parallax-website).
+        │   ├── Overview/     Block clock, node tiles, latest blocks,
+        │   │                 peers drawer.
+        │   ├── Wallet/       MetaMask connection steps, watched address.
+        │   ├── Mining/       Mode, setup, hashwarp install, live stats.
+        │   ├── Settings/     Grouped settings, save bar, live log tail.
+        │   └── Onboarding/   First-run wizard.
+        └── assets/           Logo mark (the logo gradient).
 ```
 
 ## Security defaults
 
 - **HTTP-RPC** is on by default and bound to `127.0.0.1` only. There is
   no UI option to expose it to `0.0.0.0`. Users can disable the
-  endpoint entirely from Settings → Local apps.
+  endpoint entirely from Settings → Network.
 - **Inbound NAT** is on by default — Wails opens a UPnP/PMP mapping so
   other peers can dial in, helping the network. Users behind strict
   firewalls or who prefer outbound-only can flip the toggle in
-  Settings → Networking (or during first-run onboarding).
+  Settings → Network (or during first-run onboarding).
 - **Crash reports** are written to `<userConfigDir>/Parallax/crash-*.log`
   and never sent off the machine.
 
 ## Connecting MetaMask
 
-The Connect page leads with a single **Add Parallax to MetaMask** button.
-Clicking it opens a localhost helper page in the user's default browser
+The Wallet page walks through connecting MetaMask; its **Add network** button
+opens a localhost helper page in the user's default browser
 which fires `wallet_addEthereumChain` (or `wallet_switchEthereumChain` if
 the network is already added). The helper auto-detects whether MetaMask
 is already on Parallax and shows a connected confirmation instead of the
 add button.
 
-For non-MetaMask wallets, the same Connect page also shows the manual
+For non-MetaMask wallets, the same Wallet page also shows the manual
 network values:
 
 | Field           | Value                          |

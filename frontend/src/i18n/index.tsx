@@ -112,5 +112,24 @@ export function useT() {
   return useLang().t;
 }
 
+/**
+ * useAgo returns a formatter for how long ago a unix time (seconds) was,
+ * in the interface language: "3 minutes ago", "vor 3 Minuten".
+ */
+export function useAgo() {
+  const { lang } = useLang();
+  return useMemo(() => {
+    const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto", style: "short" });
+    return (unixSeconds: number, now = Date.now()) => {
+      const s = Math.round(unixSeconds - now / 1000);
+      const a = Math.abs(s);
+      if (a < 60) return rtf.format(s, "second");
+      if (a < 3600) return rtf.format(Math.round(s / 60), "minute");
+      if (a < 86_400) return rtf.format(Math.round(s / 3600), "hour");
+      return rtf.format(Math.round(s / 86_400), "day");
+    };
+  }, [lang]);
+}
+
 export { LANG_NAMES };
 export type { Lang };

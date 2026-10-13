@@ -3,6 +3,11 @@ import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";
 import App from "./App";
 import { LanguageProvider } from "./i18n";
+// Bundled rather than fetched from Google Fonts: the app works offline and
+// makes no third-party requests to draw its text
+import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
+import "@fontsource-variable/newsreader/opsz.css";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

@@ -57,6 +57,8 @@ export type GUIConfig = {
   miningThreads: number;
   miningDevices: number[];
   customPools: PoolInfo[];
+  /** The Wallet page's watched address; empty follows miningWallet. */
+  watchAddress: string;
 };
 
 export type NodeStatus = {
@@ -79,22 +81,6 @@ export type NodeStatus = {
 export type WalletStatus = {
   connected: boolean;
   lastSeenUnixMilli: number;
-};
-
-export type GeoLocation = {
-  ip: string;
-  lat: number;
-  lon: number;
-  city: string;
-  country: string;
-};
-
-export type PublicNode = {
-  lat: number;
-  lon: number;
-  city: string;
-  country: string;
-  countryCode: string;
 };
 
 export type LogLine = {
@@ -142,6 +128,20 @@ export type TxView = {
   valueWei: string;
   gasUsed: number;
   kind: "transfer" | "contract" | "call";
+};
+
+export type AddressView = {
+  address: string;
+  /** Empty while the head state is unavailable (snap sync in progress). */
+  balanceWei: string;
+  nonce: number;
+  headBlock: number;
+  /** The oldest block the activity below was gathered from. */
+  scannedFrom: number;
+  blocksMined: number;
+  minedWei: string;
+  minedBlocks: BlockView[];
+  transactions: TxView[];
 };
 
 // ---------------------------------------------------------------------------
@@ -233,13 +233,10 @@ export const api = {
   peers: () => call<PeerView[]>("Peers"),
   recentBlocks: (n: number) => call<BlockView[]>("RecentBlocks", n),
   recentTransactions: (n: number) => call<TxView[]>("RecentTransactions", n),
+  addressSummary: (addr: string) => call<AddressView>("AddressSummary", addr),
 
   getLogTail: (n: number) => call<LogLine[]>("GetLogTail", n),
   setLogVerbosity: (n: number) => call<void>("SetLogVerbosity", n),
-
-  geoSelf: () => call<GeoLocation>("GeoSelf"),
-  geoLookupPeers: () => call<GeoLocation[]>("GeoLookupPeers"),
-  publicNodes: () => call<PublicNode[]>("PublicNodes"),
 
   metaMaskHelperURL: () => call<string>("MetaMaskHelperURL"),
 
