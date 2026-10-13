@@ -49,6 +49,29 @@ type NodeController struct {
 	walletMonitor *WalletMonitor
 
 	emitter func(NodeEvent)
+
+	// The data directory's size, re-measured at most every diskUsageTTL:
+	// walking a multi-gigabyte chain database on every status poll is
+	// far too slow.
+	diskMu     sync.Mutex
+	diskDir    string
+	diskBytes  uint64
+	diskReadAt time.Time
+}
+
+const diskUsageTTL = 30 * time.Second
+
+// diskUsage returns the cached size of dir, measuring it again once the
+// cached reading is older than diskUsageTTL or was for another directory.
+func (n *NodeController) diskUsage(dir string) uint64 {
+	n.diskMu.Lock()
+	defer n.diskMu.Unlock()
+	if dir != n.diskDir || time.Since(n.diskReadAt) > diskUsageTTL {
+		n.diskDir = dir
+		n.diskBytes = directorySize(dir)
+		n.diskReadAt = time.Now()
+	}
+	return n.diskBytes
 }
 
 // processMetricsOnce ensures we only ever spawn metrics.CollectProcessMetrics
@@ -317,7 +340,7 @@ func (n *NodeController) Status() NodeStatus {
 	caughtUp := st.HighestBlock == 0 || st.CurrentBlock >= st.HighestBlock
 	st.Syncing = st.Peers == 0 || !caughtUp
 
-	st.DiskUsedBytes = directorySize(guiCfg.DataDir)
+	st.DiskUsedBytes = n.diskUsage(guiCfg.DataDir)
 
 	var ms runtime.MemStats
 	runtime.ReadMemStats(&ms)

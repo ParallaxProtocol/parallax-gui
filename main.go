@@ -85,7 +85,7 @@ func main() {
 	// GPU rendering tuning. WebKitGTK supports a hardware-accelerated
 	// compositor that can lift CSS animations / transforms / SVG paint
 	// onto the GPU; without it everything is software-rasterised on the
-	// CPU and complex pages (like the world map) cap at well under
+	// CPU and complex pages cap at well under
 	// 60fps. Defaults below assume the GPU path is wanted.
 	//
 	// The exception is a small set of Wayland compositors that hit

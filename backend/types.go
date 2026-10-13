@@ -25,7 +25,7 @@ type GUIConfig struct {
 	AutoStartNode bool   `json:"autoStartNode"`
 	// DisableAnimations turns off CSS keyframes, motion/react transitions
 	// and any decorative motion in the GUI. Useful on low-power systems
-	// or for users who find the dashboard's pulsing arcs distracting.
+	// or for users who find the rolling figures and transitions distracting.
 	DisableAnimations bool `json:"disableAnimations"`
 
 	// EnableSmartFee turns on the Bitcoin Core-style smart fee estimator
@@ -58,6 +58,10 @@ type GUIConfig struct {
 	MiningThreads int        `json:"miningThreads"` // CPU threads for solo mode (0 = auto)
 	MiningDevices []int      `json:"miningDevices"` // GPU device indices (nil = all)
 	CustomPools   []PoolInfo `json:"customPools"`   // user-added pool entries
+
+	// WatchAddress is the address the Wallet page follows (balance, mined
+	// blocks, transactions). Empty means it follows MiningWallet.
+	WatchAddress string `json:"watchAddress"`
 }
 
 // NodeStatus is the high-level snapshot the dashboard polls.
@@ -139,6 +143,23 @@ type BlockView struct {
 	Coinbase   string `json:"coinbase"`
 	RewardWei  string `json:"rewardWei"` // base subsidy for this height
 	Difficulty string `json:"difficulty"`
+}
+
+// AddressView summarises one watched address for the Wallet page: its
+// balance at the head, and what the recent chain holds for it.
+type AddressView struct {
+	Address string `json:"address"`
+	// BalanceWei is empty while the head state is unavailable (e.g. during
+	// snap sync, before the state download completes).
+	BalanceWei string `json:"balanceWei"`
+	Nonce      uint64 `json:"nonce"`
+	HeadBlock  uint64 `json:"headBlock"`
+	// ScannedFrom is the oldest block the activity below was gathered from.
+	ScannedFrom  uint64      `json:"scannedFrom"`
+	BlocksMined  int         `json:"blocksMined"`  // blocks in the window with this coinbase
+	MinedWei     string      `json:"minedWei"`     // their base subsidy
+	MinedBlocks  []BlockView `json:"minedBlocks"`  // newest first, capped
+	Transactions []TxView    `json:"transactions"` // newest first, capped
 }
 
 // ---------------------------------------------------------------------------

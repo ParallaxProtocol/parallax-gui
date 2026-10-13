@@ -25,7 +25,6 @@ type App struct {
 	metamask *backend.MetaMaskHelper
 	miner    *backend.MinerController
 	updater  *backend.Updater
-	geo      *backend.GeoLocator
 }
 
 // NewApp constructs the App. The heavy lifting (loading config, attaching the
@@ -67,8 +66,6 @@ func (a *App) startup(ctx context.Context) {
 	if err := a.metamask.Start(); err != nil {
 		wruntime.LogErrorf(ctx, "metamask helper: %v", err)
 	}
-
-	a.geo = backend.NewGeoLocator()
 
 	a.miner = backend.NewMinerController(cfg, a.node)
 	a.miner.SetEmitter(func(evt backend.MinerEvent) {
@@ -136,33 +133,10 @@ func (a *App) RecentTransactions(n int) []backend.TxView {
 	return a.node.RecentTransactions(n)
 }
 
-// ---------------------------------------------------------------------------
-// Geo IP
-// ---------------------------------------------------------------------------
-
-// GeoSelf returns the public IP / coordinates of this machine. The result
-// is cached for the lifetime of the process.
-func (a *App) GeoSelf() (backend.GeoLocation, error) {
-	return a.geo.LookupSelf()
-}
-
-// GeoLookupPeers resolves the current peer set's remote addresses to
-// coordinates. Cached lookups are returned immediately; new addresses are
-// batched against ip-api.com.
-func (a *App) GeoLookupPeers() []backend.GeoLocation {
-	peers := a.node.Peers()
-	addrs := make([]string, 0, len(peers))
-	for _, p := range peers {
-		addrs = append(addrs, p.RemoteAddr)
-	}
-	return a.geo.LookupIPs(addrs)
-}
-
-// PublicNodes returns the public Parallax node directory snapshot. The
-// upstream is polled at most once per minute and the result is cached
-// in-process; this call is cheap to make from the polling dashboard.
-func (a *App) PublicNodes() []backend.PublicNode {
-	return a.geo.PublicNodes()
+// AddressSummary reports the balance and recent activity of one address,
+// for the Wallet page's watched address.
+func (a *App) AddressSummary(addr string) (backend.AddressView, error) {
+	return a.node.AddressSummary(addr)
 }
 
 // ---------------------------------------------------------------------------
