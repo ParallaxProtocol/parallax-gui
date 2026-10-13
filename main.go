@@ -54,6 +54,24 @@ func isBrokenWaylandCompositor() bool {
 	return false
 }
 
+// isWayland reports whether GTK will talk to a Wayland display (the
+// default when WAYLAND_DISPLAY is set, unless GDK_BACKEND pins another
+// backend such as x11).
+func isWayland() bool {
+	if os.Getenv("WAYLAND_DISPLAY") == "" {
+		return false
+	}
+	backend := os.Getenv("GDK_BACKEND")
+	return backend == "" || strings.HasPrefix(backend, "wayland")
+}
+
+// nvidiaDriverLoaded reports whether the NVIDIA proprietary kernel driver
+// is loaded. Nouveau does not create /proc/driver/nvidia.
+func nvidiaDriverLoaded() bool {
+	_, err := os.Stat("/proc/driver/nvidia/version")
+	return err == nil
+}
+
 // appIcon is the master PNG used as the window/taskbar icon on Linux at
 // runtime. On Windows the icon is supplied by build/windows/icon.ico (which
 // wails embeds into the .exe via rsrc) and on macOS wails auto-generates
@@ -88,8 +106,21 @@ func main() {
 		// compositor share GPU buffers with the host display server
 		// without an intermediate copy. Skip if the user already
 		// chose a value.
-		if _, ok := os.LookupEnv("WEBKIT_FORCE_DMABUF_RENDERER"); !ok {
-			os.Setenv("WEBKIT_FORCE_DMABUF_RENDERER", "1")
+		//
+		// The exception is Wayland on the NVIDIA proprietary driver:
+		// there the DMA-BUF renderer dies with "Error 71 (Protocol
+		// error) dispatching to Wayland display" right after the
+		// window maps (reproduced 2026-10 on Hyprland + RTX 4090 +
+		// WebKitGTK 2.54.1, with or without the force flag), so turn
+		// it off and let WebKit fall back to its shared-memory path.
+		_, forceSet := os.LookupEnv("WEBKIT_FORCE_DMABUF_RENDERER")
+		_, disableSet := os.LookupEnv("WEBKIT_DISABLE_DMABUF_RENDERER")
+		if !forceSet && !disableSet {
+			if isWayland() && nvidiaDriverLoaded() {
+				os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
+			} else {
+				os.Setenv("WEBKIT_FORCE_DMABUF_RENDERER", "1")
+			}
 		}
 		// Skip the complex-text shaper for plain Latin glyphs. Tiny
 		// per-frame win, but free.
