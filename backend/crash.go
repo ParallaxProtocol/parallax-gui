@@ -22,8 +22,9 @@ var (
 // crash-<unix>.log and invokes onCrash with the file path so the GUI can
 // surface a "report a bug" dialog.
 //
-// Wails has its own panic boundary inside the webview thread; this is the
-// catch-all for the goroutine that hosts the embedded node.
+// The Electron shell reports the backend process dying on its own; this is
+// the catch-all that writes down why, for the goroutine that hosts the
+// embedded node.
 func InstallCrashHandler(onCrash func(reportPath string)) {
 	crashOnce.Do(func() {
 		crashAlert = onCrash

@@ -7,8 +7,8 @@ package backend
 var GUIVersion = "0.1.0"
 
 // GUIConfig is the persisted configuration that the wizard / settings screens
-// edit. It is intentionally a flat struct so that Wails can serialise it to
-// JSON without surprises.
+// edit. It is intentionally a flat struct so that it serialises to JSON
+// without surprises.
 type GUIConfig struct {
 	Bootstrapped   bool   `json:"bootstrapped"`
 	DataDir        string `json:"dataDir"`
@@ -82,7 +82,7 @@ type NodeStatus struct {
 	RPCEndpoint   string `json:"rpcEndpoint"` // empty if HTTP-RPC disabled
 }
 
-// NodeEvent is broadcast over the "node" Wails event channel.
+// NodeEvent is broadcast as the "node" event.
 type NodeEvent struct {
 	Kind    string      `json:"kind"`
 	Payload interface{} `json:"payload,omitempty"`
@@ -177,8 +177,8 @@ type PoolInfo struct {
 // DeviceInfo describes one GPU detected by hashwarp --list-devices.
 type DeviceInfo struct {
 	Index  int    `json:"index"`
-	PciID  string `json:"pciId"`  // "01:00.0"
-	Type   string `json:"type"`   // "Gpu" | "Cpu" | "Acc"
+	PciID  string `json:"pciId"` // "01:00.0"
+	Type   string `json:"type"`  // "Gpu" | "Cpu" | "Acc"
 	Name   string `json:"name"`
 	Memory string `json:"memory"` // "8.00 GB"
 	CUDA   bool   `json:"cuda"`
@@ -202,7 +202,7 @@ type GPUDeviceStatus struct {
 
 // MinerStatus is the unified snapshot polled by Mining.tsx every 2s.
 type MinerStatus struct {
-	Mode    string `json:"mode"`    // "off" | "pool" | "solo"
+	Mode    string `json:"mode"` // "off" | "pool" | "solo"
 	Running bool   `json:"running"`
 
 	// Aggregate
@@ -228,7 +228,7 @@ type MinerStatus struct {
 	Error string `json:"error,omitempty"`
 }
 
-// MinerEvent is broadcast over the "miner" Wails event channel.
+// MinerEvent is broadcast as the "miner" event.
 type MinerEvent struct {
 	Kind    string      `json:"kind"` // "started" | "stopped" | "error" | "dag" | "stats"
 	Payload interface{} `json:"payload,omitempty"`
@@ -242,14 +242,14 @@ type MinerEvent struct {
 type UpdateInfo struct {
 	CurrentVersion string `json:"currentVersion"`
 	LatestVersion  string `json:"latestVersion"`
-	ReleaseURL     string `json:"releaseURL"`  // HTML URL for "View release notes"
-	AssetURL       string `json:"assetURL"`    // download URL for this OS/arch
+	ReleaseURL     string `json:"releaseURL"` // HTML URL for "View release notes"
+	AssetURL       string `json:"assetURL"`   // download URL for this OS/arch
 	AssetName      string `json:"assetName"`
-	AssetSize      int64  `json:"assetSize"`   // bytes
+	AssetSize      int64  `json:"assetSize"` // bytes
 	PublishedAt    string `json:"publishedAt"`
 }
 
-// UpdateProgress is broadcast over the "update-progress" Wails event channel.
+// UpdateProgress is broadcast as the "update-progress" event.
 type UpdateProgress struct {
 	// Step is one of:
 	//   downloading | verifying | extracting | ready | ready-manual | error

@@ -3,17 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Parallax</title>
-    <script>
-      // The last theme applied (lib/theme.ts), set before first paint so a
-      // light theme never flashes dark while the config loads.
-      try {
-        var pref = localStorage.getItem("parallax-theme") || "system";
-        if (pref === "light" || (pref === "system" && matchMedia("(prefers-color-scheme: light)").matches)) {
-          document.documentElement.dataset.theme = "light";
-        }
-      } catch (e) {}
-    </script>
+    <title>Parallax Desktop</title>
+    <script src="/boot.js"></script>
   </head>
   <body>
     <div id="root"></div>

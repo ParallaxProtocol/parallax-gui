@@ -1,9 +1,10 @@
 # Parallax Desktop
 
-A desktop node manager for the Parallax network. Built on
-[Wails v2](https://wails.io) — a Go backend embeds a full `prl.Parallax`
-node in-process and exposes it to a React frontend rendered in the
-platform's native webview. One binary, no sidecars.
+A desktop node manager for the Parallax network. A Go backend embeds a
+full `prl.Parallax` node in-process; an [Electron](https://www.electronjs.org)
+shell starts it, and shows the React frontend in Chromium, which renders
+at full frame rate on every platform (the earlier Wails build used
+WebKitGTK on Linux, which could not).
 
 ## Features
 
@@ -34,44 +35,38 @@ platform's native webview. One binary, no sidecars.
 
 ## Building
 
-The first time you build, install the Wails CLI:
+You need Go (see `go.mod`) and Node.js 22 or newer. No C toolchain or
+system libraries: the backend is pure Go and Electron brings its own
+Chromium.
+
+From the repository root:
 
 ```sh
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
+make prlx-gui           # unpacked app for this machine, in build/package/
+make prlx-gui-package   # release artifacts for this machine, in build/package/
 ```
 
-On Linux you also need GTK3 + WebKit2GTK 4.1 + pkg-config:
+`make prlx-gui` leaves a runnable app in `build/package/<os>-unpacked/`
+(e.g. `build/package/linux-unpacked/parallax-client`).
+`make prlx-gui-package` builds what a release ships: the AppImage on
+Linux, the DMG on macOS, and on Windows both the installer and the
+portable executable. Pick another platform with `GOOS`/`GOARCH`
+(`make prlx-gui-package GOOS=darwin GOARCH=arm64`); the backend
+cross-compiles anywhere, though electron-builder can only make a DMG on
+macOS.
 
-```sh
-# Arch
-sudo pacman -S --needed gtk3 webkit2gtk-4.1 pkgconf
-
-# Debian / Ubuntu
-sudo apt install libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
-```
-
-Then from the repository root:
-
-```sh
-make prlx-gui              # build for the host platform
-make prlx-gui-cross        # cross-build (best-effort, see notes below)
-make prlx-gui-package      # build + zip per GUI_TARGETS into build/package/
-```
-
-Output is in `build/bin/`. Run it with:
-
-```sh
-./build/bin/Parallax\ Client
-```
+To bundle the hashwarp GPU miner, point `HASHWARP_BIN` at its binary, or
+`HASHWARP_DIR` at a directory holding `hashwarp-<goos>-<goarch>[.exe]`.
 
 ### Development
 
 ```sh
-wails dev
+make dev
 ```
 
-`wails dev` runs Vite in watch mode and live-reloads both the Go
-bindings and the React frontend.
+`make dev` builds the backend, starts the Vite dev server for the
+frontend and runs Electron against it: frontend edits hot-reload, and
+F12 opens the developer tools. Restart it after backend changes.
 
 If you're also making changes to the core
 [parallax](https://github.com/ParallaxProtocol/parallax) module, add a
@@ -84,45 +79,21 @@ replace github.com/ParallaxProtocol/parallax => ../parallax
 
 Remove it before committing.
 
-### Build tags
-
-Two tags are applied to every Parallax Desktop build via the Makefile's
-`WAILS_TAGS` variable (default `embedfrontend webkit2_41`):
-
-- **`embedfrontend`** — switches `embed.go` (the real
-  `//go:embed all:frontend/dist`) on. Without it, the build falls back
-  to the empty `embed_stub.go`. The tag is required for any production
-  binary that needs to actually serve the UI; plain `go test ./...`
-  from CI deliberately runs without it so the package compiles cleanly
-  on a fresh checkout where `frontend/dist/` hasn't been populated yet.
-- **`webkit2_41`** — selects the modern WebKit2GTK ABI on Linux. Wails
-  2.x defaults to 4.0 but Arch and recent Debian/Ubuntu only ship 4.1.
-  Harmless on macOS / Windows.
-
-Override with `make prlx-gui WAILS_TAGS="…"` if you need different tags.
-
-### Cross-compilation notes
-
-Wails GUI cross-compilation is fragile by design — building `darwin/*`
-from a non-mac host requires `osxcross`, `windows/*` from a non-windows
-host requires `mingw-w64`, etc. `make prlx-gui-package` runs `wails build`
-once per `GUI_TARGETS` entry and continues past failures, so you'll get
-zips for whatever your local toolchain can produce.
-
-For full multi-platform releases, see the **Releases** section below — the
-release workflow uses one native runner per OS, sidestepping the
-cross-compile problem entirely.
-
 ## Releases
 
 Tagged releases are produced by `.github/workflows/release.yml`. On
 `git push` of a `v*` tag, the workflow builds the GUI on a native runner
-per OS:
+per OS with `make prlx-gui-package`:
 
-- `linux/amd64` and `linux/arm64` on Ubuntu (apt installs the GTK +
-  WebKit deps).
-- `darwin/amd64` and `darwin/arm64` on `macos-14` (Apple Silicon).
-- `windows/amd64` on `windows-latest`.
+- `linux/amd64` and `linux/arm64` on Ubuntu: AppImages.
+- `darwin/amd64` and `darwin/arm64` on `macos-14` (Apple Silicon): DMGs,
+  ad-hoc signed.
+- `windows/amd64` on `windows-latest`: an installer and a portable
+  executable.
+
+Artifact names stay as the in-app updater expects them
+(`Parallax-Client-<version>-<os>-<arch>.<ext>`), so earlier installs,
+Wails builds included, find these releases as their next update.
 
 All artifacts are combined into a single `release/` directory with a
 unified `SHA256SUMS.txt` and published as a **draft** GitHub Release.
@@ -156,7 +127,7 @@ To add a new language:
    [`frontend/src/i18n/index.tsx`](frontend/src/i18n/index.tsx) so the
    new tag is recognised by `navigator.language` and persisted in
    `localStorage`.
-5. Run `wails dev` and switch languages from **Settings → General** (or
+5. Run `make dev` and switch languages from **Settings → General** (or
    the onboarding picker) to verify the strings render and nothing
    overflows.
 
@@ -167,34 +138,44 @@ are fine for a first pass — open a PR and we'll help fill the gaps.
 
 ```
 .
-├── main.go            Wails bootstrap, window options, asset embedding.
-├── app.go             App struct bound to the frontend (every exported
-│                      method becomes a JS-callable function).
-├── embed.go           Real //go:embed of frontend/dist, gated on the
-│                      `embedfrontend` build tag.
-├── embed_stub.go      Empty embed.FS fallback for non-tagged builds
-│                      (used by `go test ./...` from CI).
+├── main.go            parallax-backend: starts the App, serves the bridge,
+│                      prints the handshake line, stops cleanly when the
+│                      shell goes away (stdin closes) or on a signal.
+├── bridge.go          Loopback HTTP bridge guarded by a random token:
+│                      POST /call runs an exported App method by name,
+│                      GET /events streams backend events (SSE).
+├── app.go             App: every exported method is callable from the
+│                      frontend under its own name.
 ├── backend/
 │   ├── config.go      GUIConfig persistence (~/.config/Parallax/gui.json).
 │   ├── node.go        NodeController: in-process node.Node + prl.Parallax
 │   │                  lifecycle, status snapshot, bootnode wiring, DNS
 │   │                  discovery defaults, RPC endpoint formatting,
 │   │                  Peers() and RecentBlocks/Transactions() walkers.
+│   ├── address.go     Watched-address balance and activity.
 │   ├── miner.go       MinerController: GPU pool mining (hashwarp) and
 │   │                  CPU solo mining, device detection, live stats.
+│   ├── updater.go     Release checks, verified downloads, installs.
 │   ├── logs.go        LogTail: GlogHandler tee'd to stderr + ring buffer
-│   │                  + live frontend emitter. Verbosity defaults to Info.
+│   │                  + batched live frontend emitter.
 │   ├── metamask.go    Tiny localhost helper HTTP server that serves a
 │   │                  Parallax-themed page calling wallet_addEthereumChain
 │   │                  in the user's default browser.
 │   ├── crash.go       Crash report writer; installs a recover() hook.
-│   └── types.go       Wails-serialisable structs shared with the frontend.
+│   └── types.go       JSON structs shared with the frontend.
+├── desktop/           The Electron shell (TypeScript).
+│   ├── src/main.ts    Starts the backend, serves the frontend on app://
+│   │                  with a Content-Security-Policy, relays calls and
+│   │                  events, restarts onto updates, single instance.
+│   ├── src/backend.ts The backend child process and its bridge client.
+│   ├── src/preload.ts window.parallax for the sandboxed renderer.
+│   └── electron-builder.yml  Packaging per platform.
 └── frontend/          React + Vite + TypeScript + Tailwind v4 + motion.
     └── src/
         ├── App.tsx           Shell: sidebar, top bar, routes and their
         │                     transitions, splash screen.
         ├── styles.css        Design tokens (dark + light) and primitives.
-        ├── lib/api.ts        Typed wrappers around the bound App methods.
+        ├── lib/api.ts        Typed wrappers around the App methods.
         ├── lib/live.tsx      One poller for node, miner and wallet status,
         │                     latest blocks and chart histories.
         ├── lib/format.ts     wei↔LAX, byte / duration / hash helpers.
@@ -212,12 +193,17 @@ are fine for a first pass — open a PR and we'll help fill the gaps.
         └── assets/           Logo mark (the logo gradient).
 ```
 
+The renderer runs sandboxed with context isolation and no Node access;
+it reaches the backend only through `window.parallax`, which the main
+process checks comes from the app's own pages. The bridge token never
+leaves the main process.
+
 ## Security defaults
 
 - **HTTP-RPC** is on by default and bound to `127.0.0.1` only. There is
   no UI option to expose it to `0.0.0.0`. Users can disable the
   endpoint entirely from Settings → Network.
-- **Inbound NAT** is on by default — Wails opens a UPnP/PMP mapping so
+- **Inbound NAT** is on by default — the node opens a UPnP/PMP mapping so
   other peers can dial in, helping the network. Users behind strict
   firewalls or who prefer outbound-only can flip the toggle in
   Settings → Network (or during first-run onboarding).

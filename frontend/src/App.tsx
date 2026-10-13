@@ -51,7 +51,14 @@ export default function App() {
         });
     };
     check();
-    api.version().then((v) => !cancelled && setVersion(v)).catch(() => {});
+    // The backend answers "Parallax Desktop 0.2.3": the sidebar shows just "v0.2.3"
+    api
+      .version()
+      .then((v) => {
+        const n = v.replace(/^Parallax Desktop\s*/, "");
+        if (!cancelled) setVersion(/^\d/.test(n) ? `v${n}` : n);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
       clearTimeout(timer);

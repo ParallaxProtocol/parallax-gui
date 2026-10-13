@@ -1,0 +1,25 @@
+{
+  "name": "parallax-client",
+  "productName": "Parallax Client",
+  "version": "0.0.0",
+  "description": "Desktop node, wallet connector and miner for the Parallax network",
+  "author": "Parallax Protocol",
+  "license": "GPL-3.0",
+  "private": true,
+  "main": "dist/main.js",
+  "desktopName": "parallax-client.desktop",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "dev": "node scripts/dev.mjs",
+    "start": "node build.mjs && electron .",
+    "dist": "node build.mjs && electron-builder"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "electron": "44.7.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.3"
+  }
+}

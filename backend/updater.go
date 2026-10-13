@@ -38,6 +38,22 @@ type Updater struct {
 	lastCheck   time.Time
 	emitter     func(UpdateProgress)
 	stopCh      chan struct{}
+	// installer is a downloaded Windows installer waiting to be run by the
+	// shell on restart.
+	installer string
+}
+
+// portableExe is the path of the Windows portable executable the app was
+// started from, which the shell passes in from electron-builder's
+// PORTABLE_EXECUTABLE_FILE; empty for an installed copy.
+func portableExe() string { return os.Getenv("PARALLAX_PORTABLE_EXE") }
+
+// PendingInstaller returns the downloaded installer the shell should run
+// on restart, or "" when the update was installed in place.
+func (u *Updater) PendingInstaller() string {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	return u.installer
 }
 
 // NewUpdater creates a new Updater.
@@ -48,7 +64,7 @@ func NewUpdater() *Updater {
 }
 
 // SetEmitter installs the callback used to stream progress events to the
-// frontend via Wails EventsEmit.
+// frontend.
 func (u *Updater) SetEmitter(fn func(UpdateProgress)) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
@@ -278,10 +294,17 @@ func (u *Updater) DownloadAndInstall(ctx context.Context) error {
 
 	// 3. Install per platform.
 	u.emit(UpdateProgress{Step: "extracting", Detail: "Installing update..."})
-	manual, err := installArtifact(tmpFile, info.AssetName)
+	manual, installer, err := installArtifact(tmpFile, info.AssetName)
 	if err != nil {
 		u.emit(UpdateProgress{Step: "error", Detail: fmt.Sprintf("Install failed: %v", err)})
 		return fmt.Errorf("install: %w", err)
+	}
+	if installer != "" {
+		// The shell runs it on restart
+		keepDownload = true
+		u.mu.Lock()
+		u.installer = installer
+		u.mu.Unlock()
 	}
 
 	if manual {
@@ -317,7 +340,12 @@ func desiredAssetName(version string) string {
 		if runtime.GOARCH != "amd64" {
 			return ""
 		}
-		return fmt.Sprintf("Parallax-Client-%s-windows-x86_64.exe", version)
+		// A portable copy updates by replacing its executable; an installed
+		// one runs the next version's installer
+		if portableExe() != "" {
+			return fmt.Sprintf("Parallax-Client-%s-windows-x86_64.exe", version)
+		}
+		return fmt.Sprintf("Parallax-Client-%s-windows-x86_64-setup.exe", version)
 	}
 	return ""
 }
@@ -452,21 +480,30 @@ func (u *Updater) verifySHA256(info *UpdateInfo, zipPath string) error {
 // installArtifact installs a downloaded release artifact for the running
 // platform. It returns manual=true when the install requires user action to
 // finish (currently: macOS DMG, where the user has to drag the .app to
-// /Applications themselves).
-func installArtifact(downloadPath, assetName string) (manual bool, err error) {
+// /Applications themselves), and the path of an installer the shell must
+// run on restart (an installed Windows copy).
+func installArtifact(downloadPath, assetName string) (manual bool, installer string, err error) {
 	switch runtime.GOOS {
 	case "windows":
+		if portableExe() == "" {
+			// Give the installer its own name, so Windows shows it as such
+			named := filepath.Join(filepath.Dir(downloadPath), assetName)
+			if err := os.Rename(downloadPath, named); err != nil {
+				return false, "", fmt.Errorf("stage installer: %w", err)
+			}
+			return false, named, nil
+		}
 		target, terr := currentBinaryPath()
 		if terr != nil {
-			return false, terr
+			return false, "", terr
 		}
-		return false, replaceFileInPlace(downloadPath, target, false)
+		return false, "", replaceFileInPlace(downloadPath, target, false)
 	case "linux":
 		target, terr := currentBinaryPath()
 		if terr != nil {
-			return false, terr
+			return false, "", terr
 		}
-		return false, replaceFileInPlace(downloadPath, target, true)
+		return false, "", replaceFileInPlace(downloadPath, target, true)
 	case "darwin":
 		// We can't safely modify the running .app bundle in place
 		// (codesigning + Gatekeeper). Open the DMG in Finder; the user
@@ -480,11 +517,11 @@ func installArtifact(downloadPath, assetName string) (manual bool, err error) {
 		}
 		cmd := exec.Command("open", downloadPath)
 		if err := cmd.Run(); err != nil {
-			return true, fmt.Errorf("open dmg: %w", err)
+			return true, "", fmt.Errorf("open dmg: %w", err)
 		}
-		return true, nil
+		return true, "", nil
 	}
-	return false, fmt.Errorf("unsupported platform %s", runtime.GOOS)
+	return false, "", fmt.Errorf("unsupported platform %s", runtime.GOOS)
 }
 
 // currentBinaryPath returns the on-disk path of the artifact that should be
@@ -501,6 +538,12 @@ func currentBinaryPath() (string, error) {
 			return abs, nil
 		}
 		return "", fmt.Errorf("not running from an AppImage ($APPIMAGE unset); auto-update is only supported for AppImage builds")
+	}
+	if runtime.GOOS == "windows" {
+		if p := portableExe(); p != "" {
+			return p, nil
+		}
+		return "", fmt.Errorf("installed copies update through the installer")
 	}
 	exe, err := os.Executable()
 	if err != nil {

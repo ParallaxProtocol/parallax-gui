@@ -6,18 +6,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
 	"time"
 
 	"github.com/ParallaxProtocol/parallax-gui/backend"
-	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/ParallaxProtocol/parallax/v2/logging"
 )
 
-// App is the root struct bound to the Wails frontend. Every exported method
-// becomes a JS-callable function under window.go.main.App.*
+// App is what the frontend talks to. Every exported method is callable
+// through the bridge (bridge.go) under its own name, as api.ts does.
 type App struct {
-	ctx context.Context
+	ctx    context.Context
+	events *hub
 
 	cfg      *backend.ConfigStore
 	logs     *backend.LogTail
@@ -27,11 +26,10 @@ type App struct {
 	updater  *backend.Updater
 }
 
-// NewApp constructs the App. The heavy lifting (loading config, attaching the
-// log handler) happens in startup so that early errors can be surfaced to the
-// frontend instead of crashing the binary.
-func NewApp() *App {
-	return &App{}
+// NewApp constructs the App, emitting its events through events. The heavy
+// lifting (loading config, attaching the log handler) happens in startup.
+func NewApp(events *hub) *App {
+	return &App{events: events}
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -41,22 +39,22 @@ func (a *App) startup(ctx context.Context) {
 	a.logs = backend.NewLogTail(2048)
 	a.logs.Install()
 	a.logs.SetEmitter(func(lines []backend.LogLine) {
-		wruntime.EventsEmit(ctx, "logs", lines)
+		a.events.emit("logs", lines)
 	})
 
 	backend.InstallCrashHandler(func(reportPath string) {
-		wruntime.EventsEmit(ctx, "crash", reportPath)
+		a.events.emit("crash", reportPath)
 	})
 
 	cfg, err := backend.LoadConfigStore("")
 	if err != nil {
-		wruntime.LogErrorf(ctx, "load config: %v", err)
+		logging.Error("Failed to load config", "err", err)
 	}
 	a.cfg = cfg
 
 	a.node = backend.NewNodeController(cfg)
 	a.node.SetEmitter(func(evt backend.NodeEvent) {
-		wruntime.EventsEmit(ctx, "node", evt)
+		a.events.emit("node", evt)
 	})
 
 	// Tiny localhost helper that serves a one-click "Add to MetaMask"
@@ -64,19 +62,19 @@ func (a *App) startup(ctx context.Context) {
 	// stable across navigations.
 	a.metamask = backend.NewMetaMaskHelper(cfg)
 	if err := a.metamask.Start(); err != nil {
-		wruntime.LogErrorf(ctx, "metamask helper: %v", err)
+		logging.Error("Failed to start the MetaMask helper", "err", err)
 	}
 
 	a.miner = backend.NewMinerController(cfg, a.node)
 	a.miner.SetEmitter(func(evt backend.MinerEvent) {
-		wruntime.EventsEmit(ctx, "miner", evt)
+		a.events.emit("miner", evt)
 	})
 
 	// Auto-updater: check for new releases on startup and periodically.
 	backend.CleanupOldBinary()
 	a.updater = backend.NewUpdater()
 	a.updater.SetEmitter(func(p backend.UpdateProgress) {
-		wruntime.EventsEmit(ctx, "update-progress", p)
+		a.events.emit("update-progress", p)
 	})
 	a.updater.StartPeriodicCheck(30 * time.Minute)
 }
@@ -167,16 +165,16 @@ func (a *App) SetLogVerbosity(level int) { a.logs.SetVerbosity(level) }
 // Mining
 // ---------------------------------------------------------------------------
 
-func (a *App) StartMining(mode string) error              { return a.miner.Start(a.ctx, mode) }
-func (a *App) StopMining() error                          { return a.miner.Stop() }
-func (a *App) MinerStatus() backend.MinerStatus           { return a.miner.Status() }
-func (a *App) DetectGPUs() ([]backend.DeviceInfo, error)  { return a.miner.DetectGPUs() }
-func (a *App) DefaultPools() []backend.PoolInfo           { return a.miner.DefaultPools() }
-func (a *App) HashwarpInstalled() bool                    { return a.miner.HashwarpInstalled() }
-func (a *App) AddDefenderExclusion() error                { return a.miner.AddDefenderExclusion() }
+func (a *App) StartMining(mode string) error             { return a.miner.Start(a.ctx, mode) }
+func (a *App) StopMining() error                         { return a.miner.Stop() }
+func (a *App) MinerStatus() backend.MinerStatus          { return a.miner.Status() }
+func (a *App) DetectGPUs() ([]backend.DeviceInfo, error) { return a.miner.DetectGPUs() }
+func (a *App) DefaultPools() []backend.PoolInfo          { return a.miner.DefaultPools() }
+func (a *App) HashwarpInstalled() bool                   { return a.miner.HashwarpInstalled() }
+func (a *App) AddDefenderExclusion() error               { return a.miner.AddDefenderExclusion() }
 func (a *App) InstallHashwarp(gpuType string) error {
 	return a.miner.InstallHashwarp(gpuType, func(step, detail string) {
-		wruntime.EventsEmit(a.ctx, "hashwarp-install", map[string]string{
+		a.events.emit("hashwarp-install", map[string]string{
 			"step":   step,
 			"detail": detail,
 		})
@@ -222,23 +220,11 @@ func (a *App) DismissUpdate() {
 	a.updater.Dismiss()
 }
 
-// RestartApp launches the updated binary as a new process and then quits the
-// current instance, giving the user a seamless restart experience. On Linux
-// we relaunch via $APPIMAGE (set by the AppImage runtime) so the freshly
-// installed AppImage runs instead of the stale binary still mapped inside
-// the previous FUSE mount.
+// RestartApp asks the shell to restart the app, onto the update just
+// installed: it relaunches the app (the AppImage on Linux), or on Windows
+// runs the downloaded installer, which starts the app again when done.
 func (a *App) RestartApp() {
-	target := ""
-	if appimg := os.Getenv("APPIMAGE"); appimg != "" {
-		target = appimg
-	} else if exe, err := os.Executable(); err == nil {
-		target = exe
-	}
-	if target != "" {
-		cmd := exec.Command(target, os.Args[1:]...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Start()
-	}
-	wruntime.Quit(a.ctx)
+	a.events.emit("app:restart", map[string]string{
+		"installer": a.updater.PendingInstaller(),
+	})
 }

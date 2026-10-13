@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { Pause, Play, Search } from "lucide-react";
-import { api, LogLine } from "../../lib/api";
+import { api, LogLine, onEvent } from "../../lib/api";
 import { useT } from "../../i18n";
 import { Indicator } from "../../components/ui/Indicator";
 import { CopyButton } from "../../components/ui/bits";
@@ -40,10 +40,7 @@ export default function LogsPanel() {
         return next.length > KEEP ? next.slice(next.length - KEEP) : next;
       });
     api.getLogTail(500).then(add).catch(() => {});
-    const off = window.runtime?.EventsOn?.("logs", add);
-    return () => {
-      if (typeof off === "function") off();
-    };
+    return onEvent<LogLine[]>("logs", add);
   }, []);
 
   useEffect(() => {

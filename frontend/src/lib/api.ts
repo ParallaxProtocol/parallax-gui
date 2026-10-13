@@ -1,36 +1,38 @@
-// Typed wrapper around the Wails-bound App methods exposed by the Go backend.
-//
-// We deliberately do not import from `wailsjs/go/main/App` (the file Wails
-// generates) so that the frontend can be type-checked before the Go bindings
-// have been generated. The runtime call still resolves through the same
-// window.go.main.App injection point.
+// Typed wrapper around the backend's App methods (app.go), which the
+// Electron shell's preload script (desktop/src/preload.ts) exposes as
+// window.parallax.
 
 declare global {
   interface Window {
-    go: any;
-    runtime: {
-      EventsOn: (event: string, cb: (data: any) => void) => () => void;
-      EventsOff: (event: string) => void;
-      BrowserOpenURL: (url: string) => void;
+    parallax?: {
+      call: (method: string, args: unknown[]) => Promise<unknown>;
+      on: (event: string, cb: (data: any) => void) => () => void;
+      openExternal: (url: string) => Promise<void>;
+      setTheme: (pref: "system" | "light" | "dark") => void;
+      platform: string;
     };
   }
 }
 
-/** Open a URL in the user's default browser via the Wails runtime. */
+/** Open a URL in the user's default browser. */
 export function openExternal(url: string) {
-  if (window.runtime?.BrowserOpenURL) {
-    window.runtime.BrowserOpenURL(url);
-  } else {
-    window.open(url, "_blank", "noreferrer");
-  }
+  if (window.parallax) window.parallax.openExternal(url);
+  else window.open(url, "_blank", "noreferrer");
+}
+
+/**
+ * onEvent subscribes to a backend event (logs, update-progress,
+ * hashwarp-install…) and returns the unsubscribe function.
+ */
+export function onEvent<T = any>(event: string, cb: (data: T) => void): () => void {
+  return window.parallax ? window.parallax.on(event, cb) : () => {};
 }
 
 const call = <T = any>(method: string, ...args: any[]): Promise<T> => {
-  const fn = window?.go?.main?.App?.[method];
-  if (typeof fn !== "function") {
+  if (!window.parallax) {
     return Promise.reject(new Error(`backend method ${method} unavailable`));
   }
-  return fn(...args);
+  return window.parallax.call(method, args) as Promise<T>;
 };
 
 export type GUIConfig = {

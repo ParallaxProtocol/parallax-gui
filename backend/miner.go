@@ -68,7 +68,7 @@ func NewMinerController(cfg *ConfigStore, node *NodeController) *MinerController
 	}
 }
 
-// SetEmitter installs the Wails event callback.
+// SetEmitter installs the callback that sends miner events to the frontend.
 func (m *MinerController) SetEmitter(fn func(MinerEvent)) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

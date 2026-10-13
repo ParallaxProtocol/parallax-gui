@@ -19,6 +19,8 @@ function set(light: boolean) {
  * follows the OS theme, including later switches.
  */
 export function applyTheme(pref: ThemePref) {
+  // Native surfaces (title bar, scrollbars, menus) follow it too
+  window.parallax?.setTheme(pref);
   try {
     localStorage.setItem(STORAGE_KEY, pref);
   } catch {

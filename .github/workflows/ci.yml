@@ -42,3 +42,22 @@ jobs:
         env:
           GOPRIVATE: github.com/ParallaxProtocol/*
         run: go vet ./...
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm ci && npm run build
+
+      - name: Type-check the Electron shell
+        working-directory: desktop
+        run: npm ci && npm run typecheck && npm run build

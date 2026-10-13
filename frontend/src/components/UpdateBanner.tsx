@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Download, X } from "lucide-react";
-import { api, openExternal } from "../lib/api";
+import { api, onEvent, openExternal } from "../lib/api";
 import type { UpdateInfo, UpdateProgress } from "../lib/api";
 import { SPRING } from "../lib/motion";
 import { useT } from "../i18n";
@@ -50,8 +50,7 @@ export default function UpdateBanner() {
   }, []);
 
   useEffect(() => {
-    if (!window.runtime?.EventsOn) return;
-    return window.runtime.EventsOn("update-progress", (p: UpdateProgress) => {
+    return onEvent<UpdateProgress>("update-progress", (p) => {
       const info = infoRef.current;
       if (!info) return;
       switch (p.step) {

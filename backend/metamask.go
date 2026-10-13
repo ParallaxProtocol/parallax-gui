@@ -17,10 +17,10 @@ import (
 // The page it serves is a Parallax-themed "Add to MetaMask" landing page
 // that fires `wallet_addEthereumChain` against the user's local node.
 //
-// We can't drive MetaMask from inside the Wails webview because the
+// We can't drive MetaMask from inside the app's window because the
 // extension only exposes window.ethereum on pages it has injected. By
 // asking the OS to open this URL in the user's default browser
-// (window.runtime.BrowserOpenURL on the frontend) we land on a page where
+// (openExternal on the frontend) we land on a page where
 // MetaMask *is* available, and a single click adds the network.
 type MetaMaskHelper struct {
 	cfg *ConfigStore

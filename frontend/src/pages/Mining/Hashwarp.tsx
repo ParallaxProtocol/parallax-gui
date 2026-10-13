@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, Download, Loader2, ShieldAlert } from "lucide-react";
-import { api } from "../../lib/api";
+import { api, onEvent } from "../../lib/api";
 import { SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
 import { Label, Plate } from "../../components/ui/Plate";
@@ -34,7 +34,7 @@ export default function HashwarpSetup({
   const avBlockedRef = useRef(false);
 
   useEffect(() => {
-    const off = window.runtime?.EventsOn?.("hashwarp-install", (data: { step: string; detail: string }) => {
+    return onEvent<{ step: string; detail: string }>("hashwarp-install", (data) => {
       if (data.step === "av-blocked") {
         avBlockedRef.current = true;
         setAvBlocked(true);
@@ -55,9 +55,6 @@ export default function HashwarpSetup({
       );
       if (data.step === "done") setDone(true);
     });
-    return () => {
-      if (typeof off === "function") off();
-    };
   }, [setAvBlocked, t]);
 
   const install = async (gpuType: "cuda" | "opencl") => {
