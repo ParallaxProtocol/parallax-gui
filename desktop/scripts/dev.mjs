@@ -10,6 +10,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..", "..");
 const desktop = path.join(root, "desktop");
 const PORT = 5173;
+// Both sides on IPv4 loopback: Vite's default "localhost" may bind only
+// ::1, where the wait below (and Electron's URL) would never reach it
+const HOST = "127.0.0.1";
 const win = process.platform === "win32";
 
 const run = (cmd, args, opts) => {
@@ -22,7 +25,7 @@ const bin = path.join(root, "build", "backend", `${os}-${process.arch}`, win ? "
 run("go", ["build", "-o", bin, "."], { cwd: root });
 run("node", ["build.mjs"], { cwd: desktop });
 
-const vite = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], {
+const vite = spawn("npx", ["vite", "--host", HOST, "--port", String(PORT), "--strictPort"], {
   cwd: path.join(root, "frontend"),
   stdio: "inherit",
   shell: win,
@@ -30,7 +33,7 @@ const vite = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], {
 
 const listening = () =>
   new Promise((resolve) => {
-    const s = net.connect(PORT, "127.0.0.1", () => {
+    const s = net.connect(PORT, HOST, () => {
       s.end();
       resolve(true);
     });
@@ -42,7 +45,7 @@ const electron = spawn("npx", ["electron", "."], {
   cwd: desktop,
   stdio: "inherit",
   shell: win,
-  env: { ...process.env, PARALLAX_DEV_URL: `http://localhost:${PORT}`, PARALLAX_BACKEND_BIN: bin },
+  env: { ...process.env, PARALLAX_DEV_URL: `http://${HOST}:${PORT}`, PARALLAX_BACKEND_BIN: bin },
 });
 electron.on("exit", (code) => {
   vite.kill();
