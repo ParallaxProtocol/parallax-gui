@@ -4,7 +4,7 @@ import { Check, Download, Loader2, ShieldAlert } from "lucide-react";
 import { api, onEvent } from "../../lib/api";
 import { SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
-import { Label, Plate } from "../../components/ui/Plate";
+import { Panel } from "../../components/ui/Panel";
 import { Meter, Notice } from "../../components/ui/bits";
 
 /**
@@ -96,7 +96,7 @@ export default function HashwarpSetup({
   const view = avBlocked ? "av" : installing ? "installing" : "pick";
 
   return (
-    <Plate tone={avBlocked ? "critical" : null} className="p-6">
+    <Panel tone={avBlocked ? "critical" : null} className="p-4">
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={view}
@@ -104,36 +104,35 @@ export default function HashwarpSetup({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={SPRING}
-          className="flex flex-col gap-5"
+          className="flex flex-col gap-4"
         >
           {view === "av" && (
             <>
               <div className="flex items-start gap-3">
                 <ShieldAlert className="mt-0.5 size-5 shrink-0 text-critical-ink" />
                 <div>
-                  <Label className="text-critical-ink">{t("hashwarp.av.eyebrow")}</Label>
-                  <p className="mt-1 text-lg font-medium">{t("hashwarp.av.title")}</p>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="text-lg font-semibold">{t("hashwarp.av.title")}</p>
+                  <p className="mt-1 text-muted-foreground">
                     {t("hashwarp.av.desc1")}{" "}
                     <strong className="text-foreground">{t("hashwarp.av.falsePositive")}</strong>{" "}
                     {t("hashwarp.av.desc2")}
                   </p>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="flex flex-col gap-3 rounded-md border border-brand/40 bg-brand-muted/40 p-4">
-                  <div className="text-sm font-medium">{t("hashwarp.av.autoTitle")}</div>
-                  <p className="text-xs text-muted-foreground">{t("hashwarp.av.autoDesc")}</p>
-                  <div className="mt-auto">
-                    <button className="btn btn-primary btn-sm" onClick={fixAndRetry} disabled={fixingAv}>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="flex flex-col gap-2 rounded-md border border-border bg-background p-3">
+                  <div className="font-medium">{t("hashwarp.av.autoTitle")}</div>
+                  <p className="text-sm text-muted-foreground">{t("hashwarp.av.autoDesc")}</p>
+                  <div className="mt-auto pt-1">
+                    <button className="btn btn-primary" onClick={fixAndRetry} disabled={fixingAv}>
                       {fixingAv && <Loader2 className="size-3.5 animate-spin" />}
                       {fixingAv ? t("hashwarp.av.adding") : t("hashwarp.av.addAndRetry")}
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-3 rounded-md border border-border bg-background p-4">
-                  <div className="text-sm font-medium">{t("hashwarp.av.manualTitle")}</div>
-                  <ol className="list-inside list-decimal space-y-1.5 text-xs text-muted-foreground">
+                <div className="flex flex-col gap-2 rounded-md border border-border bg-background p-3">
+                  <div className="font-medium">{t("hashwarp.av.manualTitle")}</div>
+                  <ol className="list-inside list-decimal space-y-1 text-sm text-muted-foreground">
                     <li>
                       {t("hashwarp.av.step1a")} <strong className="text-foreground">{t("hashwarp.av.step1b")}</strong>{" "}
                       {t("hashwarp.av.step1c")}
@@ -153,9 +152,9 @@ export default function HashwarpSetup({
                     </li>
                     <li>{t("hashwarp.av.step5")}</li>
                   </ol>
-                  <div className="mt-auto">
+                  <div className="mt-auto pt-1">
                     <button
-                      className="btn btn-secondary btn-sm"
+                      className="btn btn-secondary"
                       onClick={() => {
                         setAvBlocked(false);
                         if (pendingGpu) install(pendingGpu);
@@ -168,7 +167,7 @@ export default function HashwarpSetup({
               </div>
               <div>
                 <button
-                  className="btn btn-ghost btn-sm"
+                  className="btn btn-ghost"
                   onClick={() => {
                     setAvBlocked(false);
                     setInstalling(false);
@@ -183,23 +182,22 @@ export default function HashwarpSetup({
 
           {view === "installing" && (
             <>
-              <Label>{t("hashwarp.installing.eyebrow")}</Label>
               <div className="flex items-center gap-3">
                 {done ? (
-                  <span className="brand-gradient grid size-6 place-items-center rounded-full text-brand-foreground">
-                    <Check className="size-3.5" strokeWidth={3} />
+                  <span className="grid size-5 place-items-center rounded-full bg-brand-fill text-brand-foreground">
+                    <Check className="size-3" strokeWidth={3} />
                   </span>
                 ) : installErr ? null : (
-                  <Loader2 className="size-5 animate-spin text-brand" />
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
                 )}
-                <span className="text-sm">{step}</span>
+                <span>{step}</span>
               </div>
               {!done && !installErr && <Meter />}
               {installErr && (
                 <>
                   <Notice tone="critical">{installErr}</Notice>
                   <div>
-                    <button className="btn btn-secondary btn-sm" onClick={() => setInstalling(false)}>
+                    <button className="btn btn-secondary" onClick={() => setInstalling(false)}>
                       {t("hashwarp.installing.back")}
                     </button>
                   </div>
@@ -211,16 +209,15 @@ export default function HashwarpSetup({
           {view === "pick" && (
             <>
               <div>
-                <Label>{t("hashwarp.setup.eyebrow")}</Label>
-                <p className="mt-1 text-lg font-medium">{t("hashwarp.setup.title")}</p>
-                <p className="mt-2 text-sm text-muted-foreground">{t("hashwarp.setup.desc")}</p>
+                <p className="text-lg font-semibold">{t("hashwarp.setup.title")}</p>
+                <p className="mt-1 text-muted-foreground">{t("hashwarp.setup.desc")}</p>
               </div>
               {isWindows && (
                 <Notice tone="info">
                   <strong>{t("hashwarp.setup.winNoteBold")}</strong> {t("hashwarp.setup.winNote")}
                 </Notice>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <GpuCard
                   brand="NVIDIA"
                   series={t("hashwarp.setup.nvidiaSeries")}
@@ -234,13 +231,13 @@ export default function HashwarpSetup({
                   onClick={() => install("opencl")}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {isWindows ? (
                   t("hashwarp.setup.winHint")
                 ) : (
                   <>
                     {t("hashwarp.setup.linuxHintA")}{" "}
-                    <code className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-foreground">lspci | grep -i vga</code>{" "}
+                    <code className="rounded-sm bg-muted px-1 py-px font-mono text-foreground">lspci | grep -i vga</code>{" "}
                     {t("hashwarp.setup.linuxHintB")}
                   </>
                 )}
@@ -249,7 +246,7 @@ export default function HashwarpSetup({
           )}
         </motion.div>
       </AnimatePresence>
-    </Plate>
+    </Panel>
   );
 }
 
@@ -258,11 +255,11 @@ function GpuCard({ brand, series, cta, onClick }: { brand: string; series: strin
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex flex-col items-start gap-1 rounded-md border border-border bg-background p-5 text-left transition-colors hover:border-brand/50"
+      className="flex flex-col items-start gap-0.5 rounded-md border border-border bg-background p-3 text-left transition-colors hover:border-border-strong hover:bg-hover"
     >
-      <span className="text-base font-semibold tracking-tight">{brand}</span>
-      <span className="text-xs text-muted-foreground">{series}</span>
-      <span className="mt-3 inline-flex items-center gap-1.5 text-xs text-brand transition-[gap] group-hover:gap-2.5">
+      <span className="font-semibold">{brand}</span>
+      <span className="text-sm text-muted-foreground">{series}</span>
+      <span className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-brand">
         <Download className="size-3.5" />
         {cta}
       </span>

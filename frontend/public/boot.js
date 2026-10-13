@@ -8,3 +8,9 @@ try {
     document.documentElement.dataset.theme = "light";
   }
 } catch (e) {}
+
+// The platform, for the window chrome: macOS keeps room for its traffic
+// lights at the sidebar's top left (see createWindow in desktop/src/main.ts)
+try {
+  document.documentElement.dataset.platform = (window.parallax && window.parallax.platform) || "web";
+} catch (e) {}

@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Eye, Pencil, Pickaxe } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Pencil, Pickaxe } from "lucide-react";
 import { api, AddressView } from "../../lib/api";
 import { formatInt, formatLax, isAddress, sameAddress, shortHex } from "../../lib/format";
 import { useNode } from "../../lib/live";
 import { useNow } from "../../lib/useNow";
 import { useAgo, useT } from "../../i18n";
-import { Label, Plate } from "../../components/ui/Plate";
-import { Rolling } from "../../components/ui/Rolling";
-import { Tile } from "../../components/ui/Tile";
+import { Panel, Section, Stat, StatStrip } from "../../components/ui/Panel";
 import { CopyButton, Notice } from "../../components/ui/bits";
 
 type Activity =
@@ -20,7 +18,7 @@ type Activity =
  * the last week of blocks. Nothing leaves the machine: it all comes from
  * the node's own chain.
  */
-export default function Watched() {
+export default function Watched({ title }: { title: string }) {
   const t = useT();
   const ago = useAgo();
   const now = useNow(5000);
@@ -99,15 +97,11 @@ export default function Watched() {
 
   if (editing) {
     return (
-      <Plate className="p-6">
-        <div className="flex max-w-2xl flex-col gap-3">
-          <span className="flex items-center gap-2">
-            <Eye className="size-4 text-brand" />
-            <Label>{t("wallet.watch.title")}</Label>
-          </span>
-          <p className="text-sm text-muted-foreground">{t("wallet.watch.desc")}</p>
+      <Section title={title}>
+        <Panel className="flex flex-col gap-3 p-4">
+          <p className="max-w-2xl text-muted-foreground">{t("wallet.watch.desc")}</p>
           <form
-            className="mt-1 flex gap-2"
+            className="flex max-w-2xl gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               save();
@@ -120,14 +114,12 @@ export default function Watched() {
               onChange={(e) => setDraft(e.target.value)}
               spellCheck={false}
               autoFocus
+              aria-label={t("wallet.watch.title")}
             />
-            <button type="submit" className="btn btn-primary" disabled={!isAddress(draft)}>
-              {t("wallet.watch.cta")}
-            </button>
             {address && (
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-secondary"
                 onClick={() => {
                   setDraft(address);
                   setEditing(false);
@@ -136,110 +128,104 @@ export default function Watched() {
                 {t("common.cancel")}
               </button>
             )}
+            <button type="submit" className="btn btn-primary" disabled={!isAddress(draft)}>
+              {t("wallet.watch.cta")}
+            </button>
           </form>
-          {draft && !isAddress(draft) && (
-            <span className="text-xs text-critical-ink">{t("wallet.watch.invalid")}</span>
-          )}
-        </div>
-      </Plate>
+          {draft && !isAddress(draft) && <span className="text-sm text-critical-ink">{t("wallet.watch.invalid")}</span>}
+        </Panel>
+      </Section>
     );
   }
 
   const balanceKnown = !!view?.balanceWei;
 
   return (
-    <div className="flex flex-col gap-4">
+    <Section
+      title={title}
+      aside={
+        <>
+          <span className="font-mono" title={address}>
+            {shortHex(address, 10, 8)}
+          </span>
+          <CopyButton value={address} />
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm btn-icon"
+            onClick={() => setEditing(true)}
+            aria-label={t("wallet.watch.change")}
+            title={t("wallet.watch.change")}
+          >
+            <Pencil className="size-3.5" />
+          </button>
+        </>
+      }
+    >
       {!running && <Notice tone="info">{t("wallet.watch.nodeOff")}</Notice>}
       {err && <Notice tone="critical">{err}</Notice>}
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr]">
-        <Plate className="flex flex-col gap-4 p-6">
-          <div className="flex items-center justify-between gap-3">
-            <Label>{t("wallet.balance")}</Label>
-            <span className="flex min-w-0 items-center gap-1">
-              <span className="truncate font-mono text-xs text-muted-foreground" title={address}>
-                {shortHex(address, 10, 8)}
-              </span>
-              <CopyButton value={address} compact className="-my-1" />
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm -my-1 px-2"
-                onClick={() => setEditing(true)}
-                aria-label={t("wallet.watch.change")}
-                title={t("wallet.watch.change")}
-              >
-                <Pencil className="size-3.5" />
-              </button>
-            </span>
-          </div>
-          <div className="text-5xl font-semibold tracking-tight tabular-nums">
-            {balanceKnown ? <Rolling value={formatLax(view!.balanceWei, 4)} /> : <span className="text-muted-foreground">—</span>}
-            <span className="ml-2 text-xl font-normal text-muted-foreground">LAX</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {!view
+      <StatStrip columns="2fr 1fr 1fr">
+        <Stat
+          label={t("wallet.balance")}
+          value={balanceKnown ? formatLax(view!.balanceWei, 4) : "—"}
+          unit="LAX"
+          detail={
+            !view
               ? "…"
               : balanceKnown
                 ? t("wallet.balanceAt", { block: formatInt(view.headBlock) })
-                : t("wallet.balanceSyncing")}
-          </p>
-        </Plate>
-        <Tile
+                : t("wallet.balanceSyncing")
+          }
+        />
+        <Stat
           label={t("wallet.mined")}
-          readout={t("wallet.window")}
           value={view ? formatInt(view.blocksMined) : "—"}
-          qualifier={view ? t("wallet.minedReward", { lax: formatLax(view.minedWei, 2) }) : undefined}
+          detail={view ? t("wallet.minedReward", { lax: formatLax(view.minedWei, 2) }) : t("wallet.window")}
         />
-        <Tile
-          label={t("wallet.sent")}
-          readout={t("wallet.allTime")}
-          value={view ? formatInt(view.nonce) : "—"}
-          qualifier={t("wallet.sentDesc")}
-        />
-      </div>
+        <Stat label={t("wallet.sent")} value={view ? formatInt(view.nonce) : "—"} detail={t("wallet.sentDesc")} />
+      </StatStrip>
 
-      <Plate className="px-5 py-4">
-        <div className="mb-2 flex items-baseline justify-between">
-          <Label>{t("wallet.activity")}</Label>
-          {view && (
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {t("wallet.activityWindow", { from: formatInt(view.scannedFrom) })}
-            </span>
-          )}
-        </div>
+      <div className="mt-3 flex min-h-6 items-center justify-between gap-4 px-1">
+        <h3 className="text-sm font-semibold text-muted-foreground">{t("wallet.activity")}</h3>
+        {view && (
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {t("wallet.activityWindow", { from: formatInt(view.scannedFrom) })}
+          </span>
+        )}
+      </div>
+      <Panel className="overflow-hidden">
         {activity.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            {view ? t("wallet.activityEmpty") : "…"}
-          </p>
+          <p className="py-10 text-center text-muted-foreground">{view ? t("wallet.activityEmpty") : "…"}</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul>
             {activity.map((a) => (
-                <li key={`${a.kind}-${a.hash}`} className="rise flex items-center gap-4 py-3">
-                  <ActivityIcon kind={a.kind} />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm">{t(`wallet.kind.${a.kind}`)}</div>
-                    <div className="truncate font-mono text-[11px] text-muted-foreground">
-                      #{formatInt(a.block)}
-                      {a.kind !== "mined" && a.other && ` · ${shortHex(a.other, 8, 6)}`}
-                    </div>
+              <li key={`${a.kind}-${a.hash}`} className="flex h-11 items-center gap-3 px-4 even:bg-muted/40">
+                <ActivityIcon kind={a.kind} />
+                <div className="min-w-0 flex-1">
+                  <div>{t(`wallet.kind.${a.kind}`)}</div>
+                  <div className="truncate text-sm text-muted-foreground tabular-nums">
+                    {t("wallet.inBlock", { block: formatInt(a.block) })}
+                    {a.kind !== "mined" && a.other && (
+                      <>
+                        {" · "}
+                        <span className="font-mono">{shortHex(a.other, 8, 6)}</span>
+                      </>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <div
-                      className={`font-mono text-sm tabular-nums ${
-                        a.kind === "out" ? "" : "text-good-ink"
-                      }`}
-                    >
-                      {a.kind === "out" ? "−" : "+"}
-                      {formatLax(a.amountWei, 4)} LAX
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">{ago(a.time, now)}</div>
+                </div>
+                <div className="text-right tabular-nums">
+                  <div className={a.kind === "out" ? "" : "text-good-ink"}>
+                    {a.kind === "out" ? "−" : "+"}
+                    {formatLax(a.amountWei, 4)} LAX
                   </div>
-                </li>
-              ))}
+                  <div className="text-sm text-muted-foreground">{ago(a.time, now)}</div>
+                </div>
+              </li>
+            ))}
           </ul>
         )}
-      </Plate>
-    </div>
+      </Panel>
+    </Section>
   );
 }
 
@@ -247,15 +233,11 @@ function ActivityIcon({ kind }: { kind: Activity["kind"] }) {
   const Icon = kind === "in" ? ArrowDownLeft : kind === "out" ? ArrowUpRight : Pickaxe;
   return (
     <span
-      className={`grid size-9 shrink-0 place-items-center rounded-full border ${
-        kind === "mined"
-          ? "border-transparent brand-gradient text-brand-foreground"
-          : kind === "in"
-            ? "border-brand/40 text-brand"
-            : "border-border-strong text-muted-foreground"
+      className={`grid size-7 shrink-0 place-items-center rounded-full ${
+        kind === "out" ? "bg-muted text-muted-foreground" : "bg-brand-muted text-brand"
       }`}
     >
-      <Icon className="size-4" />
+      <Icon className="size-3.5" />
     </span>
   );
 }

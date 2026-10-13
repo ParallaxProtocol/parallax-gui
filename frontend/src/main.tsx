@@ -7,7 +7,6 @@ import { LanguageProvider } from "./i18n";
 // makes no third-party requests to draw its text
 import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
-import "@fontsource-variable/newsreader/opsz.css";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

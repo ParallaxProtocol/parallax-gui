@@ -89,7 +89,7 @@ export default function UpdateBanner() {
   };
 
   const Close = () => (
-    <button type="button" onClick={dismiss} className="btn btn-ghost btn-sm -mr-1 px-1.5" aria-label={t("updater.dismiss")}>
+    <button type="button" onClick={dismiss} className="btn btn-ghost btn-sm btn-icon -mr-1" aria-label={t("updater.dismiss")}>
       <X className="size-4" />
     </button>
   );
@@ -99,7 +99,7 @@ export default function UpdateBanner() {
       {state.kind !== "hidden" && (
         <motion.div
           key="update-banner"
-          className="fixed right-6 bottom-6 z-50 w-[360px] rounded-md border border-border-strong bg-surface-elevated p-4 shadow-2xl"
+          className="fixed right-4 bottom-10 z-50 w-[340px] rounded-xl border border-border-strong bg-surface-raised p-3 shadow-[0_8px_32px_rgb(0_0_0/25%)]"
           initial={{ opacity: 0, y: 24, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 24 }}
@@ -109,20 +109,20 @@ export default function UpdateBanner() {
           {state.kind === "available" && (
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-3">
-                <span className="brand-gradient grid size-8 shrink-0 place-items-center rounded-md text-brand-foreground">
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-muted text-brand">
                   <Download className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium">{t("updater.available")}</div>
-                  <div className="font-mono text-xs text-brand">v{state.info.latestVersion}</div>
+                  <div className="font-medium">{t("updater.available")}</div>
+                  <div className="text-sm text-muted-foreground">v{state.info.latestVersion}</div>
                 </div>
                 <Close />
               </div>
               <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => openExternal(state.info.releaseURL)} className="btn btn-ghost btn-sm">
+                <button type="button" onClick={() => openExternal(state.info.releaseURL)} className="btn btn-secondary">
                   {t("updater.notes")}
                 </button>
-                <button type="button" onClick={update} className="btn btn-primary btn-sm">
+                <button type="button" onClick={update} className="btn btn-primary">
                   {t("updater.update")}
                 </button>
               </div>
@@ -131,9 +131,9 @@ export default function UpdateBanner() {
 
           {state.kind === "downloading" && (
             <div className="flex flex-col gap-2.5">
-              <div className="flex items-baseline justify-between gap-3 text-sm">
+              <div className="flex items-baseline justify-between gap-3">
                 <span>{t("updater.downloading", { version: state.info.latestVersion })}</span>
-                <span className="font-mono text-xs text-muted-foreground tabular-nums">{state.percent}%</span>
+                <span className="text-sm text-muted-foreground tabular-nums">{state.percent}%</span>
               </div>
               <Meter value={state.percent / 100} />
             </div>
@@ -141,7 +141,7 @@ export default function UpdateBanner() {
 
           {(state.kind === "verifying" || state.kind === "extracting") && (
             <div className="flex flex-col gap-2.5">
-              <span className="text-sm">
+              <span>
                 {state.kind === "verifying" ? t("updater.verifying") : t("updater.installing")}
               </span>
               <Meter />
@@ -151,8 +151,8 @@ export default function UpdateBanner() {
           {state.kind === "ready" && (
             <div className="flex items-center gap-3">
               <Indicator grade="good" ping />
-              <span className="flex-1 text-sm">{t("updater.installed", { version: state.info.latestVersion })}</span>
-              <button type="button" onClick={() => api.restartApp().catch(() => {})} className="btn btn-primary btn-sm">
+              <span className="flex-1">{t("updater.installed", { version: state.info.latestVersion })}</span>
+              <button type="button" onClick={() => api.restartApp().catch(() => {})} className="btn btn-primary">
                 {t("updater.restartNow")}
               </button>
             </div>
@@ -161,7 +161,7 @@ export default function UpdateBanner() {
           {state.kind === "ready-manual" && (
             <div className="flex items-start gap-3">
               <Indicator grade="good" className="mt-1.5" />
-              <span className="flex-1 text-sm">{t("updater.dragToApplications", { version: state.info.latestVersion })}</span>
+              <span className="flex-1">{t("updater.dragToApplications", { version: state.info.latestVersion })}</span>
               <Close />
             </div>
           )}
@@ -170,7 +170,7 @@ export default function UpdateBanner() {
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-3">
                 <Indicator grade="critical" className="mt-1.5" />
-                <span className="line-clamp-3 flex-1 text-sm text-critical-ink" title={state.message}>
+                <span className="selectable line-clamp-3 flex-1 text-critical-ink" title={state.message}>
                   {state.message}
                 </span>
                 <Close />
@@ -179,7 +179,7 @@ export default function UpdateBanner() {
                 <button
                   type="button"
                   onClick={() => infoRef.current && setState({ kind: "available", info: infoRef.current })}
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-secondary"
                 >
                   {t("updater.retry")}
                 </button>

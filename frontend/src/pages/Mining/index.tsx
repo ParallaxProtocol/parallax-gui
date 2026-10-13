@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { Check, Cpu, Loader2, Network, Pencil, Play, Plus, Zap } from "lucide-react";
 import { api, DeviceInfo, GUIConfig, MiningMode, PoolInfo } from "../../lib/api";
 import { useMiner, useNode, useRefresh } from "../../lib/live";
-import { SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
-import { PageStagger } from "../../components/PageStagger";
-import { Indicator } from "../../components/ui/Indicator";
-import { Label, Plate } from "../../components/ui/Plate";
-import { SectionHeader } from "../../components/ui/SectionHeader";
+import { Panel, Rows, Section } from "../../components/ui/Panel";
 import { Notice } from "../../components/ui/bits";
 import { isAddress } from "../../lib/format";
 import HashwarpSetup from "./Hashwarp";
@@ -149,274 +144,223 @@ export default function Mining() {
   if (!miner) return null;
 
   return (
-    <PageStagger className="flex flex-col gap-10">
-      <AnimatePresence initial={false}>
-        {(err || (miner?.error && !err)) && (
-          <motion.div key="err" exit={{ opacity: 0, height: 0 }}>
-            <Notice tone="critical">{err || miner?.error}</Notice>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="flex flex-col gap-6 p-5">
+      {(err || miner.error) && <Notice tone="critical">{err || miner.error}</Notice>}
 
-      <AnimatePresence mode="wait" initial={false}>
-        {running && miner ? (
-          <motion.div
-            key="live"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={SPRING}
-          >
-            <Live status={miner} history={hashrate} onStop={stop} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="setup"
-            className="flex flex-col gap-10"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={SPRING}
-          >
-            <div className="flex flex-col gap-4">
-              <SectionHeader index={1} title={t("mining.section.mode")} />
-              <p className="max-w-3xl text-sm text-muted-foreground">{t("mining.intro")}</p>
-              <div role="radiogroup" className="grid grid-cols-3 gap-4">
-                {MODES.map(({ mode: m, icon: Icon, gpu }) => {
-                  const disabled = isMac && gpu;
-                  const here = mode === m;
-                  return (
-                    <button
-                      key={m}
-                      type="button"
-                      role="radio"
-                      aria-checked={here}
-                      disabled={disabled}
-                      title={disabled ? t("mining.mac.disabled") : undefined}
-                      onClick={() => setMode(m)}
-                      className={`group/plate relative flex flex-col items-start gap-3 rounded-md border p-5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                        here ? "border-brand/60 bg-surface-elevated" : "border-border bg-surface-elevated/60 hover:border-foreground/20"
-                      }`}
-                    >
-                      <span aria-hidden className="plate-brackets" />
-                      {here && (
-                        <motion.span
-                          layoutId="mode-current"
-                          layoutDependency={mode}
-                          transition={SPRING}
-                          className="brand-gradient-mark absolute inset-x-0 -top-px h-0.5 rounded-t-md"
-                        />
-                      )}
-                      <span
-                        className={`grid size-9 place-items-center rounded-md border transition-colors ${
-                          here ? "brand-gradient border-transparent text-brand-foreground" : "border-border-strong text-muted-foreground"
-                        }`}
-                      >
-                        <Icon className="size-4" />
-                      </span>
-                      <span className="text-sm font-medium">{t(`mining.mode.${m}`)}</span>
-                      <span className="text-xs leading-relaxed text-muted-foreground">{t(`mining.mode.${m}.desc`)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {isMac && <p className="text-xs text-muted-foreground">{t("mining.mac.help")}</p>}
+      {running ? (
+        <Live status={miner} history={hashrate} onStop={stop} />
+      ) : (
+        <>
+          <Section title={t("mining.section.mode")}>
+            <div role="radiogroup" aria-label={t("mining.section.mode")} className="grid grid-cols-3 gap-3">
+              {MODES.map(({ mode: m, icon: Icon, gpu }) => {
+                const disabled = isMac && gpu;
+                const here = mode === m;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    role="radio"
+                    aria-checked={here}
+                    disabled={disabled}
+                    title={disabled ? t("mining.mac.disabled") : undefined}
+                    onClick={() => setMode(m)}
+                    className={`flex items-start gap-3 rounded-lg border bg-surface p-3 text-left shadow-[var(--shadow-panel)] transition-colors disabled:opacity-40 ${
+                      here ? "border-brand-mark ring-1 ring-brand-mark" : "border-border hover:border-border-strong"
+                    }`}
+                  >
+                    <Icon className={`mt-px size-4 shrink-0 ${here ? "text-brand" : "text-muted-foreground"}`} />
+                    <span className="flex flex-col gap-0.5">
+                      <span className="font-medium">{t(`mining.mode.${m}`)}</span>
+                      <span className="text-sm text-muted-foreground">{t(`mining.mode.${m}.desc`)}</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+            <p className="px-1 text-sm text-muted-foreground">
+              {t("mining.intro")} {isMac && t("mining.mac.help")}
+            </p>
+          </Section>
 
-            <div className="flex flex-col gap-4">
-              <SectionHeader index={2} title={t("mining.config")} />
-              {gpuMode && hashwarpFound === null ? (
-                <Plate className="grid place-items-center p-10">
-                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
-                </Plate>
-              ) : needsHashwarp ? (
-                <HashwarpSetup onInstalled={recheckHashwarp} avBlocked={avBlocked} setAvBlocked={setAvBlocked} />
-              ) : (
-                <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-                  <Plate className="flex flex-col gap-5 p-6">
-                    <FormRow
-                      label={t("mining.wallet")}
-                      hint={wallet && !isAddress(wallet) ? <span className="text-critical-ink">{t("wallet.watch.invalid")}</span> : undefined}
-                    >
-                      <input
-                        className="input font-mono"
-                        placeholder={t("mining.ph.wallet")}
-                        value={wallet}
-                        onChange={(e) => setWallet(e.target.value)}
-                        spellCheck={false}
-                      />
-                    </FormRow>
+          <Section title={t("mining.config")}>
+            {gpuMode && hashwarpFound === null ? (
+              <Panel className="grid place-items-center p-10">
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              </Panel>
+            ) : needsHashwarp ? (
+              <HashwarpSetup onInstalled={recheckHashwarp} avBlocked={avBlocked} setAvBlocked={setAvBlocked} />
+            ) : (
+              <div className="grid items-start gap-5 lg:grid-cols-[3fr_2fr]">
+                <Rows>
+                  <FormRow
+                    label={t("mining.wallet")}
+                    hint={wallet && !isAddress(wallet) ? <span className="text-critical-ink">{t("wallet.watch.invalid")}</span> : undefined}
+                  >
+                    <input
+                      className="input font-mono"
+                      placeholder={t("mining.ph.wallet")}
+                      value={wallet}
+                      onChange={(e) => setWallet(e.target.value)}
+                      spellCheck={false}
+                    />
+                  </FormRow>
 
-                    {mode === "pool" && (
-                      <>
-                        <FormRow label={t("mining.pool")}>
-                          <div className="flex gap-2">
-                            <select className="input" value={poolUrl} onChange={(e) => setPoolUrl(e.target.value)}>
-                              {pools.map((p) => (
-                                <option key={p.url} value={p.url}>
-                                  {p.name}
-                                  {p.region ? ` (${p.region})` : ""}
-                                </option>
-                              ))}
-                            </select>
-                            {selectedPool && !selectedPool.builtin && (
-                              <button
-                                type="button"
-                                className="btn btn-secondary px-3"
-                                title={t("mining.edit")}
-                                aria-label={t("mining.edit")}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setPoolDrawer({ open: true, editing: selectedPool });
-                                }}
-                              >
-                                <Pencil className="size-4" />
-                              </button>
-                            )}
+                  {mode === "pool" && (
+                    <>
+                      <FormRow label={t("mining.pool")}>
+                        <div className="flex gap-1.5">
+                          <select className="input" value={poolUrl} onChange={(e) => setPoolUrl(e.target.value)}>
+                            {pools.map((p) => (
+                              <option key={p.url} value={p.url}>
+                                {p.name}
+                                {p.region ? ` (${p.region})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedPool && !selectedPool.builtin && (
                             <button
                               type="button"
-                              className="btn btn-secondary px-3"
-                              title={t("mining.pool.add")}
-                              aria-label={t("mining.pool.add")}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setPoolDrawer({ open: true, editing: null });
-                              }}
+                              className="btn btn-secondary btn-icon"
+                              title={t("mining.edit")}
+                              aria-label={t("mining.edit")}
+                              onClick={() => setPoolDrawer({ open: true, editing: selectedPool })}
                             >
-                              <Plus className="size-4" />
+                              <Pencil className="size-3.5" />
                             </button>
-                          </div>
-                        </FormRow>
-                        <FormRow label={t("mining.worker")}>
-                          <input
-                            className="input"
-                            placeholder={t("mining.ph.worker")}
-                            value={worker}
-                            onChange={(e) => setWorker(e.target.value)}
-                          />
-                        </FormRow>
-                      </>
-                    )}
-
-                    {gpuMode && (
-                      <div className="flex flex-col gap-2">
-                        <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                          {t("mining.gpuDevices")}
-                        </span>
-                        {gpus.length === 0 ? (
-                          <Notice tone="info">{t("mining.gpu.none")}</Notice>
-                        ) : (
-                          <div className="flex flex-col gap-2">
-                            {gpus.map((g) => {
-                              const on = devices.length === 0 || devices.includes(g.index);
-                              return (
-                                <button
-                                  key={g.index}
-                                  type="button"
-                                  role="checkbox"
-                                  aria-checked={on}
-                                  onClick={() =>
-                                    setDevices((prev) => {
-                                      // An empty list means all: make it explicit before removing one
-                                      const all = prev.length === 0 ? gpus.map((x) => x.index) : prev;
-                                      if (!all.includes(g.index)) return [...all, g.index];
-                                      const rest = all.filter((d) => d !== g.index);
-                                      // An empty list would mean all again: keep at least one
-                                      return rest.length > 0 ? rest : all;
-                                    })
-                                  }
-                                  className={`flex items-center gap-3 rounded-md border px-4 py-3 text-left transition-colors ${
-                                    on ? "border-brand/50 bg-brand-muted/30" : "border-border bg-background hover:border-foreground/20"
-                                  }`}
-                                >
-                                  <span
-                                    className={`grid size-4 shrink-0 place-items-center rounded-sm border ${
-                                      on ? "brand-gradient border-transparent text-brand-foreground" : "border-border-strong"
-                                    }`}
-                                  >
-                                    {on && <Check className="size-3" strokeWidth={3} />}
-                                  </span>
-                                  <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-sm font-medium">
-                                      GPU {g.index}: {g.name}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {g.memory}
-                                      {g.cuda && " · CUDA"}
-                                      {g.openCl && " · OpenCL"}
-                                    </span>
-                                  </span>
-                                </button>
-                              );
-                            })}
-                            {devices.length === 0 && <p className="text-xs text-muted-foreground">{t("mining.gpu.allDefault")}</p>}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {mode === "solo" && (
-                      <FormRow label={t("mining.cpuThreads")} hint={`${threads} / ${maxThreads}`}>
+                          )}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-icon"
+                            title={t("mining.pool.add")}
+                            aria-label={t("mining.pool.add")}
+                            onClick={() => setPoolDrawer({ open: true, editing: null })}
+                          >
+                            <Plus className="size-3.5" />
+                          </button>
+                        </div>
+                      </FormRow>
+                      <FormRow label={t("mining.worker")}>
                         <input
-                          type="range"
-                          className="range"
-                          min={1}
-                          max={maxThreads}
-                          value={threads}
-                          onChange={(e) => setThreads(parseInt(e.target.value, 10))}
+                          className="input"
+                          placeholder={t("mining.ph.worker")}
+                          value={worker}
+                          onChange={(e) => setWorker(e.target.value)}
                         />
                       </FormRow>
-                    )}
-                  </Plate>
+                    </>
+                  )}
 
-                  <Plate className="flex flex-col gap-4 p-6">
-                    <Label>{t("mining.checklist")}</Label>
-                    <ul className="flex flex-col gap-3 text-sm">
-                      <Check_ ok={isAddress(wallet)} label={t("mining.check.wallet")} />
-                      {mode === "pool" && <Check_ ok={!!poolUrl} label={t("mining.check.pool")} />}
-                      {gpuMode && <Check_ ok={!!hashwarpFound} label={t("mining.check.hashwarp")} />}
-                      {needsNode && (
-                        <Check_
-                          ok={nodeSynced}
-                          label={
-                            !node?.running
-                              ? t("mining.node.notRunning")
-                              : node.syncing
-                                ? t("mining.node.syncing")
-                                : t("mining.node.ready")
-                          }
-                          action={
-                            !node?.running ? (
+                  {gpuMode && (
+                    <div className="flex flex-col gap-2 px-4 py-3">
+                      <span>{t("mining.gpuDevices")}</span>
+                      {gpus.length === 0 ? (
+                        <Notice tone="info">{t("mining.gpu.none")}</Notice>
+                      ) : (
+                        <div className="flex flex-col">
+                          {gpus.map((g) => {
+                            const on = devices.length === 0 || devices.includes(g.index);
+                            return (
                               <button
+                                key={g.index}
                                 type="button"
-                                className="btn btn-secondary btn-sm"
+                                role="checkbox"
+                                aria-checked={on}
                                 onClick={() =>
-                                  api
-                                    .startNode()
-                                    .catch((e: any) => setErr(e?.message || String(e)))
-                                    .finally(refresh)
+                                  setDevices((prev) => {
+                                    // An empty list means all: make it explicit before removing one
+                                    const all = prev.length === 0 ? gpus.map((x) => x.index) : prev;
+                                    if (!all.includes(g.index)) return [...all, g.index];
+                                    const rest = all.filter((d) => d !== g.index);
+                                    // An empty list would mean all again: keep at least one
+                                    return rest.length > 0 ? rest : all;
+                                  })
                                 }
+                                className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left hover:bg-hover"
                               >
-                                {t("mining.startNode")}
+                                <span
+                                  className={`grid size-4 shrink-0 place-items-center rounded-[4px] ${
+                                    on ? "bg-brand-fill text-brand-foreground" : "border border-border-strong bg-field"
+                                  }`}
+                                >
+                                  {on && <Check className="size-3" strokeWidth={3} />}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate">
+                                  GPU {g.index}: {g.name}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  {g.memory}
+                                  {g.cuda && " · CUDA"}
+                                  {g.openCl && " · OpenCL"}
+                                </span>
                               </button>
-                            ) : undefined
-                          }
-                        />
+                            );
+                          })}
+                          {devices.length === 0 && <p className="mt-1 text-sm text-muted-foreground">{t("mining.gpu.allDefault")}</p>}
+                        </div>
                       )}
-                    </ul>
-                    <div className="mt-auto pt-2">
-                      <button type="button" className="btn btn-primary btn-lg w-full" onClick={start} disabled={!ready || starting}>
-                        {starting ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4 fill-current" />}
-                        {starting ? t("mining.starting") : t(`mining.start.${mode}`)}
-                      </button>
                     </div>
-                  </Plate>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  )}
+
+                  {mode === "solo" && (
+                    <FormRow label={t("mining.cpuThreads")} hint={`${threads} / ${maxThreads}`}>
+                      <input
+                        type="range"
+                        className="range"
+                        min={1}
+                        max={maxThreads}
+                        value={threads}
+                        onChange={(e) => setThreads(parseInt(e.target.value, 10))}
+                      />
+                    </FormRow>
+                  )}
+                </Rows>
+
+                <Panel className="flex flex-col gap-3 p-4">
+                  <span className="font-medium">{t("mining.checklist")}</span>
+                  <ul className="flex flex-col gap-2.5">
+                    <Check_ ok={isAddress(wallet)} label={t("mining.check.wallet")} />
+                    {mode === "pool" && <Check_ ok={!!poolUrl} label={t("mining.check.pool")} />}
+                    {gpuMode && <Check_ ok={!!hashwarpFound} label={t("mining.check.hashwarp")} />}
+                    {needsNode && (
+                      <Check_
+                        ok={nodeSynced}
+                        label={
+                          !node?.running
+                            ? t("mining.node.notRunning")
+                            : node.syncing
+                              ? t("mining.node.syncing")
+                              : t("mining.node.ready")
+                        }
+                        action={
+                          !node?.running ? (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() =>
+                                api
+                                  .startNode()
+                                  .catch((e: any) => setErr(e?.message || String(e)))
+                                  .finally(refresh)
+                              }
+                            >
+                              {t("mining.startNode")}
+                            </button>
+                          ) : undefined
+                        }
+                      />
+                    )}
+                  </ul>
+                  <button type="button" className="btn btn-primary btn-lg mt-2 w-full" onClick={start} disabled={!ready || starting}>
+                    {starting ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-3.5 fill-current" />}
+                    {starting ? t("mining.starting") : t(`mining.start.${mode}`)}
+                  </button>
+                </Panel>
+              </div>
+            )}
+          </Section>
+        </>
+      )}
 
       <PoolDrawer
         open={poolDrawer.open}
@@ -425,24 +369,21 @@ export default function Mining() {
         onSave={savePool}
         onRemove={removePool}
       />
-    </PageStagger>
+    </div>
   );
 }
 
 /** One line of the start checklist: ticked once its condition holds. */
 function Check_({ ok, label, action }: { ok: boolean; label: string; action?: React.ReactNode }) {
   return (
-    <li className="flex items-center gap-3">
-      <motion.span
-        initial={false}
-        animate={{ scale: ok ? 1 : 0.9 }}
-        transition={SPRING}
-        className={`grid size-5 shrink-0 place-items-center rounded-full border ${
-          ok ? "brand-gradient border-transparent text-brand-foreground" : "border-border-strong"
+    <li className="flex items-center gap-2.5">
+      <span
+        className={`grid size-4 shrink-0 place-items-center rounded-full ${
+          ok ? "bg-brand-fill text-brand-foreground" : "border border-border-strong"
         }`}
       >
-        {ok ? <Check className="size-3" strokeWidth={3} /> : <Indicator grade="off" className="scale-75" />}
-      </motion.span>
+        {ok && <Check className="size-2.5" strokeWidth={3.5} />}
+      </span>
       <span className={`flex-1 ${ok ? "" : "text-muted-foreground"}`}>{label}</span>
       {action}
     </li>

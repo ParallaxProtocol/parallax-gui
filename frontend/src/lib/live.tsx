@@ -25,7 +25,6 @@ const NodeContext = createContext<NodeStatus | null>(null);
 const MinerContext = createContext<MinerLive>({ status: null, hashrate: [] });
 const WalletContext = createContext<WalletStatus>({ connected: false, lastSeenUnixMilli: 0 });
 const BlocksContext = createContext<BlockView[]>([]);
-const PeerHistoryContext = createContext<Sample[]>([]);
 const RefreshContext = createContext<() => void>(() => {});
 
 function push(history: Sample[], v: number): Sample[] {
@@ -53,7 +52,7 @@ function sameNode(a: NodeStatus | null, b: NodeStatus): boolean {
 
 /**
  * LiveProvider polls the backend once for the whole app: node, miner and
- * wallet status, the latest blocks, and short histories for the charts.
+ * wallet status, the latest blocks, and the hashrate history for its chart.
  * Components read the stream they need through its own hook.
  */
 export function LiveProvider({ children }: { children: ReactNode }) {
@@ -61,7 +60,6 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   const [miner, setMiner] = useState<MinerLive>({ status: null, hashrate: [] });
   const [wallet, setWallet] = useState<WalletStatus>({ connected: false, lastSeenUnixMilli: 0 });
   const [blocks, setBlocks] = useState<BlockView[]>([]);
-  const [peers, setPeers] = useState<Sample[]>([]);
   const head = useRef(-1);
   const blocksAt = useRef(0);
   const lastMiner = useRef("");
@@ -81,8 +79,6 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       if (ns) {
         setNode((prev) => (sameNode(prev, ns) ? prev : ns));
         if (ns.running) {
-          // Only a change in the peer count needs a new chart sample
-          setPeers((h) => (h.length > 0 && h[h.length - 1].v === ns.peers ? h : push(h, ns.peers)));
           const due = !ns.syncing || Date.now() - blocksAt.current >= SYNC_BLOCKS_MS;
           if (ns.currentBlock !== head.current && due) {
             head.current = ns.currentBlock;
@@ -95,7 +91,6 @@ export function LiveProvider({ children }: { children: ReactNode }) {
         } else if (head.current !== -1) {
           head.current = -1;
           setBlocks([]);
-          setPeers([]);
         }
       }
 
@@ -152,9 +147,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       <NodeContext.Provider value={node}>
         <MinerContext.Provider value={miner}>
           <WalletContext.Provider value={wallet}>
-            <BlocksContext.Provider value={blocks}>
-              <PeerHistoryContext.Provider value={peers}>{children}</PeerHistoryContext.Provider>
-            </BlocksContext.Provider>
+            <BlocksContext.Provider value={blocks}>{children}</BlocksContext.Provider>
           </WalletContext.Provider>
         </MinerContext.Provider>
       </NodeContext.Provider>
@@ -166,7 +159,6 @@ export const useNode = () => useContext(NodeContext);
 export const useMiner = () => useContext(MinerContext);
 export const useWallet = () => useContext(WalletContext);
 export const useBlocks = () => useContext(BlocksContext);
-export const usePeerHistory = () => useContext(PeerHistoryContext);
 /** Polls again right away, after an action changed the backend's state. */
 export const useRefresh = () => useContext(RefreshContext);
 

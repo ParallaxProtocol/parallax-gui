@@ -3,16 +3,16 @@ import { BlockView } from "../../lib/api";
 import { formatInt, formatLax, formatPercent, sameAddress, shortHex } from "../../lib/format";
 import { useNow } from "../../lib/useNow";
 import { useAgo, useT } from "../../i18n";
-import { Plate } from "../../components/ui/Plate";
+import { Panel } from "../../components/ui/Panel";
 
-const HEAD = "px-3 pb-2.5 text-left font-mono text-[10px] font-normal tracking-wider text-muted-foreground uppercase first:pl-0 last:pr-0";
-const CELL = "px-3 py-2.5 whitespace-nowrap tabular-nums first:pl-0 last:pr-0";
+const HEAD = "h-7 px-3 text-left text-sm font-medium text-muted-foreground first:pl-4 last:pr-4";
+const CELL = "h-8 px-3 whitespace-nowrap tabular-nums first:pl-4 last:pr-4";
 
 /**
  * LatestBlocks lists the newest blocks: when each was found and by whom,
  * what it carried and how full it was. A block that arrives while the
- * table is shown slides in at the top with a brief wash; blocks the
- * user's own mining address found are marked.
+ * table is shown is highlighted briefly; blocks the user's own mining
+ * address found are marked.
  */
 export default function LatestBlocks({ blocks, mine }: { blocks: BlockView[]; mine?: string }) {
   const t = useT();
@@ -31,11 +31,11 @@ export default function LatestBlocks({ blocks, mine }: { blocks: BlockView[]; mi
   const from = seen.current?.from ?? Infinity;
 
   return (
-    <Plate className="px-5 pt-4 pb-2">
+    <Panel className="overflow-hidden">
       {blocks.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">{t("blocks.waiting")}</p>
+        <p className="py-10 text-center text-muted-foreground">{t("blocks.waiting")}</p>
       ) : (
-        <table className="w-full text-xs">
+        <table className="w-full">
           <thead>
             <tr className="border-b border-border">
               <th className={HEAD}>{t("blocks.block")}</th>
@@ -52,22 +52,13 @@ export default function LatestBlocks({ blocks, mine }: { blocks: BlockView[]; mi
                 const ours = sameAddress(b.coinbase, mine);
                 const full = b.gasLimit > 0 ? b.gasUsed / b.gasLimit : 0;
                 return (
-                  // No layout animation: measuring every row on each re-render
-                  // forced a synchronous reflow; a new block's row washes in instead
-                  <tr
-                    key={b.number}
-                    className={`border-b border-border/60 last:border-0 ${fresh ? "row-flash rise" : ""}`}
-                  >
-                    <td className={`${CELL} font-mono`}>#{formatInt(b.number)}</td>
+                  <tr key={b.number} className={`even:bg-muted/40 ${fresh ? "row-flash" : ""}`}>
+                    <td className={`${CELL} font-medium`}>{formatInt(b.number)}</td>
                     <td className={`${CELL} text-muted-foreground`}>{ago(b.timestamp, now)}</td>
-                    <td className={`${CELL} font-mono`}>
+                    <td className={CELL}>
                       <span className="flex items-center gap-2" title={b.coinbase}>
-                        {shortHex(b.coinbase, 8, 6)}
-                        {ours && (
-                          <span className="brand-gradient rounded-sm px-1.5 py-px font-sans text-[9px] font-semibold tracking-wider text-brand-foreground uppercase">
-                            {t("blocks.yours")}
-                          </span>
-                        )}
+                        <span className="font-mono text-sm">{shortHex(b.coinbase, 8, 6)}</span>
+                        {ours && <span className="badge bg-brand-muted text-brand">{t("blocks.yours")}</span>}
                       </span>
                     </td>
                     <td className={`${CELL} text-right`}>{formatInt(b.txCount)}</td>
@@ -79,7 +70,7 @@ export default function LatestBlocks({ blocks, mine }: { blocks: BlockView[]; mi
                             style={{ width: `${Math.max(full * 100, full > 0 ? 2 : 0)}%` }}
                           />
                         </span>
-                        <span className="w-9 text-right text-muted-foreground">{formatPercent(full)}</span>
+                        <span className="w-9 text-right text-sm text-muted-foreground">{formatPercent(full)}</span>
                       </span>
                     </td>
                     <td className={`${CELL} text-right`}>
@@ -91,6 +82,6 @@ export default function LatestBlocks({ blocks, mine }: { blocks: BlockView[]; mi
           </tbody>
         </table>
       )}
-    </Plate>
+    </Panel>
   );
 }

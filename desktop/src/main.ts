@@ -116,15 +116,35 @@ function serveFrontend(dir: string) {
   });
 }
 
+/**
+ * The window has no title bar of its own: the sidebar and the toolbar run
+ * up to the top edge and the toolbar is the drag area, as in native apps.
+ * macOS keeps its traffic lights, inset to sit centred in the toolbar;
+ * Windows and Linux draw their controls over the toolbar's right end, in
+ * the toolbar's colours (the frontend's --background), which follow the theme.
+ */
+const TOOLBAR_HEIGHT = 44;
+
+function chrome() {
+  const dark = nativeTheme.shouldUseDarkColors;
+  return {
+    background: dark ? "#1b1c1f" : "#f6f6f7",
+    overlay: { color: dark ? "#1b1c1f" : "#f6f6f7", symbolColor: dark ? "#e8e8ea" : "#1d1d1f", height: TOOLBAR_HEIGHT },
+  };
+}
+
 function createWindow() {
+  const look = chrome();
   const win = new BrowserWindow({
     width: 1280,
     height: 820,
-    minWidth: 1024,
-    minHeight: 700,
+    minWidth: 900,
+    minHeight: 600,
     show: false,
     title: "Parallax Desktop",
-    backgroundColor: nativeTheme.shouldUseDarkColors ? "#06070d" : "#faf8f5",
+    backgroundColor: look.background,
+    titleBarStyle: isMac ? "hiddenInset" : "hidden",
+    ...(isMac ? { trafficLightPosition: { x: 16, y: 15 } } : { titleBarOverlay: look.overlay }),
     icon: isWindows || isMac ? undefined : path.join(__dirname, "..", "resources", "icon.png"),
     autoHideMenuBar: true,
     webPreferences: {
@@ -137,7 +157,15 @@ function createWindow() {
   });
   mainWindow = win;
   win.once("ready-to-show", () => win.show());
+  const recolor = () => {
+    if (isMac || win.isDestroyed()) return;
+    const next = chrome();
+    win.setBackgroundColor(next.background);
+    win.setTitleBarOverlay(next.overlay);
+  };
+  nativeTheme.on("updated", recolor);
   win.on("closed", () => {
+    nativeTheme.off("updated", recolor);
     mainWindow = null;
   });
 

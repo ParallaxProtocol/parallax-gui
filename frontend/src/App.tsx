@@ -1,11 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { MotionConfig } from "motion/react";
+import { Loader2 } from "lucide-react";
 import { api } from "./lib/api";
 import { applyTheme } from "./lib/theme";
-import { AnimationsOff } from "./lib/prefs";
 import { LiveProvider } from "./lib/live";
-import { FADE_OUT } from "./lib/motion";
 import Overview from "./pages/Overview";
 
 // The landing page loads with the app; the rest load on first visit, so
@@ -15,9 +14,9 @@ const Mining = lazy(() => import("./pages/Mining"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 import Sidebar from "./components/shell/Sidebar";
-import TopBar from "./components/shell/TopBar";
+import Toolbar from "./components/shell/Toolbar";
+import StatusBar from "./components/shell/StatusBar";
 import UpdateBanner from "./components/UpdateBanner";
-import { Label } from "./components/ui/Plate";
 import { useT } from "./i18n";
 import logo from "./assets/logo.svg";
 
@@ -51,7 +50,7 @@ export default function App() {
         });
     };
     check();
-    // The backend answers "Parallax Desktop 0.2.3": the sidebar shows just "v0.2.3"
+    // The backend answers "Parallax Desktop 0.2.3": the status bar shows just "v0.2.3"
     api
       .version()
       .then((v) => {
@@ -121,12 +120,15 @@ export default function App() {
   } else {
     content = (
       <LiveProvider>
-        <div className="flex h-full">
-          <Sidebar version={version} />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <TopBar />
-            <RoutedContent animationsDisabled={animationsDisabled} />
+        <div className="flex h-full flex-col">
+          <div className="flex min-h-0 flex-1">
+            <Sidebar />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <Toolbar />
+              <RoutedContent />
+            </div>
           </div>
+          <StatusBar version={version} />
         </div>
         <UpdateBanner />
       </LiveProvider>
@@ -134,57 +136,32 @@ export default function App() {
   }
 
   return (
-    <AnimationsOff.Provider value={animationsDisabled}>
       <MotionConfig
         reducedMotion={animationsDisabled ? "always" : "never"}
         transition={animationsDisabled ? { duration: 0 } : undefined}
       >
         {content}
       </MotionConfig>
-    </AnimationsOff.Provider>
   );
 }
 
-function RoutedContent({ animationsDisabled }: { animationsDisabled: boolean }) {
-  const location = useLocation();
-  // Suspense inside the transition, so a page still loading keeps its slot
-  // blank for a moment rather than suspending the whole shell
-  const routes = (
-    <Suspense fallback={null}>
-      <Routes location={location}>
-        <Route path="/" element={<Overview />} />
-        <Route path="/wallet" element={<WalletPage />} />
-        <Route path="/mining" element={<Mining />} />
-        <Route path="/settings" element={<Settings />} />
-        {/* Older routes, from before the redesign */}
-        <Route path="/connect" element={<Navigate to="/wallet" replace />} />
-        <Route path="/logs" element={<Navigate to="/settings" replace />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
-  );
-
+function RoutedContent() {
+  // Pages switch in place, as a native window's panes do. Suspense keeps a
+  // page still loading blank for a moment rather than suspending the shell
   return (
     <main className="min-h-0 flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-[1180px] px-10 pt-8 pb-16">
-        {animationsDisabled ? (
-          // Without animations the wrapper goes entirely: Motion commits
-          // `initial` for one frame even at duration 0, which flickered
-          routes
-        ) : (
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, transition: FADE_OUT }}
-              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {routes}
-            </motion.div>
-          </AnimatePresence>
-        )}
-      </div>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<Overview />} />
+          <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/mining" element={<Mining />} />
+          <Route path="/settings" element={<Settings />} />
+          {/* Older routes, from before the redesign */}
+          <Route path="/connect" element={<Navigate to="/wallet" replace />} />
+          <Route path="/logs" element={<Navigate to="/settings" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </main>
   );
 }
@@ -192,23 +169,14 @@ function RoutedContent({ animationsDisabled }: { animationsDisabled: boolean }) 
 function SplashScreen() {
   const t = useT();
   return (
-    <div className="grid h-full place-items-center">
-      <motion.div
-        className="flex flex-col items-center"
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <motion.img
-          src={logo}
-          className="mb-6 size-16"
-          alt="Parallax"
-          animate={{ rotate: [0, 60, 60, 120] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: [0.65, 0, 0.35, 1], times: [0, 0.35, 0.5, 0.85] }}
-        />
-        <div className="text-2xl font-semibold tracking-tight">Parallax</div>
-        <Label className="mt-2">{t("splash.loading")}</Label>
-      </motion.div>
+    <div className="drag grid h-full place-items-center">
+      <div className="flex flex-col items-center gap-3">
+        <img src={logo} className="size-12" alt="Parallax" />
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="size-3.5 animate-spin" />
+          {t("splash.loading")}
+        </span>
+      </div>
     </div>
   );
 }

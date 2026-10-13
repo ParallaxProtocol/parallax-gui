@@ -1,6 +1,5 @@
 import { useId, useMemo, useState } from "react";
 import type { Sample } from "../../lib/live";
-import { useAnimationsOff } from "../../lib/prefs";
 
 const W = 600;
 
@@ -22,9 +21,8 @@ function scale(samples: Sample[], height: number, floorZero: boolean) {
 }
 
 /**
- * AreaChart draws a live series as a line in the brand teal over a soft
- * gradient fill, sweeping in from the left when first shown. Hovering
- * reads off the nearest sample through `format`.
+ * AreaChart draws a live series as a line in the accent over a faint
+ * fill. Hovering reads off the nearest sample through `format`.
  */
 export function AreaChart({
   samples,
@@ -40,7 +38,6 @@ export function AreaChart({
   label: string;
 }) {
   const id = useId();
-  const still = useAnimationsOff();
   const [hover, setHover] = useState<number | null>(null);
 
   const geom = useMemo(() => {
@@ -55,7 +52,7 @@ export function AreaChart({
   if (!geom) {
     return (
       <div
-        className="grid place-items-center rounded-sm border border-dashed border-border font-mono text-[11px] text-muted-foreground"
+        className="grid place-items-center rounded-md bg-muted/50 text-sm text-muted-foreground"
         style={{ height }}
       >
         …
@@ -67,8 +64,7 @@ export function AreaChart({
   const [fx, fy] = geom.pts[focus];
 
   return (
-    // The sweep clips the whole chart, so the live dot arrives with its line
-    <div className={`relative ${still ? "" : "chart-reveal"}`} style={{ height }}>
+    <div className="relative" style={{ height }}>
       <svg
         viewBox={`0 0 ${W} ${height}`}
         preserveAspectRatio="none"
@@ -88,7 +84,7 @@ export function AreaChart({
       >
         <defs>
           <linearGradient id={`fill-${id}`} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="var(--brand-mark)" stopOpacity="0.28" />
+            <stop offset="0%" stopColor="var(--brand-mark)" stopOpacity="0.16" />
             <stop offset="100%" stopColor="var(--brand-mark)" stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -100,8 +96,7 @@ export function AreaChart({
             y1={height * f}
             y2={height * f}
             stroke="var(--border)"
-            strokeDasharray="2 4"
-            vectorEffect="non-scaling-stroke"
+                        vectorEffect="non-scaling-stroke"
           />
         ))}
         <path d={geom.area} fill={`url(#fill-${id})`} />
@@ -109,7 +104,7 @@ export function AreaChart({
           d={geom.line}
           fill="none"
           stroke="var(--brand-mark)"
-          strokeWidth="1.75"
+          strokeWidth="1.5"
           strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
         />
@@ -127,53 +122,25 @@ export function AreaChart({
       </svg>
       {/* The dot is HTML so the stretched viewBox does not squash it */}
       <span
-        className="pointer-events-none absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-mark ring-4 ring-brand-muted"
+        className="pointer-events-none absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-mark ring-2 ring-surface"
         style={{ left: `${(fx / W) * 100}%`, top: fy }}
       />
       {hover !== null && (
         <span
-          className="pointer-events-none absolute -top-1 -translate-x-1/2 -translate-y-full rounded-sm border border-border bg-surface-elevated px-2 py-1 font-mono text-[11px] whitespace-nowrap tabular-nums shadow-lg"
+          className="pointer-events-none absolute -top-1 -translate-x-1/2 -translate-y-full rounded-md border border-border-strong bg-surface-raised px-2 py-1 text-sm whitespace-nowrap tabular-nums shadow-md"
           style={{ left: `${(fx / W) * 100}%` }}
         >
           {format(samples[hover].v)}
         </span>
       )}
-      <span className="pointer-events-none absolute top-0 right-0 font-mono text-[10px] text-muted-foreground tabular-nums">
+      <span className="pointer-events-none absolute top-0 right-0 text-xs text-muted-foreground tabular-nums">
         {format(geom.s.max)}
       </span>
       {!floorZero && (
-        <span className="pointer-events-none absolute right-0 bottom-0 font-mono text-[10px] text-muted-foreground tabular-nums">
+        <span className="pointer-events-none absolute right-0 bottom-0 text-xs text-muted-foreground tabular-nums">
           {format(geom.s.min)}
         </span>
       )}
     </div>
-  );
-}
-
-/** Sparkline is a small trend line with no axes, for inside a tile. */
-export function Sparkline({ samples, height = 32 }: { samples: Sample[]; height?: number }) {
-  const still = useAnimationsOff();
-  if (samples.length < 2) return <div style={{ height }} />;
-  const s = scale(samples, height, false);
-  const d = samples
-    .map((p, i) => `${i ? "L" : "M"}${s.x(p.t).toFixed(1)},${s.y(p.v).toFixed(1)}`)
-    .join("");
-  return (
-    <svg
-      viewBox={`0 0 ${W} ${height}`}
-      preserveAspectRatio="none"
-      className={`w-full ${still ? "" : "chart-reveal"}`}
-      style={{ height }}
-      aria-hidden
-    >
-      <path
-        d={d}
-        fill="none"
-        stroke="var(--brand-mark)"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
   );
 }

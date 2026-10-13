@@ -10,8 +10,8 @@ export type SegmentOption<T extends string> = {
 };
 
 /**
- * Segmented is a row of mutually exclusive choices; the selection's wash
- * springs from one option to the next.
+ * Segmented is a segmented control: mutually exclusive choices in one
+ * well, the selected one raised, its thumb sliding from choice to choice.
  */
 export function Segmented<T extends string>({
   options,
@@ -28,10 +28,7 @@ export function Segmented<T extends string>({
 }) {
   const id = useId();
   return (
-    <div
-      role="radiogroup"
-      className={`inline-flex gap-1 rounded-md border border-border bg-background p-1 ${className}`}
-    >
+    <div role="radiogroup" className={`inline-flex rounded-md bg-muted p-0.5 ${className}`}>
       {options.map((o) => {
         const here = o.value === value;
         return (
@@ -43,8 +40,8 @@ export function Segmented<T extends string>({
             disabled={o.disabled}
             title={o.title}
             onClick={() => !o.disabled && onChange(o.value)}
-            className={`relative rounded-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-              size === "sm" ? "px-3 py-1 text-xs" : "px-4 py-2 text-sm"
+            className={`relative min-w-16 rounded-[5px] font-medium transition-colors disabled:opacity-40 ${
+              size === "sm" ? "h-5 px-2.5 text-sm" : "h-6 px-3"
             } ${here ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
             {here && (
@@ -52,10 +49,8 @@ export function Segmented<T extends string>({
                 layoutId={`segment-${id}`}
                 layoutDependency={value}
                 transition={SPRING}
-                className="absolute inset-0 rounded-sm border border-border-strong bg-surface-elevated"
-              >
-                <span className="brand-gradient-mark absolute inset-x-2 -bottom-px h-px" />
-              </motion.span>
+                className="absolute inset-0 rounded-[5px] bg-surface-raised shadow-[var(--shadow-control)]"
+              />
             )}
             <span className="relative">{o.label}</span>
           </button>

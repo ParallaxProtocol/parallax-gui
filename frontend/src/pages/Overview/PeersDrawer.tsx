@@ -49,12 +49,11 @@ export default function PeersDrawer({ open, onClose }: { open: boolean; onClose:
     <Drawer
       open={open}
       onClose={onClose}
-      eyebrow={t("peers.eyebrow")}
       title={t("peers.title")}
       meta={t("peers.summary", { total: peers.length, in: inCount, out: outCount })}
       width="max-w-2xl"
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-border bg-surface-elevated px-6 py-3">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-border bg-background px-4 py-2">
         <Segmented
           size="sm"
           value={filter}
@@ -65,56 +64,54 @@ export default function PeersDrawer({ open, onClose }: { open: boolean; onClose:
             { value: "out", label: t("peers.filter.out") },
           ]}
         />
-        <span className="text-xs text-muted-foreground tabular-nums">
+        <span className="text-sm text-muted-foreground tabular-nums">
           {t("peers.showing", { n: shown.length, total: peers.length })}
         </span>
       </div>
 
-      {error && <Notice tone="critical" className="mx-6 mt-4">{error}</Notice>}
+      {error && <Notice tone="critical" className="mx-4 mt-3">{error}</Notice>}
 
       {shown.length === 0 ? (
-        <p className="py-16 text-center text-sm text-muted-foreground">{t("peers.empty")}</p>
+        <p className="py-16 text-center text-muted-foreground">{t("peers.empty")}</p>
       ) : (
-        <ul className="divide-y divide-border px-6">
+        <ul className="divide-y divide-border">
           {shown.map((p) => {
               const open = expanded === p.fullId;
               return (
-                <li key={p.fullId} className="py-3">
+                <li key={p.fullId}>
                   <button
                     type="button"
                     onClick={() => setExpanded(open ? null : p.fullId)}
-                    className="group flex w-full items-center gap-4 text-left"
+                    className="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-hover"
                     aria-expanded={open}
                   >
+                    <ChevronRight
+                      className={`size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 ${open ? "rotate-90" : ""}`}
+                    />
                     <span
-                      className={`w-11 shrink-0 rounded-sm border py-0.5 text-center font-mono text-[10px] tracking-wider ${
-                        p.inbound ? "border-warn/40 text-warn-ink" : "border-brand/40 text-brand"
-                      }`}
+                      className={`badge w-10 justify-center ${p.inbound ? "bg-warn/15 text-warn-ink" : "bg-brand-muted text-brand"}`}
                       title={p.inbound ? t("peers.tooltip.in") : t("peers.tooltip.out")}
                     >
                       {p.inbound ? t("peers.in") : t("peers.out")}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-3">
-                        <span className="font-mono text-xs">{p.id}</span>
-                        <span className="truncate text-sm text-foreground/80 transition-colors group-hover:text-foreground">
+                        <span className="font-mono text-sm">{p.id}</span>
+                        <span className="truncate">
                           {p.name || t("peers.unknown")}
                         </span>
                         {p.trusted && <Badge>{t("peers.trusted")}</Badge>}
                         {p.static && <Badge>{t("peers.static")}</Badge>}
                       </div>
-                      <div className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
+                      <div className="truncate font-mono text-xs text-muted-foreground">
                         {p.remoteAddr}
                         {p.minPingMs ? ` · ${p.minPingMs.toFixed(0)} ms` : ""}
                       </div>
                     </div>
-                    <ChevronRight
-                      className={`size-4 text-muted-foreground transition-transform duration-300 ${open ? "rotate-90" : ""}`}
-                    />
                   </button>
 
                   {open && (
-                        <dl className="rise mt-3 ml-15 space-y-2.5 rounded-md border border-border bg-background p-4 text-sm">
+                        <dl className="mx-4 mb-3 space-y-2 rounded-md border border-border bg-surface p-3">
                           <Detail label={t("peers.fullId")} value={p.fullId} copy />
                           <Detail label={t("peers.enode")} value={p.enode} wrap copy />
                           <Detail label={t("peers.remoteAddr")} value={p.remoteAddr} />
@@ -127,10 +124,10 @@ export default function PeersDrawer({ open, onClose }: { open: boolean; onClose:
                           <Detail label={t("peers.caps")} value={p.caps.join(", ") || t("peers.none")} />
                           {p.protocols && Object.keys(p.protocols).length > 0 && (
                             <div>
-                              <dt className="mb-1.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                              <dt className="mb-1 text-sm text-muted-foreground">
                                 {t("peers.protocols")}
                               </dt>
-                              <pre className="overflow-x-auto rounded-sm border border-border bg-surface-elevated p-3 font-mono text-[11px] text-muted-foreground">
+                              <pre className="overflow-x-auto rounded-md border border-border bg-field p-2.5 font-mono text-xs text-muted-foreground">
                                 {JSON.stringify(p.protocols, null, 2)}
                               </pre>
                             </div>
@@ -148,18 +145,16 @@ export default function PeersDrawer({ open, onClose }: { open: boolean; onClose:
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-sm bg-foreground/5 px-1.5 py-px font-mono text-[9px] tracking-wider text-muted-foreground uppercase">
-      {children}
-    </span>
+    <span className="badge">{children}</span>
   );
 }
 
 function Detail({ label, value, wrap, copy }: { label: string; value: string; wrap?: boolean; copy?: boolean }) {
   return (
-    <div className="grid grid-cols-[120px_1fr_auto] items-baseline gap-3">
-      <dt className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">{label}</dt>
-      <dd className={`font-mono text-xs text-foreground/90 ${wrap ? "break-all" : "truncate"}`}>{value || "—"}</dd>
-      {copy && value ? <CopyButton value={value} compact className="-my-1" /> : <span />}
+    <div className="grid grid-cols-[110px_1fr_auto] items-baseline gap-3">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className={`font-mono text-sm ${wrap ? "break-all" : "truncate"}`}>{value || "—"}</dd>
+      {copy && value ? <CopyButton value={value} className="-my-1" /> : <span />}
     </div>
   );
 }
