@@ -22,8 +22,8 @@ import (
 
 	"errors"
 
-	"github.com/ParallaxProtocol/parallax/logging"
-	"github.com/ParallaxProtocol/parallax/util"
+	"github.com/ParallaxProtocol/parallax/v2/logging"
+	"github.com/ParallaxProtocol/parallax/v2/util"
 )
 
 // ErrHashwarpNotFound is returned when the hashwarp binary cannot be located.

@@ -8,32 +8,32 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"net"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	parallaxpkg "github.com/ParallaxProtocol/parallax"
-	"github.com/ParallaxProtocol/parallax/kernel/chainparams"
-	"github.com/ParallaxProtocol/parallax/kernel/xhash"
-	"github.com/ParallaxProtocol/parallax/logging"
-	"github.com/ParallaxProtocol/parallax/node"
-	protocol "github.com/ParallaxProtocol/parallax/node/fullnode"
-	"github.com/ParallaxProtocol/parallax/node/fullnode/downloader"
-	"github.com/ParallaxProtocol/parallax/node/fullnode/tracers"
-	"github.com/ParallaxProtocol/parallax/node/nodeconfig"
-	"github.com/ParallaxProtocol/parallax/p2p/enode"
-	"github.com/ParallaxProtocol/parallax/p2p/nat"
-	"github.com/ParallaxProtocol/parallax/p2p/netparams"
-	"github.com/ParallaxProtocol/parallax/primitives/types"
-	"github.com/ParallaxProtocol/parallax/support/metrics"
-	"github.com/ParallaxProtocol/parallax/util"
-	"github.com/ParallaxProtocol/parallax/wallet/keystore"
+	parallaxpkg "github.com/ParallaxProtocol/parallax/v2"
+	"github.com/ParallaxProtocol/parallax/v2/kernel/chainparams"
+	"github.com/ParallaxProtocol/parallax/v2/kernel/xhash"
+	"github.com/ParallaxProtocol/parallax/v2/logging"
+	"github.com/ParallaxProtocol/parallax/v2/node"
+	protocol "github.com/ParallaxProtocol/parallax/v2/node/fullnode"
+	"github.com/ParallaxProtocol/parallax/v2/node/fullnode/downloader"
+	"github.com/ParallaxProtocol/parallax/v2/node/fullnode/tracers"
+	"github.com/ParallaxProtocol/parallax/v2/node/nodeconfig"
+	"github.com/ParallaxProtocol/parallax/v2/node/stats"
+	"github.com/ParallaxProtocol/parallax/v2/p2p/addrman"
+	"github.com/ParallaxProtocol/parallax/v2/p2p/enode"
+	"github.com/ParallaxProtocol/parallax/v2/p2p/nat"
+	"github.com/ParallaxProtocol/parallax/v2/p2p/netparams"
+	"github.com/ParallaxProtocol/parallax/v2/primitives/types"
+	"github.com/ParallaxProtocol/parallax/v2/support/metrics"
+	"github.com/ParallaxProtocol/parallax/v2/util"
+	"github.com/ParallaxProtocol/parallax/v2/wallet/keystore"
 )
 
 // NodeController owns the embedded node.Node + protocol.Parallax instance and
@@ -103,10 +103,11 @@ func (n *NodeController) Stack() *node.Node {
 //  2. attach a keystore backend (so AccountManager has at least one backend)
 //  3. protocol.New(stack, cfg) — registers the prl service
 //  4. stack.RegisterAPIs(tracers.APIs(...)) — debug_* tracer namespace
-//  5. stack.Start()
-//  6. spawn process metrics collector (once per process)
-//  7. spawn the free-disk-space monitor (per Start, stops on Stop)
-//  8. log a one-time legacy receipts warning if the freezer needs migration
+//  5. stats.New(...) — prlstats reporting, when enabled in the config
+//  6. stack.Start()
+//  7. spawn process metrics collector (once per process)
+//  8. spawn the free-disk-space monitor (per Start, stops on Stop)
+//  9. log a one-time legacy receipts warning if the freezer needs migration
 func (n *NodeController) Start(ctx context.Context) error {
 	n.mu.Lock()
 	if n.stack != nil {
@@ -156,6 +157,15 @@ func (n *NodeController) Start(ctx context.Context) error {
 	// debug_traceTransaction / debug_traceCall etc. silently 404 over RPC,
 	// which breaks devtools and dapp debuggers connecting to our local node.
 	stack.RegisterAPIs(tracers.APIs(parallax.APIBackend))
+
+	// Public stats reporting, the GUI's equivalent of a bare --prlstats
+	// (cmd/utils RegisterPrlStatsService). A failure here only costs the
+	// dashboard entry, so log it instead of refusing to start the node.
+	if guiCfg.ReportStats {
+		if err := stats.New(stack, parallax.APIBackend, parallax.Engine(), stats.DefaultHost); err != nil {
+			logging.Warn("Failed to register the Parallax Stats service", "err", err)
+		}
+	}
 
 	if err := stack.Start(); err != nil {
 		stack.Close()
@@ -536,33 +546,23 @@ func parseEnodes(urls []string) []*enode.Node {
 	return out
 }
 
-// parseV2Bootnodes converts plain "ip:port" bootstrap entries (the v2
-// handshake path, netparams.MainnetBootnodesV2) into TCP addresses,
-// skipping (and logging) malformed entries instead of crashing the GUI.
-// Mirrors cmd/utils/flags.go setBootstrapNodes.
-func parseV2Bootnodes(entries []string) []*net.TCPAddr {
-	out := make([]*net.TCPAddr, 0, len(entries))
+// parseV2Bootnodes converts v2 bootstrap entries ("ip:port" or
+// "<addr>.onion:port", netparams.MainnetBootnodesV2) into addrman
+// addresses, skipping (and logging) malformed entries instead of crashing
+// the GUI. Mirrors cmd/utils/flags.go setBootstrapNodes.
+func parseV2Bootnodes(entries []string) []addrman.NetAddr {
+	out := make([]addrman.NetAddr, 0, len(entries))
 	for _, raw := range entries {
 		raw = strings.TrimSpace(raw)
 		if raw == "" {
 			continue
 		}
-		host, portStr, err := net.SplitHostPort(raw)
+		na, err := addrman.ParseHostPort(raw)
 		if err != nil {
-			logging.Error("invalid v2 bootstrap entry (expected ip:port)", "entry", raw, "err", err)
+			logging.Error("invalid v2 bootstrap entry (expected ip:port or <addr>.onion:port)", "entry", raw, "err", err)
 			continue
 		}
-		ip := net.ParseIP(host)
-		if ip == nil {
-			logging.Error("v2 bootstrap entry has invalid IP", "entry", raw, "host", host)
-			continue
-		}
-		port, err := strconv.ParseUint(portStr, 10, 16)
-		if err != nil || port == 0 {
-			logging.Error("v2 bootstrap entry has invalid port", "entry", raw, "port", portStr)
-			continue
-		}
-		out = append(out, &net.TCPAddr{IP: ip, Port: int(port)})
+		out = append(out, na)
 	}
 	return out
 }
@@ -603,9 +603,10 @@ func (n *NodeController) Peers() []PeerView {
 	for _, p := range peers {
 		info := p.Info()
 		// v2-handshake peers carry no persistent node identity (ID, Enode
-		// and ENR marshal as null), so fall back to the remote endpoint as
-		// a stable unique key — the same way operators are expected to
-		// correlate v2 peers. The short id doubles as a "v2" badge.
+		// and ENR marshal as null), so fall back to the peer's dial target
+		// (Network.Address, which the daemon itself keys v2 peers on) or,
+		// for inbound peers without one, the remote socket endpoint. The
+		// short id doubles as a "v2" badge.
 		fullID := ""
 		if info.ID != nil {
 			fullID = *info.ID
@@ -619,7 +620,11 @@ func (n *NodeController) Peers() []PeerView {
 			shortID = shortID[:8]
 		}
 		if fullID == "" {
-			fullID = "v2@" + info.Network.RemoteAddress
+			addr := info.Network.Address
+			if addr == "" {
+				addr = info.Network.RemoteAddress
+			}
+			fullID = "v2@" + addr
 			shortID = "v2"
 		}
 		out = append(out, PeerView{
@@ -629,6 +634,9 @@ func (n *NodeController) Peers() []PeerView {
 			Name:       info.Name,
 			RemoteAddr: info.Network.RemoteAddress,
 			LocalAddr:  info.Network.LocalAddress,
+			Address:    info.Network.Address,
+			Network:    info.Network.Network,
+			MinPingMs:  info.MinPing * 1000,
 			Inbound:    info.Network.Inbound,
 			Trusted:    info.Network.Trusted,
 			Static:     info.Network.Static,

@@ -231,6 +231,20 @@ export default function PeersModal({
                                   mono
                                 />
                                 <Detail
+                                  label={t("peers.network")}
+                                  value={p.network || "—"}
+                                  mono
+                                />
+                                <Detail
+                                  label={t("peers.minPing")}
+                                  value={
+                                    p.minPingMs
+                                      ? `${p.minPingMs.toFixed(1)} ms`
+                                      : "—"
+                                  }
+                                  mono
+                                />
+                                <Detail
                                   label={t("peers.caps")}
                                   value={p.caps.join(", ") || t("peers.none")}
                                   mono

@@ -3,9 +3,9 @@ package backend
 import (
 	"testing"
 
-	"github.com/ParallaxProtocol/parallax/node"
-	protocol "github.com/ParallaxProtocol/parallax/node/fullnode"
-	"github.com/ParallaxProtocol/parallax/node/fullnode/tracers"
+	"github.com/ParallaxProtocol/parallax/v2/node"
+	protocol "github.com/ParallaxProtocol/parallax/v2/node/fullnode"
+	"github.com/ParallaxProtocol/parallax/v2/node/fullnode/tracers"
 )
 
 // TestV2EmbeddedNodeStarts brings up the embedded node exactly the way

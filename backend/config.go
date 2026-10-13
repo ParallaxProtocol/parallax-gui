@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/ParallaxProtocol/parallax/node"
+	"github.com/ParallaxProtocol/parallax/v2/node"
 )
 
 // ConfigStore persists GUIConfig to <userConfigDir>/Parallax/gui.json. The
@@ -106,6 +106,7 @@ func defaultGUIConfig() GUIConfig {
 		Theme:            "system",
 		AutoStartNode:    true,
 		EnableSmartFee:   true,                    // matches the v2.0.0 CLI default (--gpo.smartfee).
+		ReportStats:      true,                    // offered as on in the onboarding wizard.
 		DatabaseCacheMB:  cacheTotalMB * 50 / 100, // 2048 MB
 		TrieCleanCacheMB: cacheTotalMB * 15 / 100, //  614 MB
 		TrieDirtyCacheMB: cacheTotalMB * 25 / 100, // 1024 MB

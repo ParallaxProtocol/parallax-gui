@@ -172,6 +172,21 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
                 <p className="text-muted leading-relaxed">
                   {t("onboarding.welcome.desc")}
                 </p>
+
+                <div className="flex items-center justify-between gap-4 rounded border border-border bg-bg-elev-2 px-4 py-3">
+                  <div>
+                    <div className="text-sm text-fg">
+                      {t("onboarding.welcome.stats.toggle")}
+                    </div>
+                    <div className="text-xs text-muted leading-relaxed">
+                      {t("onboarding.welcome.stats.desc")}
+                    </div>
+                  </div>
+                  <Toggle
+                    checked={cfg.reportStats}
+                    onChange={(v) => update({ reportStats: v })}
+                  />
+                </div>
                 <div className="flex justify-between">
                   <button
                     className="btn-ghost"

@@ -35,6 +35,16 @@ type GUIConfig struct {
 	// the oracle is built once at protocol.New() time.
 	EnableSmartFee bool `json:"enableSmartFee"`
 
+	// ReportStats registers the prlstats service so the node reports its
+	// status (block height, peer count, sync/mining state, client version,
+	// OS) to the public dashboard at status.parallaxprotocol.org under a
+	// random name kept in the datadir — the same as a bare --prlstats on the
+	// CLI. Offered on by default in the onboarding wizard; configs persisted
+	// before this field existed load it as false, so existing installs are
+	// never opted in silently. Requires a node restart: the service is
+	// registered before stack.Start().
+	ReportStats bool `json:"reportStats"`
+
 	// Advanced (only meaningful when AdvancedUnlocked is true in the UI).
 	DatabaseCacheMB  int `json:"databaseCacheMB"`
 	TrieCleanCacheMB int `json:"trieCleanCacheMB"`
@@ -85,8 +95,9 @@ type LogLine struct {
 //
 // The dashboard's compact view uses ID, Name, RemoteAddr, Inbound, Caps.
 // The full Peers screen additionally consumes FullID, Enode, LocalAddr,
-// Trusted, Static, and Protocols (per-subprotocol metadata such as the
-// peer's head hash and total difficulty for the prl protocol).
+// Address, Network, MinPingMs, Trusted, Static, and Protocols
+// (per-subprotocol metadata such as the peer's head hash and total
+// difficulty for the prl protocol).
 type PeerView struct {
 	ID         string                 `json:"id"`     // 8-char short id
 	FullID     string                 `json:"fullId"` // full hex node id
@@ -94,6 +105,9 @@ type PeerView struct {
 	Name       string                 `json:"name"`
 	RemoteAddr string                 `json:"remoteAddr"`
 	LocalAddr  string                 `json:"localAddr"`
+	Address    string                 `json:"address,omitempty"` // dial target; empty for inbound
+	Network    string                 `json:"network"`           // "ipv4" | "ipv6" | "onion"
+	MinPingMs  float64                `json:"minPingMs,omitempty"`
 	Inbound    bool                   `json:"inbound"`
 	Trusted    bool                   `json:"trusted"`
 	Static     bool                   `json:"static"`

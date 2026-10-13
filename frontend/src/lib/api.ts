@@ -45,6 +45,7 @@ export type GUIConfig = {
   autoStartNode: boolean;
   disableAnimations: boolean;
   enableSmartFee: boolean;
+  reportStats: boolean;
   databaseCacheMB: number;
   trieCleanCacheMB: number;
   trieDirtyCacheMB: number;
@@ -109,6 +110,9 @@ export type PeerView = {
   name: string;
   remoteAddr: string;
   localAddr: string;
+  address?: string;
+  network: string;
+  minPingMs?: number;
   inbound: boolean;
   trusted: boolean;
   static: boolean;

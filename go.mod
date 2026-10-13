@@ -1,12 +1,12 @@
 module github.com/ParallaxProtocol/parallax-gui
 
-go 1.26
+go 1.26.0
 
 require (
-	github.com/ParallaxProtocol/parallax v1.2.1-0.20260815171825-c98c2002b520
+	github.com/ParallaxProtocol/parallax/v2 v2.1.3
 	github.com/ulikunitz/xz v0.5.15
-	github.com/wailsapp/wails/v2 v2.12.0
-	golang.org/x/sys v0.45.0
+	github.com/wailsapp/wails/v2 v2.16.0
+	golang.org/x/sys v0.48.0
 )
 
 require (
@@ -68,10 +68,10 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.22 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
-	golang.org/x/crypto v0.52.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/crypto v0.57.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ParallaxProtocol/parallax/logging"
+	"github.com/ParallaxProtocol/parallax/v2/logging"
 )
 
 // LogTail captures a ring buffer of recent log entries and (optionally)

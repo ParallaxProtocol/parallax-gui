@@ -18,6 +18,7 @@ const RESTART_FIELDS: (keyof GUIConfig)[] = [
   "blockInbound",
   "maxPeers",
   "enableSmartFee",
+  "reportStats",
   "databaseCacheMB",
   "trieCleanCacheMB",
   "trieDirtyCacheMB",
@@ -261,6 +262,29 @@ export default function Settings() {
             <Toggle
               checked={cfg.enableSmartFee}
               onChange={(v) => update({ enableSmartFee: v })}
+            />
+          </Field>
+        </section>
+      </StaggerItem>
+
+      <StaggerItem>
+        <section className="card space-y-5">
+          <div className="card-title">{t("settings.stats.title")}</div>
+          <p className="text-sm text-muted leading-relaxed">
+            {t("settings.stats.desc1")}{" "}
+            <span className="font-mono text-fg/80">
+              status.parallaxprotocol.org
+            </span>{" "}
+            {t("settings.stats.desc2")}
+          </p>
+          <p className="text-sm text-muted leading-relaxed">
+            {t("settings.stats.desc3")}
+          </p>
+
+          <Field label={t("settings.stats.toggle")}>
+            <Toggle
+              checked={cfg.reportStats}
+              onChange={(v) => update({ reportStats: v })}
             />
           </Field>
         </section>
