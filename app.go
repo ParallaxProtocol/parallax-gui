@@ -40,8 +40,8 @@ func (a *App) startup(ctx context.Context) {
 	// Logs first so that any subsequent setup gets captured.
 	a.logs = backend.NewLogTail(2048)
 	a.logs.Install()
-	a.logs.SetEmitter(func(line backend.LogLine) {
-		wruntime.EventsEmit(ctx, "log", line)
+	a.logs.SetEmitter(func(lines []backend.LogLine) {
+		wruntime.EventsEmit(ctx, "logs", lines)
 	})
 
 	backend.InstallCrashHandler(func(reportPath string) {

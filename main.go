@@ -113,10 +113,24 @@ func main() {
 		// window maps (reproduced 2026-10 on Hyprland + RTX 4090 +
 		// WebKitGTK 2.54.1, with or without the force flag), so turn
 		// it off and let WebKit fall back to its shared-memory path.
+		//
+		// That shared-memory path is slow on Wayland: every frame is copied
+		// through CPU memory, and measured with WebKit's MiniBrowser on the
+		// same machine (2026-10, RTX 4090, Hyprland, WebKitGTK 2.54.1) page
+		// transitions ran at 18 fps with 300 ms stalls, against a steady
+		// 60 fps under XWayland. So on Wayland + NVIDIA, run the window
+		// through XWayland when it is available and the user hasn't picked
+		// a GDK backend. DMA-BUF stays off there too: under X11 on NVIDIA
+		// it fails to allocate its GBM buffers.
 		_, forceSet := os.LookupEnv("WEBKIT_FORCE_DMABUF_RENDERER")
 		_, disableSet := os.LookupEnv("WEBKIT_DISABLE_DMABUF_RENDERER")
+		_, backendSet := os.LookupEnv("GDK_BACKEND")
+		nvidiaWayland := isWayland() && nvidiaDriverLoaded()
+		if nvidiaWayland && !backendSet && os.Getenv("DISPLAY") != "" {
+			os.Setenv("GDK_BACKEND", "x11")
+		}
 		if !forceSet && !disableSet {
-			if isWayland() && nvidiaDriverLoaded() {
+			if nvidiaWayland {
 				os.Setenv("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
 			} else {
 				os.Setenv("WEBKIT_FORCE_DMABUF_RENDERER", "1")
@@ -146,6 +160,9 @@ func main() {
 		Bind: []interface{}{
 			app,
 		},
+		// WebviewGpuPolicy is left at its zero value on purpose: Wails v2.16
+		// maps 0 to WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS, while the
+		// named WebviewGpuPolicyAlways constant (1) maps to ON_DEMAND.
 		Linux: &linux.Options{
 			Icon:                appIcon,
 			WindowIsTranslucent: false,

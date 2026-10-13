@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ParallaxProtocol/parallax/v2/logging"
 )
@@ -21,9 +22,22 @@ type LogTail struct {
 
 	mu      sync.RWMutex
 	buf     []LogLine
-	emitter func(LogLine)
+	emitter func([]LogLine)
 	glogger *logging.GlogHandler
+
+	// Lines waiting for the next batched emit, and the timer that sends
+	// them. A syncing node logs many lines a second; one frontend event
+	// per line kept the webview busy whether or not the logs were open.
+	pending []LogLine
+	flush   *time.Timer
 }
+
+// logFlushInterval is how often buffered lines are pushed to the frontend.
+const logFlushInterval = 250 * time.Millisecond
+
+// logMaxBatch caps one batch: past it only the newest lines are sent, as
+// the frontend keeps a bounded tail anyway.
+const logMaxBatch = 500
 
 // NewLogTail constructs a tail with the given capacity.
 func NewLogTail(capacity int) *LogTail {
@@ -75,11 +89,17 @@ func (l *LogTail) SetVerbosity(level int) {
 func (l *LogTail) Close() {
 	l.mu.Lock()
 	l.emitter = nil
+	if l.flush != nil {
+		l.flush.Stop()
+		l.flush = nil
+	}
+	l.pending = nil
 	l.mu.Unlock()
 }
 
-// SetEmitter installs a live-stream callback. Pass nil to disable streaming.
-func (l *LogTail) SetEmitter(fn func(LogLine)) {
+// SetEmitter installs a live-stream callback, called with batches of new
+// lines at most every logFlushInterval. Pass nil to disable streaming.
+func (l *LogTail) SetEmitter(fn func([]LogLine)) {
 	l.mu.Lock()
 	l.emitter = fn
 	l.mu.Unlock()
@@ -152,15 +172,32 @@ func formatValue(v interface{}) string {
 
 func (l *LogTail) append(line LogLine) {
 	l.mu.Lock()
+	defer l.mu.Unlock()
 	if len(l.buf) == l.cap {
 		copy(l.buf, l.buf[1:])
 		l.buf[l.cap-1] = line
 	} else {
 		l.buf = append(l.buf, line)
 	}
-	emitter := l.emitter
+	if l.emitter == nil {
+		return
+	}
+	l.pending = append(l.pending, line)
+	if len(l.pending) > logMaxBatch {
+		l.pending = l.pending[len(l.pending)-logMaxBatch:]
+	}
+	if l.flush == nil {
+		l.flush = time.AfterFunc(logFlushInterval, l.emitPending)
+	}
+}
+
+// emitPending sends the buffered lines as one batch.
+func (l *LogTail) emitPending() {
+	l.mu.Lock()
+	lines, emitter := l.pending, l.emitter
+	l.pending, l.flush = nil, nil
 	l.mu.Unlock()
-	if emitter != nil {
-		emitter(line)
+	if emitter != nil && len(lines) > 0 {
+		emitter(lines)
 	}
 }
