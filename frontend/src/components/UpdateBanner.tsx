@@ -136,7 +136,7 @@ export default function UpdateBanner() {
                 <span>{t("updater.downloading", { version: state.info.latestVersion })}</span>
                 <span className="font-mono text-xs text-muted-foreground tabular-nums">{state.percent}%</span>
               </div>
-              <Meter value={state.percent / 100} active />
+              <Meter value={state.percent / 100} />
             </div>
           )}
 

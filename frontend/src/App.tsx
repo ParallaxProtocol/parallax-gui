@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { api } from "./lib/api";
@@ -7,10 +7,13 @@ import { AnimationsOff } from "./lib/prefs";
 import { LiveProvider } from "./lib/live";
 import { FADE_OUT } from "./lib/motion";
 import Overview from "./pages/Overview";
-import WalletPage from "./pages/Wallet";
-import Mining from "./pages/Mining";
-import Settings from "./pages/Settings";
-import Onboarding from "./pages/Onboarding";
+
+// The landing page loads with the app; the rest load on first visit, so
+// the webview parses less JavaScript before the first paint
+const WalletPage = lazy(() => import("./pages/Wallet"));
+const Mining = lazy(() => import("./pages/Mining"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
 import Sidebar from "./components/shell/Sidebar";
 import TopBar from "./components/shell/TopBar";
 import UpdateBanner from "./components/UpdateBanner";
@@ -91,20 +94,22 @@ export default function App() {
     content = <SplashScreen />;
   } else if (needsBootstrap) {
     content = (
-      <Routes>
-        <Route
-          path="/onboarding"
-          element={
-            <Onboarding
-              onFinished={() => {
-                setNeedsBootstrap(false);
-                navigate("/", { replace: true });
-              }}
-            />
-          }
-        />
-        <Route path="*" element={<Navigate to="/onboarding" replace />} />
-      </Routes>
+      <Suspense fallback={<SplashScreen />}>
+        <Routes>
+          <Route
+            path="/onboarding"
+            element={
+              <Onboarding
+                onFinished={() => {
+                  setNeedsBootstrap(false);
+                  navigate("/", { replace: true });
+                }}
+              />
+            }
+          />
+          <Route path="*" element={<Navigate to="/onboarding" replace />} />
+        </Routes>
+      </Suspense>
     );
   } else {
     content = (
@@ -135,17 +140,21 @@ export default function App() {
 
 function RoutedContent({ animationsDisabled }: { animationsDisabled: boolean }) {
   const location = useLocation();
+  // Suspense inside the transition, so a page still loading keeps its slot
+  // blank for a moment rather than suspending the whole shell
   const routes = (
-    <Routes location={location}>
-      <Route path="/" element={<Overview />} />
-      <Route path="/wallet" element={<WalletPage />} />
-      <Route path="/mining" element={<Mining />} />
-      <Route path="/settings" element={<Settings />} />
-      {/* Older routes, from before the redesign */}
-      <Route path="/connect" element={<Navigate to="/wallet" replace />} />
-      <Route path="/logs" element={<Navigate to="/settings" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <Suspense fallback={null}>
+      <Routes location={location}>
+        <Route path="/" element={<Overview />} />
+        <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/mining" element={<Mining />} />
+        <Route path="/settings" element={<Settings />} />
+        {/* Older routes, from before the redesign */}
+        <Route path="/connect" element={<Navigate to="/wallet" replace />} />
+        <Route path="/logs" element={<Navigate to="/settings" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 
   return (

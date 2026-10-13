@@ -4,35 +4,37 @@ import { api, BlockView, MinerStatus, NodeStatus, WalletStatus } from "./api";
 /** One reading in a rolling history, at a wall-clock time in ms. */
 export type Sample = { t: number; v: number };
 
-export type Live = {
-  node: NodeStatus | null;
-  miner: MinerStatus | null;
-  wallet: WalletStatus;
-  /** The newest blocks, newest first, refreshed whenever the head moves. */
-  blocks: BlockView[];
+export type MinerLive = {
+  status: MinerStatus | null;
   /** Hashrate while mining, one sample per poll, cleared when mining starts. */
   hashrate: Sample[];
-  /** Peer count, one sample per poll while the node runs. */
-  peers: Sample[];
-  /** Polls again right away, after an action changed the backend's state. */
-  refresh: () => void;
 };
 
 const POLL_MS = 2000;
 const WALLET_POLL_MS = 3000;
 const BLOCKS_SHOWN = 12;
+/** While syncing the head moves every poll: refetch the latest blocks at most this often. */
+const SYNC_BLOCKS_MS = 15_000;
 /** Ten minutes of 2s samples. */
 const HISTORY = 300;
 
-const LiveContext = createContext<Live | null>(null);
+// One context per stream, so a component re-renders only when the data it
+// reads changes: the miner's hashrate moving every poll must not re-render
+// the Overview, and the node's uptime must not re-render the Mining page.
+const NodeContext = createContext<NodeStatus | null>(null);
+const MinerContext = createContext<MinerLive>({ status: null, hashrate: [] });
+const WalletContext = createContext<WalletStatus>({ connected: false, lastSeenUnixMilli: 0 });
+const BlocksContext = createContext<BlockView[]>([]);
+const PeerHistoryContext = createContext<Sample[]>([]);
+const RefreshContext = createContext<() => void>(() => {});
 
 function push(history: Sample[], v: number): Sample[] {
   const next = [...history, { t: Date.now(), v }];
   return next.length > HISTORY ? next.slice(next.length - HISTORY) : next;
 }
 
-// The fields a render depends on: uptime is left out, since it changes on
-// every poll while only its coarse format is ever shown.
+// The fields a render depends on: uptime and memory are compared coarsely,
+// since they change on every poll while only their rounded format shows.
 function sameNode(a: NodeStatus | null, b: NodeStatus): boolean {
   return (
     !!a &&
@@ -52,19 +54,19 @@ function sameNode(a: NodeStatus | null, b: NodeStatus): boolean {
 /**
  * LiveProvider polls the backend once for the whole app: node, miner and
  * wallet status, the latest blocks, and short histories for the charts.
- * Pages read it through useLive instead of each running their own timers,
- * and histories survive moving between pages.
+ * Components read the stream they need through its own hook.
  */
 export function LiveProvider({ children }: { children: ReactNode }) {
   const [node, setNode] = useState<NodeStatus | null>(null);
-  const [miner, setMiner] = useState<MinerStatus | null>(null);
+  const [miner, setMiner] = useState<MinerLive>({ status: null, hashrate: [] });
   const [wallet, setWallet] = useState<WalletStatus>({ connected: false, lastSeenUnixMilli: 0 });
   const [blocks, setBlocks] = useState<BlockView[]>([]);
-  const [hashrate, setHashrate] = useState<Sample[]>([]);
   const [peers, setPeers] = useState<Sample[]>([]);
   const head = useRef(-1);
-  const mining = useRef(false);
+  const blocksAt = useRef(0);
+  const lastMiner = useRef("");
   const pollNow = useRef<() => void>(() => {});
+  const [refresh] = useState(() => () => pollNow.current());
 
   useEffect(() => {
     let alive = true;
@@ -79,9 +81,12 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       if (ns) {
         setNode((prev) => (sameNode(prev, ns) ? prev : ns));
         if (ns.running) {
-          setPeers((h) => push(h, ns.peers));
-          if (ns.currentBlock !== head.current) {
+          // Only a change in the peer count needs a new chart sample
+          setPeers((h) => (h.length > 0 && h[h.length - 1].v === ns.peers ? h : push(h, ns.peers)));
+          const due = !ns.syncing || Date.now() - blocksAt.current >= SYNC_BLOCKS_MS;
+          if (ns.currentBlock !== head.current && due) {
             head.current = ns.currentBlock;
+            blocksAt.current = Date.now();
             api
               .recentBlocks(BLOCKS_SHOWN)
               .then((b) => alive && setBlocks(b))
@@ -95,12 +100,19 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       }
 
       if (ms) {
-        setMiner(ms);
         if (ms.running) {
-          // A fresh run starts a fresh chart
-          setHashrate((h) => push(mining.current ? h : [], ms.hashrate));
+          setMiner((m) => ({
+            status: ms,
+            // A fresh run starts a fresh chart
+            hashrate: push(m.status?.running ? m.hashrate : [], ms.hashrate),
+          }));
+        } else {
+          // Idle status rarely changes: skip the update when it is the same
+          const key = JSON.stringify(ms);
+          if (key !== lastMiner.current) setMiner((m) => ({ status: ms, hashrate: m.hashrate }));
+          lastMiner.current = key;
         }
-        mining.current = ms.running;
+        if (ms.running) lastMiner.current = "";
       }
     };
 
@@ -109,7 +121,11 @@ export function LiveProvider({ children }: { children: ReactNode }) {
         const s = await api.walletStatus();
         if (!alive) return;
         setWallet((prev) =>
-          prev.connected === s.connected && prev.lastSeenUnixMilli === s.lastSeenUnixMilli ? prev : s,
+          prev.connected === s.connected &&
+          // The last-seen time is shown to the second nowhere: a few seconds of drift needn't re-render
+          Math.abs(prev.lastSeenUnixMilli - s.lastSeenUnixMilli) < 10_000
+            ? prev
+            : s,
         );
       } catch {
         /* backend not ready yet */
@@ -131,24 +147,28 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const value: Live = {
-    node,
-    miner,
-    wallet,
-    blocks,
-    hashrate,
-    peers,
-    refresh: () => pollNow.current(),
-  };
-
-  return <LiveContext.Provider value={value}>{children}</LiveContext.Provider>;
+  return (
+    <RefreshContext.Provider value={refresh}>
+      <NodeContext.Provider value={node}>
+        <MinerContext.Provider value={miner}>
+          <WalletContext.Provider value={wallet}>
+            <BlocksContext.Provider value={blocks}>
+              <PeerHistoryContext.Provider value={peers}>{children}</PeerHistoryContext.Provider>
+            </BlocksContext.Provider>
+          </WalletContext.Provider>
+        </MinerContext.Provider>
+      </NodeContext.Provider>
+    </RefreshContext.Provider>
+  );
 }
 
-export function useLive(): Live {
-  const ctx = useContext(LiveContext);
-  if (!ctx) throw new Error("useLive must be used inside LiveProvider");
-  return ctx;
-}
+export const useNode = () => useContext(NodeContext);
+export const useMiner = () => useContext(MinerContext);
+export const useWallet = () => useContext(WalletContext);
+export const useBlocks = () => useContext(BlocksContext);
+export const usePeerHistory = () => useContext(PeerHistoryContext);
+/** Polls again right away, after an action changed the backend's state. */
+export const useRefresh = () => useContext(RefreshContext);
 
 export type NodeState = "stopped" | "syncing" | "synced";
 

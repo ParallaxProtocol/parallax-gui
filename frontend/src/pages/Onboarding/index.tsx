@@ -58,13 +58,12 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
     <div className="grid h-full grid-cols-[minmax(320px,2fr)_3fr]">
       {/* The brand panel */}
       <aside className="relative flex flex-col overflow-hidden border-r border-border bg-sidebar px-10 py-10">
-        <motion.img
+        {/* Still on purpose: an endless rotation keeps the window redrawing every frame */}
+        <img
           src={logo}
           alt=""
           aria-hidden
-          className="pointer-events-none absolute -bottom-24 -left-24 size-[420px] opacity-[0.06]"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 160, repeat: Infinity, ease: "linear" }}
+          className="pointer-events-none absolute -bottom-24 -left-24 size-[420px] -rotate-12 opacity-[0.06]"
         />
         <motion.div
           className="relative flex items-center gap-3"
@@ -107,6 +106,7 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
                 {here && (
                   <motion.span
                     layoutId="onboarding-current"
+                    layoutDependency={step}
                     transition={SPRING}
                     className="brand-gradient-mark absolute -left-10 h-5 w-0.5 rounded-full"
                   />

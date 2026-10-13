@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { ArrowDownLeft, ArrowUpRight, Eye, Pencil, Pickaxe } from "lucide-react";
 import { api, AddressView } from "../../lib/api";
 import { formatInt, formatLax, isAddress, sameAddress, shortHex } from "../../lib/format";
-import { useLive } from "../../lib/live";
-import { SPRING } from "../../lib/motion";
+import { useNode } from "../../lib/live";
 import { useNow } from "../../lib/useNow";
 import { useAgo, useT } from "../../i18n";
 import { Label, Plate } from "../../components/ui/Plate";
@@ -26,7 +24,7 @@ export default function Watched() {
   const t = useT();
   const ago = useAgo();
   const now = useNow(5000);
-  const { node } = useLive();
+  const node = useNode();
   const [address, setAddress] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -215,16 +213,8 @@ export default function Watched() {
           </p>
         ) : (
           <ul className="divide-y divide-border">
-            <AnimatePresence initial={false}>
-              {activity.map((a) => (
-                <motion.li
-                  key={`${a.kind}-${a.hash}`}
-                  layout="position"
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={SPRING}
-                  className="flex items-center gap-4 py-3"
-                >
+            {activity.map((a) => (
+                <li key={`${a.kind}-${a.hash}`} className="rise flex items-center gap-4 py-3">
                   <ActivityIcon kind={a.kind} />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm">{t(`wallet.kind.${a.kind}`)}</div>
@@ -244,9 +234,8 @@ export default function Watched() {
                     </div>
                     <div className="text-[11px] text-muted-foreground">{ago(a.time, now)}</div>
                   </div>
-                </motion.li>
+                </li>
               ))}
-            </AnimatePresence>
           </ul>
         )}
       </Plate>

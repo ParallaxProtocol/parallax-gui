@@ -7,7 +7,7 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { Lang, LANG_NAMES, TRANSLATIONS } from "./translations";
+import { Dict, en, Lang, LANG_NAMES, loadDict } from "./translations";
 
 const STORAGE_KEY = "parallax-lang";
 
@@ -65,6 +65,19 @@ const LanguageContext = createContext<Ctx | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(detectInitial);
+  // The active language's dictionary. English shows until it has loaded
+  // (a local chunk, so a moment at most); a failed load keeps English.
+  const [dict, setDict] = useState<{ lang: Lang; strings: Dict }>({ lang: "en", strings: en });
+
+  useEffect(() => {
+    let alive = true;
+    loadDict(lang)
+      .then((strings) => alive && setDict({ lang, strings }))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [lang]);
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
@@ -81,8 +94,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>) => {
-      const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
-      let str = dict[key] ?? TRANSLATIONS.en[key] ?? key;
+      let str = dict.strings[key] ?? en[key] ?? key;
       if (vars) {
         for (const k of Object.keys(vars)) {
           str = str.replace(new RegExp(`\\{${k}\\}`, "g"), String(vars[k]));
@@ -90,7 +102,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       }
       return str;
     },
-    [lang],
+    [dict],
   );
 
   const value = useMemo<Ctx>(() => ({ lang, setLang, t }), [lang, setLang, t]);

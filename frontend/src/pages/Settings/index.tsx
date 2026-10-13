@@ -182,15 +182,8 @@ export default function Settings() {
           <Row title={t("settings.rpc.enable")} desc={t("settings.rpc.desc")} restart={cfg.httpRpcEnabled !== orig.httpRpcEnabled}>
             <Toggle checked={cfg.httpRpcEnabled} onChange={(v) => update({ httpRpcEnabled: v })} label={t("settings.rpc.enable")} />
           </Row>
-          <AnimatePresence initial={false}>
-            {cfg.httpRpcEnabled && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={SPRING}
-                className="overflow-hidden"
-              >
+          {cfg.httpRpcEnabled && (
+            <div className="rise">
                 <Row title={t("settings.rpc.port")} desc={t("settings.rpc.port.desc")} restart={cfg.httpRpcPort !== orig.httpRpcPort}>
                   <input
                     type="number"
@@ -199,9 +192,8 @@ export default function Settings() {
                     onChange={(e) => update({ httpRpcPort: num(e.target.value, 8545) })}
                   />
                 </Row>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            </div>
+          )}
           <Row
             title={t("settings.stats.toggle")}
             desc={
@@ -324,7 +316,7 @@ function SectionNav() {
           return (
             <li key={id} className="relative">
               {here && (
-                <motion.span layoutId="settings-current" transition={SPRING} className="absolute inset-0 rounded-sm bg-foreground/[0.06]">
+                <motion.span layoutId="settings-current" layoutDependency={current} transition={SPRING} className="absolute inset-0 rounded-sm bg-foreground/[0.06]">
                   <span className="brand-gradient-mark absolute inset-y-1.5 left-0 w-0.5 rounded-full" />
                 </motion.span>
               )}

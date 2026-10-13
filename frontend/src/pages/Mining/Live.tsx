@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { Loader2, Square } from "lucide-react";
 import { MinerStatus } from "../../lib/api";
 import { formatDifficulty, formatDuration, formatHashrate, formatInt, formatPercent } from "../../lib/format";
 import { Sample } from "../../lib/live";
-import { SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
 import { AreaChart } from "../../components/ui/Chart";
 import { Indicator } from "../../components/ui/Indicator";
@@ -12,7 +10,7 @@ import { Label, Plate } from "../../components/ui/Plate";
 import { Rolling } from "../../components/ui/Rolling";
 import { SectionHeader } from "../../components/ui/SectionHeader";
 import { Tile } from "../../components/ui/Tile";
-import { Meter } from "../../components/ui/bits";
+import { Fill, Meter } from "../../components/ui/bits";
 
 /**
  * Live is the miner while it runs: the hashrate large over its chart,
@@ -40,7 +38,7 @@ export default function Live({
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="flex flex-col gap-2">
             <span className="flex items-center gap-2">
-              <Indicator grade={status.generatingDag ? "info" : "good"} ping="always" />
+              <Indicator grade={status.generatingDag ? "info" : "good"} ping cause={String(status.generatingDag)} />
               <Label>
                 {status.generatingDag ? t("mining.generatingDag") : t("mining.mining")} ·{" "}
                 {t(`mining.mode.${status.mode}`)}
@@ -71,24 +69,14 @@ export default function Live({
           </button>
         </div>
 
-        <AnimatePresence initial={false}>
-          {status.generatingDag && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={SPRING}
-              className="overflow-hidden"
-            >
-              <div className="flex flex-col gap-2 pb-1">
-                <span className="text-xs text-muted-foreground">
-                  {t("mining.genDagEpoch")} {status.epoch} · {t("mining.dagDesc")}
-                </span>
-                <Meter />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {status.generatingDag && (
+          <div className="rise flex flex-col gap-2 pb-1">
+            <span className="text-xs text-muted-foreground">
+              {t("mining.genDagEpoch")} {status.epoch} · {t("mining.dagDesc")}
+            </span>
+            <Meter />
+          </div>
+        )}
 
         <AreaChart samples={history} height={160} format={formatHashrate} floorZero={false} label={t("mining.hashrate")} />
       </Plate>
@@ -105,9 +93,9 @@ export default function Live({
               tone={acceptedShare < 0.9 ? "warn" : null}
               flashKey={status.sharesAccepted}
             >
-              <div className="flex h-1.5 overflow-hidden rounded-full bg-muted">
-                <span className="bg-brand-mark transition-[width] duration-700" style={{ width: `${acceptedShare * 100}%` }} />
-                <span className="bg-critical transition-[width] duration-700" style={{ width: `${(1 - acceptedShare) * 100}%` }} />
+              {/* Rejected shares show as the red track behind the accepted fill */}
+              <div className="relative h-1.5 overflow-hidden rounded-full bg-critical">
+                <Fill value={acceptedShare} className="bg-brand-mark" />
               </div>
             </Tile>
           ) : (
@@ -186,11 +174,8 @@ export default function Live({
                       {d.powerW > 0 && <span className="text-muted-foreground">{d.powerW.toFixed(0)} W</span>}
                       <span className="w-24 text-right text-sm text-foreground">{formatHashrate(d.hashrate)}</span>
                     </div>
-                    <div className="col-span-2 h-1 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="brand-gradient-mark h-full rounded-full transition-[width] duration-700"
-                        style={{ width: `${share * 100}%` }}
-                      />
+                    <div className="relative col-span-2 h-1 overflow-hidden rounded-full bg-muted">
+                      <Fill value={share} className="brand-gradient-mark" />
                     </div>
                   </li>
                 );

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, Cpu, Loader2, Network, Pencil, Play, Plus, Zap } from "lucide-react";
 import { api, DeviceInfo, GUIConfig, MiningMode, PoolInfo } from "../../lib/api";
-import { useLive } from "../../lib/live";
+import { useMiner, useNode, useRefresh } from "../../lib/live";
 import { SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
 import { PageStagger } from "../../components/PageStagger";
@@ -33,7 +33,9 @@ async function persist(patch: Partial<GUIConfig>) {
 
 export default function Mining() {
   const t = useT();
-  const { node, miner, hashrate, refresh } = useLive();
+  const node = useNode();
+  const { status: miner, hashrate } = useMiner();
+  const refresh = useRefresh();
   const [mode, setMode] = useState<Mode>(isMac ? "solo" : "pool");
   const [gpus, setGpus] = useState<DeviceInfo[]>([]);
   const [pools, setPools] = useState<PoolInfo[]>([]);
@@ -200,6 +202,7 @@ export default function Mining() {
                       {here && (
                         <motion.span
                           layoutId="mode-current"
+                          layoutDependency={mode}
                           transition={SPRING}
                           className="brand-gradient-mark absolute inset-x-0 -top-px h-0.5 rounded-t-md"
                         />

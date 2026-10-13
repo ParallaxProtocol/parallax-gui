@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { motion } from "motion/react";
 import { Loader2, Power } from "lucide-react";
 import { api, BlockView, NodeStatus } from "../../lib/api";
 import { formatInt, TARGET_BLOCK_SECONDS } from "../../lib/format";
-import { nodeState, syncProgress, useLive } from "../../lib/live";
+import { nodeState, syncProgress, useBlocks, useNode, useRefresh } from "../../lib/live";
 import { useNow } from "../../lib/useNow";
 import { useT } from "../../i18n";
 import { Indicator, type Grade } from "../../components/ui/Indicator";
 import { Label, Plate } from "../../components/ui/Plate";
 import { Rolling } from "../../components/ui/Rolling";
-import { Meter, Notice } from "../../components/ui/bits";
+import { Fill, Meter, Notice } from "../../components/ui/bits";
 import logo from "../../assets/logo.svg";
 
 /**
@@ -19,21 +18,22 @@ import logo from "../../assets/logo.svg";
  * long the network has waited since against the 10 minute target.
  */
 export default function BlockHero() {
-  const { node, blocks } = useLive();
+  const node = useNode();
+  const blocks = useBlocks();
   const state = nodeState(node);
 
   return (
-    <motion.div layout="position">
+    <div>
       {state === "stopped" && <Stopped />}
       {state === "syncing" && <Syncing node={node!} />}
       {state === "synced" && <Clock node={node!} head={blocks[0]} />}
-    </motion.div>
+    </div>
   );
 }
 
 function Stopped() {
   const t = useT();
-  const { refresh } = useLive();
+  const refresh = useRefresh();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -52,14 +52,13 @@ function Stopped() {
 
   return (
     <Plate className="overflow-hidden p-8">
-      {/* The mark, large and faint, turning slowly behind the prompt */}
-      <motion.img
+      {/* The mark, large and faint, behind the prompt. Still on purpose: an
+          endless rotation keeps the whole window redrawing every frame */}
+      <img
         src={logo}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute -top-16 -right-16 size-80 opacity-[0.07]"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+        className="pointer-events-none absolute -top-16 -right-16 size-80 rotate-12 opacity-[0.07]"
       />
       <div className="relative flex max-w-xl flex-col gap-4">
         <span className="flex items-center gap-2">
@@ -91,7 +90,7 @@ function Syncing({ node }: { node: NodeStatus }) {
       <div className="grid gap-x-12 gap-y-6 lg:grid-cols-[auto_1fr] lg:items-end">
         <div className="flex flex-col gap-2">
           <span className="flex items-center gap-2">
-            <Indicator grade="info" ping="always" />
+            <Indicator grade="info" ping cause={searching ? "search" : "sync"} />
             <Label>{searching ? t("overview.sync.searching") : t("node.state.syncing")}</Label>
           </span>
           <p className="font-sans text-6xl font-semibold tracking-tight tabular-nums">
@@ -113,7 +112,8 @@ function Syncing({ node }: { node: NodeStatus }) {
               </span>
             )}
           </div>
-          <Meter value={searching ? undefined : progress} active label={t("node.state.syncing")} />
+          {/* Static while searching: peer discovery can take minutes, and an endless sweep redraws every frame */}
+          <Meter value={progress} label={t("node.state.syncing")} />
           <p className="text-xs text-muted-foreground">
             {searching ? t("overview.sync.searchingDesc") : t("overview.sync.desc")}
           </p>
@@ -216,12 +216,13 @@ function Clock({ node, head }: { node: NodeStatus; head?: BlockView }) {
             aria-valuemax={TARGET_BLOCK_SECONDS * SPAN}
             aria-valuenow={Math.min(elapsed, TARGET_BLOCK_SECONDS * SPAN)}
           >
-            {/* Keyed by the block, so a new one starts the fill afresh rather than draining it back */}
-            <div
-              key={foundAt}
-              className="brand-gradient-mark absolute inset-y-0 left-0 rounded-full transition-[width] duration-1000 ease-linear"
-              style={{ width: `${fill * 100}%` }}
-            />
+            {/* Steps once a second with the clock, without a transition: the fill
+                moves under a pixel a second, and a running transition would keep
+                the window redrawing every frame. Keyed by the block, so a new one
+                starts afresh rather than draining back */}
+            <div className="absolute inset-0 overflow-hidden rounded-full">
+              <Fill key={foundAt} value={fill} className="brand-gradient-mark" style={{ transition: "none" }} />
+            </div>
             {ticks.slice(1, -1).map((tick) => (
               <div
                 key={tick.at}

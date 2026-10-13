@@ -137,20 +137,21 @@ repository.
 ## Contributing a localization
 
 Parallax Desktop ships with English, Deutsch, Français, Português
-(Brasil), Русский, 中文（新加坡）, and 中文（繁體）. All UI strings live in
-a single flat dictionary at
-[`frontend/src/i18n/translations.ts`](frontend/src/i18n/translations.ts),
-keyed with dot-notation (e.g. `nav.overview`, `settings.rpc.enable`).
+(Brasil), Русский, 中文（新加坡）, and 中文（繁體）. English lives in
+[`frontend/src/i18n/translations.ts`](frontend/src/i18n/translations.ts)
+and is bundled with the app as the fallback; every other language is its
+own file under [`frontend/src/i18n/locales/`](frontend/src/i18n/locales/),
+loaded on first use. Keys are flat and dot-notated (e.g. `nav.overview`,
+`settings.rpc.enable`).
 
 To add a new language:
 
 1. Add the BCP-47 tag to the `Lang` union and a display name to
    `LANG_NAMES` at the top of `translations.ts`.
-2. Copy the `en` dictionary to a new `const xx: Dict = { … }` block and
-   translate each value. Leave `{placeholder}` tokens untouched — they
-   are substituted at runtime by `t(key, vars)`.
-3. Register the dictionary in the `TRANSLATIONS` map at the bottom of
-   the file.
+2. Copy an existing file in `locales/` to `locales/<tag>.ts` and translate
+   each value. Leave `{placeholder}` tokens untouched — they are
+   substituted at runtime by `t(key, vars)`.
+3. Register it in `LOADERS` in `translations.ts`.
 4. Extend the `detectInitial()` matcher and the saved-value guard in
    [`frontend/src/i18n/index.tsx`](frontend/src/i18n/index.tsx) so the
    new tag is recognised by `navigator.language` and persisted in

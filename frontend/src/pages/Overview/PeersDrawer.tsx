@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { ChevronRight } from "lucide-react";
 import { api, PeerView } from "../../lib/api";
-import { SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
 import { Drawer } from "../../components/ui/Drawer";
 import { Segmented } from "../../components/ui/Segmented";
@@ -78,18 +76,10 @@ export default function PeersDrawer({ open, onClose }: { open: boolean; onClose:
         <p className="py-16 text-center text-sm text-muted-foreground">{t("peers.empty")}</p>
       ) : (
         <ul className="divide-y divide-border px-6">
-          <AnimatePresence initial={false}>
-            {shown.map((p) => {
+          {shown.map((p) => {
               const open = expanded === p.fullId;
               return (
-                <motion.li
-                  key={p.fullId}
-                  layout="position"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="py-3"
-                >
+                <li key={p.fullId} className="py-3">
                   <button
                     type="button"
                     onClick={() => setExpanded(open ? null : p.fullId)}
@@ -118,21 +108,13 @@ export default function PeersDrawer({ open, onClose }: { open: boolean; onClose:
                         {p.minPingMs ? ` · ${p.minPingMs.toFixed(0)} ms` : ""}
                       </div>
                     </div>
-                    <motion.span animate={{ rotate: open ? 90 : 0 }} transition={SPRING}>
-                      <ChevronRight className="size-4 text-muted-foreground" />
-                    </motion.span>
+                    <ChevronRight
+                      className={`size-4 text-muted-foreground transition-transform duration-300 ${open ? "rotate-90" : ""}`}
+                    />
                   </button>
 
-                  <AnimatePresence initial={false}>
-                    {open && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={SPRING}
-                        className="overflow-hidden"
-                      >
-                        <dl className="mt-3 ml-15 space-y-2.5 rounded-md border border-border bg-background p-4 text-sm">
+                  {open && (
+                        <dl className="rise mt-3 ml-15 space-y-2.5 rounded-md border border-border bg-background p-4 text-sm">
                           <Detail label={t("peers.fullId")} value={p.fullId} copy />
                           <Detail label={t("peers.enode")} value={p.enode} wrap copy />
                           <Detail label={t("peers.remoteAddr")} value={p.remoteAddr} />
@@ -154,13 +136,10 @@ export default function PeersDrawer({ open, onClose }: { open: boolean; onClose:
                             </div>
                           )}
                         </dl>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.li>
+                  )}
+                </li>
               );
-            })}
-          </AnimatePresence>
+          })}
         </ul>
       )}
     </Drawer>

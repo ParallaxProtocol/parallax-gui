@@ -1,8 +1,6 @@
 import { useRef } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { BlockView } from "../../lib/api";
 import { formatInt, formatLax, formatPercent, sameAddress, shortHex } from "../../lib/format";
-import { SPRING } from "../../lib/motion";
 import { useNow } from "../../lib/useNow";
 import { useAgo, useT } from "../../i18n";
 import { Plate } from "../../components/ui/Plate";
@@ -20,9 +18,17 @@ export default function LatestBlocks({ blocks, mine }: { blocks: BlockView[]; mi
   const t = useT();
   const ago = useAgo();
   const now = useNow(5000);
-  // The newest block on first render: only blocks after it count as arrivals
-  const first = useRef<number | null>(null);
-  if (first.current === null && blocks.length > 0) first.current = blocks[0].number;
+  // Rows newer than `from` count as arrivals and wash in. It trails the
+  // head by one update, and skips a jump of many blocks at once (first
+  // render, or catching up during sync), when nothing new really "arrived"
+  const seen = useRef<{ head: number; from: number } | null>(null);
+  const top = blocks[0]?.number;
+  if (top !== undefined) {
+    if (seen.current === null) seen.current = { head: top, from: top };
+    else if (top !== seen.current.head)
+      seen.current = { head: top, from: top - seen.current.head > 3 ? top : seen.current.head };
+  }
+  const from = seen.current?.from ?? Infinity;
 
   return (
     <Plate className="px-5 pt-4 pb-2">
@@ -41,20 +47,16 @@ export default function LatestBlocks({ blocks, mine }: { blocks: BlockView[]; mi
             </tr>
           </thead>
           <tbody>
-            <AnimatePresence initial={false}>
-              {blocks.map((b) => {
-                const fresh = first.current !== null && b.number > first.current;
+            {blocks.map((b) => {
+                const fresh = b.number > from;
                 const ours = sameAddress(b.coinbase, mine);
                 const full = b.gasLimit > 0 ? b.gasUsed / b.gasLimit : 0;
                 return (
-                  <motion.tr
+                  // No layout animation: measuring every row on each re-render
+                  // forced a synchronous reflow; a new block's row washes in instead
+                  <tr
                     key={b.number}
-                    layout="position"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={SPRING}
-                    className={`border-b border-border/60 last:border-0 ${fresh ? "row-flash" : ""}`}
+                    className={`border-b border-border/60 last:border-0 ${fresh ? "row-flash rise" : ""}`}
                   >
                     <td className={`${CELL} font-mono`}>#{formatInt(b.number)}</td>
                     <td className={`${CELL} text-muted-foreground`}>{ago(b.timestamp, now)}</td>
@@ -83,10 +85,9 @@ export default function LatestBlocks({ blocks, mine }: { blocks: BlockView[]; mi
                     <td className={`${CELL} text-right`}>
                       {formatLax(b.rewardWei, 2)} <span className="text-muted-foreground">LAX</span>
                     </td>
-                  </motion.tr>
+                  </tr>
                 );
               })}
-            </AnimatePresence>
           </tbody>
         </table>
       )}

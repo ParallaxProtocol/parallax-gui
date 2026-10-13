@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Pickaxe, Settings2, Wallet } from "lucide-react";
 import { api, PeerView } from "../../lib/api";
 import { formatBytes, formatDuration, shortHex } from "../../lib/format";
-import { useLive } from "../../lib/live";
+import { useBlocks, useNode, usePeerHistory } from "../../lib/live";
 import { useT } from "../../i18n";
 import { PageStagger, StaggerItem } from "../../components/PageStagger";
 import { SectionHeader } from "../../components/ui/SectionHeader";
@@ -17,7 +17,9 @@ import PeersDrawer from "./PeersDrawer";
 
 export default function Overview() {
   const t = useT();
-  const { node, blocks, peers: peerHistory } = useLive();
+  const node = useNode();
+  const blocks = useBlocks();
+  const peerHistory = usePeerHistory();
   const [peersOpen, setPeersOpen] = useState(false);
   const [peerList, setPeerList] = useState<PeerView[]>([]);
   const [mine, setMine] = useState("");

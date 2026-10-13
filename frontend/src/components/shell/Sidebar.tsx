@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { LayoutGrid, Loader2, Pickaxe, Power, Settings2, Wallet } from "lucide-react";
 import { api } from "../../lib/api";
 import { formatDuration, formatHashrate, formatInt } from "../../lib/format";
-import { nodeState, syncProgress, useLive } from "../../lib/live";
+import { nodeState, syncProgress, useMiner, useNode, useRefresh, useWallet } from "../../lib/live";
 import { SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
 import { Indicator, type Grade } from "../ui/Indicator";
@@ -20,7 +20,6 @@ import logo from "../../assets/logo.svg";
  */
 export default function Sidebar({ version }: { version: string }) {
   const t = useT();
-  const { wallet, miner } = useLive();
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-sidebar">
@@ -44,23 +43,13 @@ export default function Sidebar({ version }: { version: string }) {
           to="/wallet"
           icon={Wallet}
           label={t("nav.wallet")}
-          adornment={
-            wallet.connected ? (
-              <Indicator grade="good" ping cause="wallet" label={t("nav.walletConnected")} />
-            ) : null
-          }
+          adornment={<WalletDot />}
         />
         <NavItem
           to="/mining"
           icon={Pickaxe}
           label={t("nav.mining")}
-          adornment={
-            miner?.running ? (
-              <span className="font-mono text-[10px] text-brand tabular-nums">
-                {formatHashrate(miner.hashrate)}
-              </span>
-            ) : null
-          }
+          adornment={<MinerRate />}
         />
         <NavItem to="/settings" icon={Settings2} label={t("nav.settings")} />
       </nav>
@@ -69,6 +58,21 @@ export default function Sidebar({ version }: { version: string }) {
       <NodeDock />
     </aside>
   );
+}
+
+// The adornments read the live streams themselves, so a new hashrate every
+// poll re-renders one span rather than the whole sidebar
+function WalletDot() {
+  const t = useT();
+  const wallet = useWallet();
+  return wallet.connected ? <Indicator grade="good" ping cause="wallet" label={t("nav.walletConnected")} /> : null;
+}
+
+function MinerRate() {
+  const { status } = useMiner();
+  return status?.running ? (
+    <span className="font-mono text-[10px] text-brand tabular-nums">{formatHashrate(status.hashrate)}</span>
+  ) : null;
 }
 
 function NavItem({
@@ -90,6 +94,7 @@ function NavItem({
           {isActive && (
             <motion.span
               layoutId="nav-current"
+              layoutDependency={isActive}
               transition={SPRING}
               className="absolute inset-0 rounded-md bg-foreground/[0.06]"
             >
@@ -126,7 +131,8 @@ const STATE_GRADE: Record<ReturnType<typeof nodeState>, Grade> = {
  */
 function NodeDock() {
   const t = useT();
-  const { node, refresh } = useLive();
+  const node = useNode();
+  const refresh = useRefresh();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const state = nodeState(node);
@@ -150,7 +156,7 @@ function NodeDock() {
     <div className="m-3 rounded-md border border-border bg-surface-elevated p-4">
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2">
-          <Indicator grade={STATE_GRADE[state]} ping={state === "syncing" ? "always" : true} cause={state} />
+          <Indicator grade={STATE_GRADE[state]} ping cause={state} />
           <Label className="text-[10px]">{t(`node.state.${state}`)}</Label>
         </span>
         <button
@@ -181,7 +187,7 @@ function NodeDock() {
           </div>
           {state === "syncing" && (
             <div className="mt-3 flex items-center gap-2">
-              <Meter value={progress} active className="flex-1" label={t("node.state.syncing")} />
+              <Meter value={progress} className="flex-1" label={t("node.state.syncing")} />
               <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
                 {(progress * 100).toFixed(1)}%
               </span>

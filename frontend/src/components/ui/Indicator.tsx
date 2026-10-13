@@ -20,9 +20,10 @@ export const GRADE_TEXT: Record<Grade, string> = {
 
 /**
  * Indicator is the coloured status dot beside a value. With `ping`, a ring
- * spreads from it to draw the eye: three times and rests, or for as long
- * as the state lasts when `ping` is "always". A new `cause` starts the
- * ring again, so a change of state draws the eye anew.
+ * spreads from it to draw the eye three times and rests. A new `cause`
+ * starts the ring again, so a change of state draws the eye anew. There is
+ * deliberately no endless ring: any animation that never stops keeps
+ * WebKitGTK redrawing the whole window every frame.
  */
 export function Indicator({
   grade,
@@ -32,7 +33,7 @@ export function Indicator({
   className = "",
 }: {
   grade: Grade;
-  ping?: boolean | "always";
+  ping?: boolean;
   cause?: string;
   /** Announced to screen readers; leave out when adjacent text says it. */
   label?: string;
@@ -48,9 +49,7 @@ export function Indicator({
       {ping && grade !== "off" && (
         <span
           key={cause}
-          className={`absolute inline-flex size-full rounded-full opacity-60 motion-reduce:hidden ${
-            ping === "always" ? "animate-ping" : "animate-ping-few"
-          } ${COLOR[grade]}`}
+          className={`absolute inline-flex size-full animate-ping-few rounded-full opacity-0 motion-reduce:hidden ${COLOR[grade]}`}
         />
       )}
       <span className={`relative inline-block size-2 rounded-full ${COLOR[grade]}`} />

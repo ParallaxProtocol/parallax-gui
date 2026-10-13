@@ -1,26 +1,17 @@
 import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { AlertTriangle, Check, Copy, Info, OctagonAlert } from "lucide-react";
-import { SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
 
 /**
  * Meter is a thin progress track. The fill takes the logo gradient; with
- * `active` it carries a moving sheen, and with no `value` it shows work of
- * unknown length as a sweeping band.
+ * no `value` it shows work of unknown length as a sweeping band.
+ *
+ * The fill is full width and slides in from the left by transform, which
+ * the compositor animates on its own; transitioning `width` instead re-lays
+ * out the page on every frame.
  */
-export function Meter({
-  value,
-  active,
-  className = "",
-  label,
-}: {
-  /** 0..1, or undefined for indeterminate */
-  value?: number;
-  active?: boolean;
-  className?: string;
-  label?: string;
-}) {
+export function Meter({ value, className = "", label }: { value?: number; className?: string; label?: string }) {
   return (
     <div
       className={`relative h-1.5 overflow-hidden rounded-full bg-muted ${className}`}
@@ -33,14 +24,23 @@ export function Meter({
       {value === undefined ? (
         <div className="brand-gradient-mark indeterminate absolute inset-y-0 w-2/5 rounded-full" />
       ) : (
-        <div
-          className={`brand-gradient-mark h-full rounded-full transition-[width] duration-700 ease-out ${
-            active ? "sheen" : ""
-          }`}
-          style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%` }}
-        />
+        <Fill value={value} className="brand-gradient-mark" />
       )}
     </div>
+  );
+}
+
+/**
+ * Fill is a bar's filled part, 0..1 of its track (which must clip), moved
+ * by transform so updates animate on the compositor.
+ */
+export function Fill({ value, className = "", style }: { value: number; className?: string; style?: React.CSSProperties }) {
+  const v = Math.max(0, Math.min(1, value));
+  return (
+    <div
+      className={`absolute inset-0 rounded-full transition-transform duration-700 ease-out ${className}`}
+      style={{ transform: `translateX(${(v - 1) * 100}%)`, ...style }}
+    />
   );
 }
 
@@ -67,12 +67,8 @@ export function Notice({
   const n = NOTICE[tone];
   const Icon = n.icon;
   return (
-    <motion.div
-      layout="position"
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={SPRING}
-      className={`flex items-start gap-3 rounded-md border px-4 py-3 ${n.box} ${className}`}
+    <div
+      className={`rise flex items-start gap-3 rounded-md border px-4 py-3 ${n.box} ${className}`}
       role={tone === "critical" ? "alert" : "status"}
     >
       <Icon className={`mt-0.5 size-4 shrink-0 ${n.ink}`} />
@@ -81,7 +77,7 @@ export function Notice({
         {children && <div className="break-words text-foreground/85">{children}</div>}
       </div>
       {action && <div className="shrink-0 self-center">{action}</div>}
-    </motion.div>
+    </div>
   );
 }
 

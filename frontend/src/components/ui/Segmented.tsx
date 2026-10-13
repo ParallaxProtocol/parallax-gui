@@ -50,6 +50,7 @@ export function Segmented<T extends string>({
             {here && (
               <motion.span
                 layoutId={`segment-${id}`}
+                layoutDependency={value}
                 transition={SPRING}
                 className="absolute inset-0 rounded-sm border border-border-strong bg-surface-elevated"
               >

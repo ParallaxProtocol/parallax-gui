@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { Pickaxe } from "lucide-react";
 import { formatHashrate } from "../../lib/format";
-import { useLive } from "../../lib/live";
+import { useMiner, useWallet } from "../../lib/live";
 import { FADE_IN, FADE_OUT, SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
 import { Indicator } from "../ui/Indicator";
@@ -23,7 +23,8 @@ const PAGES: Record<string, { title: string; subtitle: string }> = {
 export default function TopBar() {
   const t = useT();
   const { pathname } = useLocation();
-  const { wallet, miner } = useLive();
+  const wallet = useWallet();
+  const { status: miner } = useMiner();
   const page = PAGES[pathname] ?? PAGES["/"];
 
   return (
@@ -66,7 +67,6 @@ export default function TopBar() {
 function Chip({ to, children }: { to: string; children: React.ReactNode }) {
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, scale: 0.9, x: 8 }}
       animate={{ opacity: 1, scale: 1, x: 0 }}
       exit={{ opacity: 0, scale: 0.9, transition: FADE_OUT }}
