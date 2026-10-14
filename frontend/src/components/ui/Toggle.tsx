@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { SPRING } from "../../lib/motion";
 
 /**
- * Toggle is a switch, its track taking the accent when on and its knob
+ * Toggle is a switch, its track turning blue when on (Apple's system blue) and its knob
  * springing across. The knob moves by transform x rather than by tweening
  * `left`: motion can't interpolate calc() expressions.
  */
@@ -26,7 +26,7 @@ export default function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-[34px] shrink-0 rounded-full transition-colors duration-200 disabled:opacity-40 ${
-        checked ? "bg-brand-fill" : "bg-border-strong"
+        checked ? "bg-[var(--switch-on)]" : "bg-border-strong"
       }`}
     >
       <motion.span

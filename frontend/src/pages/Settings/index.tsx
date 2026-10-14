@@ -1,11 +1,28 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, Loader2, RefreshCw } from "lucide-react";
+import {
+  Activity,
+  Check,
+  Globe,
+  Info,
+  KeyRound,
+  Loader2,
+  Palette,
+  Plug,
+  RefreshCw,
+  Server,
+  Settings2,
+  type LucideIcon,
+} from "lucide-react";
 import { api, GUIConfig, UpdateInfo } from "../../lib/api";
 import { applyTheme } from "../../lib/theme";
 import { FADE_IN, FADE_OUT, GLIDE, PAGE, SPRING } from "../../lib/motion";
 import { CONFIG_UPDATED_EVENT } from "../../App";
 import { useLang, useT, LANG_NAMES, Lang } from "../../i18n";
+import { useSettingsSheet, type SettingsSection } from "../../components/shell/SettingsSheet";
+import { Select } from "../../components/ui/Select";
+import { IconTile, TILE } from "../../components/ui/IconTile";
+import { AccountsSettings } from "../Wallet/Accounts";
 import { Indicator } from "../../components/ui/Indicator";
 import { Row, Rows } from "../../components/ui/Panel";
 import { Segmented } from "../../components/ui/Segmented";
@@ -13,6 +30,9 @@ import Toggle from "../../components/ui/Toggle";
 import { Notice } from "../../components/ui/bits";
 import LogsPanel from "./LogsPanel";
 import { Advanced, countSet, Group, ListInput, NumberInput, Setting, TextInput } from "./fields";
+import { AddressAvatar } from "../../components/ui/AddressAvatar";
+import { useWallet } from "../../lib/wallet";
+import type { AvatarStyle } from "../../lib/prefs";
 
 // Fields the app applies itself, at once or on its next action: changing
 // them needs no node restart. Every other field configures the node.
@@ -20,6 +40,7 @@ const LIVE_FIELDS = new Set<keyof GUIConfig>([
   "bootstrapped",
   "theme",
   "disableAnimations",
+  "avatarStyle",
   "autoStartNode",
   "logLevel",
   "noUpdateCheck",
@@ -32,9 +53,6 @@ const LIVE_FIELDS = new Set<keyof GUIConfig>([
 // Fields the daemon reads only as its process starts, from its argv:
 // they wait on a restart of the whole app
 const APP_FIELDS = new Set<keyof GUIConfig>(["metrics", "metricsExpensive", "metricsAddr", "metricsPort"]);
-
-const SECTIONS = ["general", "appearance", "node", "network", "rpc", "diagnostics", "about"] as const;
-type Section = (typeof SECTIONS)[number];
 
 const LOOPBACK = new Set(["", "127.0.0.1", "localhost", "::1"]);
 
@@ -51,7 +69,7 @@ export default function Settings() {
   const [restartPending, setRestartPending] = useState(false);
   const [appRestartPending, setAppRestartPending] = useState(false);
   const [restarting, setRestarting] = useState(false);
-  const [section, setSection] = useState<Section>("general");
+  const { section, setSection } = useSettingsSheet();
   const [login, setLogin] = useState<{ supported: boolean; enabled: boolean }>({ supported: false, enabled: false });
 
   useEffect(() => {
@@ -148,31 +166,41 @@ export default function Settings() {
   const inbound = !cfg.blockInbound;
 
   return (
-    <div className="flex h-full min-h-0">
+    <div className="flex min-h-0 flex-1">
       <nav
         aria-label={t("nav.settings")}
-        className="flex w-44 shrink-0 flex-col gap-px overflow-y-auto border-r border-border p-2"
+        className="flex w-52 shrink-0 flex-col gap-px overflow-y-auto border-r border-border p-2"
       >
-        {SECTIONS.map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setSection(id)}
-            aria-current={section === id ? "page" : undefined}
-            className={`relative flex h-7 shrink-0 items-center rounded-md px-2 text-left transition-colors ${
-              section === id ? "font-medium" : "text-foreground/80 hover:bg-hover"
-            }`}
-          >
-            {section === id && (
-              <motion.span
-                layoutId="settings-selection"
-                layoutDependency={section}
-                transition={GLIDE}
-                className="absolute inset-0 rounded-md bg-selected"
-              />
-            )}
-            <span className="relative">{t(`settings.section.${id}`)}</span>
-          </button>
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={group.title} className="flex flex-col gap-px">
+            <h3 className={`px-2.5 pb-1 text-xs font-semibold text-muted-foreground ${gi === 0 ? "pt-1" : "pt-4"}`}>
+              {t(group.title)}
+            </h3>
+            {group.sections.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setSection(id)}
+                aria-current={section === id ? "page" : undefined}
+                className={`relative flex h-9 shrink-0 items-center rounded-lg px-2.5 text-left transition-colors ${
+                  section === id ? "font-medium" : "text-foreground/80 hover:bg-hover"
+                }`}
+              >
+                {section === id && (
+                  <motion.span
+                    layoutId="settings-selection"
+                    layoutDependency={section}
+                    transition={GLIDE}
+                    className="absolute inset-0 rounded-lg bg-selected"
+                  />
+                )}
+                <span className="relative flex items-center gap-2.5">
+                  <SectionTile id={id} />
+                  {t(`settings.section.${id}`)}
+                </span>
+              </button>
+            ))}
+          </div>
         ))}
       </nav>
 
@@ -183,21 +211,28 @@ export default function Settings() {
             {...PAGE}
             className={`min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] ${section === "diagnostics" ? "flex flex-col" : ""}`}
           >
-            <div className={`flex flex-col gap-6 p-5 ${section === "diagnostics" ? "flex-1" : "max-w-3xl"}`}>
+            <div className={`flex flex-col gap-7 px-6 py-6 ${section === "diagnostics" ? "flex-1" : "max-w-3xl"}`}>
+              {/* The section's own header, as in System Settings */}
+              <div className="flex items-center gap-4">
+                <SectionTile id={section} large />
+                <h2 className="text-2xl font-semibold tracking-tight">{t(`settings.section.${section}`)}</h2>
+              </div>
               {err && <Notice tone="critical">{err}</Notice>}
+
+              {section === "accounts" && <AccountsSettings />}
 
               {section === "general" && (
                 <>
                   <Group title={t("settings.group.language")}>
                     <Rows>
                       <Setting title={t("settings.language.label")} desc={t("settings.language.desc")}>
-                        <select className="input w-52" value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
-                          {(Object.keys(LANG_NAMES) as Lang[]).map((l) => (
-                            <option key={l} value={l}>
-                              {LANG_NAMES[l]}
-                            </option>
-                          ))}
-                        </select>
+                        <Select<Lang>
+                          className="w-52"
+                          aria-label={t("settings.language.label")}
+                          value={lang}
+                          onChange={setLang}
+                          options={(Object.keys(LANG_NAMES) as Lang[]).map((l) => ({ value: l, label: LANG_NAMES[l] }))}
+                        />
                       </Setting>
                     </Rows>
                   </Group>
@@ -267,6 +302,17 @@ export default function Settings() {
                         ]}
                       />
                     </Setting>
+                    <Setting title={t("settings.avatars")} desc={t("settings.avatars.desc")}>
+                      <AvatarPreview style={cfg.avatarStyle === "blockies" ? "blockies" : "jazzicon"} />
+                      <Segmented
+                        value={cfg.avatarStyle === "blockies" ? "blockies" : "jazzicon"}
+                        onChange={(v) => instant({ avatarStyle: v })}
+                        options={[
+                          { value: "jazzicon", label: "Jazzicon" },
+                          { value: "blockies", label: "Blockies" },
+                        ]}
+                      />
+                    </Setting>
                     <Setting title={t("settings.disableAnimations")} desc={t("settings.appearance.desc")}>
                       <Toggle
                         checked={cfg.disableAnimations}
@@ -282,7 +328,11 @@ export default function Settings() {
                 <>
                   <Group title={t("settings.group.storage")}>
                     <Rows>
-                      <Setting title={t("settings.dataDir")} desc={t("settings.dataDir.desc")} restart={restart("dataDir")}>
+                      <Setting
+                        title={t("settings.dataDir")}
+                        desc={t("settings.dataDir.desc")}
+                        restart={restart("dataDir")}
+                      >
                         <TextInput width="w-72" value={cfg.dataDir} onChange={(v) => update({ dataDir: v })} />
                       </Setting>
                     </Rows>
@@ -400,7 +450,12 @@ export default function Settings() {
                         ] as const
                       ).map(([key, label]) => (
                         <Setting key={key} title={t(label)} restart={restart(key)}>
-                          <NumberInput width="w-24" value={cfg[key]} unit="MB" onChange={(v) => update({ [key]: v ?? 0 })} />
+                          <NumberInput
+                            width="w-24"
+                            value={cfg[key]}
+                            unit="MB"
+                            onChange={(v) => update({ [key]: v ?? 0 })}
+                          />
                         </Setting>
                       ))}
                     </Rows>
@@ -432,7 +487,11 @@ export default function Settings() {
                           label={t("settings.preimages")}
                         />
                       </Setting>
-                      <Setting title={t("settings.fdLimit")} desc={t("settings.fdLimit.desc")} restart={restart("fdLimit")}>
+                      <Setting
+                        title={t("settings.fdLimit")}
+                        desc={t("settings.fdLimit.desc")}
+                        restart={restart("fdLimit")}
+                      >
                         <NumberInput
                           optional
                           value={cfg.fdLimit || null}
@@ -506,7 +565,11 @@ export default function Settings() {
                         desc={t("settings.gpo.ignorePrice.desc")}
                         restart={restart("gpoIgnorePrice")}
                       >
-                        <WeiInput value={cfg.gpoIgnorePrice} placeholder="2" onChange={(v) => update({ gpoIgnorePrice: v })} />
+                        <WeiInput
+                          value={cfg.gpoIgnorePrice}
+                          placeholder="2"
+                          onChange={(v) => update({ gpoIgnorePrice: v })}
+                        />
                       </Setting>
                     </Advanced>
                   </Group>
@@ -585,7 +648,12 @@ export default function Settings() {
                         ] as const
                       ).map(([key, label, def]) => (
                         <Setting key={key} title={t(label)} desc={t(`${label}.desc`)} restart={restart(key)}>
-                          <NumberInput optional value={cfg[key]} placeholder={def} onChange={(v) => update({ [key]: v })} />
+                          <NumberInput
+                            optional
+                            value={cfg[key]}
+                            placeholder={def}
+                            onChange={(v) => update({ [key]: v })}
+                          />
                         </Setting>
                       ))}
                       <Setting
@@ -638,10 +706,23 @@ export default function Settings() {
                           onChange={(v) => update({ listenPort: v ?? 0 })}
                         />
                       </Setting>
-                      <Setting title={t("settings.maxPeers")} desc={t("settings.maxPeers.desc")} restart={restart("maxPeers")}>
-                        <NumberInput width="w-24" min={1} value={cfg.maxPeers} onChange={(v) => update({ maxPeers: v ?? 0 })} />
+                      <Setting
+                        title={t("settings.maxPeers")}
+                        desc={t("settings.maxPeers.desc")}
+                        restart={restart("maxPeers")}
+                      >
+                        <NumberInput
+                          width="w-24"
+                          min={1}
+                          value={cfg.maxPeers}
+                          onChange={(v) => update({ maxPeers: v ?? 0 })}
+                        />
                       </Setting>
-                      <Setting title={t("settings.nodeName")} desc={t("settings.nodeName.desc")} restart={restart("nodeName")}>
+                      <Setting
+                        title={t("settings.nodeName")}
+                        desc={t("settings.nodeName.desc")}
+                        restart={restart("nodeName")}
+                      >
                         <TextInput
                           mono={false}
                           value={cfg.nodeName}
@@ -658,17 +739,19 @@ export default function Settings() {
                         desc={t("settings.nat.desc")}
                         restart={restart("natMode", "externalIp")}
                       >
-                        <select
-                          className="input w-48 disabled:opacity-50"
+                        <Select<GUIConfig["natMode"]>
+                          className="w-48"
+                          aria-label={t("settings.nat")}
                           disabled={!inbound}
                           value={cfg.natMode}
-                          onChange={(e) => update({ natMode: e.target.value as GUIConfig["natMode"] })}
-                        >
-                          <option value="">{t("settings.nat.any")}</option>
-                          <option value="upnp">UPnP</option>
-                          <option value="pmp">NAT-PMP</option>
-                          <option value="extip">{t("settings.nat.extip")}</option>
-                        </select>
+                          onChange={(natMode) => update({ natMode })}
+                          options={[
+                            { value: "", label: t("settings.nat.any") },
+                            { value: "upnp", label: "UPnP" },
+                            { value: "pmp", label: "NAT-PMP" },
+                            { value: "extip", label: t("settings.nat.extip") },
+                          ]}
+                        />
                       </Setting>
                       {inbound && cfg.natMode === "extip" && (
                         <Setting
@@ -795,7 +878,13 @@ export default function Settings() {
                     </Rows>
                     <Advanced
                       id="privacy"
-                      changed={countSet([cfg.onionProxy, cfg.onlyNet, cfg.proxyNoRandomize, cfg.torControl, cfg.torPassword])}
+                      changed={countSet([
+                        cfg.onionProxy,
+                        cfg.onlyNet,
+                        cfg.proxyNoRandomize,
+                        cfg.torControl,
+                        cfg.torPassword,
+                      ])}
                     >
                       <Setting
                         title={t("settings.onlyNet")}
@@ -804,7 +893,10 @@ export default function Settings() {
                         desc={t("settings.onlyNet.desc")}
                         restart={restart("onlyNet")}
                       >
-                        <NetworkPicker value={cfg.onlyNet ?? []} onChange={(v) => update({ onlyNet: v.length ? v : null })} />
+                        <NetworkPicker
+                          value={cfg.onlyNet ?? []}
+                          onChange={(v) => update({ onlyNet: v.length ? v : null })}
+                        />
                       </Setting>
                       <Setting
                         title={t("settings.onionProxy")}
@@ -931,14 +1023,22 @@ export default function Settings() {
                           onChange={(v) => update({ httpHost: v.trim() })}
                         />
                       </Setting>
-                      <Setting title={t("settings.rpc.apis")} desc={t("settings.rpc.apis.desc")} restart={restart("httpApis")}>
+                      <Setting
+                        title={t("settings.rpc.apis")}
+                        desc={t("settings.rpc.apis.desc")}
+                        restart={restart("httpApis")}
+                      >
                         <ListInput
                           value={cfg.httpApis}
                           placeholder="net, web3, eth, debug"
                           onChange={(v) => update({ httpApis: v })}
                         />
                       </Setting>
-                      <Setting title={t("settings.rpc.cors")} desc={t("settings.rpc.cors.desc")} restart={restart("httpCors")}>
+                      <Setting
+                        title={t("settings.rpc.cors")}
+                        desc={t("settings.rpc.cors.desc")}
+                        restart={restart("httpCors")}
+                      >
                         <ListInput value={cfg.httpCors} placeholder="*" onChange={(v) => update({ httpCors: v })} />
                       </Setting>
                       <Setting
@@ -960,7 +1060,11 @@ export default function Settings() {
                   <Group title={t("settings.group.ws")}>
                     <Rows>
                       <Setting title={t("settings.ws")} desc={t("settings.ws.desc")} restart={restart("wsEnabled")}>
-                        <Toggle checked={cfg.wsEnabled} onChange={(v) => update({ wsEnabled: v })} label={t("settings.ws")} />
+                        <Toggle
+                          checked={cfg.wsEnabled}
+                          onChange={(v) => update({ wsEnabled: v })}
+                          label={t("settings.ws")}
+                        />
                       </Setting>
                     </Rows>
                     {cfg.wsEnabled && (
@@ -1002,7 +1106,11 @@ export default function Settings() {
 
                   <Group title={t("settings.group.otherApis")}>
                     <Rows>
-                      <Setting title={t("settings.graphql")} desc={t("settings.graphql.desc")} restart={restart("graphql")}>
+                      <Setting
+                        title={t("settings.graphql")}
+                        desc={t("settings.graphql.desc")}
+                        restart={restart("graphql")}
+                      >
                         <Toggle
                           checked={cfg.graphql}
                           disabled={!cfg.httpRpcEnabled && !cfg.graphql}
@@ -1119,20 +1227,13 @@ export default function Settings() {
                   <Group title={t("settings.group.logging")}>
                     <Rows>
                       <Setting title={t("settings.logLevel")} desc={t("settings.logLevel.desc")}>
-                        <select
-                          className="input w-40"
+                        <Select<number>
+                          className="w-40"
+                          aria-label={t("settings.logLevel")}
                           value={cfg.logLevel || 3}
-                          onChange={(e) => {
-                            const v = parseInt(e.target.value, 10);
-                            instant({ logLevel: v === 3 ? 0 : v });
-                          }}
-                        >
-                          {[1, 2, 3, 4, 5].map((l) => (
-                            <option key={l} value={l}>
-                              {t(`settings.logLevel.${l}`)}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(v) => instant({ logLevel: v === 3 ? 0 : v })}
+                          options={[1, 2, 3, 4, 5].map((l) => ({ value: l, label: t(`settings.logLevel.${l}`) }))}
+                        />
                       </Setting>
                     </Rows>
                   </Group>
@@ -1145,11 +1246,18 @@ export default function Settings() {
                         desc={t("settings.metrics.desc")}
                         restart={restart("metrics")}
                       >
-                        <Toggle checked={cfg.metrics} onChange={(v) => update({ metrics: v })} label={t("settings.metrics")} />
+                        <Toggle
+                          checked={cfg.metrics}
+                          onChange={(v) => update({ metrics: v })}
+                          label={t("settings.metrics")}
+                        />
                       </Setting>
                     </Rows>
                     {cfg.metrics && (
-                      <Advanced id="metrics" changed={countSet([cfg.metricsExpensive, cfg.metricsAddr, cfg.metricsPort])}>
+                      <Advanced
+                        id="metrics"
+                        changed={countSet([cfg.metricsExpensive, cfg.metricsAddr, cfg.metricsPort])}
+                      >
                         <Setting
                           title={t("settings.metrics.expensive")}
                           desc={t("settings.metrics.expensive.desc")}
@@ -1186,7 +1294,11 @@ export default function Settings() {
                       </Advanced>
                     )}
                   </Group>
-                  <Group title={t("settings.group.logs")} desc={t("settings.diagnostics.desc")} className="min-h-80 flex-1">
+                  <Group
+                    title={t("settings.group.logs")}
+                    desc={t("settings.diagnostics.desc")}
+                    className="min-h-80 flex-1"
+                  >
                     <LogsPanel />
                   </Group>
                 </>
@@ -1215,7 +1327,15 @@ export default function Settings() {
 }
 
 /** WeiInput edits a whole number of wei as text: amounts outgrow a JS number. */
-function WeiInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+function WeiInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
   return (
     <>
       <input
@@ -1360,7 +1480,7 @@ function SaveBar({
       {visible && (
         <motion.div
           key="save-bar"
-          className="shrink-0 overflow-hidden border-t border-border bg-background"
+          className="shrink-0 overflow-hidden border-t border-border bg-popover/60 backdrop-blur-xl"
           initial={{ height: 0 }}
           animate={{ height: 48 }}
           exit={{ height: 0 }}
@@ -1378,7 +1498,9 @@ function SaveBar({
                 <>
                   <span className="flex-1">
                     {t("settings.save.unsaved")}
-                    {dirtyNeedsRestart && <span className="ml-2 text-sm text-warn-ink">{t("settings.save.needsRestart")}</span>}
+                    {dirtyNeedsRestart && (
+                      <span className="ml-2 text-sm text-warn-ink">{t("settings.save.needsRestart")}</span>
+                    )}
                   </span>
                   <button type="button" onClick={onDiscard} className="btn btn-secondary">
                     {t("common.discard")}
@@ -1391,7 +1513,9 @@ function SaveBar({
                 <>
                   <span className="flex flex-1 items-center gap-2">
                     <Indicator grade="warn" />
-                    {restartPending === "app" ? t("settings.save.appRestartRequired") : t("settings.save.restartRequired")}
+                    {restartPending === "app"
+                      ? t("settings.save.appRestartRequired")
+                      : t("settings.save.restartRequired")}
                   </span>
                   <button type="button" onClick={onRestart} disabled={restarting} className="btn btn-primary">
                     {restarting && <Loader2 className="size-3.5 animate-spin" />}
@@ -1414,4 +1538,39 @@ function SaveBar({
       )}
     </AnimatePresence>
   );
+}
+
+/** The sections, grouped under headings in the list, in SETTINGS_SECTIONS' order. */
+const NAV_GROUPS: { title: string; sections: SettingsSection[] }[] = [
+  { title: "nav.wallet", sections: ["accounts"] },
+  { title: "settings.navGroup.app", sections: ["general", "appearance"] },
+  { title: "nav.node", sections: ["node", "network", "rpc"] },
+  { title: "settings.navGroup.support", sections: ["diagnostics", "about"] },
+];
+
+/** Each section's icon and colour, as System Settings gives its panes. */
+const SECTION_LOOK: Record<SettingsSection, { icon: LucideIcon; color: string }> = {
+  accounts: { icon: KeyRound, color: TILE.indigo },
+  general: { icon: Settings2, color: TILE.gray },
+  appearance: { icon: Palette, color: TILE.blue },
+  node: { icon: Server, color: TILE.purple },
+  network: { icon: Globe, color: TILE.green },
+  rpc: { icon: Plug, color: TILE.orange },
+  diagnostics: { icon: Activity, color: TILE.pink },
+  about: { icon: Info, color: TILE.graphite },
+};
+
+/** SectionTile is a section's icon on its coloured tile. */
+function SectionTile({ id, large }: { id: SettingsSection; large?: boolean }) {
+  const { icon, color } = SECTION_LOOK[id];
+  return <IconTile icon={icon} color={color} large={large} />;
+}
+
+/** An address to preview avatars with while the wallet has no account: EIP-55's example. */
+const SAMPLE_ADDRESS = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";
+
+/** AvatarPreview pictures the selected account (or a sample) in a style, beside its choice. */
+function AvatarPreview({ style }: { style: AvatarStyle }) {
+  const { account } = useWallet();
+  return <AddressAvatar address={account?.address ?? SAMPLE_ADDRESS} size={24} style={style} className="mr-2" />;
 }

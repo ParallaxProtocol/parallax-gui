@@ -1,6 +1,5 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -222,22 +221,27 @@ function serveFrontend(dir: string) {
  * up to the top edge and the toolbar is the drag area, as in native apps.
  * macOS keeps its traffic lights, inset to sit centred in the toolbar;
  * Windows and Linux draw their controls over the toolbar's right end, in
- * the toolbar's colours (the frontend's --background), which follow the theme.
- *
- * Where the OS has a window material, the sidebar and status bar show it
- * through: vibrancy on macOS, Mica on Windows 11 (22H2, build 22621, and
- * later). The frontend learns of it from the --parallax-material argument
- * (preload.ts) and leaves those surfaces transparent.
+ * the window's colours (the frontend's --background: black, or a soft
+ * white in the light theme), which follow the theme.
  */
 const TOOLBAR_HEIGHT = 44;
-const MATERIAL = isMac || (isWindows && Number(os.release().split(".")[2] ?? 0) >= 22621);
 
 function chrome() {
   const dark = nativeTheme.shouldUseDarkColors;
+  const bg = dark ? "#000000" : "#f6f6f7";
   return {
-    background: dark ? "#1b1c1f" : "#f6f6f7",
-    overlay: { color: dark ? "#1b1c1f" : "#f6f6f7", symbolColor: dark ? "#e8e8ea" : "#1d1d1f", height: TOOLBAR_HEIGHT },
+    background: bg,
+    // The controls' face is see-through, over whatever the page shows there
+    overlay: { color: "#00000000", symbolColor: dark ? "#ececee" : "#1d1d1f", height: TOOLBAR_HEIGHT },
   };
+}
+
+/** recolorWindow brings the window's own colours (its background, the title bar controls) in line with chrome(). */
+function recolorWindow(win: BrowserWindow) {
+  if (isMac || win.isDestroyed()) return;
+  const next = chrome();
+  win.setBackgroundColor(next.background);
+  win.setTitleBarOverlay(next.overlay);
 }
 
 function createWindow() {
@@ -249,8 +253,7 @@ function createWindow() {
     minHeight: 600,
     show: false,
     title: "Parallax Desktop",
-    backgroundColor: MATERIAL ? "#00000000" : look.background,
-    ...(MATERIAL ? (isMac ? { vibrancy: "sidebar" as const } : { backgroundMaterial: "mica" as const }) : {}),
+    backgroundColor: look.background,
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
     ...(isMac ? { trafficLightPosition: { x: 16, y: 15 } } : { titleBarOverlay: look.overlay }),
     icon: isWindows || isMac ? undefined : path.join(__dirname, "..", "resources", "icon.png"),
@@ -261,17 +264,11 @@ function createWindow() {
       sandbox: true,
       nodeIntegration: false,
       spellcheck: false,
-      additionalArguments: MATERIAL ? ["--parallax-material"] : [],
     },
   });
   mainWindow = win;
   win.once("ready-to-show", () => win.show());
-  const recolor = () => {
-    if (isMac || win.isDestroyed()) return;
-    const next = chrome();
-    if (!MATERIAL) win.setBackgroundColor(next.background);
-    win.setTitleBarOverlay(next.overlay);
-  };
+  const recolor = () => recolorWindow(win);
   nativeTheme.on("updated", recolor);
   win.on("closed", () => {
     nativeTheme.off("updated", recolor);

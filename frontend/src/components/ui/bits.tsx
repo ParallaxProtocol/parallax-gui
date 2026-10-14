@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { AlertTriangle, Check, Copy, Info, OctagonAlert } from "lucide-react";
 import { useT } from "../../i18n";
 import { Tooltip } from "./Tooltip";
+import { IconBadge } from "./IconBadge";
 
 /**
  * Meter is a thin progress track in the accent; with no `value` it shows
@@ -72,12 +73,18 @@ export function Fill({
 }
 
 const NOTICE = {
-  info: { icon: Info, box: "border-info/30 bg-info/[0.08]", ink: "text-info-ink" },
-  warn: { icon: AlertTriangle, box: "border-warn/35 bg-warn/[0.09]", ink: "text-warn-ink" },
-  critical: { icon: OctagonAlert, box: "border-critical/35 bg-critical/[0.08]", ink: "text-critical-ink" },
+  info: { icon: Info },
+  warn: { icon: AlertTriangle },
+  critical: { icon: OctagonAlert },
 } as const;
 
-/** Notice is an inline message bar: an error, a warning, or a note worth reading first. */
+const tint = (tone: keyof typeof NOTICE) => `color-mix(in oklab, var(--${tone}) 7%, transparent)`;
+
+/**
+ * Notice is an inline message: an error, a warning, or a note worth reading
+ * first. A card of frosted glass, faintly tinted by its tone, with the
+ * tone's icon in a round badge.
+ */
 export function Notice({
   tone,
   title,
@@ -95,13 +102,15 @@ export function Notice({
   const Icon = n.icon;
   return (
     <div
-      className={`flex items-start gap-2.5 rounded-lg border px-3 py-2.5 ${n.box} ${className}`}
+      className={`glass flex items-center gap-3.5 px-4 py-3.5 ${className}`}
+      // The tint lies over the glass, whose own colour it can't replace
+      style={{ backgroundImage: `linear-gradient(${tint(tone)}, ${tint(tone)})` }}
       role={tone === "critical" ? "alert" : "status"}
     >
-      <Icon className={`mt-px size-4 shrink-0 ${n.ink}`} />
-      <div className="selectable min-w-0 flex-1">
-        {title && <div className="font-medium">{title}</div>}
-        {children && <div className="break-words text-foreground/85">{children}</div>}
+      <IconBadge icon={Icon} tone={tone} className="self-start" />
+      <div className="selectable flex min-w-0 flex-1 flex-col gap-0.5 self-center">
+        {title && <div className="font-semibold">{title}</div>}
+        {children && <div className={`break-words ${title ? "text-muted-foreground" : "text-foreground/90"}`}>{children}</div>}
       </div>
       {action && <div className="shrink-0 self-center">{action}</div>}
     </div>

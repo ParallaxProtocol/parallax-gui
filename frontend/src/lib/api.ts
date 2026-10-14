@@ -14,7 +14,6 @@ declare global {
       keepAwake: (on: boolean) => void;
       saveBackup: (fileName: string, contents: string) => Promise<boolean>;
       platform: string;
-      material?: boolean;
     };
   }
 }
@@ -49,6 +48,8 @@ export type GUIConfig = {
   blockInbound: boolean;
   maxPeers: number;
   theme: "system" | "light" | "dark";
+  /** How addresses are pictured; "" is Jazzicon. */
+  avatarStyle: "" | "jazzicon" | "blockies";
   autoStartNode: boolean;
   disableAnimations: boolean;
   enableSmartFee: boolean;
@@ -291,8 +292,14 @@ export type WalletAccount = {
   /** EIP-55 checksummed. */
   address: string;
   name: string;
-  /** Saved to a backup, or imported from elsewhere: not the only copy. */
+  /** Saved to a backup, imported from elsewhere, or from a confirmed recovery phrase: not the only copy. */
   backedUp: boolean;
+  /** Made from recovery phrase seedId, at seedPath; seedStandard when that is m/44'/60'/0'/0/seedIndex. */
+  fromSeed: boolean;
+  seedId: string;
+  seedPath: string;
+  seedIndex: number;
+  seedStandard: boolean;
 };
 
 export type WalletInfo = {
@@ -300,7 +307,41 @@ export type WalletInfo = {
   /** Empty when there are no accounts. */
   selected: string;
   keystoreDir: string;
+  /** The wallet password is set; needsSetup when the keystore has keys but no password yet. */
+  hasPassword: boolean;
+  needsSetup: boolean;
+  /** The recovery phrases, in the order they were added. */
+  seeds: SeedInfo[];
 };
+
+/** A recovery phrase as the app shows it: nothing secret. */
+export type SeedInfo = {
+  id: string;
+  name: string;
+  confirmed: boolean;
+  hasPassphrase: boolean;
+  accounts: number;
+};
+
+/** A recovery phrase made or shown: its words, its passphrase ("" for none), and the account made with it. */
+export type SeedPhrase = { seedId: string; words: string[]; passphrase: string; account: WalletAccount };
+
+/** Where wallets put accounts under a phrase: MetaMask's standard path, Ledger Live's, the legacy one. */
+export type SeedScheme = "standard" | "ledgerlive" | "legacy";
+
+/** An account a phrase holds, as a scan of it found. balanceWei is empty while the node can't read it. */
+export type SeedCandidate = {
+  scheme: SeedScheme;
+  index: number;
+  path: string;
+  address: string;
+  balanceWei: string;
+  nonce: number;
+  used: boolean;
+  inWallet: boolean;
+};
+
+export type SeedPick = { scheme: SeedScheme; index: number };
 
 /** An account's keystore file, still encrypted. */
 export type WalletBackup = { fileName: string; keyfile: string };
@@ -355,12 +396,22 @@ const WALLET_ERRORS: Record<string, string> = {
   "wallet: the node is still syncing": "wallet.err.syncing",
   "wallet: the node has no peers to send the transaction to": "wallet.err.noPeers",
   "wallet: the balance does not cover the amount and the fee": "wallet.err.insufficient",
+  "wallet: this recovery phrase is already in the wallet": "wallet.err.seedExists",
+  "wallet: not a valid recovery phrase": "wallet.err.badMnemonic",
+  "wallet: the passphrase is too long": "wallet.err.longPassphrase",
+  "wallet: no such recovery phrase in this wallet": "wallet.err.unknownSeed",
+  "wallet: the wallet has no password yet": "wallet.err.noPassword",
+  "wallet: set the wallet password first": "wallet.err.needsSetup",
+  "wallet: this account's key is under a different password": "wallet.err.keyMismatch",
+  "wallet: the password doesn't open every key in the wallet": "wallet.err.setupMismatch",
+  "wallet: wrong password for the keystore file": "wallet.err.wrongFilePassword",
 };
 
 /** walletError says a wallet call's failure in the user's language when it is a known one. */
 export function walletError(e: unknown, t: (key: string) => string): string {
   const msg = e instanceof Error ? e.message : String(e);
-  const key = WALLET_ERRORS[msg];
+  // Some carry what they are about after a colon: the address of a key
+  const key = WALLET_ERRORS[msg] ?? WALLET_ERRORS[msg.replace(/: 0x[0-9a-fA-F]{40}$/, "")];
   return key ? t(key) : msg;
 }
 
@@ -421,12 +472,25 @@ export const api = {
   walletCreate: (name: string, password: string) => call<WalletAccount>("WalletCreate", name, password),
   walletImportPrivateKey: (name: string, key: string, password: string) =>
     call<WalletAccount>("WalletImportPrivateKey", name, key, password),
-  walletImportKeyfile: (name: string, keyJSON: string, filePassword: string, newPassword: string) =>
-    call<WalletAccount>("WalletImportKeyfile", name, keyJSON, filePassword, newPassword),
+  walletImportKeyfile: (name: string, keyJSON: string, filePassword: string, password: string) =>
+    call<WalletAccount>("WalletImportKeyfile", name, keyJSON, filePassword, password),
+  walletSetupPassword: (password: string) => call<void>("WalletSetupPassword", password),
+  walletChangePassword: (oldPassword: string, newPassword: string) =>
+    call<void>("WalletChangePassword", oldPassword, newPassword),
+  walletCreateSeed: (name: string, password: string, passphrase: string) =>
+    call<SeedPhrase>("WalletCreateSeed", name, password, passphrase),
+  walletScanSeed: (words: string, passphrase: string, scheme: SeedScheme, from: number, count: number) =>
+    call<SeedCandidate[]>("WalletScanSeed", words, passphrase, scheme, from, count),
+  walletImportSeed: (name: string, words: string, passphrase: string, password: string, picks: SeedPick[]) =>
+    call<WalletAccount>("WalletImportSeed", name, words, passphrase, password, picks),
+  walletDeriveAccount: (seedId: string, name: string, password: string) =>
+    call<WalletAccount>("WalletDeriveAccount", seedId, name, password),
+  walletRevealSeed: (seedId: string, password: string) => call<SeedPhrase>("WalletRevealSeed", seedId, password),
+  walletConfirmSeed: (seedId: string) => call<void>("WalletConfirmSeed", seedId),
+  walletRenameSeed: (seedId: string, name: string) => call<void>("WalletRenameSeed", seedId, name),
+  walletRemoveSeed: (seedId: string, password: string) => call<void>("WalletRemoveSeed", seedId, password),
   walletBackup: (address: string, password: string) => call<WalletBackup>("WalletBackup", address, password),
   walletMarkBackedUp: (address: string) => call<void>("WalletMarkBackedUp", address),
-  walletChangePassword: (address: string, oldPassword: string, newPassword: string) =>
-    call<void>("WalletChangePassword", address, oldPassword, newPassword),
   walletRemove: (address: string, password: string) => call<void>("WalletRemove", address, password),
   walletSummary: (address: string) => call<AddressView>("WalletSummary", address),
   walletQuote: (from: string, to: string, valueWei: string, gasPriceWei: string) =>

@@ -10,3 +10,12 @@ export const AnimationsOff = createContext(false);
 export function useAnimationsOff() {
   return useContext(AnimationsOff);
 }
+
+export type AvatarStyle = "jazzicon" | "blockies";
+
+/** How addresses are pictured (Settings → Appearance). App provides it. */
+export const AvatarStyleContext = createContext<AvatarStyle>("jazzicon");
+
+export function useAvatarStyle() {
+  return useContext(AvatarStyleContext);
+}

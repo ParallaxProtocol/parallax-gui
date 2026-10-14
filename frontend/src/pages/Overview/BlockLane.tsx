@@ -128,7 +128,7 @@ export default function BlockLane({ blocks, now }: { blocks: BlockView[]; now: n
           {hovered && (
             <motion.div
               key="tip"
-              className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border border-border-strong bg-surface-raised px-2.5 py-1.5 text-sm whitespace-nowrap shadow-[var(--shadow-popover)]"
+              className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border border-border-strong bg-popover px-2.5 py-1.5 text-sm whitespace-nowrap shadow-[var(--shadow-popover)]"
               style={{ left: `clamp(60px, ${x(hovered.timestamp)}%, calc(100% - 60px))`, bottom: LANE + 6 }}
               initial={{ opacity: 0, y: 4, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}

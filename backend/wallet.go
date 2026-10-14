@@ -43,22 +43,23 @@ import (
 // Errors the frontend recognises, by message, to say them in the user's
 // language. Keep them in step with WALLET_ERRORS in frontend/src/lib/api.ts.
 var (
-	ErrWrongPassword   = errors.New("wallet: wrong password")
-	ErrWeakPassword    = fmt.Errorf("wallet: the password must be at least %d characters", minPasswordLen)
-	ErrLongPassword    = fmt.Errorf("wallet: the password must be at most %d characters", maxPasswordLen)
-	ErrUnknownAccount  = errors.New("wallet: no such account in this wallet")
-	ErrAccountExists   = errors.New("wallet: this account is already in the wallet")
-	ErrBadPrivateKey   = errors.New("wallet: not a valid private key")
-	ErrBadKeyfile      = errors.New("wallet: not a valid keystore file")
-	ErrBadRecipient    = errors.New("wallet: not a valid recipient address")
-	ErrBadChecksum     = errors.New("wallet: the recipient address fails its checksum")
-	ErrBadAmount       = errors.New("wallet: not a valid amount")
-	ErrBadFee          = errors.New("wallet: not a valid fee")
-	ErrFeeTooLow       = errors.New("wallet: the fee is below what the node suggests")
-	ErrNodeStopped     = errors.New("wallet: the node is not running")
-	ErrNodeSyncing     = errors.New("wallet: the node is still syncing")
-	ErrNoPeers         = errors.New("wallet: the node has no peers to send the transaction to")
-	ErrInsufficientFee = errors.New("wallet: the balance does not cover the amount and the fee")
+	ErrWrongPassword     = errors.New("wallet: wrong password")
+	ErrWeakPassword      = fmt.Errorf("wallet: the password must be at least %d characters", minPasswordLen)
+	ErrLongPassword      = fmt.Errorf("wallet: the password must be at most %d characters", maxPasswordLen)
+	ErrUnknownAccount    = errors.New("wallet: no such account in this wallet")
+	ErrAccountExists     = errors.New("wallet: this account is already in the wallet")
+	ErrBadPrivateKey     = errors.New("wallet: not a valid private key")
+	ErrBadKeyfile        = errors.New("wallet: not a valid keystore file")
+	ErrWrongFilePassword = errors.New("wallet: wrong password for the keystore file")
+	ErrBadRecipient      = errors.New("wallet: not a valid recipient address")
+	ErrBadChecksum       = errors.New("wallet: the recipient address fails its checksum")
+	ErrBadAmount         = errors.New("wallet: not a valid amount")
+	ErrBadFee            = errors.New("wallet: not a valid fee")
+	ErrFeeTooLow         = errors.New("wallet: the fee is below what the node suggests")
+	ErrNodeStopped       = errors.New("wallet: the node is not running")
+	ErrNodeSyncing       = errors.New("wallet: the node is still syncing")
+	ErrNoPeers           = errors.New("wallet: the node has no peers to send the transaction to")
+	ErrInsufficientFee   = errors.New("wallet: the balance does not cover the amount and the fee")
 )
 
 const (
@@ -83,10 +84,17 @@ var walletScryptN, walletScryptP = keystore.StandardScryptN, keystore.StandardSc
 type WalletAccount struct {
 	Address string `json:"address"` // EIP-55 checksummed
 	Name    string `json:"name"`
-	// BackedUp is set once the user saved the key's backup, or brought the
-	// key from elsewhere (an import): until then this computer holds the
-	// only copy.
+	// BackedUp is set once the user saved the key's backup, brought the key
+	// from elsewhere (an import), or confirmed the recovery phrase it comes
+	// from: until then this computer holds the only copy.
 	BackedUp bool `json:"backedUp"`
+	// FromSeed is set for an account made from recovery phrase SeedID, at
+	// SeedPath; SeedStandard when that is m/44'/60'/0'/0/SeedIndex.
+	FromSeed     bool   `json:"fromSeed"`
+	SeedID       string `json:"seedId"`
+	SeedPath     string `json:"seedPath"`
+	SeedIndex    uint32 `json:"seedIndex"`
+	SeedStandard bool   `json:"seedStandard"`
 }
 
 // WalletInfo is the wallet as a whole: its accounts in creation order, the
@@ -95,6 +103,12 @@ type WalletInfo struct {
 	Accounts    []WalletAccount `json:"accounts"`
 	Selected    string          `json:"selected"` // empty when there are no accounts
 	KeystoreDir string          `json:"keystoreDir"`
+	// HasPassword is set once the wallet password is; NeedsSetup when the
+	// keystore has keys but the wallet no password yet.
+	HasPassword bool `json:"hasPassword"`
+	NeedsSetup  bool `json:"needsSetup"`
+	// Seeds are the recovery phrases, in the order they were added.
+	Seeds []SeedInfo `json:"seeds"`
 }
 
 // walletMeta is what the wallet keeps beside the keystore: nothing secret,
@@ -103,6 +117,11 @@ type walletMeta struct {
 	Names    map[string]string `json:"names"`
 	BackedUp map[string]bool   `json:"backedUp"`
 	Selected string            `json:"selected"`
+	// Seeds labels each recovery phrase by its id; SeedOf ties each account
+	// made from one to it. Nothing here is secret: the phrases, in the
+	// vault, are what derive the keys.
+	Seeds  map[string]seedMeta `json:"seeds"`
+	SeedOf map[string]seedRef  `json:"seedOf"`
 }
 
 // Wallet is the app's own wallet. It is safe for concurrent use.
@@ -138,7 +157,7 @@ func NewWallet(configDir string, node *NodeController) (*Wallet, error) {
 		dir:      dir,
 		metaPath: filepath.Join(configDir, "wallet.json"),
 		node:     node,
-		meta:     walletMeta{Names: map[string]string{}, BackedUp: map[string]bool{}},
+		meta:     walletMeta{Names: map[string]string{}, BackedUp: map[string]bool{}, Seeds: map[string]seedMeta{}, SeedOf: map[string]seedRef{}},
 	}
 	w.ready = w.nodeReady
 	if data, err := os.ReadFile(w.metaPath); err == nil {
@@ -152,6 +171,12 @@ func NewWallet(configDir string, node *NodeController) (*Wallet, error) {
 		}
 		if w.meta.BackedUp == nil {
 			w.meta.BackedUp = map[string]bool{}
+		}
+		if w.meta.Seeds == nil {
+			w.meta.Seeds = map[string]seedMeta{}
+		}
+		if w.meta.SeedOf == nil {
+			w.meta.SeedOf = map[string]seedRef{}
 		}
 	} else if !os.IsNotExist(err) {
 		return nil, err
@@ -176,13 +201,23 @@ func (w *Wallet) saveMeta() error {
 // which starts with the time each key was made or imported.
 func (w *Wallet) Info() WalletInfo {
 	accs := w.ks.Accounts()
+	v, err := w.loadVault()
+	if err != nil {
+		logging.Warn("Failed to read the wallet's vault", "err", err)
+	}
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	info := WalletInfo{Accounts: make([]WalletAccount, 0, len(accs)), KeystoreDir: w.dir}
+	info := WalletInfo{
+		Accounts:    make([]WalletAccount, 0, len(accs)),
+		KeystoreDir: w.dir,
+		HasPassword: v != nil,
+		NeedsSetup:  v == nil && err == nil && len(accs) > 0,
+		Seeds:       w.seedInfosLocked(v),
+	}
 	selected := false
 	for _, a := range accs {
 		addr := a.Address.Hex()
-		info.Accounts = append(info.Accounts, WalletAccount{Address: addr, Name: w.meta.Names[addr], BackedUp: w.meta.BackedUp[addr]})
+		info.Accounts = append(info.Accounts, w.viewLocked(addr))
 		if addr == w.meta.Selected {
 			selected = true
 		}
@@ -273,21 +308,18 @@ func (w *Wallet) added(acc wallet.Account, name string, backedUp bool) (WalletAc
 		// The key is safely stored; only its label is lost
 		logging.Warn("Failed to save the wallet's labels", "err", err)
 	}
-	return WalletAccount{Address: addr, Name: name, BackedUp: backedUp}, nil
+	return w.viewLocked(addr), nil
 }
 
 // Create makes a new key from the operating system's random source and
-// stores it encrypted with password.
+// stores it encrypted with the wallet password.
 func (w *Wallet) Create(name, password string) (WalletAccount, error) {
 	name, err := cleanName(name)
 	if err != nil {
 		return WalletAccount{}, err
 	}
-	if err := checkPassword(password); err != nil {
-		return WalletAccount{}, err
-	}
 	w.keyMu.Lock()
-	acc, err := w.ks.NewAccount(password)
+	acc, err := w.newAccount(password)
 	w.keyMu.Unlock()
 	if err != nil {
 		return WalletAccount{}, err
@@ -296,14 +328,20 @@ func (w *Wallet) Create(name, password string) (WalletAccount, error) {
 	return w.added(acc, name, false)
 }
 
+// newAccount makes a key under the wallet password. The caller holds
+// w.keyMu.
+func (w *Wallet) newAccount(password string) (wallet.Account, error) {
+	if _, err := w.unlockVault(password); err != nil {
+		return wallet.Account{}, err
+	}
+	return w.ks.NewAccount(password)
+}
+
 // ImportPrivateKey stores a raw secp256k1 private key, given as 64 hex
-// digits, encrypted with password.
+// digits, encrypted with the wallet password.
 func (w *Wallet) ImportPrivateKey(name, privateKeyHex, password string) (WalletAccount, error) {
 	name, err := cleanName(name)
 	if err != nil {
-		return WalletAccount{}, err
-	}
-	if err := checkPassword(password); err != nil {
 		return WalletAccount{}, err
 	}
 	raw := strings.TrimSpace(privateKeyHex)
@@ -324,7 +362,12 @@ func (w *Wallet) ImportPrivateKey(name, privateKeyHex, password string) (WalletA
 	defer zeroPrivateKey(priv)
 
 	w.keyMu.Lock()
-	acc, err := w.ks.ImportECDSA(priv, password)
+	acc, err := func() (wallet.Account, error) {
+		if _, err := w.unlockVault(password); err != nil {
+			return wallet.Account{}, err
+		}
+		return w.ks.ImportECDSA(priv, password)
+	}()
 	w.keyMu.Unlock()
 	if errors.Is(err, keystore.ErrAccountAlreadyExists) {
 		return WalletAccount{}, ErrAccountExists
@@ -338,9 +381,8 @@ func (w *Wallet) ImportPrivateKey(name, privateKeyHex, password string) (WalletA
 
 // ImportKeyfile stores a key from a keystore file (as parallaxd,
 // parallax-wallet and most EVM wallets export them), decrypted with
-// filePassword and encrypted again under newPassword, or under filePassword
-// when newPassword is empty.
-func (w *Wallet) ImportKeyfile(name, keyJSON, filePassword, newPassword string) (WalletAccount, error) {
+// filePassword and encrypted again under the wallet password.
+func (w *Wallet) ImportKeyfile(name, keyJSON, filePassword, password string) (WalletAccount, error) {
 	name, err := cleanName(name)
 	if err != nil {
 		return WalletAccount{}, err
@@ -349,23 +391,23 @@ func (w *Wallet) ImportKeyfile(name, keyJSON, filePassword, newPassword string) 
 		return WalletAccount{}, ErrBadKeyfile
 	}
 	if len(filePassword) > maxPasswordLen {
-		return WalletAccount{}, ErrLongPassword
-	}
-	if newPassword == "" {
-		newPassword = filePassword
-	}
-	// The password the key ends up under must be one the wallet would accept
-	if err := checkPassword(newPassword); err != nil {
-		return WalletAccount{}, err
+		return WalletAccount{}, ErrWrongFilePassword
 	}
 	w.keyMu.Lock()
-	acc, err := w.ks.Import([]byte(keyJSON), filePassword, newPassword)
+	acc, err := func() (wallet.Account, error) {
+		if _, err := w.unlockVault(password); err != nil {
+			return wallet.Account{}, err
+		}
+		return w.ks.Import([]byte(keyJSON), filePassword, password)
+	}()
 	w.keyMu.Unlock()
 	switch {
+	case errors.Is(err, ErrWrongPassword), errors.Is(err, ErrNoPassword), errors.Is(err, ErrNeedsSetup):
+		return WalletAccount{}, err
 	case errors.Is(err, keystore.ErrAccountAlreadyExists):
 		return WalletAccount{}, ErrAccountExists
 	case errors.Is(err, keystore.ErrDecrypt):
-		return WalletAccount{}, ErrWrongPassword
+		return WalletAccount{}, ErrWrongFilePassword
 	case err != nil:
 		// A file that parses as JSON but not as a key, or uses a cipher or
 		// KDF the keystore doesn't know
@@ -376,9 +418,10 @@ func (w *Wallet) ImportKeyfile(name, keyJSON, filePassword, newPassword string) 
 	return w.added(acc, name, true)
 }
 
-// Backup returns the account's keystore file, still encrypted, once the
-// password proves to open it: a backup is only worth keeping if its owner
-// can decrypt it. The file name is the keystore's own.
+// Backup returns the account's keystore file, still encrypted with the
+// wallet password, once the password proves to open it: a backup is only
+// worth keeping if its owner can decrypt it. The file name is the
+// keystore's own.
 func (w *Wallet) Backup(address, password string) (WalletBackup, error) {
 	acc, err := w.find(address)
 	if err != nil {
@@ -412,28 +455,7 @@ func (w *Wallet) verify(data []byte, password string) error {
 		zeroPrivateKey(key.PrivateKey)
 	}
 	if errors.Is(err, keystore.ErrDecrypt) {
-		return ErrWrongPassword
-	}
-	return err
-}
-
-// ChangePassword encrypts the account's key under a new password.
-func (w *Wallet) ChangePassword(address, oldPassword, newPassword string) error {
-	acc, err := w.find(address)
-	if err != nil {
-		return err
-	}
-	if err := checkPassword(newPassword); err != nil {
-		return err
-	}
-	if len(oldPassword) > maxPasswordLen {
-		return ErrWrongPassword
-	}
-	w.keyMu.Lock()
-	err = w.ks.Update(acc, oldPassword, newPassword)
-	w.keyMu.Unlock()
-	if errors.Is(err, keystore.ErrDecrypt) {
-		return ErrWrongPassword
+		return w.keyError(password)
 	}
 	return err
 }
@@ -450,10 +472,10 @@ func (w *Wallet) Remove(address, password string) error {
 	}
 	w.keyMu.Lock()
 	err = w.ks.Delete(acc, password)
-	w.keyMu.Unlock()
 	if errors.Is(err, keystore.ErrDecrypt) {
-		return ErrWrongPassword
+		err = w.keyError(password)
 	}
+	w.keyMu.Unlock()
 	if err != nil {
 		return err
 	}
@@ -462,6 +484,7 @@ func (w *Wallet) Remove(address, password string) error {
 	defer w.mu.Unlock()
 	delete(w.meta.Names, acc.Address.Hex())
 	delete(w.meta.BackedUp, acc.Address.Hex())
+	delete(w.meta.SeedOf, acc.Address.Hex())
 	if w.meta.Selected == acc.Address.Hex() {
 		w.meta.Selected = ""
 	}
@@ -776,7 +799,7 @@ func (w *Wallet) Send(req SendRequest) (SentTx, error) {
 func (w *Wallet) sign(acc wallet.Account, password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
 	signed, err := w.ks.SignTxWithPassphrase(acc, password, tx, chainID)
 	if errors.Is(err, keystore.ErrDecrypt) {
-		return nil, ErrWrongPassword
+		return nil, w.keyError(password)
 	}
 	if err != nil {
 		return nil, err

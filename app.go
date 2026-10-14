@@ -120,13 +120,16 @@ func (a *App) shutdown(ctx context.Context) {
 // Bootstrap / config
 // ---------------------------------------------------------------------------
 
-// BootstrapNeeded reports whether the onboarding wizard should run.
+// BootstrapNeeded reports whether the node still needs its first-launch setup.
 func (a *App) BootstrapNeeded() bool {
 	return a.cfg == nil || !a.cfg.Get().Bootstrapped
 }
 
-// SaveBootstrap finalises the onboarding wizard and persists initial config.
+// SaveBootstrap persists the first-launch setup, once the node would accept it.
 func (a *App) SaveBootstrap(cfg backend.GUIConfig) error {
+	if err := backend.ValidateConfig(cfg); err != nil {
+		return err
+	}
 	cfg.Bootstrapped = true
 	return a.cfg.Save(cfg)
 }
@@ -253,6 +256,102 @@ func (a *App) WalletImportKeyfile(name, keyJSON, filePassword, newPassword strin
 	return w.ImportKeyfile(name, keyJSON, filePassword, newPassword)
 }
 
+// WalletSetupPassword sets the wallet password: the first step, before any
+// account is made or imported.
+func (a *App) WalletSetupPassword(password string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.SetupPassword(password)
+}
+
+// WalletChangePassword encrypts every key and phrase of the wallet under a
+// new password.
+func (a *App) WalletChangePassword(oldPassword, newPassword string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.ChangePassword(oldPassword, newPassword)
+}
+
+// WalletCreateSeed makes a recovery phrase (with an optional passphrase)
+// and its first account. The words are returned once, to be written down.
+func (a *App) WalletCreateSeed(name, password, passphrase string) (backend.SeedPhrase, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SeedPhrase{}, err
+	}
+	return w.CreateSeed(name, password, passphrase)
+}
+
+// WalletScanSeed lists accounts a recovery phrase holds under a derivation
+// scheme, with their balances, for the user to choose from. Nothing is
+// stored.
+func (a *App) WalletScanSeed(words, passphrase, scheme string, from, count uint32) ([]backend.SeedCandidate, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return nil, err
+	}
+	return w.ScanSeed(words, passphrase, scheme, from, count)
+}
+
+// WalletImportSeed brings a recovery phrase into the wallet, with the
+// accounts picked from a scan of it.
+func (a *App) WalletImportSeed(name, words, passphrase, password string, picks []backend.SeedPick) (backend.WalletAccount, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletAccount{}, err
+	}
+	return w.ImportSeed(name, words, passphrase, password, picks)
+}
+
+// WalletDeriveAccount makes the next account from a recovery phrase.
+func (a *App) WalletDeriveAccount(seedID, name, password string) (backend.WalletAccount, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletAccount{}, err
+	}
+	return w.DeriveAccount(seedID, name, password)
+}
+
+// WalletRevealSeed shows a recovery phrase to its owner.
+func (a *App) WalletRevealSeed(seedID, password string) (backend.SeedPhrase, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SeedPhrase{}, err
+	}
+	return w.RevealSeed(seedID, password)
+}
+
+// WalletConfirmSeed records that a recovery phrase was written down.
+func (a *App) WalletConfirmSeed(seedID string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.ConfirmSeed(seedID)
+}
+
+// WalletRenameSeed labels a recovery phrase.
+func (a *App) WalletRenameSeed(seedID, name string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.RenameSeed(seedID, name)
+}
+
+// WalletRemoveSeed deletes a recovery phrase and the accounts made from it.
+func (a *App) WalletRemoveSeed(seedID, password string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.RemoveSeed(seedID, password)
+}
+
 // WalletBackup returns an account's encrypted keystore file, once the
 // password opens it. The shell saves it where the user chooses.
 func (a *App) WalletBackup(address, password string) (backend.WalletBackup, error) {
@@ -270,14 +369,6 @@ func (a *App) WalletMarkBackedUp(address string) error {
 		return err
 	}
 	return w.MarkBackedUp(address)
-}
-
-func (a *App) WalletChangePassword(address, oldPassword, newPassword string) error {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return err
-	}
-	return w.ChangePassword(address, oldPassword, newPassword)
 }
 
 // WalletRemove deletes an account's key from this computer.

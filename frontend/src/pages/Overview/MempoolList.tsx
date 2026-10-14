@@ -6,8 +6,10 @@ import { formatGwei, formatInt, formatLax, shortHex } from "../../lib/format";
 import { SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
 import { Segmented } from "../../components/ui/Segmented";
-import { CopyButton, Notice } from "../../components/ui/bits";
+import { Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
+import { IconBadge } from "../../components/ui/IconBadge";
+import { Detail, DetailCard, Unfold } from "./parts";
 
 type Filter = "all" | "pending" | "queued";
 
@@ -70,11 +72,11 @@ export default function MempoolList({ known }: { known?: { pending: number; queu
 
   return (
     <div className="border-t border-border">
-      <div className="flex items-center gap-3 px-4 py-2">
+      <div className="flex items-center gap-3 px-5 py-3">
         <div className="relative max-w-sm flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
-            className="input pr-7 pl-7"
+            className="input rounded-full pr-8 pl-8"
             placeholder={t("mempool.search")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -86,7 +88,7 @@ export default function MempoolList({ known }: { known?: { pending: number; queu
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="absolute top-1/2 right-1 grid size-5 -translate-y-1/2 place-items-center rounded text-muted-foreground hover:bg-hover hover:text-foreground"
+              className="absolute top-1/2 right-1.5 grid size-6 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-hover hover:text-foreground"
               aria-label={t("common.clear")}
             >
               <X className="size-3" />
@@ -112,18 +114,22 @@ export default function MempoolList({ known }: { known?: { pending: number; queu
         </span>
       </div>
 
-      {error && <Notice tone="critical" className="mx-4 mb-2">{error}</Notice>}
+      {error && (
+        <Notice tone="critical" className="mx-5 mb-3">
+          {error}
+        </Notice>
+      )}
 
       {!view && !knownEmpty ? (
         <Placeholder rows={Math.min(Math.max(total, 1), 6)} />
       ) : knownEmpty || shown.length === 0 ? (
-        <p className="border-t border-border py-10 text-center text-muted-foreground">
+        <p className="border-t border-border py-12 text-center text-muted-foreground">
           {search || filter !== "all" ? t("mempool.noMatch") : t("mempool.empty")}
         </p>
       ) : (
         <ul className="divide-y divide-border border-t border-border">
           {/* Column heads over the rows' grid */}
-          <li className={`grid ${ROW} gap-3 bg-muted/30 px-4 py-1.5 text-xs font-medium text-muted-foreground`} aria-hidden>
+          <li className={`grid ${ROW} gap-3 px-5 pt-2.5 pb-2 text-xs font-medium text-muted-foreground`} aria-hidden>
             <span className="col-start-3">{t("mempool.col.tx")}</span>
             <span>{t("mempool.col.parties")}</span>
             <span className="text-right">{t("mempool.value")}</span>
@@ -143,7 +149,7 @@ export default function MempoolList({ known }: { known?: { pending: number; queu
       )}
 
       {view && view.matched > txs.length && (
-        <p className="border-t border-border px-4 py-2 text-center text-sm text-muted-foreground">
+        <p className="border-t border-border px-5 py-2.5 text-center text-sm text-muted-foreground">
           {t("mempool.more", { n: formatInt(txs.length), total: formatInt(view.matched) })}
         </p>
       )}
@@ -152,16 +158,16 @@ export default function MempoolList({ known }: { known?: { pending: number; queu
 }
 
 /** The rows' columns: chevron, status, transaction, from → to, value, gas price. */
-const ROW = "grid-cols-[14px_20px_minmax(0,1fr)_minmax(0,1fr)_minmax(96px,auto)_76px]";
+const ROW = "grid-cols-[14px_32px_minmax(0,1fr)_minmax(0,1fr)_minmax(96px,auto)_76px]";
 
 /** Placeholder holds the place of rows still on their way: the same height, a faint shimmer. */
 function Placeholder({ rows }: { rows: number }) {
   return (
     <ul className="divide-y divide-border border-t border-border" aria-hidden>
       {Array.from({ length: rows }, (_, i) => (
-        <li key={i} className={`grid h-[52px] ${ROW} items-center gap-3 px-4`}>
+        <li key={i} className={`grid h-[64px] ${ROW} items-center gap-3 px-5`}>
           <span />
-          <span className="size-5 rounded-full bg-muted" />
+          <span className="size-8 rounded-full bg-muted" />
           <span className="flex flex-col gap-1.5">
             <span className="h-3 w-40 rounded bg-muted" />
             <span className="h-2.5 w-20 rounded bg-muted/70" />
@@ -192,7 +198,7 @@ function Row({ tx, open, onToggle }: { tx: MempoolTx; open: boolean; onToggle: (
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className={`grid w-full ${ROW} items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-hover ${open ? "bg-muted/40" : ""}`}
+        className={`grid w-full ${ROW} items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-hover ${open ? "bg-hover" : ""}`}
       >
         <ChevronRight
           className={`size-3.5 text-muted-foreground transition-transform duration-200 ${open ? "rotate-90" : ""}`}
@@ -209,13 +215,13 @@ function Row({ tx, open, onToggle }: { tx: MempoolTx; open: boolean; onToggle: (
             )
           }
         >
-          <span
-            className={`grid size-5 place-items-center rounded-full ${tx.queued ? "bg-warn/15 text-warn-ink" : "bg-brand-muted text-brand"}`}
+          <IconBadge
+            icon={tx.queued ? Hourglass : CircleDot}
+            tone={tx.queued ? "warn" : "brand"}
+            size="sm"
             aria-label={tx.queued ? t("mempool.queued") : t("mempool.pending")}
             role="img"
-          >
-            {tx.queued ? <Hourglass className="size-3" strokeWidth={2.5} /> : <CircleDot className="size-3" strokeWidth={2.5} />}
-          </span>
+          />
         </Tooltip>
         <span className="min-w-0">
           <Tooltip content={tx.hash} mono>
@@ -234,7 +240,9 @@ function Row({ tx, open, onToggle }: { tx: MempoolTx; open: boolean; onToggle: (
           <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
             <ArrowRight className="size-3 shrink-0" />
             <Tooltip content={tx.to} mono>
-              <span className="truncate">{tx.to ? shortHex(tx.to, 8, 6) : <span className="font-sans">{t("mempool.creation")}</span>}</span>
+              <span className="truncate">
+                {tx.to ? shortHex(tx.to, 8, 6) : <span className="font-sans">{t("mempool.creation")}</span>}
+              </span>
             </Tooltip>
           </span>
         </span>
@@ -246,31 +254,25 @@ function Row({ tx, open, onToggle }: { tx: MempoolTx; open: boolean; onToggle: (
 
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={SPRING}
-            className="overflow-hidden"
-          >
-            {/* Flat, continuing the row: indented to its transaction column
-                (padding, chevron, status and their gaps), not boxed inside the panel */}
-            <dl className={`space-y-2 pt-2 pr-4 pb-3.5 pl-[74px] ${open ? "bg-muted/40" : ""}`}>
-              <Detail label={t("mempool.hash")} value={tx.hash} copy />
-              <Detail label={t("mempool.from")} value={tx.from} copy />
-              <Detail label={t("mempool.to")} value={tx.to || t("mempool.creation")} copy={!!tx.to} />
-              <Detail label={t("mempool.nonce")} value={String(tx.nonce)} />
-              <Detail label={t("mempool.value")} value={`${formatLax(tx.valueWei, 18)} LAX`} />
-              <Detail label={t("mempool.gasPrice")} value={formatGwei(tx.gasPriceWei)} />
-              <Detail label={t("mempool.gas")} value={formatInt(tx.gas)} />
-              <Detail label={t("mempool.maxFee")} value={`${formatLax(maxFeeWei(tx), 8)} LAX`} />
-              <Detail
-                label={t("mempool.data")}
-                value={tx.dataBytes ? t("mempool.bytes", { n: formatInt(tx.dataBytes) }) : t("peers.none")}
-              />
-              <Detail label={t("mempool.size")} value={t("mempool.bytes", { n: formatInt(tx.sizeBytes) })} />
-            </dl>
-          </motion.div>
+          <Unfold>
+            <DetailCard>
+              <dl className="space-y-2.5">
+                <Detail label={t("mempool.hash")} value={tx.hash} copy />
+                <Detail label={t("mempool.from")} value={tx.from} copy />
+                <Detail label={t("mempool.to")} value={tx.to || t("mempool.creation")} copy={!!tx.to} />
+                <Detail label={t("mempool.nonce")} value={String(tx.nonce)} />
+                <Detail label={t("mempool.value")} value={`${formatLax(tx.valueWei, 18)} LAX`} />
+                <Detail label={t("mempool.gasPrice")} value={formatGwei(tx.gasPriceWei)} />
+                <Detail label={t("mempool.gas")} value={formatInt(tx.gas)} />
+                <Detail label={t("mempool.maxFee")} value={`${formatLax(maxFeeWei(tx), 8)} LAX`} />
+                <Detail
+                  label={t("mempool.data")}
+                  value={tx.dataBytes ? t("mempool.bytes", { n: formatInt(tx.dataBytes) }) : t("peers.none")}
+                />
+                <Detail label={t("mempool.size")} value={t("mempool.bytes", { n: formatInt(tx.sizeBytes) })} />
+              </dl>
+            </DetailCard>
+          </Unfold>
         )}
       </AnimatePresence>
     </motion.li>
@@ -284,16 +286,4 @@ function maxFeeWei(tx: MempoolTx): string {
   } catch {
     return "0";
   }
-}
-
-function Detail({ label, value, copy }: { label: string; value: string; copy?: boolean }) {
-  return (
-    <div className="grid grid-cols-[110px_1fr_auto] items-baseline gap-3">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <Tooltip content={value} mono overflowOnly>
-        <dd className="truncate font-mono text-sm">{value}</dd>
-      </Tooltip>
-      {copy ? <CopyButton value={value} className="-my-1" /> : <span />}
-    </div>
-  );
 }

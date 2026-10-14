@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ParallaxProtocol/parallax/v2/crypto"
 	"github.com/ParallaxProtocol/parallax/v2/primitives/types"
@@ -18,7 +19,9 @@ import (
 
 const testPassword = "correct horse battery"
 
-func newTestWallet(t *testing.T) (*Wallet, string) {
+// newBareWallet opens an empty wallet with light scrypt, its password not
+// yet set.
+func newBareWallet(t *testing.T) (*Wallet, string) {
 	t.Helper()
 	n, p := walletScryptN, walletScryptP
 	walletScryptN, walletScryptP = keystore.LightScryptN, keystore.LightScryptP
@@ -31,6 +34,29 @@ func newTestWallet(t *testing.T) (*Wallet, string) {
 	return w, dir
 }
 
+// newTestWallet opens an empty wallet whose password is testPassword.
+func newTestWallet(t *testing.T) (*Wallet, string) {
+	t.Helper()
+	w, dir := newBareWallet(t)
+	if err := w.SetupPassword(testPassword); err != nil {
+		t.Fatalf("SetupPassword: %v", err)
+	}
+	return w, dir
+}
+
+// waitForAccounts waits for the wallet's keystore to see n keys: it rescans
+// its folder every few seconds, and a test may drop a key in from outside.
+func waitForAccounts(t *testing.T, w *Wallet, n int) {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for len(w.ks.Accounts()) != n {
+		if time.Now().After(deadline) {
+			t.Fatalf("the keystore never saw %d keys", n)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
 func TestWalletCreateKeepsKeyEncryptedAndPrivate(t *testing.T) {
 	w, dir := newTestWallet(t)
 	acc, err := w.Create("Savings", testPassword)
@@ -38,7 +64,7 @@ func TestWalletCreateKeepsKeyEncryptedAndPrivate(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 	info := w.Info()
-	if len(info.Accounts) != 1 || info.Accounts[0] != acc || info.Selected != acc.Address || acc.BackedUp {
+	if len(info.Accounts) != 1 || info.Accounts[0] != acc || info.Selected != acc.Address || acc.BackedUp || !info.HasPassword {
 		t.Fatalf("Info = %+v, want the one account, selected", info)
 	}
 	if acc.Address != util.HexToAddress(acc.Address).Hex() {
@@ -53,9 +79,10 @@ func TestWalletCreateKeepsKeyEncryptedAndPrivate(t *testing.T) {
 	assertPrivate(t, keyPath, 0o600)
 	assertPrivate(t, filepath.Join(dir, "keystore"), 0o700)
 	assertPrivate(t, filepath.Join(dir, "wallet.json"), 0o600)
+	assertPrivate(t, filepath.Join(dir, "vault.json"), 0o600)
 
 	// The file is a standard encrypted keystore file that opens with the
-	// password and no other
+	// wallet password and no other
 	data, _ := os.ReadFile(keyPath)
 	if _, err := keystore.DecryptKey(data, "wrong password"); err == nil {
 		t.Fatal("key file opens with the wrong password")
@@ -67,10 +94,12 @@ func TestWalletCreateKeepsKeyEncryptedAndPrivate(t *testing.T) {
 	if key.Address.Hex() != acc.Address {
 		t.Fatalf("key file holds %s, want %s", key.Address.Hex(), acc.Address)
 	}
-	// The labels file holds nothing secret
-	meta, _ := os.ReadFile(filepath.Join(dir, "wallet.json"))
-	if strings.Contains(string(meta), hex.EncodeToString(crypto.FromECDSA(key.PrivateKey))) || strings.Contains(string(meta), testPassword) {
-		t.Fatal("wallet.json holds key material or the password")
+	// Neither the labels nor the vault hold the password or a key in clear
+	for _, f := range []string{"wallet.json", "vault.json"} {
+		raw, _ := os.ReadFile(filepath.Join(dir, f))
+		if strings.Contains(string(raw), hex.EncodeToString(crypto.FromECDSA(key.PrivateKey))) || strings.Contains(string(raw), testPassword) {
+			t.Fatalf("%s holds key material or the password", f)
+		}
 	}
 }
 
@@ -85,18 +114,60 @@ func assertPrivate(t *testing.T, path string, want os.FileMode) {
 	}
 }
 
-func TestWalletRejectsWeakPasswords(t *testing.T) {
-	w, _ := newTestWallet(t)
+func TestWalletPasswordComesFirst(t *testing.T) {
+	w, _ := newBareWallet(t)
+	if info := w.Info(); info.HasPassword || info.NeedsSetup {
+		t.Fatalf("Info = %+v, want no password, no setup needed", info)
+	}
+	// No account before the password
+	if _, err := w.Create("", testPassword); !errors.Is(err, ErrNoPassword) {
+		t.Fatalf("Create before setup = %v, want ErrNoPassword", err)
+	}
 	for _, p := range []string{"", "short", "1234567"} {
-		if _, err := w.Create("", p); !errors.Is(err, ErrWeakPassword) {
-			t.Errorf("Create(%q) = %v, want ErrWeakPassword", p, err)
+		if err := w.SetupPassword(p); !errors.Is(err, ErrWeakPassword) {
+			t.Errorf("SetupPassword(%q) = %v, want ErrWeakPassword", p, err)
 		}
 	}
-	if _, err := w.Create("", strings.Repeat("x", maxPasswordLen+1)); !errors.Is(err, ErrLongPassword) {
-		t.Errorf("Create(long) = %v, want ErrLongPassword", err)
+	if err := w.SetupPassword(strings.Repeat("x", maxPasswordLen+1)); !errors.Is(err, ErrLongPassword) {
+		t.Errorf("SetupPassword(long) = %v, want ErrLongPassword", err)
+	}
+	if err := w.SetupPassword(testPassword); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SetupPassword(testPassword); err == nil {
+		t.Fatal("the password was set twice")
+	}
+	// A mistyped password never encrypts anything
+	if _, err := w.Create("", "correct horse batterY"); !errors.Is(err, ErrWrongPassword) {
+		t.Fatalf("Create(mistyped) = %v, want ErrWrongPassword", err)
 	}
 	if len(w.Info().Accounts) != 0 {
-		t.Fatal("a refused password still made an account")
+		t.Fatal("a mistyped password made an account")
+	}
+}
+
+func TestWalletSetupOverExistingKeys(t *testing.T) {
+	w, dir := newBareWallet(t)
+	// Keys left by an earlier build, under one password
+	ks := keystore.NewKeyStore(filepath.Join(dir, "keystore"), keystore.LightScryptN, keystore.LightScryptP)
+	if _, err := ks.NewAccount(testPassword); err != nil {
+		t.Fatal(err)
+	}
+	waitForAccounts(t, w, 1)
+	if !w.Info().NeedsSetup {
+		t.Fatal("a wallet with keys and no password doesn't ask for setup")
+	}
+	if _, err := w.Create("", testPassword); !errors.Is(err, ErrNeedsSetup) {
+		t.Fatalf("Create = %v, want ErrNeedsSetup", err)
+	}
+	if err := w.SetupPassword("another long password"); !errors.Is(err, ErrSetupMismatch) {
+		t.Fatalf("SetupPassword(not the keys') = %v, want ErrSetupMismatch", err)
+	}
+	if err := w.SetupPassword(testPassword); err != nil {
+		t.Fatalf("SetupPassword(the keys') = %v", err)
+	}
+	if info := w.Info(); !info.HasPassword || info.NeedsSetup {
+		t.Fatalf("Info after setup = %+v", info)
 	}
 }
 
@@ -110,6 +181,9 @@ func TestWalletImportPrivateKey(t *testing.T) {
 		if _, err := w.ImportPrivateKey("", bad, testPassword); !errors.Is(err, ErrBadPrivateKey) {
 			t.Errorf("ImportPrivateKey(%q) = %v, want ErrBadPrivateKey", bad, err)
 		}
+	}
+	if _, err := w.ImportPrivateKey("", keyHex, "wrong password"); !errors.Is(err, ErrWrongPassword) {
+		t.Fatalf("ImportPrivateKey(wrong wallet password) = %v", err)
 	}
 	acc, err := w.ImportPrivateKey("Imported", "  0x"+keyHex+"\n", testPassword)
 	if err != nil {
@@ -128,23 +202,26 @@ func TestWalletImportKeyfile(t *testing.T) {
 	priv, _ := crypto.GenerateKey()
 	addr := crypto.PubkeyToAddress(priv.PublicKey)
 	ks := keystore.NewKeyStore(t.TempDir(), keystore.LightScryptN, keystore.LightScryptP)
-	src, err := ks.ImportECDSA(priv, "file password")
+	src, err := ks.ImportECDSA(priv, "weak")
 	if err != nil {
 		t.Fatal(err)
 	}
 	data, _ := os.ReadFile(src.URL.Path)
 
-	if _, err := w.ImportKeyfile("", "{not json", "file password", ""); !errors.Is(err, ErrBadKeyfile) {
+	if _, err := w.ImportKeyfile("", "{not json", "weak", testPassword); !errors.Is(err, ErrBadKeyfile) {
 		t.Errorf("garbage = %v, want ErrBadKeyfile", err)
 	}
-	if _, err := w.ImportKeyfile("", `{"address":"00"}`, "file password", ""); !errors.Is(err, ErrBadKeyfile) {
+	if _, err := w.ImportKeyfile("", `{"address":"00"}`, "weak", testPassword); !errors.Is(err, ErrBadKeyfile) {
 		t.Errorf("non-key JSON = %v, want ErrBadKeyfile", err)
 	}
-	if _, err := w.ImportKeyfile("", string(data), "nope nope nope", ""); !errors.Is(err, ErrWrongPassword) {
-		t.Errorf("wrong file password = %v, want ErrWrongPassword", err)
+	if _, err := w.ImportKeyfile("", string(data), "nope", testPassword); !errors.Is(err, ErrWrongFilePassword) {
+		t.Errorf("wrong file password = %v, want ErrWrongFilePassword", err)
 	}
-	// Re-encrypted under the new password
-	acc, err := w.ImportKeyfile("", string(data), "file password", testPassword)
+	if _, err := w.ImportKeyfile("", string(data), "weak", "wrong password"); !errors.Is(err, ErrWrongPassword) {
+		t.Errorf("wrong wallet password = %v, want ErrWrongPassword", err)
+	}
+	// Re-encrypted under the wallet password, whatever the file had
+	acc, err := w.ImportKeyfile("", string(data), "weak", testPassword)
 	if err != nil {
 		t.Fatalf("ImportKeyfile: %v", err)
 	}
@@ -153,22 +230,14 @@ func TestWalletImportKeyfile(t *testing.T) {
 	}
 	b, err := w.Backup(acc.Address, testPassword)
 	if err != nil {
-		t.Fatalf("Backup with the new password: %v", err)
+		t.Fatalf("Backup with the wallet password: %v", err)
 	}
-	if _, err := keystore.DecryptKey([]byte(b.Keyfile), "file password"); err == nil {
+	if _, err := keystore.DecryptKey([]byte(b.Keyfile), "weak"); err == nil {
 		t.Fatal("the imported key still opens with the file's password")
-	}
-
-	// A file whose own password is too weak to keep must get a new one
-	priv2, _ := crypto.GenerateKey()
-	src2, _ := ks.ImportECDSA(priv2, "weak")
-	data2, _ := os.ReadFile(src2.URL.Path)
-	if _, err := w.ImportKeyfile("", string(data2), "weak", ""); !errors.Is(err, ErrWeakPassword) {
-		t.Fatalf("weak file password kept = %v, want ErrWeakPassword", err)
 	}
 }
 
-func TestWalletBackupChangePasswordRemove(t *testing.T) {
+func TestWalletBackupRemove(t *testing.T) {
 	w, _ := newTestWallet(t)
 	acc, err := w.Create("", testPassword)
 	if err != nil {
@@ -187,38 +256,89 @@ func TestWalletBackupChangePasswordRemove(t *testing.T) {
 	if err := w.MarkBackedUp(acc.Address); err != nil || !w.Info().Accounts[0].BackedUp {
 		t.Fatalf("MarkBackedUp: %v, %+v", err, w.Info())
 	}
-
-	const next = "another long password"
-	if err := w.ChangePassword(acc.Address, "wrong password", next); !errors.Is(err, ErrWrongPassword) {
-		t.Fatalf("ChangePassword(wrong) = %v", err)
-	}
-	if err := w.ChangePassword(acc.Address, testPassword, "short"); !errors.Is(err, ErrWeakPassword) {
-		t.Fatalf("ChangePassword(weak) = %v", err)
-	}
-	if err := w.ChangePassword(acc.Address, testPassword, next); err != nil {
-		t.Fatalf("ChangePassword: %v", err)
-	}
-	if _, err := w.Backup(acc.Address, testPassword); !errors.Is(err, ErrWrongPassword) {
-		t.Fatal("the old password still opens the key")
-	}
-
 	if err := w.Rename(acc.Address, "Daily"); err != nil {
 		t.Fatal(err)
 	}
 	if err := w.Rename(acc.Address, "bad\x00name"); err == nil {
 		t.Fatal("Rename accepted a control character")
 	}
-	if err := w.Remove(acc.Address, testPassword); !errors.Is(err, ErrWrongPassword) {
-		t.Fatalf("Remove(old password) = %v, want ErrWrongPassword", err)
+	if err := w.Remove(acc.Address, "wrong password"); !errors.Is(err, ErrWrongPassword) {
+		t.Fatalf("Remove(wrong) = %v, want ErrWrongPassword", err)
 	}
-	if err := w.Remove(acc.Address, next); err != nil {
+	if err := w.Remove(acc.Address, testPassword); err != nil {
 		t.Fatalf("Remove: %v", err)
 	}
 	if info := w.Info(); len(info.Accounts) != 0 || info.Selected != "" {
 		t.Fatalf("Info after Remove = %+v", info)
 	}
-	if _, err := w.Backup(acc.Address, next); !errors.Is(err, ErrUnknownAccount) {
+	if _, err := w.Backup(acc.Address, testPassword); !errors.Is(err, ErrUnknownAccount) {
 		t.Fatalf("Backup after Remove = %v, want ErrUnknownAccount", err)
+	}
+}
+
+func TestWalletChangePasswordReencryptsEverything(t *testing.T) {
+	w, dir := newTestWallet(t)
+	single, err := w.Create("", testPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+	phrase, err := w.CreateSeed("", testPassword, "a passphrase")
+	if err != nil {
+		t.Fatal(err)
+	}
+	const next = "another long password"
+	if err := w.ChangePassword("wrong password", next); !errors.Is(err, ErrWrongPassword) {
+		t.Fatalf("ChangePassword(wrong) = %v", err)
+	}
+	if err := w.ChangePassword(testPassword, "short"); !errors.Is(err, ErrWeakPassword) {
+		t.Fatalf("ChangePassword(weak) = %v", err)
+	}
+	if err := w.ChangePassword(testPassword, next); err != nil {
+		t.Fatalf("ChangePassword: %v", err)
+	}
+	// Every key and the phrase open with the new password only
+	for _, addr := range []string{single.Address, phrase.Account.Address} {
+		if _, err := w.Backup(addr, testPassword); !errors.Is(err, ErrWrongPassword) {
+			t.Errorf("%s still opens with the old password: %v", addr, err)
+		}
+		if _, err := w.Backup(addr, next); err != nil {
+			t.Errorf("%s doesn't open with the new password: %v", addr, err)
+		}
+	}
+	got, err := w.RevealSeed(phrase.SeedID, next)
+	if err != nil || strings.Join(got.Words, " ") != strings.Join(phrase.Words, " ") || got.Passphrase != "a passphrase" {
+		t.Fatalf("RevealSeed after the change = %+v, %v", got, err)
+	}
+	// No staged file is left behind
+	entries, _ := os.ReadDir(filepath.Join(dir, "keystore"))
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), ".") {
+			t.Errorf("left behind %s", e.Name())
+		}
+	}
+}
+
+func TestWalletChangePasswordAllOrNothing(t *testing.T) {
+	w, dir := newTestWallet(t)
+	acc, err := w.Create("", testPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A key dropped into the keystore under another password
+	ks := keystore.NewKeyStore(filepath.Join(dir, "keystore"), keystore.LightScryptN, keystore.LightScryptP)
+	if _, err := ks.NewAccount("someone else's password"); err != nil {
+		t.Fatal(err)
+	}
+	waitForAccounts(t, w, 2)
+	if err := w.ChangePassword(testPassword, "another long password"); !errors.Is(err, ErrKeyMismatch) {
+		t.Fatalf("ChangePassword with a foreign key = %v, want ErrKeyMismatch", err)
+	}
+	// Nothing changed
+	if _, err := w.Backup(acc.Address, testPassword); err != nil {
+		t.Fatalf("the wallet's key no longer opens with its password: %v", err)
+	}
+	if _, err := w.Create("", testPassword); err != nil {
+		t.Fatalf("the wallet password no longer works: %v", err)
 	}
 }
 

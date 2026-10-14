@@ -19,9 +19,12 @@ type GUIConfig struct {
 	// us. Stored as the negative ("block") so that the JSON zero value
 	// (false = allow inbound) is the safe network-friendly default for
 	// configs persisted before this field existed.
-	BlockInbound  bool   `json:"blockInbound"`
-	MaxPeers      int    `json:"maxPeers"`
-	Theme         string `json:"theme"` // "system" | "light" | "dark"
+	BlockInbound bool   `json:"blockInbound"`
+	MaxPeers     int    `json:"maxPeers"`
+	Theme        string `json:"theme"` // "system" | "light" | "dark"
+	// AvatarStyle is how addresses are pictured: "" or "jazzicon"
+	// (MetaMask's default) | "blockies".
+	AvatarStyle   string `json:"avatarStyle"`
 	AutoStartNode bool   `json:"autoStartNode"`
 	// DisableAnimations turns off CSS keyframes, motion/react transitions
 	// and any decorative motion in the GUI. Useful on low-power systems
@@ -39,7 +42,7 @@ type GUIConfig struct {
 	// status (block height, peer count, sync state, client version,
 	// OS) to the public dashboard at status.parallaxprotocol.org under a
 	// random name kept in the datadir — the same as a bare --prlstats on the
-	// CLI. Offered on by default in the onboarding wizard; configs persisted
+	// CLI. On by default for new installs; configs persisted
 	// before this field existed load it as false, so existing installs are
 	// never opted in silently. Requires a node restart: the service is
 	// registered before stack.Start().

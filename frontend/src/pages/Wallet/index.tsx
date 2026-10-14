@@ -1,7 +1,19 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, Clock, FileKey2, KeyRound, Plus } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Clock,
+  FileKey2,
+  HardDrive,
+  KeyRound,
+  Lock,
+  Plus,
+  ScrollText,
+  Server,
+} from "lucide-react";
 import { TxView } from "../../lib/api";
 import { formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
 import { useNow } from "../../lib/useNow";
@@ -9,12 +21,18 @@ import { STAGGER, useStagger } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { useAgo, useT } from "../../i18n";
 import { Counter } from "../../components/ui/Counter";
-import { Panel, Section, Stat, StatStrip } from "../../components/ui/Panel";
+import { Panel, Section } from "../../components/ui/Panel";
+import { IconBadge } from "../../components/ui/IconBadge";
+import { Pill } from "../../components/ui/Pill";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { BrandMark } from "../../components/ui/BrandMark";
-import { BackupDrawer } from "./AccountForms";
+import { BackupModal } from "./AccountForms";
 import { useSummary } from "./common";
+import { GlowCard } from "../../components/ui/GlowCard";
+import { PAGE_WIDE } from "../../lib/layout";
+import { AddressAvatar } from "../../components/ui/AddressAvatar";
+import { RevealPhraseModal } from "./Phrase";
 
 type Activity = {
   kind: "in" | "out" | "self";
@@ -34,6 +52,8 @@ type Activity = {
 export default function WalletPage() {
   const wallet = useWallet();
   if (!wallet.info) return null;
+  // A wallet without its password shows only the welcome, until it has one
+  if (!wallet.info.hasPassword) return <Locked existing={wallet.info.needsSetup} />;
   return wallet.account ? <Overview /> : <Welcome />;
 }
 
@@ -45,6 +65,7 @@ function Overview() {
   const { info, account } = useWallet();
   const { view, err, running } = useSummary(account?.address);
   const [backup, setBackup] = useState(false);
+  const [reveal, setReveal] = useState(false);
 
   const activity = useMemo<Activity[]>(() => {
     if (!view) return [];
@@ -72,98 +93,128 @@ function Overview() {
   const outgoing = view?.pending.filter((tx) => sameAddress(tx.from, view.address)).length ?? 0;
 
   return (
-    <div className="flex flex-col gap-6 p-5">
-      {!account.backedUp && (
-        <Notice
-          tone="warn"
-          title={t("wallet.backup.missingTitle")}
-          action={
-            <button type="button" className="btn btn-secondary" onClick={() => setBackup(true)}>
-              <FileKey2 className="size-3.5" />
-              {t("wallet.backup.cta")}
-            </button>
-          }
-        >
-          {t("wallet.backup.missingDesc")}
-        </Notice>
-      )}
-
-      <Section
-        title={label}
-        aside={
-          <>
-            <Tooltip content={account.address} mono>
-              <span className="font-mono">{shortHex(account.address, 10, 8)}</span>
-            </Tooltip>
-            <CopyButton value={account.address} />
-          </>
-        }
-      >
-        {!running && <Notice tone="info">{t("wallet.nodeOff")}</Notice>}
-        {err && <Notice tone="critical">{err}</Notice>}
-
-        <StatStrip columns="2fr 1fr">
-          <Stat
-            label={t("wallet.balance")}
-            value={
-              balanceKnown ? (
-                <Counter value={Number(formatLax(view!.balanceWei, 4))} format={(v) => formatAmount(v)} />
-              ) : (
-                "—"
-              )
+    <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
+      {!account.backedUp &&
+        (account.fromSeed ? (
+          <Notice
+            tone="warn"
+            title={t("wallet.phrase.missingTitle")}
+            action={
+              <button type="button" className="btn btn-secondary" onClick={() => setReveal(true)}>
+                <ScrollText className="size-3.5" />
+                {t("wallet.phrase.showConfirm")}
+              </button>
             }
-            unit="LAX"
-            detail={
-              !running
+          >
+            {t("wallet.phrase.missingDesc")}
+          </Notice>
+        ) : (
+          <Notice
+            tone="warn"
+            title={t("wallet.backup.missingTitle")}
+            action={
+              <button type="button" className="btn btn-secondary" onClick={() => setBackup(true)}>
+                <FileKey2 className="size-3.5" />
+                {t("wallet.backup.cta")}
+              </button>
+            }
+          >
+            {t("wallet.backup.missingDesc")}
+          </Notice>
+        ))}
+
+      {/* The account's card: who it is, what it holds, and the two things to do with it */}
+      <GlowCard {...stagger} aria-label={label}>
+        <div className="relative flex flex-col gap-6">
+          <motion.div variants={STAGGER.item} className="flex items-center gap-3">
+            <AddressAvatar address={account.address} size={36} />
+            {/* The full address where the card has room for it, shortened where it hasn't */}
+            <div className="@container flex min-w-0 flex-1 flex-col">
+              <span className="truncate font-semibold">{label}</span>
+              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                <span className="hidden @md:inline">
+                  <GroupedAddress address={account.address} />
+                </span>
+                <Tooltip content={account.address} mono>
+                  <span className="font-mono @md:hidden">{shortHex(account.address, 8, 6)}</span>
+                </Tooltip>
+                <CopyButton value={account.address} className="-my-1" />
+              </span>
+            </div>
+            {view && view.pending.length > 0 && (
+              <Tooltip content={outgoing > 0 ? t("wallet.waitingOut", { n: outgoing }) : t("wallet.waitingDesc")}>
+                <Pill tone="info" className="h-7 gap-1.5 px-3 text-sm tabular-nums">
+                  <Clock className="size-3.5" />
+                  {t("wallet.waiting")} · {formatInt(view.pending.length)}
+                </Pill>
+              </Tooltip>
+            )}
+          </motion.div>
+
+          <motion.div variants={STAGGER.item} className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-muted-foreground">{t("wallet.balance")}</span>
+            <span className="flex items-baseline gap-2.5">
+              <span className="bg-gradient-to-br from-foreground via-foreground to-[var(--app-brand)] bg-clip-text text-6xl font-semibold tracking-tight text-transparent tabular-nums">
+                {balanceKnown ? (
+                  <Counter value={Number(formatLax(view!.balanceWei, 4))} format={(v) => formatAmount(v)} />
+                ) : (
+                  "—"
+                )}
+              </span>
+              <span className="text-2xl font-medium text-muted-foreground">LAX</span>
+            </span>
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {!running
                 ? t("wallet.balanceOffline")
                 : !view
                   ? "…"
                   : balanceKnown
                     ? t("wallet.balanceAt", { block: formatInt(view.headBlock) })
-                    : t("wallet.balanceSyncing")
-            }
-          />
-          <Stat
-            label={t("wallet.waiting")}
-            value={view ? formatInt(view.pending.length) : "—"}
-            detail={outgoing > 0 ? t("wallet.waitingOut", { n: outgoing }) : t("wallet.waitingDesc")}
-          />
-        </StatStrip>
+                    : t("wallet.balanceSyncing")}
+            </span>
+          </motion.div>
 
-        <div className="flex gap-2">
-          <Link to="/send" className="btn btn-primary btn-lg">
-            <ArrowUpRight className="size-4" />
-            {t("wallet.send")}
-          </Link>
-          <Link to="/receive" className="btn btn-secondary btn-lg">
-            <ArrowDownLeft className="size-4" />
-            {t("wallet.receive")}
-          </Link>
+          <motion.div variants={STAGGER.item} className="flex flex-wrap gap-3">
+            <Link to="/send" className="btn btn-primary btn-lg min-w-40">
+              <ArrowUpRight className="size-4" />
+              {t("wallet.send")}
+            </Link>
+            <Link to="/receive" className="btn btn-secondary btn-lg min-w-40">
+              <ArrowDownLeft className="size-4" />
+              {t("wallet.receive")}
+            </Link>
+          </motion.div>
         </div>
-      </Section>
+      </GlowCard>
+
+      {!running && <Notice tone="info">{t("wallet.nodeOff")}</Notice>}
+      {err && <Notice tone="critical">{err}</Notice>}
 
       <Section
         title={t("wallet.activity")}
-        aside={view && <span className="tabular-nums">{t("wallet.activityWindow", { from: formatInt(view.scannedFrom) })}</span>}
+        aside={view && t("wallet.activityWindow", { from: formatInt(view.scannedFrom) })}
       >
         <Panel className="overflow-hidden">
           {activity.length === 0 ? (
-            <p className="py-10 text-center text-muted-foreground">
-              {!running ? t("wallet.activityOffline") : view ? t("wallet.activityEmpty") : "…"}
-            </p>
+            <div className="flex flex-col items-center gap-3 py-14 text-center text-muted-foreground">
+              <IconBadge icon={ScrollText} size="lg" />
+              <p>{!running ? t("wallet.activityOffline") : view ? t("wallet.activityEmpty") : "…"}</p>
+            </div>
           ) : (
-            <motion.ul {...stagger}>
+            <motion.ul {...stagger} className="flex flex-col divide-y divide-border">
               {activity.map((a) => (
                 <motion.li
                   variants={STAGGER.item}
                   key={`${a.pending}-${a.hash}`}
-                  className="flex h-12 items-center gap-3 px-4 transition-colors even:bg-muted/40 hover:bg-hover"
+                  className="group flex h-16 items-center gap-3.5 px-4 transition-colors hover:bg-hover"
                 >
                   <ActivityIcon kind={a.kind} pending={a.pending} />
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 font-medium">
                       {t(`wallet.kind.${a.kind}`)}
-                      {a.pending && <span className="text-sm text-info-ink">{t("wallet.pending")}</span>}
+                      {a.pending && (
+                        <Pill tone="info">{t("wallet.pending")}</Pill>
+                      )}
                     </div>
                     <div className="truncate text-sm text-muted-foreground tabular-nums">
                       {a.pending ? t("wallet.inPool") : t("wallet.inBlock", { block: formatInt(a.block) })}
@@ -176,13 +227,16 @@ function Overview() {
                     </div>
                   </div>
                   <div className="text-right tabular-nums">
-                    <div className={a.kind === "in" ? "text-good-ink" : ""}>
+                    <div className={`font-semibold ${a.kind === "in" ? "text-good-ink" : ""}`}>
                       {a.kind === "in" ? "+" : a.kind === "out" ? "−" : ""}
-                      {formatLax(a.amountWei, 6)} LAX
+                      {formatLax(a.amountWei, 6)} <span className="font-normal text-muted-foreground">LAX</span>
                     </div>
                     <div className="flex items-center justify-end gap-1 text-sm text-muted-foreground">
                       {a.pending ? t("wallet.unconfirmed") : ago(a.time, now)}
-                      <CopyButton value={a.hash} className="-my-1 -mr-2" />
+                      <CopyButton
+                        value={a.hash}
+                        className="-my-1 -mr-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                      />
                     </div>
                   </div>
                 </motion.li>
@@ -192,20 +246,37 @@ function Overview() {
         </Panel>
       </Section>
 
-      <BackupDrawer open={backup} onClose={() => setBackup(false)} account={account} label={label} />
+      <RevealPhraseModal open={reveal} onClose={() => setReveal(false)} seedId={account.seedId || null} />
+      <BackupModal open={backup} onClose={() => setBackup(false)} account={account} label={label} />
     </div>
   );
 }
 
 function ActivityIcon({ kind, pending }: { kind: Activity["kind"]; pending: boolean }) {
-  const Icon = pending ? Clock : kind === "in" ? ArrowDownLeft : ArrowUpRight;
   return (
-    <span
-      className={`grid size-7 shrink-0 place-items-center rounded-full ${
-        kind === "in" ? "bg-brand-muted text-brand" : "bg-muted text-muted-foreground"
-      }`}
-    >
-      <Icon className="size-3.5" />
+    <IconBadge
+      icon={pending ? Clock : kind === "in" ? ArrowDownLeft : ArrowUpRight}
+      tone={pending ? "info" : kind === "in" ? "good" : "neutral"}
+    />
+  );
+}
+
+/**
+ * GroupedAddress shows an address as a card number is printed: 0x, then
+ * its digits in groups of four. The gaps are margins, not spaces, so the
+ * address selects and copies whole.
+ */
+function GroupedAddress({ address }: { address: string }) {
+  const digits = address.replace(/^0x/i, "");
+  const groups = digits.match(/.{1,4}/g) ?? [digits];
+  return (
+    <span className="selectable font-mono tracking-wide">
+      <span className="mr-1.5">0x</span>
+      {groups.map((g, i) => (
+        <span key={i} className={i < groups.length - 1 ? "mr-1.5" : ""}>
+          {g}
+        </span>
+      ))}
     </span>
   );
 }
@@ -220,10 +291,10 @@ function Welcome() {
   const t = useT();
   const navigate = useNavigate();
   return (
-    <div className="flex flex-col items-center gap-6 px-5 py-14">
-      <BrandMark size={48} />
+    <div className="flex min-h-full flex-col items-center justify-center gap-6 px-5 py-10">
+      <BrandMark size={56} />
       <div className="flex max-w-lg flex-col items-center gap-2 text-center">
-        <h2 className="text-xl font-semibold">{t("wallet.welcome.title")}</h2>
+        <h2 className="text-3xl font-semibold tracking-tight">{t("wallet.welcome.title")}</h2>
         <p className="text-muted-foreground">{t("wallet.welcome.desc")}</p>
       </div>
       <div className="grid w-full max-w-2xl gap-3 sm:grid-cols-2">
@@ -263,19 +334,62 @@ function Choice({
     <button
       type="button"
       onClick={onClick}
-      className="group flex items-start gap-3 rounded-lg border border-border bg-surface p-4 text-left shadow-[var(--shadow-panel)] transition-colors hover:border-border-strong hover:bg-hover"
+      className="glass group flex items-start gap-3.5 p-5 text-left transition-colors"
     >
-      <span
-        className={`grid size-8 shrink-0 place-items-center rounded-full ${
-          primary ? "bg-brand-muted text-brand" : "bg-muted text-muted-foreground"
-        }`}
-      >
-        <Icon className="size-4" />
-      </span>
+      <IconBadge icon={Icon} tone={primary ? "brand" : "neutral"} />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="font-medium">{title}</span>
         <span className="text-sm text-muted-foreground">{desc}</span>
       </span>
     </button>
+  );
+}
+
+/**
+ * Locked is the app before the wallet has its password: what the app is,
+ * and the one way on, Get started, which sets the password. Nothing else
+ * of the wallet shows until then. A wallet that has keys but no password
+ * yet (from an earlier build) gets the same, worded for it.
+ */
+function Locked({ existing }: { existing: boolean }) {
+  const t = useT();
+  const navigate = useNavigate();
+  const stagger = useStagger();
+  return (
+    <div className="flex min-h-full flex-col items-center justify-center gap-8 px-5 py-10">
+      <motion.div {...stagger} className="flex w-full max-w-2xl flex-col items-center gap-8">
+        <motion.div variants={STAGGER.item}>
+          <BrandMark size={56} />
+        </motion.div>
+        <motion.div variants={STAGGER.item} className="flex flex-col items-center gap-2 text-center">
+          <h2 className="text-3xl font-semibold tracking-tight">{t("wallet.locked.title")}</h2>
+          <p className="max-w-lg text-muted-foreground">
+            {existing ? t("wallet.locked.existing") : t("wallet.locked.desc")}
+          </p>
+        </motion.div>
+        <motion.ul variants={STAGGER.item} className="grid w-full gap-5 sm:grid-cols-3">
+          <Point icon={Server} title={t("wallet.locked.node")} desc={t("wallet.locked.nodeDesc")} />
+          <Point icon={HardDrive} title={t("wallet.locked.keys")} desc={t("wallet.locked.keysDesc")} />
+          <Point icon={Lock} title={t("wallet.locked.password")} desc={t("wallet.locked.passwordDesc")} />
+        </motion.ul>
+        <motion.div variants={STAGGER.item} className="flex flex-col items-center gap-2">
+          <button type="button" className="btn btn-primary btn-lg" onClick={() => navigate("/setup")} autoFocus>
+            {t("wallet.locked.cta")}
+            <ArrowRight className="size-4" />
+          </button>
+          <span className="text-sm text-muted-foreground">{t("wallet.locked.ctaHint")}</span>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
+function Point({ icon: Icon, title, desc }: { icon: typeof Lock; title: string; desc: string }) {
+  return (
+    <li className="flex flex-col items-center gap-2 text-center">
+      <IconBadge icon={Icon} tone="brand" className="ring-1 ring-brand/25" />
+      <span className="font-medium">{title}</span>
+      <span className="text-sm text-muted-foreground">{desc}</span>
+    </li>
   );
 }

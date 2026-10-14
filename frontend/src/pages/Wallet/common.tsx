@@ -1,4 +1,5 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
+import { motion } from "motion/react";
 import { Eye, EyeOff } from "lucide-react";
 import { api, AddressView } from "../../lib/api";
 import { useNode } from "../../lib/live";
@@ -55,6 +56,8 @@ export function PasswordInput({
   autoFocus,
   isNew,
   placeholder,
+  disabled,
+  inputRef,
 }: {
   id?: string;
   value: string;
@@ -63,6 +66,8 @@ export function PasswordInput({
   /** A password being chosen, not one being entered. */
   isNew?: boolean;
   placeholder?: string;
+  disabled?: boolean;
+  inputRef?: React.Ref<HTMLInputElement>;
 }) {
   const t = useT();
   const [shown, setShown] = useState(false);
@@ -70,6 +75,8 @@ export function PasswordInput({
     <div className="relative">
       <input
         id={id}
+        ref={inputRef}
+        disabled={disabled}
         type={shown ? "text" : "password"}
         className="input pr-8"
         value={value}
@@ -82,8 +89,11 @@ export function PasswordInput({
         placeholder={placeholder}
       />
       <Tooltip content={shown ? t("wallet.password.hide") : t("wallet.password.show")}>
+        {/* Out of the tab order: Tab goes from one field to the next */}
         <button
           type="button"
+          tabIndex={-1}
+          disabled={disabled}
           className="btn btn-ghost btn-sm btn-icon absolute top-0.5 right-0.5"
           onClick={() => setShown((s) => !s)}
           aria-label={shown ? t("wallet.password.hide") : t("wallet.password.show")}
@@ -189,4 +199,57 @@ export function useSummary(address: string | undefined) {
   }, [running, address, head, tick]);
 
   return { view: running ? view : null, err, running };
+}
+
+/**
+ * Checkbox is a checkbox and its label, the box centred on the label's
+ * first line however many lines the label wraps to.
+ */
+export function Checkbox({
+  checked,
+  onChange,
+  children,
+}: {
+  checked: boolean;
+  onChange: (on: boolean) => void;
+  children: ReactNode;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-2.5">
+      <span className="flex h-[1lh] shrink-0 items-center">
+        <input
+          type="checkbox"
+          className="size-3.5 cursor-pointer accent-[var(--brand-fill)]"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+      </span>
+      <span>{children}</span>
+    </label>
+  );
+}
+
+/** DrawnCheck is a disc in the accent whose check draws itself in. */
+export function DrawnCheck() {
+  return (
+    <motion.span
+      className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-fill text-brand-foreground shadow-[0_0_20px_-4px_var(--brand-mark)]"
+      initial={{ scale: 0.5, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", bounce: 0.35, visualDuration: 0.45 }}
+    >
+      <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" aria-hidden>
+        <motion.path
+          d="M5 12.5l4.5 4.5L19 7.5"
+          stroke="currentColor"
+          strokeWidth={2.75}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
+        />
+      </svg>
+    </motion.span>
+  );
 }

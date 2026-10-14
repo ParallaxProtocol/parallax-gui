@@ -110,7 +110,7 @@ func defaultGUIConfig() GUIConfig {
 		Theme:            "system",
 		AutoStartNode:    true,
 		EnableSmartFee:   true,                    // matches the v2.0.0 CLI default (--gpo.smartfee).
-		ReportStats:      true,                    // offered as on in the onboarding wizard.
+		ReportStats:      true,                    // on for new installs.
 		Notifications:    true,                    // configs saved before it existed load it off.
 		DatabaseCacheMB:  cacheTotalMB * 50 / 100, // 2048 MB
 		TrieCleanCacheMB: cacheTotalMB * 15 / 100, //  614 MB

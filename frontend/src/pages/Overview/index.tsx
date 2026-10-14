@@ -1,10 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown } from "lucide-react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { api, NodeDetails, PeerView } from "../../lib/api";
 import { formatBytes, formatDuration, formatGwei, formatInt } from "../../lib/format";
 import { useBlocks, useNode } from "../../lib/live";
-import { GLIDE, SPRING, STAGGER, useStagger } from "../../lib/motion";
+import { SPRING, STAGGER, useStagger } from "../../lib/motion";
 import { Counter } from "../../components/ui/Counter";
 import { useT } from "../../i18n";
 import { Stat } from "../../components/ui/Panel";
@@ -12,6 +12,7 @@ import BlockHero, { Stopped } from "./BlockHero";
 import NodeInfo from "./NodeInfo";
 import MempoolList from "./MempoolList";
 import PeerList from "./PeerList";
+import { PAGE_WIDE } from "../../lib/layout";
 
 export default function Overview() {
   const t = useT();
@@ -77,7 +78,7 @@ export default function Overview() {
 
   return (
     // The page's one orchestrated entrance: its blocks arrive in turn
-    <motion.div className="flex flex-col gap-5 p-5" {...stagger}>
+    <motion.div className={`flex flex-col gap-5 p-5 ${PAGE_WIDE}`} {...stagger}>
       <motion.div variants={STAGGER.item}>
         <BlockHero />
       </motion.div>
@@ -86,7 +87,7 @@ export default function Overview() {
           figure across the strip, the others making way, and unfolds its
           list below */}
       <motion.div variants={STAGGER.item}>
-        <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-panel)]">
+        <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-panel)]">
           <div className="flex">
             <AnimatePresence initial={false}>
               {(open === null || open === "peers") && (
@@ -191,9 +192,9 @@ function Collapsing({ edge, children }: { edge?: boolean; children: ReactNode })
 }
 
 /**
- * Expander makes a whole figure the switch that opens its list, with a
- * chevron (handed to the figure for its corner) that turns to show which
- * way it goes.
+ * Expander makes a whole figure the switch that opens its list, with the
+ * expand or collapse icon (handed to the figure for its corner), as the
+ * node bar and Settings have.
  */
 function Expander({
   label,
@@ -224,9 +225,7 @@ function Expander({
     >
       {children(
         <span className="-my-1 -mr-2 grid size-6 place-items-center rounded-md text-muted-foreground transition-colors group-hover:text-foreground">
-          <motion.span className="grid place-items-center" initial={false} animate={{ rotate: open ? 180 : 0 }} transition={GLIDE}>
-            <ChevronDown className="size-4" />
-          </motion.span>
+          {open ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
         </span>,
       )}
     </div>

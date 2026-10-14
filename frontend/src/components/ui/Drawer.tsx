@@ -41,7 +41,7 @@ export function Drawer({
         // Below the toolbar, so the window stays draggable and its controls reachable.
         // Clipped there too: the panel's shadow would otherwise shade the toolbar,
         // around the window controls the OS paints over it in a solid colour
-        <div className="fixed inset-x-0 top-11 bottom-0 z-[90] overflow-hidden" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="no-drag fixed inset-x-0 top-11 bottom-0 z-[90] overflow-hidden" role="dialog" aria-modal="true" aria-label={title}>
           <motion.div
             className="absolute inset-0 bg-black/25"
             initial={{ opacity: 0 }}

@@ -1,17 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, CheckCircle2, Loader2, Send as SendIcon } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, Loader2, Send as SendIcon } from "lucide-react";
 import { api, SendQuote, SentTx, walletError } from "../../lib/api";
-import { formatGwei, formatInt, formatLax, formatUnits, isAddress, parseUnits } from "../../lib/format";
+import { formatGwei, formatInt, formatUnits, isAddress, parseUnits } from "../../lib/format";
 import { useNode } from "../../lib/live";
 import { PAGE } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
+import { ToolbarAccessory } from "../../lib/toolbar";
 import { useT } from "../../i18n";
-import { Panel, Property, Rows, Section } from "../../components/ui/Panel";
+import { Panel, Property, Rows } from "../../components/ui/Panel";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Segmented } from "../../components/ui/Segmented";
-import { Address, Field, PasswordInput, useSummary } from "./common";
+import { Address, DrawnCheck, Field, PasswordInput, useSummary } from "./common";
+import { GlowCard } from "../../components/ui/GlowCard";
+import { Steps } from "./flow";
+import { AccountSelect } from "./AccountSelect";
+import { PAGE_WIDE } from "../../lib/layout";
+import { AddressAvatar } from "../../components/ui/AddressAvatar";
 
 const LAX_DECIMALS = 18;
 const GWEI_DECIMALS = 9;
@@ -45,8 +51,15 @@ export default function SendPage() {
   if (!info) return null;
   if (!account) {
     return (
-      <div className="p-5">
-        <Notice tone="info" action={<Link to="/" className="btn btn-secondary">{t("wallet.welcome.cta")}</Link>}>
+      <div className={`p-5 ${PAGE_WIDE}`}>
+        <Notice
+          tone="info"
+          action={
+            <Link to="/" className="btn btn-secondary">
+              {t("wallet.welcome.cta")}
+            </Link>
+          }
+        >
           {t("wallet.noAccount")}
         </Notice>
       </div>
@@ -56,7 +69,13 @@ export default function SendPage() {
   const step = sent ? "sent" : quote ? "review" : "form";
 
   return (
-    <div className="flex max-w-3xl flex-col gap-6 p-5">
+    <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
+      <ToolbarAccessory>
+        <Steps
+          steps={[t("wallet.send.step.details"), t("wallet.send.review"), t("wallet.sent.title")]}
+          current={sent ? 3 : quote ? 1 : 0}
+        />
+      </ToolbarAccessory>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={step} {...PAGE}>
           {sent && quote ? (
@@ -75,7 +94,6 @@ export default function SendPage() {
           ) : (
             <SendForm
               from={account.address}
-              label={label}
               state={{ to, amount, feeMode, gwei }}
               set={{ setTo, setAmount, setFeeMode, setGwei }}
               onQuote={setQuote}
@@ -99,13 +117,11 @@ function useNotReady(): string | null {
 
 function SendForm({
   from,
-  label,
   state,
   set,
   onQuote,
 }: {
   from: string;
-  label: string;
   state: { to: string; amount: string; feeMode: FeeMode; gwei: string };
   set: {
     setTo: (v: string) => void;
@@ -121,6 +137,7 @@ function SendForm({
   const [busy, setBusy] = useState<"max" | "quote" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { to, amount, feeMode, gwei } = state;
+  const amountId = useId();
 
   const toTrim = to.trim();
   const toOk = isAddress(toTrim) && toTrim.startsWith("0x");
@@ -159,29 +176,61 @@ function SendForm({
   };
 
   return (
-    <Section title={t("wallet.send.title")}>
+    <form
+      className="flex flex-col gap-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        review();
+      }}
+    >
       {notReady && <Notice tone="info">{notReady}</Notice>}
-      <Panel className="p-4">
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            review();
-          }}
-        >
-          <Field label={t("wallet.send.from")}>
-            {() => (
-              <div className="flex items-center justify-between gap-3 rounded-md bg-muted/50 px-3 py-2">
-                <span className="min-w-0 truncate">
-                  {label} <span className="font-mono text-sm text-muted-foreground">{from}</span>
-                </span>
-                <span className="shrink-0 tabular-nums text-muted-foreground">
-                  {view?.balanceWei ? `${formatLax(view.balanceWei, 6)} LAX` : "—"}
-                </span>
-              </div>
-            )}
-          </Field>
 
+      {/* The amount, large, as the page's subject */}
+      <GlowCard>
+        <div className="flex flex-col items-center gap-3 py-4">
+          <label htmlFor={amountId} className="text-sm font-medium text-muted-foreground">
+            {t("wallet.send.amount")}
+          </label>
+          <div className="flex max-w-full items-baseline justify-center gap-2.5">
+            <input
+              id={amountId}
+              className="min-w-0 bg-transparent text-center text-6xl font-semibold tracking-tight tabular-nums outline-none placeholder:text-faint"
+              style={{ width: `${Math.max(amount.length, 1) + 0.6}ch` }}
+              inputMode="decimal"
+              placeholder="0"
+              value={amount}
+              onChange={(e) => set.setAmount(e.target.value.replace(",", "."))}
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <span className="text-3xl font-medium text-muted-foreground">LAX</span>
+          </div>
+          {amount && valueWei === null ? (
+            <span className="text-sm text-critical-ink" role="alert">
+              {t("wallet.err.badAmount")}
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm rounded-full px-4"
+              onClick={max}
+              disabled={!toOk || !!notReady || busy !== null}
+            >
+              {busy === "max" && <Loader2 className="size-3 animate-spin" />}
+              {t("wallet.send.max")}
+            </button>
+          )}
+        </div>
+      </GlowCard>
+
+      {/* Where it comes from and goes to, and what the network takes */}
+      <Panel className="flex flex-col divide-y divide-border">
+        <div className="p-4">
+          <Field label={t("wallet.send.from")}>
+            {(id) => <AccountSelect id={id} balanceWei={view?.balanceWei || undefined} />}
+          </Field>
+        </div>
+        <div className="p-4">
           <Field
             label={t("wallet.send.to")}
             error={toTrim && !toOk ? t("wallet.err.badRecipient") : null}
@@ -200,35 +249,12 @@ function SendForm({
               />
             )}
           </Field>
-
+        </div>
+        <div className="p-4">
           <Field
-            label={t("wallet.send.amount")}
-            error={amount && valueWei === null ? t("wallet.err.badAmount") : null}
-            aside={
-              <button type="button" className="btn btn-ghost btn-sm" onClick={max} disabled={!toOk || !!notReady || busy !== null}>
-                {busy === "max" && <Loader2 className="size-3 animate-spin" />}
-                {t("wallet.send.max")}
-              </button>
-            }
+            label={t("wallet.send.fee")}
+            hint={feeMode === "suggested" ? t("wallet.send.feeSuggested") : t("wallet.send.feeCustom")}
           >
-            {(id) => (
-              <div className="relative">
-                <input
-                  id={id}
-                  className="input pr-12 tabular-nums"
-                  inputMode="decimal"
-                  placeholder="0.0"
-                  value={amount}
-                  onChange={(e) => set.setAmount(e.target.value.replace(",", "."))}
-                  spellCheck={false}
-                  autoComplete="off"
-                />
-                <span className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground">LAX</span>
-              </div>
-            )}
-          </Field>
-
-          <Field label={t("wallet.send.fee")} hint={feeMode === "suggested" ? t("wallet.send.feeSuggested") : t("wallet.send.feeCustom")}>
             {(id) => (
               <div className="flex flex-wrap items-center gap-3">
                 <Segmented<FeeMode>
@@ -243,30 +269,33 @@ function SendForm({
                   <div className="relative w-40">
                     <input
                       id={id}
-                      className="input pr-12 tabular-nums"
+                      className="input pr-14 tabular-nums"
                       inputMode="decimal"
                       placeholder="1"
                       value={gwei}
                       onChange={(e) => set.setGwei(e.target.value.replace(",", "."))}
                       aria-label={t("wallet.send.gasPrice")}
                     />
-                    <span className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground">gwei</span>
+                    <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">
+                      gwei
+                    </span>
                   </div>
                 )}
               </div>
             )}
           </Field>
-
-          {error && <Notice tone="critical">{error}</Notice>}
-          <div className="flex justify-end">
-            <button type="submit" className="btn btn-primary" disabled={!ready || busy !== null}>
-              {busy === "quote" && <Loader2 className="size-3.5 animate-spin" />}
-              {t("wallet.send.review")}
-            </button>
-          </div>
-        </form>
+        </div>
       </Panel>
-    </Section>
+
+      {error && <Notice tone="critical">{error}</Notice>}
+      <div className="flex justify-center">
+        <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!ready || busy !== null}>
+          {busy === "quote" && <Loader2 className="size-4 animate-spin" />}
+          {t("wallet.send.review")}
+          {busy !== "quote" && <ArrowRight className="size-4" />}
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -313,20 +342,37 @@ function Review({
   };
 
   return (
-    <Section title={t("wallet.review.title")}>
+    <div className="flex flex-col gap-5">
+      {/* What leaves the account, large, and exactly where it goes */}
+      <GlowCard>
+        <div className="flex flex-col items-center gap-5 py-2 text-center">
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-sm font-medium text-muted-foreground">{t("wallet.review.title")}</span>
+            <span className="flex items-baseline gap-2.5">
+              <span className="bg-gradient-to-br from-foreground via-foreground to-[var(--app-brand)] bg-clip-text text-6xl font-semibold tracking-tight text-transparent tabular-nums">
+                {formatUnits(quote.valueWei, LAX_DECIMALS)}
+              </span>
+              <span className="text-3xl font-medium text-muted-foreground">LAX</span>
+            </span>
+          </div>
+          <div className="flex w-full max-w-md flex-col items-center gap-2">
+            <span className="flex items-center gap-2 text-sm text-muted-foreground">
+              <ArrowDown className="size-3.5" />
+              {t("wallet.send.to")}
+            </span>
+            <span className="flex items-center gap-3 rounded-2xl bg-muted px-4 py-3">
+              <AddressAvatar address={quote.to} size={28} />
+              <Address value={quote.to} className="text-left text-[15px] leading-relaxed" />
+            </span>
+            <span className="text-sm text-muted-foreground">{t("wallet.review.checkAddress")}</span>
+          </div>
+        </div>
+      </GlowCard>
+
       <Rows as="dl">
         <Property label={t("wallet.send.from")}>
+          <AddressAvatar address={quote.from} size={20} />
           <span className="truncate">{label}</span>
-        </Property>
-        <div className="flex flex-col gap-1.5 px-4 py-3">
-          <dt className="text-muted-foreground">{t("wallet.send.to")}</dt>
-          <dd className="text-[15px] leading-relaxed">
-            <Address value={quote.to} />
-          </dd>
-          <dd className="text-sm text-muted-foreground">{t("wallet.review.checkAddress")}</dd>
-        </div>
-        <Property label={t("wallet.send.amount")}>
-          <span className="text-lg font-semibold">{formatUnits(quote.valueWei, LAX_DECIMALS)} LAX</span>
         </Property>
         <Property label={t("wallet.review.fee")}>
           <span>
@@ -337,7 +383,7 @@ function Review({
           </span>
         </Property>
         <Property label={t("wallet.review.total")}>
-          <span className="font-semibold">{formatUnits(quote.totalWei, LAX_DECIMALS)} LAX</span>
+          <span className="font-semibold text-foreground">{formatUnits(quote.totalWei, LAX_DECIMALS)} LAX</span>
         </Property>
         <Property label={t("wallet.review.network")}>
           <span>Parallax · {t("wallet.review.chainId", { id: quote.chainId })}</span>
@@ -349,31 +395,35 @@ function Review({
       {quote.toContract && <Notice tone="warn">{t("wallet.review.toContract")}</Notice>}
       {dear && <Notice tone="warn">{t("wallet.review.dear", { price: formatGwei(quote.suggestedPriceWei) })}</Notice>}
 
-      <Panel className="p-4">
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (password && quote.sufficient) send();
-          }}
-        >
-          <Field label={t("wallet.password")} hint={t("wallet.review.passwordHint")}>
+      <form
+        className="flex flex-col gap-5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (password && quote.sufficient) send();
+        }}
+      >
+        <Panel className="p-4">
+          <Field label={t("wallet.walletPassword")} hint={t("wallet.review.passwordHint")}>
             {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus />}
           </Field>
-          {error && <Notice tone="critical">{error}</Notice>}
-          <div className="flex justify-between gap-2">
-            <button type="button" className="btn btn-secondary" onClick={onBack} disabled={busy}>
-              <ArrowLeft className="size-3.5" />
-              {t("common.back")}
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={busy || !password || !quote.sufficient}>
-              {busy ? <Loader2 className="size-3.5 animate-spin" /> : <SendIcon className="size-3.5" />}
-              {busy ? t("wallet.review.signing") : t("wallet.review.cta")}
-            </button>
-          </div>
-        </form>
-      </Panel>
-    </Section>
+        </Panel>
+        {error && <Notice tone="critical">{error}</Notice>}
+        <div className="flex justify-center gap-3">
+          <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onBack} disabled={busy}>
+            <ArrowLeft className="size-4" />
+            {t("common.back")}
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg min-w-56"
+            disabled={busy || !password || !quote.sufficient}
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
+            {busy ? t("wallet.review.signing") : t("wallet.review.cta")}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -381,36 +431,33 @@ function Sent({ tx, quote, onAgain }: { tx: SentTx; quote: SendQuote; onAgain: (
   const t = useT();
   const navigate = useNavigate();
   return (
-    <Section title={t("wallet.sent.title")}>
-      <Panel className="flex flex-col gap-4 p-5">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-good-ink" />
-          <div className="flex min-w-0 flex-col gap-1">
-            <span className="font-medium">
-              {t("wallet.sent.desc", { amount: formatUnits(quote.valueWei, LAX_DECIMALS) })}
-            </span>
-            <span className="text-sm text-muted-foreground">{t("wallet.sent.wait")}</span>
-          </div>
-        </div>
-        <Rows as="dl">
-          <Property label={t("wallet.sent.hash")} mono>
-            <span className="selectable truncate">{tx.hash}</span>
-            <CopyButton value={tx.hash} className="-my-1 -mr-2" />
-          </Property>
-          <Property label={t("wallet.send.to")} mono>
-            <span className="selectable truncate">{quote.to}</span>
-          </Property>
-          <Property label={t("wallet.sent.nonce")}>{formatInt(tx.nonce)}</Property>
-        </Rows>
-        <div className="flex justify-end gap-2">
-          <button type="button" className="btn btn-secondary" onClick={onAgain}>
-            {t("wallet.sent.again")}
-          </button>
-          <button type="button" className="btn btn-primary" onClick={() => navigate("/")}>
-            {t("wallet.sent.done")}
-          </button>
-        </div>
-      </Panel>
-    </Section>
+    <div className="flex flex-col items-center gap-6 pt-6 text-center">
+      <span className="scale-150">
+        <DrawnCheck />
+      </span>
+      <div className="flex flex-col items-center gap-2">
+        <h2 className="text-3xl font-semibold tracking-tight">{t("wallet.sent.title")}</h2>
+        <p className="text-lg">{t("wallet.sent.desc", { amount: formatUnits(quote.valueWei, LAX_DECIMALS) })}</p>
+        <p className="max-w-md text-muted-foreground">{t("wallet.sent.wait")}</p>
+      </div>
+      <Rows as="dl" className="w-full text-left">
+        <Property label={t("wallet.sent.hash")} mono>
+          <span className="selectable truncate">{tx.hash}</span>
+          <CopyButton value={tx.hash} className="-my-1 -mr-2" />
+        </Property>
+        <Property label={t("wallet.send.to")} mono>
+          <span className="selectable truncate">{quote.to}</span>
+        </Property>
+        <Property label={t("wallet.sent.nonce")}>{formatInt(tx.nonce)}</Property>
+      </Rows>
+      <div className="flex justify-center gap-3">
+        <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onAgain}>
+          {t("wallet.sent.again")}
+        </button>
+        <button type="button" className="btn btn-primary btn-lg min-w-36" onClick={() => navigate("/")}>
+          {t("wallet.sent.done")}
+        </button>
+      </div>
+    </div>
   );
 }

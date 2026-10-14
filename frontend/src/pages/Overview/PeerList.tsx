@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, Ban, Check, ChevronRight, Loader2, Plus, ShieldCheck, ShieldOff, Unplug } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Ban,
+  Check,
+  ChevronRight,
+  Loader2,
+  Plus,
+  ShieldCheck,
+  ShieldOff,
+  Unplug,
+} from "lucide-react";
 import { api, BanEntry, PeerView } from "../../lib/api";
 import { parseClient } from "../../lib/client";
 import { formatInt } from "../../lib/format";
@@ -8,8 +19,12 @@ import { SPRING } from "../../lib/motion";
 import { useNow } from "../../lib/useNow";
 import { useLang, useT } from "../../i18n";
 import { Segmented } from "../../components/ui/Segmented";
-import { CopyButton, Notice } from "../../components/ui/bits";
+import { Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
+import { Select } from "../../components/ui/Select";
+import { Pill } from "../../components/ui/Pill";
+import { IconBadge } from "../../components/ui/IconBadge";
+import { Detail, DetailCard, Unfold } from "./parts";
 
 type Filter = "all" | "in" | "out" | "blocked";
 
@@ -88,7 +103,7 @@ export default function PeerList({
 
   return (
     <div className="border-t border-border">
-      <div className="flex items-center gap-3 px-4 py-2">
+      <div className="flex items-center gap-3 px-5 py-3">
         <Segmented
           size="sm"
           value={filter}
@@ -101,7 +116,10 @@ export default function PeerList({
             { value: "all", label: t("peers.filter.all") },
             { value: "in", label: t("peers.filter.in") },
             { value: "out", label: t("peers.filter.out") },
-            { value: "blocked", label: bans?.length ? t("peers.filter.blockedN", { n: bans.length }) : t("peers.filter.blocked") },
+            {
+              value: "blocked",
+              label: bans?.length ? t("peers.filter.blockedN", { n: bans.length }) : t("peers.filter.blocked"),
+            },
           ]}
         />
         <span className="ml-auto text-sm text-muted-foreground tabular-nums">
@@ -110,7 +128,7 @@ export default function PeerList({
         {filter !== "blocked" && (
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
+            className="btn btn-tinted btn-sm"
             onClick={() => {
               setAdding((a) => !a);
               setActionErr(null);
@@ -143,14 +161,14 @@ export default function PeerList({
       <AnimatePresence initial={false}>
         {(error || actionErr) && (
           <Unfold key="err">
-            <Notice tone="critical" className="mx-4 mb-2">
+            <Notice tone="critical" className="mx-5 mb-3">
               {actionErr || error}
             </Notice>
           </Unfold>
         )}
         {done && !actionErr && (
           <Unfold key="done">
-            <p className="mx-4 mb-2 flex items-center gap-1.5 text-sm text-good-ink">
+            <p className="mx-5 mb-3 flex items-center gap-1.5 text-sm text-good-ink">
               <Check className="size-3.5" />
               {done}
             </p>
@@ -161,11 +179,11 @@ export default function PeerList({
       {filter === "blocked" ? (
         <Blocked bans={bans} busy={busy} run={run} />
       ) : shown.length === 0 ? (
-        <p className="border-t border-border py-10 text-center text-muted-foreground">{t("peers.empty")}</p>
+        <p className="border-t border-border py-12 text-center text-muted-foreground">{t("peers.empty")}</p>
       ) : (
         <ul className="divide-y divide-border border-t border-border">
           {/* Column heads over the rows' grid */}
-          <li className={`grid ${ROW} gap-3 bg-muted/30 px-4 py-1.5 text-xs font-medium text-muted-foreground`} aria-hidden>
+          <li className={`grid ${ROW} gap-3 px-5 pt-2.5 pb-2 text-xs font-medium text-muted-foreground`} aria-hidden>
             <span className="col-start-3">{t("peers.col.client")}</span>
             <span>{t("peers.col.address")}</span>
             <span className="text-right">{t("peers.col.latency")}</span>
@@ -189,7 +207,7 @@ export default function PeerList({
 }
 
 /** The peer rows' columns: chevron, direction, client, address, latency. */
-const ROW = "grid-cols-[14px_20px_minmax(0,1.5fr)_minmax(0,1fr)_76px]";
+const ROW = "grid-cols-[14px_32px_minmax(0,1.5fr)_minmax(0,1fr)_76px]";
 
 /** Latency shows a peer's best round trip, its dot coloured by how quick it is. */
 function Latency({ ms }: { ms?: number }) {
@@ -239,7 +257,7 @@ function PeerRow({
       <button
         type="button"
         onClick={onToggle}
-        className={`grid w-full ${ROW} items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-hover ${open ? "bg-muted/40" : ""}`}
+        className={`grid w-full ${ROW} items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-hover ${open ? "bg-hover" : ""}`}
         aria-expanded={open}
       >
         <ChevronRight
@@ -249,17 +267,20 @@ function PeerRow({
           content={
             <>
               <span className="font-medium">{p.inbound ? t("peers.filter.in") : t("peers.filter.out")}</span>
-              <span className="text-muted-foreground"> · {p.inbound ? t("peers.tooltip.in") : t("peers.tooltip.out")}</span>
+              <span className="text-muted-foreground">
+                {" "}
+                · {p.inbound ? t("peers.tooltip.in") : t("peers.tooltip.out")}
+              </span>
             </>
           }
         >
-          <span
-            className={`grid size-5 place-items-center rounded-full ${p.inbound ? "bg-warn/15 text-warn-ink" : "bg-brand-muted text-brand"}`}
+          <IconBadge
+            icon={p.inbound ? ArrowDownLeft : ArrowUpRight}
+            tone={p.inbound ? "warn" : "brand"}
+            size="sm"
             aria-label={p.inbound ? t("peers.filter.in") : t("peers.filter.out")}
             role="img"
-          >
-            {p.inbound ? <ArrowDownLeft className="size-3" strokeWidth={2.5} /> : <ArrowUpRight className="size-3" strokeWidth={2.5} />}
-          </span>
+          />
         </Tooltip>
         <span className="min-w-0">
           <span className="flex min-w-0 items-center gap-2">
@@ -268,11 +289,12 @@ function PeerRow({
                 {[client.name, client.version].filter(Boolean).join(" ") || t("peers.unknown")}
               </span>
             </Tooltip>
-            {p.trusted && <span className="badge bg-brand-muted text-brand">{t("peers.trusted")}</span>}
-            {p.static && <span className="badge">{t("peers.static")}</span>}
+            {p.trusted && <Pill tone="brand">{t("peers.trusted")}</Pill>}
+            {p.static && <Pill>{t("peers.static")}</Pill>}
           </span>
           <span className="block truncate text-sm text-muted-foreground">
-            {[[client.os, client.arch].filter(Boolean).join(" "), client.identity].filter(Boolean).join(" · ") || "\u00a0"}
+            {[[client.os, client.arch].filter(Boolean).join(" "), client.identity].filter(Boolean).join(" · ") ||
+              "\u00a0"}
           </span>
         </span>
         <Tooltip content={p.remoteAddr} mono overflowOnly>
@@ -284,10 +306,8 @@ function PeerRow({
       <AnimatePresence initial={false}>
         {open && (
           <Unfold>
-            {/* Flat, continuing the row: indented to its client column (padding,
-                chevron, direction and their gaps), not boxed inside the panel */}
-            <div className={`pt-2 pr-4 pb-3.5 pl-[74px] ${open ? "bg-muted/40" : ""}`}>
-              <dl className="space-y-2">
+            <DetailCard>
+              <dl className="space-y-2.5">
                 {/* The client's own string, which the row above summarises */}
                 <Detail label={t("overview.client")} value={p.name} wrap />
                 <Detail label={t("peers.fullId")} value={p.fullId} copy />
@@ -297,14 +317,14 @@ function PeerRow({
                 <Detail label={t("peers.localAddr")} value={p.localAddr} />
                 <Detail label={t("peers.network")} value={p.network || "—"} />
                 <Detail label={t("peers.minPing")} value={p.minPingMs ? `${p.minPingMs.toFixed(1)} ms` : "—"} />
-                <div className="grid grid-cols-[110px_1fr_auto] items-center gap-3">
+                <div className="grid grid-cols-[120px_1fr_auto] items-center gap-3">
                   <dt className="text-sm text-muted-foreground">{t("peers.caps")}</dt>
                   <dd className="flex flex-wrap gap-1">
                     {p.caps.length > 0 ? (
                       p.caps.map((c) => (
-                        <span key={c} className="badge font-mono">
+                        <Pill key={c} className="font-mono">
                           {c}
-                        </span>
+                        </Pill>
                       ))
                     ) : (
                       <span className="text-sm text-muted-foreground">{t("peers.none")}</span>
@@ -315,12 +335,14 @@ function PeerRow({
               </dl>
 
               {/* What can be done about this peer */}
-              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
                 <Action
                   busy={busy === `disconnect:${id}`}
                   disabled={!!busy}
                   icon={<Unplug className="size-3.5" />}
-                  onClick={() => run(`disconnect:${id}`, () => api.disconnectPeer(target(p)), t("peers.done.disconnected"))}
+                  onClick={() =>
+                    run(`disconnect:${id}`, () => api.disconnectPeer(target(p)), t("peers.done.disconnected"))
+                  }
                 >
                   {t("peers.disconnect")}
                 </Action>
@@ -354,7 +376,7 @@ function PeerRow({
                   {t("peers.block")}
                 </Action>
               </div>
-            </div>
+            </DetailCard>
           </Unfold>
         )}
       </AnimatePresence>
@@ -368,7 +390,7 @@ function AddPeer({ busy, onAdd, onCancel }: { busy: boolean; onAdd: (target: str
   const [value, setValue] = useState("");
   return (
     <form
-      className="flex flex-col gap-1.5 px-4 pb-3"
+      className="flex flex-col gap-1.5 px-5 pb-4"
       onSubmit={(e) => {
         e.preventDefault();
         if (value.trim()) onAdd(value.trim());
@@ -385,7 +407,7 @@ function AddPeer({ busy, onAdd, onCancel }: { busy: boolean; onAdd: (target: str
           autoFocus
           aria-label={t("peers.add")}
         />
-        <button type="button" className="btn btn-secondary" onClick={onCancel}>
+        <button type="button" className="btn btn-tinted" onClick={onCancel}>
           {t("common.cancel")}
         </button>
         <button type="submit" className="btn btn-primary" disabled={busy || !value.trim()}>
@@ -420,7 +442,7 @@ function Blocked({ bans, busy, run }: { bans: BanEntry[] | null; busy: string | 
   return (
     <div className="border-t border-border">
       <form
-        className="flex items-center gap-2 px-4 py-2.5"
+        className="flex items-center gap-2 px-5 py-3"
         onSubmit={async (e) => {
           e.preventDefault();
           if (await run("ban:manual", () => api.banPeer(value.trim(), duration), t("peers.done.blocked"))) setValue("");
@@ -435,14 +457,20 @@ function Blocked({ bans, busy, run }: { bans: BanEntry[] | null; busy: string | 
           aria-label={t("peers.ban.placeholder")}
         />
         <DurationSelect value={duration} onChange={setDuration} />
-        <Action danger busy={busy === "ban:manual"} disabled={!!busy || !value.trim()} icon={<Ban className="size-3.5" />} submit>
+        <Action
+          danger
+          busy={busy === "ban:manual"}
+          disabled={!!busy || !value.trim()}
+          icon={<Ban className="size-3.5" />}
+          submit
+        >
           {t("peers.block")}
         </Action>
         <span className="flex-1" />
         {!!bans?.length && (
           <button
             type="button"
-            className={`btn btn-sm ${confirmClear ? "btn-danger" : "btn-ghost"}`}
+            className={`btn btn-sm ${confirmClear ? "btn-danger" : "btn-tinted"}`}
             disabled={!!busy}
             onClick={async () => {
               if (!confirmClear) {
@@ -460,9 +488,9 @@ function Blocked({ bans, busy, run }: { bans: BanEntry[] | null; busy: string | 
       </form>
 
       {bans === null ? (
-        <p className="border-t border-border py-10 text-center text-muted-foreground">…</p>
+        <p className="border-t border-border py-12 text-center text-muted-foreground">…</p>
       ) : bans.length === 0 ? (
-        <p className="border-t border-border py-10 text-center text-muted-foreground">{t("peers.ban.empty")}</p>
+        <p className="border-t border-border py-12 text-center text-muted-foreground">{t("peers.ban.empty")}</p>
       ) : (
         <ul className="divide-y divide-border border-t border-border">
           <AnimatePresence initial={false}>
@@ -474,16 +502,16 @@ function Blocked({ bans, busy, run }: { bans: BanEntry[] | null; busy: string | 
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.12 } }}
                 transition={SPRING}
-                className="flex items-center gap-3 px-4 py-2"
+                className="flex items-center gap-3 px-5 py-3"
               >
-                <Ban className="size-3.5 shrink-0 text-critical-ink" />
+                <IconBadge icon={Ban} tone="critical" size="sm" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-mono text-sm">{b.subnet}</span>
                   <span className="block text-xs text-muted-foreground">{until(b)}</span>
                 </span>
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-tinted btn-sm"
                   disabled={!!busy}
                   onClick={() => run(`unban:${b.subnet}`, () => api.unbanPeer(b.subnet), t("peers.done.unblocked"))}
                 >
@@ -496,7 +524,7 @@ function Blocked({ bans, busy, run }: { bans: BanEntry[] | null; busy: string | 
         </ul>
       )}
       {bans && bans.length > 0 && (
-        <p className="border-t border-border px-4 py-2 text-sm text-muted-foreground">
+        <p className="border-t border-border px-5 py-2.5 text-sm text-muted-foreground">
           {t("peers.ban.count", { n: formatInt(bans.length) })}
         </p>
       )}
@@ -507,18 +535,13 @@ function Blocked({ bans, busy, run }: { bans: BanEntry[] | null; busy: string | 
 function DurationSelect({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const t = useT();
   return (
-    <select
-      className="input h-6 w-auto py-0 pr-6 text-sm"
+    <Select<number>
+      size="sm"
       value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
+      onChange={onChange}
       aria-label={t("peers.ban.duration")}
-    >
-      {DURATIONS.map((d) => (
-        <option key={d.key} value={d.seconds}>
-          {t(`peers.ban.for.${d.key}`)}
-        </option>
-      ))}
-    </select>
+      options={DURATIONS.map((d) => ({ value: d.seconds, label: t(`peers.ban.for.${d.key}`) }))}
+    />
   );
 }
 
@@ -544,7 +567,7 @@ function Action({
   const button = (
     <button
       type={submit ? "submit" : "button"}
-      className={`btn btn-sm ${danger ? "btn-danger" : "btn-secondary"}`}
+      className={`btn btn-tinted btn-sm ${danger ? "text-critical-ink" : ""}`}
       disabled={disabled}
       onClick={onClick}
     >
@@ -553,31 +576,4 @@ function Action({
     </button>
   );
   return title ? <Tooltip content={title}>{button}</Tooltip> : button;
-}
-
-/** Unfold reveals its content by growing to its height. */
-function Unfold({ children }: { children: ReactNode }) {
-  return (
-    <motion.div
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: "auto", opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={SPRING}
-      className="overflow-hidden"
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function Detail({ label, value, wrap, copy }: { label: string; value: string; wrap?: boolean; copy?: boolean }) {
-  return (
-    <div className="grid grid-cols-[110px_1fr_auto] items-baseline gap-3">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <Tooltip content={value} mono overflowOnly>
-        <dd className={`font-mono text-sm ${wrap ? "break-all" : "truncate"}`}>{value || "—"}</dd>
-      </Tooltip>
-      {copy && value ? <CopyButton value={value} className="-my-1" /> : <span />}
-    </div>
-  );
 }

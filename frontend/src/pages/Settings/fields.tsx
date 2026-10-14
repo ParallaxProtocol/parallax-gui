@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChevronRight, RotateCcw } from "lucide-react";
 import { useT } from "../../i18n";
 import { GLIDE, SPRING, STAGGER, useStagger } from "../../lib/motion";
-import { Panel, Row, Rows, Section } from "../../components/ui/Panel";
+import { Panel, Row, Rows } from "../../components/ui/Panel";
 import { CopyButton } from "../../components/ui/bits";
 import { Drawer } from "../../components/ui/Drawer";
 
@@ -177,16 +177,19 @@ export function Group({
 }) {
   const { link, drawer } = useReadMore(title, more, undefined, desc);
   return (
-    <Section title={title} className={className}>
-      {(desc || link) && (
-        <p className="-mt-1 px-1 text-sm text-muted-foreground">
-          {desc}
-          {link}
-        </p>
-      )}
+    <section className={`flex flex-col gap-2.5 ${className}`}>
+      <div className="flex flex-col gap-0.5 px-1">
+        <h3 className="text-base font-semibold">{title}</h3>
+        {(desc || link) && (
+          <p className="text-sm text-muted-foreground">
+            {desc}
+            {link}
+          </p>
+        )}
+      </div>
       {children}
       {drawer}
-    </Section>
+    </section>
   );
 }
 
@@ -227,7 +230,7 @@ export function Advanced({ id, changed, children }: { id: string; changed: numbe
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        className="flex h-7 items-center gap-1.5 self-start rounded-md px-1 text-sm font-semibold text-muted-foreground hover:text-foreground"
+        className="btn btn-secondary btn-sm self-start"
       >
         <motion.span animate={{ rotate: open ? 90 : 0 }} transition={SPRING} className="flex">
           <ChevronRight className="size-3.5" />

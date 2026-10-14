@@ -18,6 +18,21 @@ const WARM_MS = 400;
 const GAP = 6;
 const MARGIN = 8;
 
+/**
+ * controlsFloor is how far down the window's own controls reach (Windows
+ * and Linux draw them over the page, above anything in it) where a tip
+ * spanning x..x+w would meet them, or 0 where it wouldn't.
+ */
+function controlsFloor(x: number, w: number): number {
+  const wco = (navigator as Navigator & { windowControlsOverlay?: { visible: boolean; getTitlebarAreaRect: () => DOMRect } })
+    .windowControlsOverlay;
+  if (!wco?.visible) return 0;
+  const area = wco.getTitlebarAreaRect();
+  // The controls are what the title bar area leaves: on its right, or its left
+  const meets = x + w > area.right || x < area.left;
+  return meets ? area.bottom + MARGIN : 0;
+}
+
 let lastHidden = 0;
 
 type Pos = { x: number; y: number; below: boolean };
@@ -81,8 +96,8 @@ export function Tooltip({
     const r = el.getBoundingClientRect();
     const w = t.offsetWidth;
     const h = t.offsetHeight;
-    const below = r.top - GAP - h < MARGIN;
     const x = Math.min(Math.max(r.left + r.width / 2 - w / 2, MARGIN), window.innerWidth - w - MARGIN);
+    const below = r.top - GAP - h < Math.max(MARGIN, controlsFloor(x, w));
     const y = below ? r.bottom + GAP : r.top - GAP - h;
     setPos({ x, y, below });
   }, [open]);
@@ -142,7 +157,7 @@ export function Tooltip({
               // Monospace values (hashes, addresses) run wider and a size
               // smaller, so a whole transaction hash fits on one line, and
               // break evenly rather than at a hyphen when they must wrap
-              className={`pointer-events-none fixed top-0 left-0 z-[200] rounded-md border border-border-strong bg-surface-raised px-2 py-1 text-foreground shadow-[var(--shadow-popover)] ${
+              className={`pointer-events-none fixed top-0 left-0 z-[200] rounded-md border border-border-strong bg-popover px-2 py-1 text-foreground shadow-[var(--shadow-popover)] ${
                 mono ? "max-w-[34rem] font-mono text-xs leading-4 break-all" : "max-w-80 text-sm break-words"
               }`}
               style={{ x: pos?.x ?? -9999, y: pos?.y ?? -9999, visibility: pos ? "visible" : "hidden" }}

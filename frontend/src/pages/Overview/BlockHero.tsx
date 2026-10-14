@@ -8,9 +8,10 @@ import { STAGGER, useStagger } from "../../lib/motion";
 import { useNow } from "../../lib/useNow";
 import { useT } from "../../i18n";
 import { BrandMark } from "../../components/ui/BrandMark";
+import { GlowCard } from "../../components/ui/GlowCard";
 import { Counter } from "../../components/ui/Counter";
 import { Indicator, type Grade } from "../../components/ui/Indicator";
-import { Label, Panel } from "../../components/ui/Panel";
+import { Label } from "../../components/ui/Panel";
 import { Meter, Notice } from "../../components/ui/bits";
 import BlockLane from "./BlockLane";
 
@@ -27,20 +28,6 @@ export default function BlockHero() {
   if (state === "syncing") return <Syncing node={node!} />;
   if (state === "synced") return <Clock node={node!} blocks={blocks} />;
   return null;
-}
-
-/** The hero's surface: a panel lit by a soft accent glow from its top left corner. */
-function HeroPanel({ tone, children }: { tone?: "warn" | null; children: React.ReactNode }) {
-  return (
-    <Panel tone={tone} className="relative overflow-hidden p-5">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 -left-40 size-[30rem]"
-        style={{ background: `radial-gradient(closest-side, ${tone ? "color-mix(in oklab, var(--warn) 18%, transparent)" : "var(--glow)"}, transparent 75%)` }}
-      />
-      <div className="relative">{children}</div>
-    </Panel>
-  );
 }
 
 /** Stopped is the Overview's empty state: what the node does, and the switch to start it. */
@@ -73,11 +60,11 @@ export function Stopped() {
         <BrandMark size={64} />
       </motion.div>
       <motion.div variants={STAGGER.item} className="flex max-w-sm flex-col gap-1.5">
-        <h2 className="text-xl font-semibold">{t("overview.stopped.title")}</h2>
+        <h2 className="text-3xl font-semibold tracking-tight">{t("overview.stopped.title")}</h2>
         <p className="text-muted-foreground">{t("overview.stopped.desc")}</p>
       </motion.div>
       <motion.div variants={STAGGER.item}>
-        <button type="button" className="btn btn-primary btn-lg" onClick={start} disabled={busy}>
+        <button type="button" className="btn btn-primary btn-lg min-w-56" onClick={start} disabled={busy}>
           {busy ? <Loader2 className="size-4 animate-spin" /> : <Power className="size-4" />}
           {busy ? t("node.starting") : t("node.start")}
         </button>
@@ -94,7 +81,7 @@ function Syncing({ node }: { node: NodeStatus }) {
   const left = Math.max(0, node.highestBlock - node.currentBlock);
 
   return (
-    <HeroPanel>
+    <GlowCard glowAt="left">
       <div className="flex flex-col gap-4">
         <div className="flex items-end justify-between gap-6">
           <div className="flex flex-col gap-1">
@@ -102,7 +89,7 @@ function Syncing({ node }: { node: NodeStatus }) {
               <Indicator grade="info" ping cause={searching ? "search" : "sync"} />
               <Label>{searching ? t("overview.sync.searching") : t("node.state.syncing")}</Label>
             </span>
-            <span className="text-[30px] leading-9 font-semibold tracking-tight">
+            <span className="bg-gradient-to-br from-foreground via-foreground to-[var(--app-brand)] bg-clip-text text-6xl font-semibold tracking-tight text-transparent tabular-nums">
               <Counter value={progress * 100} format={(v) => `${v.toFixed(1)}%`} />
             </span>
           </div>
@@ -119,7 +106,7 @@ function Syncing({ node }: { node: NodeStatus }) {
           {searching ? t("overview.sync.searchingDesc") : t("overview.sync.desc")}
         </p>
       </div>
-    </HeroPanel>
+    </GlowCard>
   );
 }
 
@@ -159,12 +146,12 @@ function Clock({ node, blocks }: { node: NodeStatus; blocks: BlockView[] }) {
   const longer = Math.min(99, Math.round(Math.exp(-elapsed / TARGET_BLOCK_SECONDS) * 100));
 
   return (
-    <HeroPanel tone={g === "serious" || g === "critical" ? "warn" : null}>
+    <GlowCard glowAt="left" tone={g === "serious" || g === "critical" ? "warn" : null}>
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
           <div className="flex flex-col gap-0.5">
-            <Label as="h2">{t("clock.bestBlock")}</Label>
-            <span className="selectable text-[30px] leading-9 font-semibold tracking-tight">
+            <Label as="h2" className="font-medium">{t("clock.bestBlock")}</Label>
+            <span className="selectable bg-gradient-to-br from-foreground via-foreground to-[var(--app-brand)] bg-clip-text text-6xl font-semibold tracking-tight text-transparent tabular-nums">
               <Counter value={node.currentBlock} format={(v) => formatInt(Math.round(v))} />
             </span>
           </div>
@@ -177,7 +164,7 @@ function Clock({ node, blocks }: { node: NodeStatus; blocks: BlockView[] }) {
                   <Indicator grade={g} />
                   {t(VERDICT[g])} · {t("clock.longer", { pct: longer < 1 ? "<1" : longer })}
                 </span>
-                <span className="text-xl font-semibold tabular-nums">{clock(elapsed)}</span>
+                <span className="text-3xl font-semibold tracking-tight tabular-nums">{clock(elapsed)}</span>
               </span>
             </div>
           )}
@@ -185,6 +172,6 @@ function Clock({ node, blocks }: { node: NodeStatus; blocks: BlockView[] }) {
 
         <BlockLane blocks={blocks} now={now} />
       </div>
-    </HeroPanel>
+    </GlowCard>
   );
 }

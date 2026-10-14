@@ -1,62 +1,85 @@
 @import "tailwindcss";
 
-/* Design tokens. The app should read as a native desktop app: the OS's own
-   UI font at desktop sizes (13px body), flat neutral surfaces, inset
-   grouped panels as in system settings, and one solid accent, the logo's
-   teal. The light theme applies when <html data-theme="light">, which
-   lib/theme.ts sets from the saved preference or the system theme.
+/* Design tokens. The app reads as a native desktop app in the manner of a
+   Mac's own setup: plain black (or, in the light theme, a soft white) behind
+   everything, panels and fields of frosted glass, glossy controls in
+   chrome on black and black on white, and the brand's violet kept for its
+   light (the glow, the greeting) and for marks of the brand. The light
+   theme applies when <html data-theme="light">, which lib/theme.ts sets
+   from the saved preference or the system theme.
 
-   --background is also the toolbar's colour, and desktop/src/main.ts paints
-   the Windows/Linux window controls in it: keep the two in step. */
+   --background is also the window's colour, which desktop/src/main.ts
+   paints before the page loads: keep the two in step. */
 @custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
 
 :root {
   color-scheme: dark;
-  --radius: 6px;
-  --background: #1b1c1f;
-  --foreground: #e8e8ea;
-  --sidebar: #151619;
-  /* Grouped panels, and the raised face of buttons and segment thumbs */
-  --surface: #232428;
-  --surface-raised: #2f3035;
-  /* Text fields and wells (logs, code) sit below the panel */
-  --field: #161719;
-  --hover: rgb(255 255 255 / 5%);
-  --selected: rgb(255 255 255 / 8%);
-  --muted: rgb(255 255 255 / 7%);
-  --muted-foreground: #9b9ca3;
-  --faint: #6c6d74;
-  --border: rgb(255 255 255 / 8%);
-  --border-strong: rgb(255 255 255 / 13%);
-  /* Panels are lit from above: a faint top highlight and a soft drop */
-  --shadow-panel: 0 1px 0 rgb(255 255 255 / 4%) inset, 0 1px 2px rgb(0 0 0 / 20%), 0 8px 24px -16px rgb(0 0 0 / 50%);
-  --shadow-control: 0 1px 0 rgb(255 255 255 / 5%) inset, 0 1px 2px rgb(0 0 0 / 30%);
-  --shadow-popover: 0 0 0 1px rgb(255 255 255 / 6%) inset, 0 12px 40px -8px rgb(0 0 0 / 60%);
-  /* The accent's light, for the hero and live marks */
-  --glow: rgb(43 188 188 / 22%);
+  --radius: 10px;
+  --background: #000000;
+  --foreground: #ececee;
+  --sidebar: #000000;
+  /* Grouped panels, and the raised face of buttons and segment thumbs: glass */
+  --surface: rgb(255 255 255 / 5%);
+  --surface-raised: rgb(255 255 255 / 9%);
+  /* Text fields and wells (logs, code) */
+  --field: rgb(255 255 255 / 5%);
+  --hover: rgb(255 255 255 / 6%);
+  --selected: rgb(255 255 255 / 10%);
+  --muted: rgb(255 255 255 / 8%);
+  --muted-foreground: #9a9aa1;
+  --faint: #67676e;
+  --border: rgb(255 255 255 / 9%);
+  --border-strong: rgb(255 255 255 / 14%);
+  /* Glass is lit from above: a faint top highlight and a soft drop */
+  --shadow-panel: 0 1px 0 rgb(255 255 255 / 6%) inset, 0 10px 30px -14px rgb(0 0 0 / 70%);
+  --shadow-control: 0 1px 0 rgb(255 255 255 / 8%) inset, 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-popover: 0 0 0 1px rgb(255 255 255 / 8%) inset, 0 16px 48px -8px rgb(0 0 0 / 80%);
+  /* What floats over everything (tooltips, toasts): opaque, as glass over
+     text would be unreadable */
+  --popover: #161618;
   /* Segmented controls: a recessed well, the selected segment raised and lit */
-  --segment-well: rgb(0 0 0 / 28%);
-  --segment-thumb: #4a4c53;
-  --shadow-segment: 0 1px 0 rgb(255 255 255 / 10%) inset, 0 1px 3px rgb(0 0 0 / 45%);
+  --segment-well: rgb(255 255 255 / 6%);
+  --segment-thumb: rgb(255 255 255 / 16%);
+  --shadow-segment: 0 1px 0 rgb(255 255 255 / 12%) inset, 0 1px 3px rgb(0 0 0 / 50%);
 
-  /* The accent: --brand for text and icons, --brand-mark for chart marks,
-     --brand-fill for solid controls carrying --brand-foreground */
-  --brand: #3ccfcf;
-  --brand-mark: #2bbcbc;
-  --brand-fill: #0f8a8a;
-  --brand-fill-hover: #119999;
-  --brand-foreground: #ffffff;
-  --brand-muted: rgb(43 188 188 / 14%);
-  --ring: rgb(60 207 207 / 45%);
+  /* The brand's violet: the glow, the greeting, marks of the brand */
+  --app-brand: #b18cff;
+  --app-brand-mark: #9d6bff;
+  --glow: rgb(157 107 255 / 22%);
+
+  /* The controls' accent, chrome: --brand for text and icons, --brand-mark
+     for marks, --brand-fill for solid controls carrying --brand-foreground */
+  --brand: #d4d4d8;
+  --brand-mark: #e4e4e7;
+  --brand-fill: #e4e4e7;
+  --brand-fill-hover: #f4f4f5;
+  --brand-foreground: #0a0a0b;
+  --brand-muted: rgb(255 255 255 / 10%);
+  --ring: rgb(255 255 255 / 35%);
+  /* A switch's track when on: Apple's blue, which the white knob stands out on */
+  --switch-on: #0a84ff;
+
+  /* Glossy controls: lit from above, a highlight along the top edge */
+  --gloss-shine: rgb(255 255 255 / 85%);
+  --gloss-shade: rgb(0 0 0 / 18%);
+  --gloss-top: #fafafa;
+  --gloss-bottom: #c8c8cd;
+  --gloss-drop: 0 1px 2px rgb(0 0 0 / 50%), 0 10px 28px -10px rgb(255 255 255 / 25%);
+  /* Frosted glass, for fields and cards over the glow */
+  --glass: rgb(255 255 255 / 6%);
+  --glass-hover: rgb(255 255 255 / 9%);
+  --glass-edge: rgb(255 255 255 / 12%);
+  --glass-shine: inset 0 1px 0 rgb(255 255 255 / 8%);
+  --glass-drop: 0 8px 24px -12px rgb(0 0 0 / 60%);
 
   /* Status grades, as mark colours (dots, bars, icons). Coloured text
      takes the -ink shades, which only differ in light mode */
-  --good: var(--brand-mark);
+  --good: #4ade80;
   --warn: #f0a92e;
   --serious: #ec835a;
   --critical: #ef5a5a;
   --info: #4a94ff;
-  --good-ink: var(--brand);
+  --good-ink: #6ee7a0;
   --warn-ink: var(--warn);
   --serious-ink: var(--serious);
   --critical-ink: #ff7a7a;
@@ -68,8 +91,8 @@
   color-scheme: light;
   --background: #f6f6f7;
   --foreground: #1d1d1f;
-  --sidebar: #ececee;
-  --surface: #ffffff;
+  --sidebar: #f6f6f7;
+  --surface: rgb(0 0 0 / 2.5%);
   --surface-raised: #ffffff;
   --field: #ffffff;
   --hover: rgb(0 0 0 / 4%);
@@ -77,26 +100,42 @@
   --muted: rgb(0 0 0 / 6%);
   --muted-foreground: #6e6e73;
   --faint: #a1a1a6;
-  --border: rgb(0 0 0 / 9%);
-  --border-strong: rgb(0 0 0 / 16%);
-  --shadow-panel: 0 1px 2px rgb(0 0 0 / 4%), 0 8px 24px -16px rgb(0 0 0 / 12%);
+  --border: rgb(0 0 0 / 8%);
+  --border-strong: rgb(0 0 0 / 14%);
+  --shadow-panel: 0 1px 0 rgb(255 255 255 / 90%) inset, 0 1px 2px rgb(0 0 0 / 4%), 0 10px 30px -16px rgb(0 0 0 / 16%);
   --shadow-control: 0 1px 1px rgb(0 0 0 / 6%);
-  --shadow-popover: 0 0 0 1px rgb(0 0 0 / 6%), 0 12px 40px -8px rgb(0 0 0 / 22%);
-  --glow: rgb(14 143 143 / 16%);
-  --segment-well: rgb(0 0 0 / 6%);
+  --shadow-popover: 0 0 0 1px rgb(0 0 0 / 7%), 0 16px 48px -8px rgb(0 0 0 / 24%);
+  --popover: #ffffff;
+  --segment-well: rgb(0 0 0 / 5%);
   --segment-thumb: #ffffff;
   --shadow-segment: 0 0 0 0.5px rgb(0 0 0 / 8%), 0 1px 3px rgb(0 0 0 / 14%);
-  --brand: #00797a;
-  --brand-mark: #0e8f8f;
-  --brand-fill: #0b7f80;
-  --brand-fill-hover: #0a7172;
-  --brand-muted: rgb(0 124 125 / 10%);
-  --ring: rgb(0 124 125 / 35%);
+  --app-brand: #6d3fd0;
+  --app-brand-mark: #7c4ddb;
+  --glow: rgb(124 77 219 / 14%);
+  --brand: #3f3f46;
+  --brand-mark: #18181b;
+  --brand-fill: #18181b;
+  --brand-fill-hover: #000000;
+  --brand-foreground: #ffffff;
+  --brand-muted: rgb(0 0 0 / 6%);
+  --ring: rgb(0 0 0 / 25%);
+  --switch-on: #007aff;
+  --gloss-shine: rgb(255 255 255 / 22%);
+  --gloss-shade: rgb(0 0 0 / 40%);
+  --gloss-top: #3c3c40;
+  --gloss-bottom: #0e0e10;
+  --gloss-drop: 0 1px 2px rgb(0 0 0 / 30%), 0 10px 24px -10px rgb(0 0 0 / 45%);
+  --glass: rgb(255 255 255 / 65%);
+  --glass-hover: rgb(255 255 255 / 85%);
+  --glass-edge: rgb(0 0 0 / 9%);
+  --glass-shine: inset 0 1px 0 rgb(255 255 255 / 90%);
+  --glass-drop: 0 1px 2px rgb(0 0 0 / 4%), 0 8px 24px -12px rgb(0 0 0 / 18%);
+  --good: #16a34a;
   --warn: #e39b12;
   --serious: #e8743d;
   --critical: #dc3b3b;
   --info: #2a78d6;
-  --good-ink: var(--brand);
+  --good-ink: #15803d;
   --warn-ink: #985f00;
   --serious-ink: #b8501f;
   --critical-ink: #c42b2b;
@@ -104,13 +143,24 @@
   --off: #b4b4b9;
 }
 
-/* With an OS material behind the window (vibrancy, Mica) the sidebar and
-   status bar are see-through, and only the content column is painted */
-:root[data-material] {
-  --sidebar: transparent;
+/* Frosted glass, for cards and options that sit over the glow */
+.glass {
+  border: 1px solid var(--glass-edge);
+  background-color: var(--glass);
+  box-shadow: var(--glass-shine), var(--glass-drop);
+  backdrop-filter: blur(24px) saturate(1.5);
+  border-radius: 14px;
 }
-:root[data-material] body {
-  background-color: transparent;
+li.glass {
+  border-radius: 10px;
+}
+button.glass:hover {
+  background-color: var(--glass-hover);
+}
+/* What the glass covers up: a chosen option */
+.glass[aria-checked="true"] {
+  border-color: var(--brand-mark);
+  box-shadow: var(--glass-shine), 0 0 0 1px var(--brand-mark), var(--glass-drop);
 }
 
 @theme inline {
@@ -119,6 +169,7 @@
   --color-sidebar: var(--sidebar);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  --color-popover: var(--popover);
   --color-field: var(--field);
   --color-hover: var(--hover);
   --color-selected: var(--selected);
@@ -127,6 +178,7 @@
   --color-faint: var(--faint);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-glass-edge: var(--glass-edge);
   --color-brand: var(--brand);
   --color-brand-mark: var(--brand-mark);
   --color-brand-fill: var(--brand-fill);
@@ -229,7 +281,7 @@
   /* The <option> popup is drawn by the OS; color-scheme keeps it on the
      theme's side */
   select option {
-    background-color: var(--surface);
+    background-color: var(--background);
     color: var(--foreground);
   }
 
@@ -245,6 +297,11 @@
   -webkit-app-region: drag;
 }
 .drag :is(button, a, input, select, [role="button"], .no-drag) {
+  -webkit-app-region: no-drag;
+}
+/* What floats over a drag area (the panels, popovers) must opt out too:
+   the window takes drags from a drag area even under something on top */
+.no-drag {
   -webkit-app-region: no-drag;
 }
 
@@ -291,8 +348,8 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 28px;
-    padding-inline: 12px;
+    height: 34px;
+    padding-inline: 14px;
     border-radius: var(--radius);
     font-size: var(--text-base);
     font-weight: 500;
@@ -302,7 +359,8 @@
       background-color 150ms ease,
       border-color 150ms ease,
       color 150ms ease,
-      filter 100ms ease;
+      filter 100ms ease,
+      transform 150ms ease;
   }
   .btn:active:not(:disabled) {
     filter: brightness(0.94);
@@ -310,43 +368,89 @@
   .btn:disabled {
     opacity: 0.45;
   }
+  /* Small buttons are capsules, as in a list's rows */
   .btn-sm {
-    height: 24px;
-    padding-inline: 8px;
+    height: 28px;
+    padding-inline: 12px;
+    border-radius: 9999px;
     font-size: var(--text-sm);
     gap: 4px;
   }
   .btn-lg {
-    height: 32px;
-    padding-inline: 16px;
+    height: 40px;
+    padding-inline: 20px;
+    border-radius: 12px;
   }
   .btn-icon {
-    width: 28px;
+    width: 34px;
     padding: 0;
   }
   .btn-sm.btn-icon {
-    width: 24px;
+    width: 28px;
   }
 
   /* The default action of a view: one per view */
   .btn-primary {
     background-color: var(--brand-fill);
+    background-image: linear-gradient(180deg, var(--gloss-top), var(--gloss-bottom));
     color: var(--brand-foreground);
-    box-shadow: var(--shadow-control);
+    box-shadow:
+      inset 0 1px 0 var(--gloss-shine),
+      inset 0 -1px 0 var(--gloss-shade),
+      var(--gloss-drop);
   }
   .btn-primary:hover:not(:disabled) {
-    background-color: var(--brand-fill-hover);
+    filter: brightness(1.06);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
+    filter: brightness(0.96);
   }
 
   /* A push button */
   .btn-secondary {
-    border: 1px solid var(--border-strong);
-    background-color: var(--surface-raised);
+    border: 1px solid var(--glass-edge);
+    background-color: var(--glass);
     color: var(--foreground);
-    box-shadow: var(--shadow-control);
+    box-shadow: var(--glass-shine), var(--shadow-control);
+    backdrop-filter: blur(24px) saturate(1.5);
   }
   .btn-secondary:hover:not(:disabled) {
-    background-color: color-mix(in oklab, var(--surface-raised), var(--foreground) 5%);
+    background-color: var(--glass-hover);
+  }
+
+  /* A menu or popover floating over the window: frosted, opaque enough to
+     read, and its rows (the account switcher, the top bar's panels, a
+     Select's options) */
+  .menu {
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background-color: color-mix(in oklab, var(--popover) 92%, transparent);
+    box-shadow: var(--shadow-popover);
+    backdrop-filter: blur(40px) saturate(1.5);
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    border-radius: 8px;
+    padding-inline: 8px;
+    text-align: left;
+  }
+  .menu-item:hover,
+  .menu-item[data-active] {
+    background-color: var(--hover);
+  }
+
+  /* A row's button, as in a settings list: a flat, quietly tinted capsule */
+  .btn-tinted {
+    border-radius: 9999px;
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+  .btn-tinted:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--muted), var(--foreground) 8%);
   }
 
   /* A toolbar or inline button: no face until hovered */
@@ -359,22 +463,24 @@
   }
 
   .btn-danger {
-    border: 1px solid var(--border-strong);
-    background-color: var(--surface-raised);
+    border: 1px solid var(--glass-edge);
+    background-color: var(--glass);
     color: var(--critical-ink);
     box-shadow: var(--shadow-control);
   }
   .btn-danger:hover:not(:disabled) {
-    background-color: color-mix(in oklab, var(--surface-raised), var(--critical) 12%);
+    background-color: color-mix(in oklab, var(--glass-hover), var(--critical) 14%);
   }
 
   .input {
     width: 100%;
-    height: 28px;
-    padding-inline: 8px;
-    border: 1px solid var(--border-strong);
+    /* As tall as a button, so a field and a control in one row line up */
+    height: 34px;
+    padding-inline: 12px;
+    border: 1px solid var(--glass-edge);
     border-radius: var(--radius);
     background-color: var(--field);
+    box-shadow: var(--glass-shine);
     color: var(--foreground);
     font-size: var(--text-base);
     transition:
@@ -387,14 +493,7 @@
   .input:focus {
     outline: none;
     border-color: var(--brand-mark);
-    box-shadow: 0 0 0 3px var(--ring);
-  }
-  select.input {
-    appearance: none;
-    padding-right: 26px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.25'%3E%3Cpath d='m7 9 5-5 5 5M7 15l5 5 5-5'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 7px center;
+    box-shadow: var(--glass-shine), 0 0 0 3px var(--ring);
   }
 
   .range {
@@ -403,13 +502,15 @@
   }
 
   /* A small count or tag beside a label */
+  /* A small capsule label (Pill): a state, a kind, a count */
   .badge {
     display: inline-flex;
+    flex-shrink: 0;
     align-items: center;
     gap: 4px;
-    height: 18px;
-    padding-inline: 6px;
-    border-radius: 4px;
+    height: 20px;
+    padding-inline: 8px;
+    border-radius: 9999px;
     background-color: var(--muted);
     color: var(--muted-foreground);
     font-size: var(--text-xs);

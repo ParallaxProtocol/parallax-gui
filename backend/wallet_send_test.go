@@ -32,18 +32,27 @@ func TestWalletSendThroughNode(t *testing.T) {
 
 	lax := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 	genesis := &validation.Genesis{
-		Config:   chainparams.AllXHashProtocolChanges,
-		Alloc:    validation.GenesisAlloc{from: {Balance: new(big.Int).Mul(big.NewInt(10), lax)}},
+		Config: chainparams.AllXHashProtocolChanges,
+		Alloc: validation.GenesisAlloc{
+			from: {Balance: new(big.Int).Mul(big.NewInt(10), lax)},
+			// The development phrase's third account holds 7 LAX, for the scan below
+			util.HexToAddress(devAccounts[2]): {Balance: new(big.Int).Mul(big.NewInt(7), lax)},
+		},
 		GasLimit: 8_000_000,
 		BaseFee:  big.NewInt(chainparams.InitialBaseFee),
 	}
-	stack, err := node.New(&node.Config{DataDir: t.TempDir(), P2P: node.DefaultConfig.P2P})
+	// A private node: any free port, no discovery, so it never collides
+	// with a node already running on this machine
+	p2p := node.DefaultConfig.P2P
+	p2p.ListenAddr = "127.0.0.1:0"
+	p2p.NoDiscovery = true
+	p2p.DNSSeeds = nil
+	p2p.MaxPeers = 0
+	stack, err := node.New(&node.Config{DataDir: t.TempDir(), P2P: p2p})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer stack.Close()
-	stack.Config().P2P.NoDiscovery = true
-	stack.Config().P2P.ListenAddr = "127.0.0.1:0"
 	cfg := nodeconfig.Defaults
 	cfg.Genesis = genesis
 	cfg.XHash.PowMode = xhash.ModeFake
@@ -56,6 +65,18 @@ func TestWalletSendThroughNode(t *testing.T) {
 	}
 	w.node = &NodeController{cfg: &ConfigStore{cfg: defaultGUIConfig()}, stack: stack, parallax: prl}
 	w.ready = func() error { return nil } // a private chain has no peers
+
+	// A scan of a phrase reads each account's balance from the node
+	found, err := w.ScanSeed(devPhrase, "", SchemeStandard, 0, 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, c := range found {
+		funded := i == 2
+		if c.Used != funded || (funded && c.BalanceWei != new(big.Int).Mul(big.NewInt(7), lax).String()) || (!funded && c.BalanceWei != "0") {
+			t.Errorf("scan candidate %d = %+v", i, c)
+		}
+	}
 
 	to := util.HexToAddress("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
 	value := new(big.Int).Div(lax, big.NewInt(4)) // 0.25 LAX

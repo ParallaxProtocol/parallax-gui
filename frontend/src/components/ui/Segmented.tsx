@@ -11,8 +11,9 @@ export type SegmentOption<T extends string> = {
 };
 
 /**
- * Segmented is a segmented control: mutually exclusive choices in one
- * well, the selected one raised, its thumb sliding from choice to choice.
+ * Segmented is a segmented control, as Apple draws them: mutually exclusive
+ * choices in one flat, rounded well, the selected one raised on a lit
+ * thumb that slides from choice to choice.
  */
 export function Segmented<T extends string>({
   options,
@@ -29,7 +30,7 @@ export function Segmented<T extends string>({
 }) {
   const id = useId();
   return (
-    <div role="radiogroup" className={`inline-flex rounded-md bg-segment-well p-0.5 shadow-[0_1px_2px_rgb(0_0_0/20%)_inset] ${className}`}>
+    <div role="radiogroup" className={`inline-flex rounded-[10px] bg-segment-well p-[3px] ${className}`}>
       {options.map((o) => {
         const here = o.value === value;
         const button = (
@@ -40,8 +41,8 @@ export function Segmented<T extends string>({
             aria-checked={here}
             disabled={o.disabled}
             onClick={() => !o.disabled && onChange(o.value)}
-            className={`relative min-w-16 rounded-[5px] font-medium transition-colors disabled:opacity-40 ${
-              size === "sm" ? "h-5 px-2.5 text-sm" : "h-6 px-3"
+            className={`relative min-w-20 rounded-[7px] font-medium transition-colors disabled:opacity-40 ${
+              size === "sm" ? "h-6 px-3 text-sm" : "h-7 px-4"
             } ${here ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
             {here && (
@@ -49,7 +50,7 @@ export function Segmented<T extends string>({
                 layoutId={`segment-${id}`}
                 layoutDependency={value}
                 transition={SPRING}
-                className="absolute inset-0 rounded-[5px] bg-segment-thumb shadow-[var(--shadow-segment)]"
+                className="absolute inset-0 rounded-[7px] bg-segment-thumb shadow-[var(--shadow-segment)]"
               />
             )}
             <span className="relative">{o.label}</span>

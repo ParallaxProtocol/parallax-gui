@@ -29,7 +29,7 @@ export function Panel({
 }) {
   return (
     <Tag
-      className={`rounded-lg border bg-surface shadow-[var(--shadow-panel)] ${TONE[tone ?? "none"]} ${className}`}
+      className={`rounded-2xl border bg-surface shadow-[var(--shadow-panel)] ${TONE[tone ?? "none"]} ${className}`}
       {...rest}
     >
       {children}
@@ -40,20 +40,26 @@ export function Panel({
 /** Section is a titled block of a page: a small heading over its panels, with an optional aside. */
 export function Section({
   title,
+  count,
   aside,
   className = "",
   children,
 }: {
   title: string;
+  /** How many things the section holds, shown beside its title. */
+  count?: number;
   aside?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
   return (
-    <section className={`flex flex-col gap-2 ${className}`}>
-      <div className="flex min-h-6 items-center justify-between gap-4 px-1">
-        <h2 className="text-sm font-semibold text-muted-foreground">{title}</h2>
-        {aside && <div className="flex items-center gap-2 text-sm text-muted-foreground">{aside}</div>}
+    <section className={`flex flex-col gap-3 ${className}`}>
+      <div className="flex items-baseline justify-between gap-4 px-1">
+        <h2 className="flex items-baseline gap-2 text-xl font-semibold tracking-tight">
+          {title}
+          {count !== undefined && <span className="text-base font-medium text-muted-foreground tabular-nums">{count}</span>}
+        </h2>
+        {aside && <div className="flex items-center gap-2 text-sm text-muted-foreground tabular-nums">{aside}</div>}
       </div>
       {children}
     </section>
@@ -95,7 +101,7 @@ export function Row({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex min-h-11 items-center justify-between gap-8 px-4 py-2.5">
+    <div className="flex min-h-14 items-center justify-between gap-8 px-4 py-3">
       <div className="min-w-0 max-w-xl">
         <div className="flex items-center gap-2">
           {title}
@@ -108,12 +114,12 @@ export function Row({
   );
 }
 
-/** Property is a read-only Row: a label and its value, the value selectable. */
+/** Property is a read-only Row, as in an About list: the label on the left, its value in grey on the right, selectable. */
 export function Property({ label, mono, children }: { label: string; mono?: boolean; children: ReactNode }) {
   return (
-    <div className="flex min-h-9 items-center justify-between gap-6 px-4 py-2">
-      <dt className="shrink-0 text-muted-foreground">{label}</dt>
-      <dd className={`flex min-w-0 items-center justify-end gap-1 tabular-nums ${mono ? "font-mono text-sm" : ""}`}>
+    <div className="flex min-h-12 items-center justify-between gap-6 px-5 py-3">
+      <dt className="shrink-0">{label}</dt>
+      <dd className={`flex min-w-0 items-center justify-end gap-1 text-muted-foreground tabular-nums ${mono ? "font-mono text-sm" : ""}`}>
         {children}
       </dd>
     </div>
@@ -124,7 +130,7 @@ export function Property({ label, mono, children }: { label: string; mono?: bool
 export function StatStrip({ columns, children }: { columns?: string; children: ReactNode }) {
   return (
     <div
-      className="grid auto-cols-fr grid-flow-col divide-x divide-border rounded-lg border border-border bg-surface shadow-[var(--shadow-panel)]"
+      className="grid auto-cols-fr grid-flow-col divide-x divide-border rounded-2xl border border-border bg-surface shadow-[var(--shadow-panel)]"
       style={columns ? { gridTemplateColumns: columns } : undefined}
     >
       {children}
@@ -147,12 +153,12 @@ export function Stat({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 px-4 py-3">
+    <div className="flex min-w-0 flex-col gap-1 px-5 py-4">
       <div className="flex items-center justify-between gap-2">
-        <Label className="truncate">{label}</Label>
+        <Label className="truncate font-medium">{label}</Label>
         {action}
       </div>
-      <div className="truncate text-xl font-semibold tabular-nums">
+      <div className="truncate text-2xl font-semibold tracking-tight tabular-nums">
         {value}
         {unit && <span className="ml-1 text-base font-normal text-muted-foreground">{unit}</span>}
       </div>

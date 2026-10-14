@@ -148,7 +148,7 @@ export default function NodeInfo({
         type="button"
         onClick={toggle}
         aria-expanded={more}
-        className="btn btn-ghost mt-1 self-center"
+        className="btn btn-tinted btn-sm mt-1 self-center"
       >
         {more ? t("details.less") : t("details.more")}
         <motion.span className="grid place-items-center" initial={false} animate={{ rotate: more ? 180 : 0 }} transition={GLIDE}>

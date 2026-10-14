@@ -30,7 +30,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       setInfo(await api.walletInfo());
     } catch {
-      setInfo((prev) => prev ?? { accounts: [], selected: "", keystoreDir: "" });
+      setInfo((prev) => prev ?? { accounts: [], selected: "", keystoreDir: "", hasPassword: false, needsSetup: false, seeds: [] });
     }
   }, []);
 

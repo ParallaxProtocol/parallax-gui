@@ -9,8 +9,8 @@ WebKitGTK on Linux, which could not).
 ## Features
 
 - One binary that runs a Parallax full node — no sidecars.
-- First-run wizard for picking a language, data directory, sync mode and
-  inbound NAT policy.
+- A first-launch welcome that sets up the node (language, data directory,
+  inbound NAT policy) and then the wallet (password, recovery phrase).
 - A sidebar shell with the wallet's account switcher at the top and the
   node's heartbeat pinned at the bottom (state, block height, peers,
   uptime, sync progress and a power switch).
@@ -122,7 +122,7 @@ To add a new language:
    new tag is recognised by `navigator.language` and persisted in
    `localStorage`.
 5. Run `make dev` and switch languages from **Settings → General** (or
-   the onboarding picker) to verify the strings render and nothing
+   the first-launch language step) to verify the strings render and nothing
    overflows.
 
 Missing keys automatically fall back to English, so partial translations
@@ -180,7 +180,7 @@ are fine for a first pass — open a PR and we'll help fill the gaps.
         │   ├── Wallet/       Overview, send, receive, accounts and their
         │   │                 create / import / backup / password flows.
         │   ├── Settings/     Grouped settings, save bar, live log tail.
-        │   └── Onboarding/   First-run wizard.
+        │   └── Hello/        First-launch welcome: node and wallet setup.
         └── assets/           Logo mark (the logo gradient).
 ```
 
@@ -197,40 +197,51 @@ leaves the main process.
 - **Inbound NAT** is on by default — the node opens a UPnP/PMP mapping so
   other peers can dial in, helping the network. Users behind strict
   firewalls or who prefer outbound-only can flip the toggle in
-  Settings → Network (or during first-run onboarding).
+  Settings → Network (or during the first-launch setup).
 - **Crash reports** are written to `<userConfigDir>/Parallax/crash-*.log`
   and never sent off the machine.
 
 ## The wallet
 
-The wallet is built on the daemon's own key management rather than new
-cryptography:
+The wallet is built on the daemon's own key management and on established
+libraries rather than new cryptography:
 
-- **Keys** are generated from the OS's secure random source and stored by
-  the daemon's `wallet/keystore` package: one Web3 Secret Storage file per
-  account (scrypt with the standard cost, AES-128-CTR), the same format
-  `parallaxd` and `parallax-wallet` use. Passwords must be at least 8
-  characters.
-- **Where**: `<userConfigDir>/Parallax/keystore` (e.g.
-  `~/.config/Parallax/keystore`), apart from the chain data directory so a
-  resync can't take keys with it. Directory `0700`, files `0600`. Labels
-  and backup status live beside it in `wallet.json`, which holds nothing
-  secret. The keystore is never attached to the node, so nothing that
-  connects to its RPC can list or use these accounts.
-- **Nothing is left unlocked.** A key is decrypted only for the one action
-  its password was typed for (signing a transaction, checking a backup,
-  changing the password) and zeroed right after.
-- **Sending**: the app asks the node for the fee and gas (a plain
-  transfer is exactly 21,000 gas; a contract recipient is estimated),
-  shows the full recipient address, amount, fee and total for review, and
-  signs an EIP-155 transaction bound to the running chain's ID once the
-  password is given. The backend re-checks every field and the signature,
-  then submits through the node's own `eth_sendRawTransaction` path, so the
-  fee cap and pool rules apply. Mixed-case recipients must pass the EIP-55
-  checksum; the zero address is refused.
-- **Backups** are the account's keystore file, still encrypted, saved
-  where the user picks (only after the password proves to open it). Any
-  compatible wallet can restore from the file and its password.
+- **One wallet password** protects everything, set from the Welcome page
+  before any account exists (at least 8 characters). Every key and every
+  recovery phrase is encrypted with it; a check value in `vault.json`
+  verifies it before anything new is encrypted, so a mistyped password can
+  never leave a key under a password of its own. Nothing is ever left
+  unlocked: each action that needs a key decrypts it for that action only
+  and wipes it after. Changing the password re-encrypts every key and
+  phrase, all or nothing.
+- **Keys** are stored by the daemon's `wallet/keystore`: one Web3 Secret
+  Storage file per account (scrypt with the standard cost, AES-128-CTR),
+  the same format `parallaxd` and `parallax-wallet` use.
+- **Recovery phrases** (BIP-39, 12 words, via `go-bip39`) derive accounts
+  with BIP-32/BIP-44 (`btcd/btcutil/hdkeychain`) along MetaMask's path,
+  `m/44'/60'/0'/0/n`, so the same words restore the same accounts here and
+  in MetaMask. A wallet can hold several phrases, each optionally with a
+  BIP-39 passphrase (NFKD-normalised, as on Ledger and Trezor). Importing a
+  phrase scans the standard, Ledger Live (`m/44'/60'/n'/0/0`) and legacy
+  (`m/44'/60'/0'/n`) paths, with each account's balance read from the
+  local node, and lets the user pick which to bring in. Phrases are stored
+  only as encrypted entropy.
+- **Where**: `<userConfigDir>/Parallax/` (e.g. `~/.config/Parallax/`):
+  `keystore/` (directory `0700`, files `0600`), `vault.json` (the check and
+  the encrypted phrases, `0600`) and `wallet.json` (labels, nothing secret).
+  It is apart from the chain data so a resync can't take keys with it, and
+  the keystore is never attached to the node, so nothing that connects to
+  its RPC can list or use these accounts.
+- **Sending**: the app asks the node for the fee and gas (a plain transfer
+  is exactly 21,000 gas; a contract recipient is estimated), shows the full
+  recipient, amount, fee and total for review, and signs an EIP-155
+  transaction bound to the running chain's ID once the password is given.
+  The backend re-checks every field and the signature, then submits through
+  the node's own `eth_sendRawTransaction` path, so the fee cap and pool
+  rules apply. A custom fee may only exceed the node's suggestion.
+- **Backups**: a recovery phrase is written down and confirmed by retyping
+  three of its words; a single-key account's backup is its keystore file,
+  still encrypted with the wallet password, saved where the user picks.
 
 To use these accounts from the command line, point `parallax-wallet` at
 the same directory with `--keystore`.

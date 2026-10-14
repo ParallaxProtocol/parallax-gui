@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { onEvent } from "./api";
 import { useNode } from "./live";
+import { useNotifications } from "./notifications";
 import { useT } from "../i18n";
 
 /** A sync shorter than this (a new block arriving at the tip) isn't worth a notification. */
@@ -15,11 +16,15 @@ function notify(title: string, body: string) {
 /**
  * DesktopBehaviors carries out the Settings that act outside the window:
  * keeping the computer awake while syncing, and notifying the user when
- * a long sync finishes or the node stops itself to protect its database from a full disk. It renders nothing.
+ * a long sync finishes or the node stops itself to protect its database
+ * from a full disk. Those always go to the app's own notifications (the
+ * top bar's); the desktop ones are what the setting turns on. It renders
+ * nothing.
  */
 export function DesktopBehaviors({ notifications, preventSleep }: { notifications: boolean; preventSleep: boolean }) {
   const t = useT();
   const node = useNode();
+  const { push } = useNotifications();
 
   const awake = preventSleep && !!node?.running && node.syncing;
   useEffect(() => {
@@ -40,10 +45,12 @@ export function DesktopBehaviors({ notifications, preventSleep }: { notification
     }
     const since = syncingSince.current;
     syncingSince.current = null;
-    if (notifications && since !== null && Date.now() - since >= LONG_SYNC_MS) {
-      notify(t("notify.synced"), t("notify.synced.body", { block: node.currentBlock.toLocaleString() }));
+    if (since !== null && Date.now() - since >= LONG_SYNC_MS) {
+      const body = t("notify.synced.body", { block: node.currentBlock.toLocaleString() });
+      push("synced", t("notify.synced"), body);
+      if (notifications) notify(t("notify.synced"), body);
     }
-  }, [node?.running, node?.syncing, node?.currentBlock, notifications, t]);
+  }, [node?.running, node?.syncing, node?.currentBlock, notifications, t, push]);
 
   // The free disk space guard stopped the node
   const on = useRef(notifications);
@@ -51,9 +58,11 @@ export function DesktopBehaviors({ notifications, preventSleep }: { notification
   useEffect(
     () =>
       onEvent<{ kind: string }>("node", (evt) => {
-        if (evt?.kind === "lowdisk" && on.current) notify(t("notify.lowDisk"), t("notify.lowDisk.body"));
+        if (evt?.kind !== "lowdisk") return;
+        push("lowdisk", t("notify.lowDisk"), t("notify.lowDisk.body"));
+        if (on.current) notify(t("notify.lowDisk"), t("notify.lowDisk.body"));
       }),
-    [t],
+    [t, push],
   );
 
   return null;
