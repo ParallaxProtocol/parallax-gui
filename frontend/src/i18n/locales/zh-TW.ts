@@ -526,8 +526,6 @@ const zhTW: Dict = {
   "wallet.review.fee": "網路手續費",
   "wallet.review.feeDetail": "{gas} gas，單價 {price}",
   "wallet.review.total": "總計",
-  "wallet.review.network": "網路",
-  "wallet.review.chainId": "鏈 {id}",
   "wallet.review.toSelf": "這是傳送到同一個帳戶：只會花費手續費。",
   "wallet.review.toContract": "收款方是一個合約。它在收到 LAX 時會執行程式碼；請確認它確實用於接收 LAX。",
   "wallet.review.dear": "此價格超過您節點建議的 {price} 的三倍。",

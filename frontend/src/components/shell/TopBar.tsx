@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, CheckCircle2, Download, HardDrive, Loader2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Bell, CheckCircle2, Download, HardDrive, Loader2, XCircle } from "lucide-react";
 import { FADE_OUT, GLIDE } from "../../lib/motion";
 import { useNotifications, type NoticeKind } from "../../lib/notifications";
 import { useUpdate } from "../../lib/update";
@@ -137,6 +137,18 @@ const KIND_ICON: Record<NoticeKind, typeof Bell> = {
   synced: CheckCircle2,
   lowdisk: HardDrive,
   update: Download,
+  received: ArrowDownLeft,
+  sent: ArrowUpRight,
+  failed: XCircle,
+};
+
+const KIND_TONE: Record<NoticeKind, "critical" | "good" | "brand" | "neutral"> = {
+  synced: "good",
+  lowdisk: "critical",
+  update: "brand",
+  received: "good",
+  sent: "neutral",
+  failed: "critical",
 };
 
 /**
@@ -170,7 +182,7 @@ function Notifications() {
             <li key={n.id} className="flex items-start gap-3 rounded-xl bg-muted/60 p-3">
               <IconBadge
                 icon={KIND_ICON[n.kind]}
-                tone={n.kind === "lowdisk" ? "critical" : n.kind === "synced" ? "good" : "brand"}
+                tone={KIND_TONE[n.kind]}
                 size="sm"
               />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">

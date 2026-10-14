@@ -526,8 +526,6 @@ const ptBR: Dict = {
   "wallet.review.fee": "Taxa de rede",
   "wallet.review.feeDetail": "{gas} de gas a {price}",
   "wallet.review.total": "Total",
-  "wallet.review.network": "Rede",
-  "wallet.review.chainId": "chain {id}",
   "wallet.review.toSelf": "Isto envia para a mesma conta: só a taxa é gasta.",
   "wallet.review.toContract": "O destinatário é um contrato. Ele executa código ao receber LAX; confirme que ele foi feito para isso.",
   "wallet.review.dear": "Este preço é mais de três vezes os {price} que seu nó sugere.",

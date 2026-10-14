@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, Check, ChevronsUpDown, Sparkles, Wallet } from "lucide-react";
-import { shortHex } from "../../lib/format";
+import { ArrowDownLeft, ArrowUpRight, BookUser, Check, ChevronsUpDown, Sparkles, Wallet } from "lucide-react";
+import { formatLax, shortHex } from "../../lib/format";
 import { FADE_OUT, GLIDE } from "../../lib/motion";
-import { accountLabel, useWallet } from "../../lib/wallet";
+import { accountLabel, useBalances, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import logo from "../../assets/logo.svg";
 import { NODE_BAR_ROOM } from "./NodeBar";
@@ -25,7 +25,7 @@ export default function Sidebar() {
   const locked = !!info && !info.hasPassword;
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col bg-sidebar">
+    <aside className="flex w-64 shrink-0 flex-col bg-sidebar">
       {/* The title bar's part over the sidebar: the line under it runs on
           under the page's part, and the sidebar's own line starts below it */}
       <div className="drag flex h-13 shrink-0 items-center gap-2.5 border-b border-border px-4">
@@ -46,6 +46,7 @@ export default function Sidebar() {
               <NavItem to="/" icon={Wallet} label={t("nav.overview")} />
               <NavItem to="/send" icon={ArrowUpRight} label={t("nav.send")} disabled={noAccount} />
               <NavItem to="/receive" icon={ArrowDownLeft} label={t("nav.receive")} disabled={noAccount} />
+              <NavItem to="/contacts" icon={BookUser} label={t("nav.contacts")} />
             </>
           )}
         </nav>
@@ -68,6 +69,7 @@ function AccountSwitcher() {
   const t = useT();
   const { openAt } = useSettingsSheet();
   const { info, account, select } = useWallet();
+  const balances = useBalances();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
@@ -106,7 +108,10 @@ function AccountSwitcher() {
         <AddressAvatar address={account.address} size={34} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[15px] font-semibold">{accountLabel(account, accounts, t)}</span>
-          <span className="block truncate font-mono text-sm text-muted-foreground">
+          <span className="block truncate text-sm tabular-nums">
+            <Balance wei={balances[account.address]} />
+          </span>
+          <span className="block truncate font-mono text-xs text-muted-foreground">
             {shortHex(account.address, 8, 6)}
           </span>
         </span>
@@ -117,13 +122,13 @@ function AccountSwitcher() {
           <motion.div
             role="listbox"
             aria-label={t("nav.accounts")}
-            className="menu absolute inset-x-0 top-full z-50 mt-1 flex flex-col gap-px p-1"
+            className="menu absolute top-full left-0 z-50 mt-1 flex w-96 flex-col gap-px p-1.5"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, transition: FADE_OUT }}
             transition={GLIDE}
           >
-            <div className="flex max-h-64 flex-col gap-px overflow-y-auto">
+            <div className="flex max-h-96 flex-col gap-px overflow-y-auto">
               {accounts.map((a) => {
                 const here = a.address === account.address;
                 return (
@@ -136,16 +141,21 @@ function AccountSwitcher() {
                       setOpen(false);
                       if (!here) select(a.address);
                     }}
-                    className="menu-item py-1"
+                    className="menu-item gap-3 py-2"
                   >
-                    <AddressAvatar address={a.address} size={28} />
+                    <AddressAvatar address={a.address} size={32} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate">{accountLabel(a, accounts, t)}</span>
                       <span className="block truncate font-mono text-xs text-muted-foreground">
                         {shortHex(a.address, 8, 6)}
                       </span>
                     </span>
-                    {here && <Check className="size-3.5 shrink-0 text-brand" />}
+                    <span className="shrink-0 pl-2 text-right tabular-nums">
+                      <Balance wei={balances[a.address]} />
+                    </span>
+                    <span className="grid size-3.5 shrink-0 place-items-center">
+                      {here && <Check className="size-3.5 text-brand" />}
+                    </span>
                   </button>
                 );
               })}
@@ -165,6 +175,16 @@ function AccountSwitcher() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/** Balance is an amount of LAX, or a dash until it is known. */
+function Balance({ wei }: { wei?: string }) {
+  if (wei === undefined) return <span className="text-muted-foreground">—</span>;
+  return (
+    <>
+      {formatLax(wei, 4)} <span className="text-muted-foreground">LAX</span>
+    </>
   );
 }
 

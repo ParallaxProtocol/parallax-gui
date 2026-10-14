@@ -526,8 +526,6 @@ const fr: Dict = {
   "wallet.review.fee": "Frais de réseau",
   "wallet.review.feeDetail": "{gas} gas à {price}",
   "wallet.review.total": "Total",
-  "wallet.review.network": "Réseau",
-  "wallet.review.chainId": "chaîne {id}",
   "wallet.review.toSelf": "Cet envoi est destiné au même compte : seuls les frais sont dépensés.",
   "wallet.review.toContract": "Le destinataire est un contrat. Il exécute du code lorsqu'il reçoit des LAX ; assurez-vous qu'il est prévu pour cela.",
   "wallet.review.dear": "Ce prix est plus de trois fois supérieur aux {price} suggérés par votre nœud.",

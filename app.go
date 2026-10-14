@@ -24,11 +24,12 @@ type App struct {
 	ctx    context.Context
 	events *hub
 
-	cfg     *backend.ConfigStore
-	logs    *backend.LogTail
-	node    *backend.NodeController
-	wallet  *backend.Wallet
-	updater *backend.Updater
+	cfg      *backend.ConfigStore
+	logs     *backend.LogTail
+	node     *backend.NodeController
+	wallet   *backend.Wallet
+	contacts *backend.Contacts
+	updater  *backend.Updater
 }
 
 // NewApp constructs the App, emitting its events through events. The heavy
@@ -91,6 +92,9 @@ func (a *App) startup(ctx context.Context) {
 	if cfg != nil {
 		if a.wallet, err = backend.NewWallet(cfg.Dir(), a.node); err != nil {
 			logging.Error("Failed to open the wallet", "err", err)
+		}
+		if a.contacts, err = backend.OpenContacts(cfg.Dir()); err != nil {
+			logging.Error("Failed to open the address book", "err", err)
 		}
 	}
 
@@ -197,6 +201,30 @@ func (a *App) RecentBlocks(n int) []backend.BlockView {
 }
 func (a *App) RecentTransactions(n int) []backend.TxView {
 	return a.node.RecentTransactions(n)
+}
+
+// TxDetails is everything the node knows of one transaction, for a row of
+// the wallet's activity opened up.
+func (a *App) TxDetails(hash string) (backend.TxDetails, error) { return a.node.TxDetails(hash) }
+
+// WalletBalances reads every wallet account's balance at the chain head.
+func (a *App) WalletBalances() (map[string]string, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return nil, err
+	}
+	return w.Balances()
+}
+
+// WalletActivitySince lists the wallet's transactions in the blocks after
+// `after` and the head it read up to, for the app's notifications.
+func (a *App) WalletActivitySince(after uint64) (backend.WalletActivity, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletActivity{}, err
+	}
+	txs, head, err := w.WalletActivity(after)
+	return backend.WalletActivity{Transactions: txs, Head: head}, err
 }
 
 // ---------------------------------------------------------------------------
@@ -417,7 +445,83 @@ func (a *App) WalletSend(req backend.SendRequest) (backend.SentTx, error) {
 	if err != nil {
 		return backend.SentTx{}, err
 	}
-	return w.Send(req)
+	tx, err := w.Send(req)
+	if err == nil && a.contacts != nil {
+		a.contacts.SentTo(req.To)
+	}
+	return tx, err
+}
+
+// ---------------------------------------------------------------------------
+// Address book
+// ---------------------------------------------------------------------------
+
+var errNoContacts = errors.New("contacts: the address book could not be opened")
+
+func (a *App) contactsOrErr() (*backend.Contacts, error) {
+	if a.contacts == nil {
+		return nil, errNoContacts
+	}
+	return a.contacts, nil
+}
+
+// Contacts lists the address book: favourites first, then by name.
+func (a *App) Contacts() ([]backend.Contact, error) {
+	c, err := a.contactsOrErr()
+	if err != nil {
+		return nil, err
+	}
+	return c.List(), nil
+}
+
+func (a *App) ContactAdd(in backend.ContactInput) (backend.Contact, error) {
+	c, err := a.contactsOrErr()
+	if err != nil {
+		return backend.Contact{}, err
+	}
+	return c.Add(in)
+}
+
+func (a *App) ContactUpdate(id string, in backend.ContactInput) (backend.Contact, error) {
+	c, err := a.contactsOrErr()
+	if err != nil {
+		return backend.Contact{}, err
+	}
+	return c.Update(id, in)
+}
+
+func (a *App) ContactSetFavorite(id string, on bool) error {
+	c, err := a.contactsOrErr()
+	if err != nil {
+		return err
+	}
+	return c.SetFavorite(id, on)
+}
+
+func (a *App) ContactRemove(id string) error {
+	c, err := a.contactsOrErr()
+	if err != nil {
+		return err
+	}
+	return c.Remove(id)
+}
+
+// ContactsExport writes the address book as "json" or "csv".
+func (a *App) ContactsExport(format string) (string, error) {
+	c, err := a.contactsOrErr()
+	if err != nil {
+		return "", err
+	}
+	return c.Export(format)
+}
+
+// ContactsImport adds the contacts of an exported address book.
+func (a *App) ContactsImport(data string) (backend.ContactsImport, error) {
+	c, err := a.contactsOrErr()
+	if err != nil {
+		return backend.ContactsImport{}, err
+	}
+	return c.Import(data)
 }
 
 // ---------------------------------------------------------------------------

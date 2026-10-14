@@ -5,10 +5,14 @@ package backend
 
 import (
 	"context"
+	"math/big"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/ParallaxProtocol/parallax/v2/primitives/types"
 	"github.com/ParallaxProtocol/parallax/v2/util"
+	"github.com/ParallaxProtocol/parallax/v2/wallet/keystore"
 )
 
 // TestDevChain starts the embedded node on the development chain and checks
@@ -65,4 +69,69 @@ func TestDevChain(t *testing.T) {
 	if !n.Parallax().IsMining() {
 		t.Fatal("the development chain is not sealing")
 	}
+
+	// A transfer from the signer to a wallet account is sealed into a block
+	// of its own; TxDetails reads it from the pool and then from the chain,
+	// and WalletActivity reports it to the watch started before it
+	w, _ := newTestWallet(t)
+	w.node = n
+	acc, err := w.Create("", testPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recv := util.HexToAddress(acc.Address)
+	if txs, head, err := w.WalletActivity(0); err != nil || len(txs) != 0 || head != 0 {
+		t.Fatalf("activity at genesis = %v, %d, %v; want nothing, at head 0", txs, head, err)
+	}
+	ks := n.Stack().AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
+	signer := ks.Accounts()[0]
+	chainID := n.Parallax().BlockChain().Config().ChainID
+	value := big.NewInt(1e18)
+	tx, err := ks.SignTx(signer, types.NewTransaction(0, recv, value, 21000, big.NewInt(1e9), nil), chainID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := n.Parallax().TxPool().AddLocal(tx); err != nil {
+		t.Fatal(err)
+	}
+	var d TxDetails
+	for deadline := time.Now().Add(10 * time.Second); ; time.Sleep(50 * time.Millisecond) {
+		if d, err = n.TxDetails(tx.Hash().Hex()); err != nil {
+			t.Fatal(err)
+		}
+		if d.Status != "pending" || time.Now().After(deadline) {
+			break
+		}
+	}
+	if d.Status != "success" || d.Block != 1 || d.GasUsed != 21000 || d.Timestamp == 0 {
+		t.Fatalf("details = %+v, want a successful transfer in block 1", d)
+	}
+	if d.From != signer.Address.Hex() || d.To != recv.Hex() || d.ValueWei != value.String() || d.Input != "0x" {
+		t.Fatalf("details = %+v, want %s → %s of %s", d, signer.Address.Hex(), recv.Hex(), value)
+	}
+	if want := new(big.Int).Mul(new(big.Int).SetUint64(d.GasUsed), mustBig(t, d.GasPriceWei)); d.FeeWei != want.String() {
+		t.Fatalf("fee = %s, want gas used × price = %s", d.FeeWei, want)
+	}
+	txs, head, err := w.WalletActivity(0)
+	if err != nil || head != 1 || len(txs) != 1 || txs[0].Hash != tx.Hash().Hex() || txs[0].To != recv.Hex() || txs[0].Failed {
+		t.Fatalf("activity after genesis = %+v, %d, %v; want the transfer, at head 1", txs, head, err)
+	}
+	if txs, _, err := w.WalletActivity(1); err != nil || len(txs) != 0 {
+		t.Fatalf("activity after block 1 = %v, %v; want none", txs, err)
+	}
+	if b, err := w.Balances(); err != nil || len(b) != 1 || b[recv.Hex()] != value.String() {
+		t.Fatalf("balances = %v, %v; want %s holding %s", b, err, recv.Hex(), value)
+	}
+	if _, err := n.TxDetails("0x1234"); err == nil {
+		t.Fatal("a malformed hash was looked up")
+	}
+}
+
+func mustBig(t *testing.T, s string) *big.Int {
+	t.Helper()
+	v, ok := new(big.Int).SetString(s, 10)
+	if !ok {
+		t.Fatalf("%q is not a number", s)
+	}
+	return v
 }

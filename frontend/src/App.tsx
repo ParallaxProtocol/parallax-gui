@@ -16,6 +16,7 @@ import WalletPage from "./pages/Wallet";
 // the webview parses less JavaScript before the first paint
 const SendPage = lazy(() => import("./pages/Wallet/Send"));
 const ReceivePage = lazy(() => import("./pages/Wallet/Receive"));
+const ContactsPage = lazy(() => import("./pages/Contacts"));
 const CreateAccountPage = lazy(() =>
   import("./pages/Wallet/AddAccount").then((m) => ({ default: m.CreateAccountPage })),
 );
@@ -36,6 +37,7 @@ import SettingsSheet, {
   type SettingsSection,
 } from "./components/shell/SettingsSheet";
 import { NotificationsProvider } from "./lib/notifications";
+import { ContactsProvider } from "./lib/contacts";
 import { UpdateProvider } from "./lib/update";
 import { useT } from "./i18n";
 import { BrandMark } from "./components/ui/BrandMark";
@@ -146,32 +148,34 @@ export default function App() {
     content = (
       <LiveProvider>
         <WalletProvider>
-          <ToolbarSlotProvider>
-            <NotificationsProvider>
-              <UpdateProvider>
-                <NodeSheetProvider>
-                  <SettingsSheetProvider>
-                    <DesktopBehaviors {...desktop} />
-                    {/* The sidebar and the page run the window's whole height, the
-                      node's bar floating over their foot: each keeps room for it */}
-                    <div className="flex h-full">
-                      <Sidebar />
-                      <div
-                        className="flex min-w-0 flex-1 flex-col bg-background"
-                        style={{ paddingBottom: NODE_BAR_ROOM }}
-                      >
-                        <TopBar />
-                        <Toolbar />
-                        <RoutedContent animate={!animationsDisabled} />
+          <ContactsProvider>
+            <ToolbarSlotProvider>
+              <NotificationsProvider>
+                <UpdateProvider>
+                  <NodeSheetProvider>
+                    <SettingsSheetProvider>
+                      <DesktopBehaviors {...desktop} />
+                      {/* The sidebar and the page run the window's whole height, the
+                        node's bar floating over their foot: each keeps room for it */}
+                      <div className="flex h-full">
+                        <Sidebar />
+                        <div
+                          className="flex min-w-0 flex-1 flex-col bg-background"
+                          style={{ paddingBottom: NODE_BAR_ROOM }}
+                        >
+                          <TopBar />
+                          <Toolbar />
+                          <RoutedContent animate={!animationsDisabled} />
+                        </div>
                       </div>
-                    </div>
-                    <SettingsSheet />
-                    <NodeBar version={version} />
-                  </SettingsSheetProvider>
-                </NodeSheetProvider>
-              </UpdateProvider>
-            </NotificationsProvider>
-          </ToolbarSlotProvider>
+                      <SettingsSheet />
+                      <NodeBar version={version} />
+                    </SettingsSheetProvider>
+                  </NodeSheetProvider>
+                </UpdateProvider>
+              </NotificationsProvider>
+            </ToolbarSlotProvider>
+          </ContactsProvider>
         </WalletProvider>
       </LiveProvider>
     );
@@ -212,6 +216,14 @@ function RoutedContent({ animate }: { animate: boolean }) {
           element={
             <Unlocked>
               <ReceivePage />
+            </Unlocked>
+          }
+        />
+        <Route
+          path="/contacts"
+          element={
+            <Unlocked>
+              <ContactsPage />
             </Unlocked>
           }
         />

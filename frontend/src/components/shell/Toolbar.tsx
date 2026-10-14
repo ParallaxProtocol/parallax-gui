@@ -10,6 +10,7 @@ const TITLES: Record<string, string> = {
   "/": "nav.overview",
   "/send": "nav.send",
   "/receive": "nav.receive",
+  "/contacts": "nav.contacts",
   "/accounts/new": "wallet.create.title",
   "/accounts/import": "wallet.import.title",
   "/setup": "wallet.setup.title",

@@ -526,8 +526,6 @@ const zhSG: Dict = {
   "wallet.review.fee": "网络手续费",
   "wallet.review.feeDetail": "{gas} gas，单价 {price}",
   "wallet.review.total": "总计",
-  "wallet.review.network": "网络",
-  "wallet.review.chainId": "链 {id}",
   "wallet.review.toSelf": "这是发送到同一账户：只会花费手续费。",
   "wallet.review.toContract": "收款方是一个合约。它在收到 LAX 时会执行代码；请确认它确实用于接收 LAX。",
   "wallet.review.dear": "此价格超过您节点建议的 {price} 的三倍。",

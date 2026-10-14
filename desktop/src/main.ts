@@ -189,6 +189,26 @@ async function saveBackup(fileName: string, contents: string): Promise<boolean> 
   return true;
 }
 
+/**
+ * Saves an exported address book (backend/contacts.go) where the user
+ * picks, as JSON or CSV. Nothing in it is secret, but it says who the user
+ * pays, so it is written private to them like a backup.
+ */
+async function saveContacts(format: "json" | "csv", contents: string): Promise<boolean> {
+  if (contents.length > 8 * 1024 * 1024) return false;
+  const date = new Date().toISOString().slice(0, 10);
+  const opts = {
+    title: "Export address book",
+    defaultPath: path.join(app.getPath("documents"), `parallax-contacts-${date}.${format}`),
+    filters: [format === "json" ? { name: "JSON", extensions: ["json"] } : { name: "CSV", extensions: ["csv"] }],
+  };
+  const res = mainWindow ? await dialog.showSaveDialog(mainWindow, opts) : await dialog.showSaveDialog(opts);
+  if (res.canceled || !res.filePath) return false;
+  await fs.promises.writeFile(res.filePath, contents, { mode: 0o600 });
+  await fs.promises.chmod(res.filePath, 0o600).catch(() => {});
+  return true;
+}
+
 /** Whether s is a Web3 Secret Storage keystore file: an encrypted key, never a plain one. */
 function isKeystoreFile(s: string): boolean {
   try {
@@ -343,6 +363,10 @@ function wireIpc() {
   ipcMain.handle("wallet:saveBackup", async (event, fileName: unknown, contents: unknown) => {
     if (!trusted(event) || typeof fileName !== "string" || typeof contents !== "string") return false;
     return saveBackup(fileName, contents);
+  });
+  ipcMain.handle("contacts:export", async (event, format: unknown, contents: unknown) => {
+    if (!trusted(event) || (format !== "json" && format !== "csv") || typeof contents !== "string") return false;
+    return saveContacts(format, contents);
   });
   ipcMain.on("power:keepAwake", (event, on: unknown) => {
     if (trusted(event) && typeof on === "boolean") keepAwake(on);

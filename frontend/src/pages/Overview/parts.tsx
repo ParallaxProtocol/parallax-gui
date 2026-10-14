@@ -27,11 +27,12 @@ export function Unfold({ children }: { children: ReactNode }) {
 /**
  * DetailCard is an opened row's details: an inset card under the row,
  * indented to the row's main column (its padding, chevron, badge and
- * their gaps), the row's highlight running on behind it.
+ * their gaps; `inset` for other rows), the row's highlight running on
+ * behind it.
  */
-export function DetailCard({ children }: { children: ReactNode }) {
+export function DetailCard({ children, inset = "pr-5 pl-[90px]" }: { children: ReactNode; inset?: string }) {
   return (
-    <div className="bg-hover pr-5 pb-4 pl-[90px]">
+    <div className={`bg-hover pb-4 ${inset}`}>
       <div className="rounded-xl bg-muted/60 p-4">{children}</div>
     </div>
   );

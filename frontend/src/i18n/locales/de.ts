@@ -526,8 +526,6 @@ const de: Dict = {
   "wallet.review.fee": "Netzwerkgebühr",
   "wallet.review.feeDetail": "{gas} Gas zu je {price}",
   "wallet.review.total": "Gesamt",
-  "wallet.review.network": "Netzwerk",
-  "wallet.review.chainId": "Chain {id}",
   "wallet.review.toSelf": "Dies sendet an dasselbe Konto: Nur die Gebühr wird ausgegeben.",
   "wallet.review.toContract": "Der Empfänger ist ein Vertrag. Er führt Code aus, wenn er LAX erhält; stellen Sie sicher, dass er dafür vorgesehen ist.",
   "wallet.review.dear": "Dieser Preis ist mehr als dreimal so hoch wie die {price}, die Ihr Node vorschlägt.",

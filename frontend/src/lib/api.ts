@@ -13,6 +13,7 @@ declare global {
       setLoginItem: (on: boolean) => Promise<void>;
       keepAwake: (on: boolean) => void;
       saveBackup: (fileName: string, contents: string) => Promise<boolean>;
+      exportContacts: (format: "json" | "csv", contents: string) => Promise<boolean>;
       platform: string;
     };
   }
@@ -307,6 +308,36 @@ export type TxView = {
   kind: "transfer" | "contract" | "call";
 };
 
+/** Everything the node knows of one transaction (backend/txdetails.go). Amounts are decimal wei. */
+export type TxDetails = {
+  hash: string;
+  status: "pending" | "success" | "failed";
+  /** Zero while pending */
+  block: number;
+  blockHash: string;
+  index: number;
+  timestamp: number;
+  from: string;
+  /** Empty for a contract creation */
+  to: string;
+  contractAddress: string;
+  valueWei: string;
+  nonce: number;
+  gasLimit: number;
+  /** Zero while pending */
+  gasUsed: number;
+  /** The whole price per gas: Parallax has no base fee */
+  gasPriceWei: string;
+  /** What it paid; while pending, the most it can */
+  feeWei: string;
+  input: string;
+  sizeBytes: number;
+  logs: number;
+};
+
+/** A wallet account's transaction in a block, for the app's notifications. */
+export type WalletTx = TxView & { failed: boolean };
+
 export type AddressView = {
   address: string;
   /** Empty while the head state is unavailable (snap sync in progress). */
@@ -411,6 +442,24 @@ export type SendRequest = {
 
 export type SentTx = { hash: string; nonce: number };
 
+/** An address book entry (backend/contacts.go). Times are Unix seconds; lastSentAt 0 until sent to. */
+export type Contact = {
+  id: string;
+  name: string;
+  /** EIP-55 checksummed */
+  address: string;
+  note: string;
+  favorite: boolean;
+  createdAt: number;
+  updatedAt: number;
+  lastSentAt: number;
+};
+
+export type ContactInput = { name: string; address: string; note: string };
+
+/** What an import did; errors explains the first few invalid entries. */
+export type ContactsImport = { added: number; skipped: number; invalid: number; errors: string[] };
+
 /**
  * The wallet's errors the app says in the user's language, by the
  * backend's message (backend/wallet.go): the key is the i18n key.
@@ -438,6 +487,14 @@ const WALLET_ERRORS: Record<string, string> = {
   "wallet: no such recovery phrase in this wallet": "wallet.err.unknownSeed",
   "wallet: the wallet has no password yet": "wallet.err.noPassword",
   "wallet: set the wallet password first": "wallet.err.needsSetup",
+  "contacts: a contact needs a name of at most 64 characters": "contacts.err.name",
+  "contacts: the note is longer than 500 characters": "contacts.err.note",
+  "contacts: this address is already in the address book": "contacts.err.exists",
+  "contacts: another contact already has this name": "contacts.err.nameUsed",
+  "contacts: no such contact in the address book": "contacts.err.unknown",
+  "contacts: the address book is full": "contacts.err.full",
+  "contacts: not an address book file": "contacts.err.file",
+  "contacts: the address book could not be opened": "contacts.err.unavailable",
   "wallet: this account's key is under a different password": "wallet.err.keyMismatch",
   "wallet: the password doesn't open every key in the wallet": "wallet.err.setupMismatch",
   "wallet: wrong password for the keystore file": "wallet.err.wrongFilePassword",
@@ -449,6 +506,12 @@ export function walletError(e: unknown, t: (key: string) => string): string {
   // Some carry what they are about after a colon: the address of a key
   const key = WALLET_ERRORS[msg] ?? WALLET_ERRORS[msg.replace(/: 0x[0-9a-fA-F]{40}$/, "")];
   return key ? t(key) : msg;
+}
+
+/** Saves an exported address book where the user picks; false if cancelled. */
+export function exportContacts(format: "json" | "csv", contents: string): Promise<boolean> {
+  if (!window.parallax) return Promise.reject(new Error("unavailable"));
+  return window.parallax.exportContacts(format, contents);
 }
 
 /** Saves an account's encrypted keystore file where the user picks; false if cancelled. */
@@ -530,6 +593,18 @@ export const api = {
   walletMarkBackedUp: (address: string) => call<void>("WalletMarkBackedUp", address),
   walletRemove: (address: string, password: string) => call<void>("WalletRemove", address, password),
   walletSummary: (address: string) => call<AddressView>("WalletSummary", address),
+  /** Every wallet account's balance at the head, in wei by checksummed address. */
+  walletBalances: () => call<Record<string, string>>("WalletBalances"),
+  contacts: () => call<Contact[]>("Contacts"),
+  contactAdd: (c: ContactInput) => call<Contact>("ContactAdd", c),
+  contactUpdate: (id: string, c: ContactInput) => call<Contact>("ContactUpdate", id, c),
+  contactSetFavorite: (id: string, on: boolean) => call<void>("ContactSetFavorite", id, on),
+  contactRemove: (id: string) => call<void>("ContactRemove", id),
+  contactsExport: (format: "json" | "csv") => call<string>("ContactsExport", format),
+  contactsImport: (data: string) => call<ContactsImport>("ContactsImport", data),
+  txDetails: (hash: string) => call<TxDetails>("TxDetails", hash),
+  walletActivitySince: (after: number) =>
+    call<{ transactions: WalletTx[]; head: number }>("WalletActivitySince", after),
   walletQuote: (from: string, to: string, valueWei: string, gasPriceWei: string) =>
     call<SendQuote>("WalletQuote", from, to, valueWei, gasPriceWei),
   walletSend: (req: SendRequest) => call<SentTx>("WalletSend", req),

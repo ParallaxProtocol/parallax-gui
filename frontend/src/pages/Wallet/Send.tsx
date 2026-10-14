@@ -1,9 +1,12 @@
-import { useEffect, useId, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDown, ArrowLeft, ArrowRight, Loader2, Send as SendIcon } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, BookUser, Check, Loader2, Send as SendIcon, UserPlus } from "lucide-react";
 import { api, SendQuote, SentTx, walletError } from "../../lib/api";
-import { formatGwei, formatInt, formatUnits, isAddress, parseUnits } from "../../lib/format";
+import { formatGwei, formatInt, formatUnits, isAddress, parseUnits, sameAddress, shortHex } from "../../lib/format";
+import { useContacts } from "../../lib/contacts";
+import { FADE_OUT, GLIDE } from "../../lib/motion";
+import { ContactModal } from "../Contacts/ContactForm";
 import { useNode } from "../../lib/live";
 import { PAGE } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
@@ -36,8 +39,10 @@ export default function SendPage() {
   const { info, account } = useWallet();
   const [quote, setQuote] = useState<SendQuote | null>(null);
   const [sent, setSent] = useState<SentTx | null>(null);
-  // The form keeps what was typed while the review shows
-  const [to, setTo] = useState("");
+  // The form keeps what was typed while the review shows. The address book
+  // opens it with a contact's address (/send?to=0x…)
+  const [params, setParams] = useSearchParams();
+  const [to, setTo] = useState(params.get("to") ?? "");
   const [amount, setAmount] = useState("");
   const [feeMode, setFeeMode] = useState<FeeMode>("suggested");
   const [gwei, setGwei] = useState("");
@@ -47,6 +52,16 @@ export default function SendPage() {
     setQuote(null);
     setSent(null);
   }, [account?.address]);
+
+  // Sent here again from a contact, while already on this page
+  const toParam = params.get("to");
+  useEffect(() => {
+    if (!toParam) return;
+    setTo(toParam);
+    setQuote(null);
+    setSent(null);
+    setParams({}, { replace: true });
+  }, [toParam, setParams]);
 
   if (!info) return null;
   if (!account) {
@@ -234,21 +249,10 @@ function SendForm({
         <div className="p-4">
           <Field
             label={t("wallet.send.to")}
-            error={toTrim && !toOk ? t("wallet.err.badRecipient") : null}
-            hint={t("wallet.send.toHint")}
+            error={toTrim && !toOk && !looksLikeName(toTrim) ? t("wallet.err.badRecipient") : null}
+            hint={<RecipientHint address={toOk ? toTrim : ""} />}
           >
-            {(id) => (
-              <input
-                id={id}
-                className="input font-mono"
-                placeholder="0x…"
-                value={to}
-                onChange={(e) => set.setTo(e.target.value)}
-                spellCheck={false}
-                autoComplete="off"
-                autoFocus
-              />
-            )}
+            {(id) => <RecipientInput id={id} value={to} onChange={set.setTo} />}
           </Field>
         </div>
         <div className="p-4">
@@ -312,6 +316,8 @@ function Review({
   onSent: (tx: SentTx) => void;
 }) {
   const t = useT();
+  const { byAddress } = useContacts();
+  const contact = byAddress(quote.to);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -361,11 +367,25 @@ function Review({
               <ArrowDown className="size-3.5" />
               {t("wallet.send.to")}
             </span>
-            <span className="flex items-center gap-3 rounded-2xl bg-muted px-4 py-3">
-              <AddressAvatar address={quote.to} size={28} />
-              <Address value={quote.to} className="text-left text-[15px] leading-relaxed" />
-            </span>
-            <span className="text-sm text-muted-foreground">{t("wallet.review.checkAddress")}</span>
+            {contact ? (
+              // A saved contact: its name is what to recognise, its address a
+              // line under it to match against the book
+              <span className="flex items-center gap-3.5 rounded-2xl bg-muted px-5 py-3.5">
+                <AddressAvatar address={quote.to} size={40} />
+                <span className="flex min-w-0 flex-col items-start">
+                  <span className="max-w-full truncate text-2xl font-semibold tracking-tight">{contact.name}</span>
+                  <span className="selectable font-mono text-sm text-muted-foreground">{shortHex(quote.to, 10, 8)}</span>
+                </span>
+              </span>
+            ) : (
+              <>
+                <span className="flex items-center gap-3 rounded-2xl bg-muted px-4 py-3">
+                  <AddressAvatar address={quote.to} size={28} />
+                  <Address value={quote.to} className="text-left text-[15px] leading-relaxed" />
+                </span>
+                <span className="text-sm text-muted-foreground">{t("wallet.review.checkAddress")}</span>
+              </>
+            )}
           </div>
         </div>
       </GlowCard>
@@ -385,9 +405,6 @@ function Review({
         </Property>
         <Property label={t("wallet.review.total")}>
           <span className="font-semibold text-foreground">{formatUnits(quote.totalWei, LAX_DECIMALS)} LAX</span>
-        </Property>
-        <Property label={t("wallet.review.network")}>
-          <span>Parallax · {t("wallet.review.chainId", { id: quote.chainId })}</span>
         </Property>
       </Rows>
 
@@ -431,6 +448,12 @@ function Review({
 function Sent({ tx, quote, onAgain }: { tx: SentTx; quote: SendQuote; onAgain: () => void }) {
   const t = useT();
   const navigate = useNavigate();
+  const { byAddress } = useContacts();
+  const { info } = useWallet();
+  const [saving, setSaving] = useState(false);
+  const contact = byAddress(quote.to);
+  // A new recipient, not one of the wallet's own accounts, can be saved
+  const savable = !contact && !quote.toSelf && !info?.accounts.some((a) => sameAddress(a.address, quote.to));
   return (
     <div className="flex flex-col items-center gap-6 pt-6 text-center">
       <span className="scale-150">
@@ -448,9 +471,17 @@ function Sent({ tx, quote, onAgain }: { tx: SentTx; quote: SendQuote; onAgain: (
         </Property>
         <Property label={t("wallet.send.to")} mono>
           <span className="selectable truncate">{quote.to}</span>
+          {contact && <span className="shrink-0 font-sans text-muted-foreground">{contact.name}</span>}
         </Property>
         <Property label={t("wallet.sent.nonce")}>{formatInt(tx.nonce)}</Property>
       </Rows>
+      {savable && (
+        <button type="button" className="btn btn-tinted" onClick={() => setSaving(true)}>
+          <UserPlus className="size-4" />
+          {t("contacts.saveRecipient")}
+        </button>
+      )}
+      <ContactModal open={saving} onClose={() => setSaving(false)} initial={{ address: quote.to }} />
       <div className="flex justify-center gap-3">
         <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onAgain}>
           {t("wallet.sent.again")}
@@ -461,4 +492,157 @@ function Sent({ tx, quote, onAgain }: { tx: SentTx; quote: SendQuote; onAgain: (
       </div>
     </div>
   );
+}
+
+/** Whether a recipient typed so far is a name to look up, not an address being pasted. */
+function looksLikeName(s: string): boolean {
+  return !/^0x[0-9a-f]*$/i.test(s);
+}
+
+/**
+ * RecipientInput is the recipient's address, with the address book to pick
+ * from: typing a name, part of an address or a note lists the matching
+ * contacts (recently sent to first, then favourites), and the book's button
+ * lists them all. Arrow keys move through the list and Enter picks.
+ */
+function RecipientInput({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  const t = useT();
+  const { contacts } = useContacts();
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const box = useRef<HTMLDivElement>(null);
+  const listId = useId();
+
+  const q = value.trim().toLowerCase();
+  const matches = useMemo(() => {
+    const all = [...(contacts ?? [])].sort(
+      (a, b) => b.lastSentAt - a.lastSentAt || Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name),
+    );
+    // A complete address needs no suggestions
+    if (isAddress(q)) return [];
+    if (!q) return all.slice(0, 8);
+    return all
+      .filter((c) => c.name.toLowerCase().includes(q) || c.address.toLowerCase().includes(q) || c.note.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [contacts, q]);
+  const showing = open && matches.length > 0;
+
+  useEffect(() => setActive(0), [q]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const pick = (address: string) => {
+    onChange(address);
+    setOpen(false);
+  };
+
+  return (
+    <div ref={box} className="relative">
+      <div className="flex items-center gap-2">
+        <input
+          id={id}
+          className="input flex-1 font-mono"
+          placeholder={(contacts?.length ?? 0) > 0 ? t("wallet.send.toPlaceholder") : "0x…"}
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (!showing) return;
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setActive((i) => (i + 1) % matches.length);
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setActive((i) => (i - 1 + matches.length) % matches.length);
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              pick(matches[active].address);
+            } else if (e.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+          role="combobox"
+          aria-expanded={showing}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          spellCheck={false}
+          autoComplete="off"
+          autoFocus
+        />
+        {(contacts?.length ?? 0) > 0 && (
+          <button
+            type="button"
+            className="btn btn-secondary shrink-0"
+            onClick={() => setOpen((o) => !o || !!q)}
+            aria-label={t("contacts.pick")}
+          >
+            <BookUser className="size-4" />
+            {t("nav.contacts")}
+          </button>
+        )}
+      </div>
+      <AnimatePresence>
+        {showing && (
+          <motion.ul
+            id={listId}
+            role="listbox"
+            aria-label={t("contacts.pick")}
+            className="menu absolute inset-x-0 top-full z-50 mt-1 flex max-h-80 flex-col gap-px overflow-y-auto p-1"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, transition: FADE_OUT }}
+            transition={GLIDE}
+          >
+            {matches.map((c, i) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={i === active}
+                  data-active={i === active ? "" : undefined}
+                  onMouseEnter={() => setActive(i)}
+                  onClick={() => pick(c.address)}
+                  className="menu-item w-full gap-3 py-1.5 text-left"
+                >
+                  <AddressAvatar address={c.address} size={28} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{c.name}</span>
+                    <span className="block truncate font-mono text-xs text-muted-foreground">{shortHex(c.address, 10, 8)}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/** RecipientHint names the recipient once a full address is in: a contact, or one of the wallet's own accounts. */
+function RecipientHint({ address }: { address: string }) {
+  const t = useT();
+  const { byAddress } = useContacts();
+  const { info } = useWallet();
+  if (!address) return <>{t("wallet.send.toHint")}</>;
+  const contact = byAddress(address);
+  if (contact) {
+    return (
+      <span className="flex items-center gap-1.5 text-good-ink">
+        <Check className="size-3.5" />
+        {t("contacts.recipient", { name: contact.name })}
+      </span>
+    );
+  }
+  const own = info?.accounts.find((a) => sameAddress(a.address, address));
+  if (own && info) return <>{t("contacts.ownAccount", { name: accountLabel(own, info.accounts, t) })}</>;
+  return <>{t("wallet.send.toHint")}</>;
 }

@@ -526,8 +526,6 @@ const ru: Dict = {
   "wallet.review.fee": "Комиссия сети",
   "wallet.review.feeDetail": "{gas} газа по {price}",
   "wallet.review.total": "Итого",
-  "wallet.review.network": "Сеть",
-  "wallet.review.chainId": "сеть {id}",
   "wallet.review.toSelf": "Отправка на этот же аккаунт: тратится только комиссия.",
   "wallet.review.toContract": "Получатель — контракт. При получении LAX он выполняет код; убедитесь, что он для этого предназначен.",
   "wallet.review.dear": "Эта цена более чем втрое выше {price}, предлагаемых вашим узлом.",

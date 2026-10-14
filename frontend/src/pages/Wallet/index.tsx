@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowDownLeft,
   ArrowRight,
   ArrowUpRight,
+  ChevronRight,
   Clock,
   FileKey2,
   HardDrive,
@@ -14,12 +15,12 @@ import {
   ScrollText,
   Server,
 } from "lucide-react";
-import { TxView } from "../../lib/api";
-import { formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
+import { api, TxDetails, TxView } from "../../lib/api";
+import { formatGwei, formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
 import { useNow } from "../../lib/useNow";
 import { STAGGER, useStagger } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
-import { useAgo, useT } from "../../i18n";
+import { useAgo, useLang, useT } from "../../i18n";
 import { Counter } from "../../components/ui/Counter";
 import { Panel, Section } from "../../components/ui/Panel";
 import { IconBadge } from "../../components/ui/IconBadge";
@@ -33,6 +34,8 @@ import { GlowCard } from "../../components/ui/GlowCard";
 import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { RevealPhraseModal } from "./Phrase";
+import { Detail, DetailCard, Unfold } from "../Overview/parts";
+import { useContacts } from "../../lib/contacts";
 
 type Activity = {
   kind: "in" | "out" | "self";
@@ -66,6 +69,20 @@ function Overview() {
   const { view, err, running } = useSummary(account?.address);
   const [backup, setBackup] = useState(false);
   const [reveal, setReveal] = useState(false);
+  // The activity row opened to its details, by hash, and the details read
+  // so far (or why they couldn't be). A row opens once its details are in,
+  // so it unfolds to its full height in one motion.
+  const [opened, setOpened] = useState<string | null>(null);
+  const [details, setDetails] = useState<Record<string, TxDetails | string>>({});
+  const load = (hash: string) =>
+    api
+      .txDetails(hash)
+      .then((d) => setDetails((m) => ({ ...m, [hash]: d })))
+      .catch((e: unknown) => setDetails((m) => ({ ...m, [hash]: e instanceof Error ? e.message : String(e) })));
+  const toggle = (hash: string) => {
+    if (opened === hash) setOpened(null);
+    else load(hash).then(() => setOpened(hash));
+  };
 
   const activity = useMemo<Activity[]>(() => {
     if (!view) return [];
@@ -86,6 +103,13 @@ function Overview() {
     // The backend lists confirmed ones newest first; waiting ones go on top
     return [...view.pending.map((tx) => row(tx, true)), ...view.transactions.slice(0, 25).map((tx) => row(tx, false))];
   }, [view]);
+
+  // The opened one read again as it lands in a block
+  const openedBlock = activity.find((a) => a.hash === opened)?.block;
+  useEffect(() => {
+    if (opened && openedBlock) load(opened);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opened, openedBlock]);
 
   if (!account || !info) return null;
   const label = accountLabel(account, info.accounts, t);
@@ -203,42 +227,50 @@ function Overview() {
           ) : (
             <motion.ul {...stagger} className="flex flex-col divide-y divide-border">
               {activity.map((a) => (
-                <motion.li
-                  variants={STAGGER.item}
-                  key={`${a.pending}-${a.hash}`}
-                  className="group flex h-16 items-center gap-3.5 px-4 transition-colors hover:bg-hover"
-                >
-                  <ActivityIcon kind={a.kind} pending={a.pending} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 font-medium">
-                      {t(`wallet.kind.${a.kind}`)}
-                      {a.pending && (
-                        <Pill tone="info">{t("wallet.pending")}</Pill>
-                      )}
+                <motion.li variants={STAGGER.item} key={`${a.pending}-${a.hash}`}>
+                  <button
+                    type="button"
+                    onClick={() => toggle(a.hash)}
+                    aria-expanded={opened === a.hash}
+                    className={`flex h-16 w-full items-center gap-3.5 px-4 text-left transition-colors hover:bg-hover ${opened === a.hash ? "bg-hover" : ""}`}
+                  >
+                    <ActivityIcon kind={a.kind} pending={a.pending} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 font-medium">
+                        {t(`wallet.kind.${a.kind}`)}
+                        {a.pending && <Pill tone="info">{t("wallet.pending")}</Pill>}
+                      </div>
+                      <div className="truncate text-sm text-muted-foreground tabular-nums">
+                        {a.pending ? t("wallet.inPool") : t("wallet.inBlock", { block: formatInt(a.block) })}
+                        {a.kind !== "self" && (
+                          <>
+                            {" · "}
+                            {a.kind === "out" ? t("wallet.row.to") : t("wallet.row.from")}{" "}
+                            <Counterparty address={a.other} />
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="truncate text-sm text-muted-foreground tabular-nums">
-                      {a.pending ? t("wallet.inPool") : t("wallet.inBlock", { block: formatInt(a.block) })}
-                      {a.other && a.kind !== "self" && (
-                        <>
-                          {" · "}
-                          <span className="font-mono">{shortHex(a.other, 8, 6)}</span>
-                        </>
-                      )}
+                    <div className="text-right tabular-nums">
+                      <div className={`font-semibold ${a.kind === "in" ? "text-good-ink" : ""}`}>
+                        {a.kind === "in" ? "+" : a.kind === "out" ? "−" : ""}
+                        {formatLax(a.amountWei, 6)} <span className="font-normal text-muted-foreground">LAX</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {a.pending ? t("wallet.unconfirmed") : ago(a.time, now)}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right tabular-nums">
-                    <div className={`font-semibold ${a.kind === "in" ? "text-good-ink" : ""}`}>
-                      {a.kind === "in" ? "+" : a.kind === "out" ? "−" : ""}
-                      {formatLax(a.amountWei, 6)} <span className="font-normal text-muted-foreground">LAX</span>
-                    </div>
-                    <div className="flex items-center justify-end gap-1 text-sm text-muted-foreground">
-                      {a.pending ? t("wallet.unconfirmed") : ago(a.time, now)}
-                      <CopyButton
-                        value={a.hash}
-                        className="-my-1 -mr-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                      />
-                    </div>
-                  </div>
+                    <ChevronRight
+                      className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${opened === a.hash ? "rotate-90" : ""}`}
+                    />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {opened === a.hash && (
+                      <Unfold>
+                        <ActivityDetails d={details[a.hash]} head={view?.headBlock ?? 0} />
+                      </Unfold>
+                    )}
+                  </AnimatePresence>
                 </motion.li>
               ))}
             </motion.ul>
@@ -250,6 +282,101 @@ function Overview() {
       <BackupModal open={backup} onClose={() => setBackup(false)} account={account} label={label} />
     </div>
   );
+}
+
+/** ActivityDetails is an opened activity row: everything the node knows of the transaction. */
+function ActivityDetails({ d, head }: { d: TxDetails | string | undefined; head: number }) {
+  const t = useT();
+  const { lang } = useLang();
+
+  // Indented to the row's text: its padding, the badge and the gap after it
+  const inset = "pr-4 pl-[70px]";
+  if (!d || typeof d === "string") {
+    return (
+      <DetailCard inset={inset}>
+        <p className="text-sm text-critical-ink">{d}</p>
+      </DetailCard>
+    );
+  }
+
+  const pending = d.status === "pending";
+  const confirmations = pending || head < d.block ? 0 : head - d.block + 1;
+  const used = d.gasLimit > 0 ? Math.round((d.gasUsed / d.gasLimit) * 100) : 0;
+  return (
+    <DetailCard inset={inset}>
+      <div className="mb-3.5 flex flex-wrap items-center gap-2">
+        <Pill tone={pending ? "info" : d.status === "failed" ? "critical" : "good"}>
+          {t(`wallet.tx.status.${d.status}`)}
+        </Pill>
+        {!pending && (
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {t(confirmations === 1 ? "wallet.tx.confirmation" : "wallet.tx.confirmations", {
+              n: formatInt(confirmations),
+            })}
+          </span>
+        )}
+      </div>
+      <dl className="space-y-2.5">
+        <Detail label={t("mempool.hash")} value={d.hash} copy />
+        {!pending && (
+          <>
+            <Detail
+              label={t("wallet.tx.block")}
+              value={`${formatInt(d.block)} · ${t("wallet.tx.position", { n: formatInt(d.index) })}`}
+            />
+            <Detail
+              label={t("wallet.tx.time")}
+              value={new Date(d.timestamp * 1000).toLocaleString(lang, { dateStyle: "medium", timeStyle: "medium" })}
+            />
+          </>
+        )}
+        <Detail label={t("mempool.from")} value={d.from} copy />
+        <Detail label={t("mempool.to")} value={d.to || t("mempool.creation")} copy={!!d.to} />
+        {d.contractAddress && <Detail label={t("wallet.tx.contract")} value={d.contractAddress} copy />}
+        <Detail label={t("mempool.value")} value={`${formatLax(d.valueWei, 18)} LAX`} />
+        <Detail label={pending ? t("mempool.maxFee") : t("wallet.tx.fee")} value={`${formatLax(d.feeWei, 18)} LAX`} />
+        <Detail label={t("mempool.gasPrice")} value={formatGwei(d.gasPriceWei)} />
+        <Detail
+          label={t("wallet.tx.gas")}
+          value={
+            pending
+              ? formatInt(d.gasLimit)
+              : `${formatInt(d.gasUsed)} / ${formatInt(d.gasLimit)} (${used}%)`
+          }
+        />
+        <Detail label={t("mempool.nonce")} value={String(d.nonce)} />
+        {!pending && <Detail label={t("wallet.tx.events")} value={formatInt(d.logs)} />}
+        <Detail label={t("mempool.size")} value={t("mempool.bytes", { n: formatInt(d.sizeBytes) })} />
+        {!pending && <Detail label={t("wallet.tx.blockHash")} value={d.blockHash} copy />}
+        <div className="grid grid-cols-[120px_1fr_auto] items-start gap-3">
+          <dt className="text-sm text-muted-foreground">{t("mempool.data")}</dt>
+          {d.input === "0x" ? (
+            <dd className="text-sm">{t("peers.none")}</dd>
+          ) : (
+            <dd className="selectable max-h-28 overflow-y-auto font-mono text-sm break-all">{d.input}</dd>
+          )}
+          {d.input !== "0x" ? <CopyButton value={d.input} className="-my-1" /> : <span />}
+        </div>
+      </dl>
+    </DetailCard>
+  );
+}
+
+/**
+ * Counterparty is the other side of an activity row: one of the wallet's
+ * own accounts or a contact by name, any other address shortened, or a
+ * contract creation, which has none.
+ */
+function Counterparty({ address }: { address: string }) {
+  const t = useT();
+  const { info } = useWallet();
+  const { byAddress } = useContacts();
+  if (!address) return <>{t("mempool.creation")}</>;
+  const own = info?.accounts.find((x) => sameAddress(x.address, address));
+  if (own) return <span className="text-foreground/80">{accountLabel(own, info!.accounts, t)}</span>;
+  const contact = byAddress(address);
+  if (contact) return <span className="text-foreground/80">{contact.name}</span>;
+  return <span className="font-mono">{shortHex(address, 8, 6)}</span>;
 }
 
 function ActivityIcon({ kind, pending }: { kind: Activity["kind"]; pending: boolean }) {
