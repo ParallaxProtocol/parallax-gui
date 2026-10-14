@@ -30,7 +30,7 @@ func LoadConfigStore(path string) (*ConfigStore, error) {
 		if err != nil {
 			return nil, err
 		}
-		path = filepath.Join(dir, "Parallax", "gui.json")
+		path = filepath.Join(dir, appDirName(), "gui.json")
 	}
 	cs := &ConfigStore{path: path, cfg: defaultGUIConfig()}
 
@@ -99,9 +99,14 @@ func defaultGUIConfig() GUIConfig {
 	// cmd/parallaxd/main.go:prepare(). Without this bump the GUI would sync
 	// roughly four times slower than the CLI.
 	const cacheTotalMB = 4096
+	dataDir := node.DefaultDataDir()
+	if p := Profile(); p != "" {
+		// A profile's node keeps its own chain, never another copy's
+		dataDir += "-" + p
+	}
 	return GUIConfig{
 		Bootstrapped:     false,
-		DataDir:          node.DefaultDataDir(),
+		DataDir:          dataDir,
 		SyncMode:         "snap",
 		HTTPRPCEnabled:   true, // on by default so local tools and dapps can reach the node.
 		HTTPRPCPort:      8545,

@@ -14,6 +14,8 @@ declare global {
       keepAwake: (on: boolean) => void;
       saveBackup: (fileName: string, contents: string) => Promise<boolean>;
       exportContacts: (format: "json" | "csv", contents: string) => Promise<boolean>;
+      saveSigningDoc: (fileName: string, contents: string) => Promise<boolean>;
+      cameraAccess: () => Promise<boolean>;
       platform: string;
     };
   }
@@ -138,6 +140,11 @@ export type GUIConfig = {
   notifications: boolean;
   /** Start each run with an empty log; otherwise the latest lines are kept across restarts. */
   clearLogsOnStartup: boolean;
+
+  /** The whole app is an offline signer: no node, no update checks (takes effect on restart). */
+  offlineSigner: boolean;
+  /** The most fee a signed request may pay, decimal wei; empty is 1 LAX. */
+  offlineFeeCapWei: string;
 
   // Development builds only (make dev)
   /** Run a private `parallaxd --dev` chain instead of mainnet. */
@@ -359,6 +366,8 @@ export type WalletAccount = {
   /** EIP-55 checksummed. */
   address: string;
   name: string;
+  /** Its key is on an offline signer: sends from it are signing requests. */
+  watchOnly: boolean;
   /** Saved to a backup, imported from elsewhere, or from a confirmed recovery phrase: not the only copy. */
   backedUp: boolean;
   /** Made from recovery phrase seedId, at seedPath; seedStandard when that is m/44'/60'/0'/0/seedIndex. */
@@ -442,6 +451,85 @@ export type SendRequest = {
 
 export type SentTx = { hash: string; nonce: number };
 
+/** A transfer as both sides of offline signing show it (backend/offline.go). Amounts are decimal wei. */
+export type OfflineTx = {
+  id: string;
+  /** The short form of id both screens show: 3FA2-91C0 */
+  fingerprint: string;
+  chainId: number;
+  from: string;
+  to: string;
+  valueWei: string;
+  nonce: number;
+  gasLimit: number;
+  gasPriceWei: string;
+  maxFeeWei: string;
+  totalWei: string;
+  memo: string;
+  createdAt: number;
+};
+
+/** A signing request: its document (the QR code's and the file's content) and what it says. */
+export type SigningRequest = { doc: string; tx: OfflineTx };
+
+/** A request on the signer, before signing. */
+export type RequestReview = { tx: OfflineTx; conflict: boolean; signed: boolean };
+
+/** What the signer hands back. */
+export type SignedOffline = { doc: string; hash: string; tx: OfflineTx };
+
+/** A signed transaction, checked before it is broadcast. */
+export type SignedReview = {
+  tx: OfflineTx;
+  hash: string;
+  /** It answers one of the wallet's own requests. */
+  matched: boolean;
+  warnings: ("priceLow" | "nonceGap" | "balanceLow")[];
+};
+
+/** A message and its signature (backend/message.go); signature is 0x with v 27/28. */
+export type SignedMessage = {
+  address: string;
+  message: string;
+  signature: string;
+  id: string;
+  fingerprint: string;
+  /** The signed document, from the offline signer */
+  doc?: string;
+};
+
+/** What verifying found: whether it is from the address, and who it is from. */
+export type MessageCheck = { valid: boolean; recovered: string };
+
+/** A message signing request for a watch-only account's offline signer. */
+export type MessageRequest = {
+  doc: string;
+  id: string;
+  fingerprint: string;
+  from: string;
+  message: string;
+  createdAt: number;
+};
+
+/** A request the wallet follows until its transaction is in a block. */
+export type PendingRequest = {
+  doc: string;
+  tx: OfflineTx;
+  status: "waiting" | "broadcast" | "replaced" | "stale";
+  txHash: string;
+  sentAt: number;
+  replaces: string;
+};
+
+export type OfflineRequestInput = {
+  from: string;
+  to: string;
+  valueWei: string;
+  gasPriceWei: string;
+  gasLimit: number;
+  memo: string;
+};
+
 /** An address book entry (backend/contacts.go). Times are Unix seconds; lastSentAt 0 until sent to. */
 export type Contact = {
   id: string;
@@ -487,6 +575,32 @@ const WALLET_ERRORS: Record<string, string> = {
   "wallet: no such recovery phrase in this wallet": "wallet.err.unknownSeed",
   "wallet: the wallet has no password yet": "wallet.err.noPassword",
   "wallet: set the wallet password first": "wallet.err.needsSetup",
+  "wallet: this account is watch-only: its key is on an offline signer": "wallet.err.watchOnly",
+  "offline: this app is an offline signer: it never goes online": "offline.err.signer",
+  "offline: not a signing request": "offline.err.format",
+  "offline: the signing request is from a newer version of the app": "offline.err.version",
+  "offline: the signing request is for another network": "offline.err.chain",
+  "offline: only plain LAX transfers can be signed": "offline.err.data",
+  "offline: the signing request's gas is not valid": "offline.err.gas",
+  "offline: the fee is above the signing fee cap": "offline.err.feeCap",
+  "offline: the signing request does not match its fingerprint": "offline.err.tampered",
+  "offline: the signing request is for an account this wallet doesn't hold": "offline.err.account",
+  "offline: no such signing request": "offline.err.unknown",
+  "offline: the memo is longer than 200 characters": "offline.err.memo",
+  "offline: not a signed transaction": "offline.err.signedFormat",
+  "offline: the signed transaction does not match its signing request": "offline.err.mismatch",
+  "offline: the signed transaction is for another network": "offline.err.chain",
+  "offline: the transaction is not signed by an account of this wallet": "offline.err.sender",
+  "offline: this transaction's nonce has already been used": "offline.err.nonceUsed",
+  "offline: signing requests are for watch-only accounts": "offline.err.notWatch",
+  "offline: the signing fee cap must be more than 0 LAX": "offline.err.feeCapZero",
+  "offline: this needs the node, which an offline signer never starts": "offline.err.signer",
+  "message: the message must be 1 to 1024 bytes of text, without control characters": "message.err.text",
+  "message: not a valid signature": "message.err.signature",
+  "message: not a valid address": "message.err.address",
+  "message: not a message signing request": "message.err.request",
+  "message: not a signed message": "message.err.signed",
+  "message: the message does not match its fingerprint": "message.err.tampered",
   "contacts: a contact needs a name of at most 64 characters": "contacts.err.name",
   "contacts: the note is longer than 500 characters": "contacts.err.note",
   "contacts: this address is already in the address book": "contacts.err.exists",
@@ -506,6 +620,17 @@ export function walletError(e: unknown, t: (key: string) => string): string {
   // Some carry what they are about after a colon: the address of a key
   const key = WALLET_ERRORS[msg] ?? WALLET_ERRORS[msg.replace(/: 0x[0-9a-fA-F]{40}$/, "")];
   return key ? t(key) : msg;
+}
+
+/** Saves a signing request or signed transaction where the user picks; false if cancelled. */
+export function saveSigningDoc(fileName: string, contents: string): Promise<boolean> {
+  if (!window.parallax) return Promise.reject(new Error("unavailable"));
+  return window.parallax.saveSigningDoc(fileName, contents);
+}
+
+/** Asks for the camera where the OS needs asking; whether it may be used. */
+export function cameraAccess(): Promise<boolean> {
+  return window.parallax?.cameraAccess ? window.parallax.cameraAccess() : Promise.resolve(true);
 }
 
 /** Saves an exported address book where the user picks; false if cancelled. */
@@ -595,6 +720,24 @@ export const api = {
   walletSummary: (address: string) => call<AddressView>("WalletSummary", address),
   /** Every wallet account's balance at the head, in wei by checksummed address. */
   walletBalances: () => call<Record<string, string>>("WalletBalances"),
+  walletAddWatchOnly: (name: string, address: string) => call<WalletAccount>("WalletAddWatchOnly", name, address),
+  walletRemoveWatchOnly: (address: string) => call<void>("WalletRemoveWatchOnly", address),
+  offlineBuildRequest: (input: OfflineRequestInput) => call<SigningRequest>("OfflineBuildRequest", input),
+  offlinePendingRequests: () => call<PendingRequest[]>("OfflinePendingRequests"),
+  offlineDiscardRequest: (id: string) => call<void>("OfflineDiscardRequest", id),
+  offlineReplaceRequest: (id: string) => call<SigningRequest>("OfflineReplaceRequest", id),
+  offlineReviewSigned: (data: string) => call<SignedReview>("OfflineReviewSigned", data),
+  offlineBroadcast: (data: string) => call<SentTx>("OfflineBroadcast", data),
+  offlineReviewRequest: (data: string) => call<RequestReview>("OfflineReviewRequest", data),
+  offlineSignRequest: (data: string, password: string) => call<SignedOffline>("OfflineSignRequest", data, password),
+  messageSign: (address: string, message: string, password: string) =>
+    call<SignedMessage>("MessageSign", address, message, password),
+  messageVerify: (address: string, message: string, signature: string) =>
+    call<MessageCheck>("MessageVerify", address, message, signature),
+  messageBuildRequest: (address: string, message: string) => call<MessageRequest>("MessageBuildRequest", address, message),
+  messageReviewRequest: (data: string) => call<MessageRequest>("MessageReviewRequest", data),
+  messageSignRequest: (data: string, password: string) => call<SignedMessage>("MessageSignRequest", data, password),
+  messageReviewSigned: (data: string) => call<SignedMessage & MessageCheck>("MessageReviewSigned", data),
   contacts: () => call<Contact[]>("Contacts"),
   contactAdd: (c: ContactInput) => call<Contact>("ContactAdd", c),
   contactUpdate: (id: string, c: ContactInput) => call<Contact>("ContactUpdate", id, c),
@@ -602,6 +745,8 @@ export const api = {
   contactRemove: (id: string) => call<void>("ContactRemove", id),
   contactsExport: (format: "json" | "csv") => call<string>("ContactsExport", format),
   contactsImport: (data: string) => call<ContactsImport>("ContactsImport", data),
+  /** The development profile this copy runs as (make dev PROFILE=…), "" for the default one. */
+  profile: () => call<string>("Profile"),
   txDetails: (hash: string) => call<TxDetails>("TxDetails", hash),
   walletActivitySince: (after: number) =>
     call<{ transactions: WalletTx[]; head: number }>("WalletActivitySince", after),

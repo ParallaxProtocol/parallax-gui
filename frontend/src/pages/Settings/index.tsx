@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { api, GUIConfig, UpdateInfo } from "../../lib/api";
+import { formatUnits, parseUnits } from "../../lib/format";
 import { applyTheme } from "../../lib/theme";
 import { FADE_IN, FADE_OUT, GLIDE, PAGE, SPRING } from "../../lib/motion";
 import { CONFIG_UPDATED_EVENT } from "../../App";
@@ -33,6 +34,7 @@ import { Notice } from "../../components/ui/bits";
 import LogsPanel from "./LogsPanel";
 import { Advanced, countSet, Group, ListInput, NumberInput, Setting, TextInput } from "./fields";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
+import { useOfflineMode } from "../../lib/offline";
 import { useWallet } from "../../lib/wallet";
 import type { AvatarStyle } from "../../lib/prefs";
 
@@ -50,6 +52,10 @@ const LIVE_FIELDS = new Set<keyof GUIConfig>([
   "notifications",
   "staticPeers",
   "trustedPeers",
+  // The backend takes the node down at once on becoming an offline signer,
+  // and reads the fee cap on each signature
+  "offlineSigner",
+  "offlineFeeCapWei",
 ]);
 
 // Fields the daemon reads only as its process starts, from its argv:
@@ -71,7 +77,11 @@ export default function Settings() {
   const [restartPending, setRestartPending] = useState(false);
   const [appRestartPending, setAppRestartPending] = useState(false);
   const [restarting, setRestarting] = useState(false);
-  const { section, setSection } = useSettingsSheet();
+  const { section: chosen, setSection } = useSettingsSheet();
+  // An offline signer never runs its node: its sections aren't shown, and
+  // one left open shows General instead
+  const offline = useOfflineMode();
+  const section = offline && NODE_SECTIONS.has(chosen) ? "general" : chosen;
   const [login, setLogin] = useState<{ supported: boolean; enabled: boolean }>({ supported: false, enabled: false });
 
   useEffect(() => {
@@ -173,7 +183,7 @@ export default function Settings() {
         aria-label={t("nav.settings")}
         className="flex w-60 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-border p-3"
       >
-        {NAV_GROUPS.map((group, gi) => (
+        {NAV_GROUPS.filter((g) => !offline || !g.sections.some((x) => NODE_SECTIONS.has(x))).map((group, gi) => (
           <div key={group.title} className="flex flex-col gap-px">
             <h3 className={`px-2.5 pb-1.5 text-sm font-semibold text-muted-foreground ${gi === 0 ? "" : "pt-5"}`}>
               {t(group.title)}
@@ -245,15 +255,19 @@ export default function Settings() {
                           <Toggle checked={login.enabled} onChange={toggleLogin} label={t("settings.openAtLogin")} />
                         </Setting>
                       )}
-                      <Setting title={t("settings.autoStart")} desc={t("settings.autoStart.desc")}>
-                        <Toggle
-                          checked={cfg.autoStartNode}
-                          onChange={(v) => update({ autoStartNode: v })}
-                          label={t("settings.autoStart")}
-                        />
-                      </Setting>
+                      {!offline && (
+                        <Setting title={t("settings.autoStart")} desc={t("settings.autoStart.desc")}>
+                          <Toggle
+                            checked={cfg.autoStartNode}
+                            onChange={(v) => update({ autoStartNode: v })}
+                            label={t("settings.autoStart")}
+                          />
+                        </Setting>
+                      )}
                     </Rows>
                   </Group>
+                  {/* Syncing, notifications of the chain, update checks: none on a signer */}
+                  {!offline && (
                   <Group title={t("settings.group.background")}>
                     <Rows>
                       <Setting
@@ -285,6 +299,27 @@ export default function Settings() {
                           label={t("settings.updateCheck")}
                         />
                       </Setting>
+                    </Rows>
+                  </Group>
+                  )}
+                  <Group title={t("settings.group.offline")}>
+                    <Rows>
+                      <Setting
+                        title={t("settings.offlineSigner")}
+                        more={t("settings.offlineSigner.more")}
+                        desc={t("settings.offlineSigner.desc")}
+                      >
+                        <Toggle
+                          checked={cfg.offlineSigner}
+                          onChange={(v) => update({ offlineSigner: v, autoStartNode: v ? false : cfg.autoStartNode })}
+                          label={t("settings.offlineSigner")}
+                        />
+                      </Setting>
+                      {cfg.offlineSigner && (
+                        <Setting title={t("settings.feeCap")} desc={t("settings.feeCap.desc")}>
+                          <FeeCapInput value={cfg.offlineFeeCapWei} onChange={(v) => update({ offlineFeeCapWei: v })} />
+                        </Setting>
+                      )}
                     </Rows>
                   </Group>
                 </>
@@ -1278,6 +1313,7 @@ export default function Settings() {
                       </Setting>
                     </Rows>
                   </Group>
+                  {!offline && (
                   <Group title={t("settings.group.metrics")}>
                     <Rows>
                       <Setting
@@ -1335,6 +1371,7 @@ export default function Settings() {
                       </Advanced>
                     )}
                   </Group>
+                  )}
                   <Group title={t("settings.group.logs")} desc={t("settings.diagnostics.desc")}>
                     <LogsPanel />
                   </Group>
@@ -1360,6 +1397,38 @@ export default function Settings() {
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * FeeCapInput edits the offline signer's fee cap in LAX, stored as decimal
+ * wei ("" is the default, 1 LAX); a value that isn't a positive amount
+ * is held back until it is.
+ */
+function FeeCapInput({ value, onChange }: { value: string; onChange: (wei: string) => void }) {
+  const t = useT();
+  const [text, setText] = useState(value ? formatUnits(value, 18) : "1");
+  const wei = parseUnits(text, 18);
+  const bad = wei === null || wei <= 0n;
+  return (
+    <span className="flex items-center gap-2">
+      <span className="relative w-36">
+        <input
+          className={`input pr-12 tabular-nums ${bad ? "border-critical" : ""}`}
+          inputMode="decimal"
+          value={text}
+          aria-label={t("settings.feeCap")}
+          aria-invalid={bad}
+          onChange={(e) => {
+            const v = e.target.value.replace(",", ".");
+            setText(v);
+            const w = parseUnits(v, 18);
+            if (w !== null && w > 0n) onChange(w === 10n ** 18n ? "" : w.toString());
+          }}
+        />
+        <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">LAX</span>
+      </span>
+    </span>
   );
 }
 
@@ -1414,6 +1483,7 @@ function NetworkPicker({ value, onChange }: { value: string[]; onChange: (v: str
 
 function About() {
   const t = useT();
+  const offline = useOfflineMode();
   const [appVersion, setAppVersion] = useState("");
   const [client, setClient] = useState<{ release: string; meta: string; commit: string } | null>(null);
   const [checking, setChecking] = useState(false);
@@ -1492,8 +1562,8 @@ function About() {
         >
           <span className="selectable font-medium tabular-nums">{client ? `v${client.release}` : "—"}</span>
         </Row>
-        <Row title={t("settings.about.updates")} desc={result ?? undefined}>
-          {info ? (
+        <Row title={t("settings.about.updates")} desc={offline ? t("settings.about.offlineUpdates") : (result ?? undefined)}>
+          {offline ? null : info ? (
             <button
               type="button"
               className="btn btn-primary btn-sm"
@@ -1613,6 +1683,9 @@ function SaveBar({
 }
 
 /** The sections, grouped under headings in the list, in SETTINGS_SECTIONS' order. */
+/** The sections about the node, which an offline signer never runs. */
+const NODE_SECTIONS = new Set<SettingsSection>(["node", "network", "rpc"]);
+
 const NAV_GROUPS: { title: string; sections: SettingsSection[] }[] = [
   { title: "settings.navGroup.app", sections: ["general", "appearance"] },
   { title: "nav.wallet", sections: ["accounts"] },

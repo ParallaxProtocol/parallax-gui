@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Check, FileKey2, HardDrive, KeyRound, Lock, Pencil, Plus, ScrollText, Trash2, X } from "lucide-react";
+import { Check, Eye, FileKey2, HardDrive, KeyRound, Lock, Pencil, Plus, ScrollText, Trash2, X } from "lucide-react";
 import { api, SeedInfo, walletError, WalletAccount } from "../../lib/api";
 import { shortHex } from "../../lib/format";
 import { STAGGER, useStagger } from "../../lib/motion";
@@ -17,6 +17,8 @@ import { BackupModal, DeriveModal, PasswordModal, RemoveModal, RemoveSeedModal }
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { RevealPhraseModal } from "./Phrase";
 import { useSettingsSheet } from "../../components/shell/SettingsSheet";
+import { RemoveWatchOnlyModal } from "./WatchOnly";
+import { useOfflineMode } from "../../lib/offline";
 
 type Action = "backup" | "remove";
 type SeedAction = "reveal" | "derive" | "remove";
@@ -33,6 +35,7 @@ export function AccountsSettings() {
   const stagger = useStagger();
   const wallet = useWallet();
   const { setOpen } = useSettingsSheet();
+  const offline = useOfflineMode();
   const [seedAction, setSeedAction] = useState<{ kind: SeedAction; seed: SeedInfo } | null>(null);
   const [changing, setChanging] = useState(false);
   const [action, setAction] = useState<{ kind: Action; account: WalletAccount } | null>(null);
@@ -70,6 +73,10 @@ export function AccountsSettings() {
           <div className="flex flex-col divide-y divide-border border-t border-border">
             <AddRow to="/accounts/new" icon={Plus} label={t("wallet.accounts.create")} onGo={() => setOpen(false)} />
             <AddRow to="/accounts/import" icon={KeyRound} label={t("wallet.accounts.import")} onGo={() => setOpen(false)} />
+            {/* An offline signer holds keys only; following one is for a wallet online */}
+            {!offline && (
+              <AddRow to="/accounts/watch" icon={Eye} label={t("offline.watch.add")} onGo={() => setOpen(false)} />
+            )}
           </div>
         </Panel>
       </section>
@@ -141,10 +148,15 @@ export function AccountsSettings() {
         seed={seedAction?.seed ?? null}
       />
       <RemoveModal
-        open={action?.kind === "remove"}
+        open={action?.kind === "remove" && !target?.watchOnly}
         onClose={close}
         account={target}
         label={target ? label(target) : ""}
+      />
+      <RemoveWatchOnlyModal
+        account={action?.kind === "remove" && target?.watchOnly ? target : null}
+        label={target ? label(target) : ""}
+        onClose={close}
       />
     </div>
   );
@@ -213,7 +225,13 @@ function AccountRow({
           ) : (
             <div className="flex items-center gap-2">
               <span className="truncate font-semibold">{label}</span>
-              {!account.backedUp && <Pill tone="warn">{t("wallet.accounts.noBackup")}</Pill>}
+              {account.watchOnly ? (
+                <Tooltip content={t("offline.watchOnly.desc")}>
+                  <Pill>{t("offline.watchOnly")}</Pill>
+                </Tooltip>
+              ) : (
+                !account.backedUp && <Pill tone="warn">{t("wallet.accounts.noBackup")}</Pill>
+              )}
             </div>
           )}
           <div className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
@@ -236,10 +254,12 @@ function AccountRow({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <button type="button" className="btn btn-tinted btn-sm" onClick={() => onAction("backup")}>
-            <FileKey2 className="size-3.5" />
-            {t("wallet.backup.cta")}
-          </button>
+          {!account.watchOnly && (
+            <button type="button" className="btn btn-tinted btn-sm" onClick={() => onAction("backup")}>
+              <FileKey2 className="size-3.5" />
+              {t("wallet.backup.cta")}
+            </button>
+          )}
           <RowActions
             onRename={() => setEditing(true)}
             onRemove={() => onAction("remove")}

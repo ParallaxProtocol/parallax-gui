@@ -153,6 +153,14 @@ type GUIConfig struct {
 	// latest lines are kept across restarts (backend/logfile.go)
 	ClearLogsOnStartup bool `json:"clearLogsOnStartup"`
 
+	// OfflineSigner makes the whole app an air-gapped signer (offline.go):
+	// the node never starts, no update check runs, and the wallet signs
+	// requests from a watch-only wallet online. It takes effect on restart
+	OfflineSigner bool `json:"offlineSigner"`
+	// OfflineFeeCapWei is the most fee a signed request may pay, decimal
+	// wei; empty is 1 LAX
+	OfflineFeeCapWei string `json:"offlineFeeCapWei"`
+
 	// Development builds only (make dev, devchain.go): run a private
 	// `parallaxd --dev` chain instead of mainnet, its genesis funding
 	// DevFundAddress

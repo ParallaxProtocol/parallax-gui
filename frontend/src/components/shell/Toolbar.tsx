@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { FADE_IN, FADE_OUT } from "../../lib/motion";
 import { useToolbarSlot } from "../../lib/toolbar";
 import { useWallet } from "../../lib/wallet";
+import { useOfflineMode } from "../../lib/offline";
 import { useT } from "../../i18n";
 
 const TITLES: Record<string, string> = {
@@ -11,6 +12,11 @@ const TITLES: Record<string, string> = {
   "/send": "nav.send",
   "/receive": "nav.receive",
   "/contacts": "nav.contacts",
+  "/sign": "offline.nav.sign",
+  "/messages/sign": "nav.signMessage",
+  "/messages/verify": "nav.verifyMessage",
+  "/broadcast": "offline.nav.broadcast",
+  "/accounts/watch": "offline.watch.title",
   "/accounts/new": "wallet.create.title",
   "/accounts/import": "wallet.import.title",
   "/setup": "wallet.setup.title",
@@ -29,7 +35,13 @@ export default function Toolbar() {
   const slot = useToolbarSlot();
   const { info } = useWallet();
   // The home page is the welcome until the wallet has its password
-  const title = pathname === "/" && info && !info.hasPassword ? "nav.welcome" : (TITLES[pathname] ?? TITLES["/"]);
+  const offline = useOfflineMode();
+  const title =
+    pathname === "/" && info && !info.hasPassword
+      ? "nav.welcome"
+      : pathname === "/" && offline
+        ? "offline.mode"
+        : (TITLES[pathname] ?? TITLES["/"]);
 
   return (
     <header

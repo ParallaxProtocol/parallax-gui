@@ -143,6 +143,10 @@ func (n *NodeController) Start(ctx context.Context) error {
 	}
 	guiCfg := n.cfg.Get()
 	n.mu.Unlock()
+	// An offline signer never goes online, whoever asks
+	if guiCfg.OfflineSigner {
+		return ErrOfflineSigner
+	}
 
 	nodeCfg, prlCfg, err := buildConfigs(guiCfg)
 	if err != nil {
@@ -443,6 +447,11 @@ func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 // ValidateConfig reports the first setting the node would refuse to start
 // with, so Settings can reject it on save rather than at the next start.
 func ValidateConfig(g GUIConfig) error {
+	if g.OfflineFeeCapWei != "" {
+		if v, ok := parseDecimal(g.OfflineFeeCapWei); !ok || v.Sign() <= 0 {
+			return ErrOfflineFeeCap
+		}
+	}
 	_, _, err := buildConfigs(g)
 	return err
 }

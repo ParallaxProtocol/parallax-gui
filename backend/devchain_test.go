@@ -7,6 +7,7 @@ import (
 	"context"
 	"math/big"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -134,4 +135,27 @@ func mustBig(t *testing.T, s string) *big.Int {
 		t.Fatalf("%q is not a number", s)
 	}
 	return v
+}
+
+// TestProfiles keeps each development profile's state apart, and release
+// builds out of them.
+func TestProfiles(t *testing.T) {
+	t.Setenv("PARALLAX_PROFILE", "signer")
+	t.Setenv("PARALLAX_DEV", "")
+	if Profile() != "" || appDirName() != "Parallax" {
+		t.Fatal("a release build took a profile")
+	}
+	t.Setenv("PARALLAX_DEV", "1")
+	if Profile() != "signer" || appDirName() != "Parallax-signer" {
+		t.Fatalf("profile %q, folder %q", Profile(), appDirName())
+	}
+	if d := defaultGUIConfig().DataDir; !strings.HasSuffix(d, "-signer") {
+		t.Fatalf("the profile's node data folder %s isn't its own", d)
+	}
+	for _, bad := range []string{"../x", "Signer", "-x", "a b", strings.Repeat("a", 33)} {
+		t.Setenv("PARALLAX_PROFILE", bad)
+		if Profile() != "" {
+			t.Errorf("profile %q was taken", bad)
+		}
+	}
 }

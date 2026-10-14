@@ -15,6 +15,8 @@ import {
   powerSaveBlocker,
   protocol,
   shell,
+  session,
+  systemPreferences,
 } from "electron";
 import { Backend } from "./backend";
 
@@ -28,6 +30,18 @@ import { Backend } from "./backend";
 /** The Vite dev server, when running `npm run dev`; unset in packaged builds. */
 const DEV_URL = process.env.PARALLAX_DEV_URL;
 const APP_ORIGIN = "app://parallax";
+
+/**
+ * The development profile (make dev PROFILE=<name>): a separate copy of the
+ * app, with its own Electron profile (and so its own single-instance lock)
+ * and its own backend state in <config>/Parallax-<name> (backend Profile).
+ * Packaged apps have none.
+ */
+const PROFILE = (() => {
+  const p = process.env.PARALLAX_PROFILE ?? "";
+  return !app.isPackaged && /^[a-z0-9][a-z0-9-]{0,31}$/.test(p) ? p : "";
+})();
+if (PROFILE) app.setPath("userData", path.join(app.getPath("appData"), `Parallax Client (${PROFILE})`));
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
 
@@ -141,7 +155,7 @@ function keepAwake(on: boolean) {
  */
 function backendArgs(): string[] {
   try {
-    const file = path.join(app.getPath("appData"), "Parallax", "gui.json");
+    const file = path.join(app.getPath("appData"), PROFILE ? `Parallax-${PROFILE}` : "Parallax", "gui.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8")) as { metrics?: boolean; metricsExpensive?: boolean };
     const args = ["--metrics"];
     if (cfg.metrics && cfg.metricsExpensive) args.push("--metrics.expensive");
@@ -209,6 +223,57 @@ async function saveContacts(format: "json" | "csv", contents: string): Promise<b
   return true;
 }
 
+/**
+ * Saves an offline signing document (backend/offline.go): a signing
+ * request or a signed transaction, to carry between the online wallet and
+ * the offline signer on a drive. Only those two kinds are written.
+ */
+async function saveSigningDoc(fileName: string, contents: string): Promise<boolean> {
+  if (contents.length > 8 * 1024) return false;
+  try {
+    const t = (JSON.parse(contents) as { type?: unknown }).type;
+    const kinds = ["parallax-sign-request", "parallax-signed-tx", "parallax-sign-message-request", "parallax-signed-message"];
+    if (typeof t !== "string" || !kinds.includes(t)) return false;
+  } catch {
+    return false;
+  }
+  const name = path.basename(fileName).replace(/[^\w.-]/g, "_") || "parallax-signing.json";
+  const opts = {
+    title: "Save for offline signing",
+    defaultPath: path.join(app.getPath("documents"), name.endsWith(".json") ? name : `${name}.json`),
+    filters: [{ name: "JSON", extensions: ["json"] }],
+  };
+  const res = mainWindow ? await dialog.showSaveDialog(mainWindow, opts) : await dialog.showSaveDialog(opts);
+  if (res.canceled || !res.filePath) return false;
+  await fs.promises.writeFile(res.filePath, contents, { mode: 0o600 });
+  await fs.promises.chmod(res.filePath, 0o600).catch(() => {});
+  return true;
+}
+
+/**
+ * The permissions the app's own pages get: the clipboard (the copy buttons
+ * write it; pasting a signing document reads it) and the camera, for
+ * scanning signing QR codes, video only. Every other permission, and any
+ * other page, is refused.
+ */
+const CLIPBOARD = new Set(["clipboard-sanitized-write", "clipboard-read"]);
+
+function guardPermissions() {
+  const own = (url: string) => url.startsWith(`${APP_ORIGIN}/`) || (!!DEV_URL && url.startsWith(DEV_URL));
+  session.defaultSession.setPermissionRequestHandler((wc, permission, callback, details) => {
+    const media = details as { mediaTypes?: string[]; requestingUrl?: string };
+    if (!own(media.requestingUrl ?? wc.getURL())) return callback(false);
+    if (CLIPBOARD.has(permission)) return callback(true);
+    const videoOnly = !!media.mediaTypes?.length && media.mediaTypes.every((m) => m === "video");
+    callback(permission === "media" && videoOnly);
+  });
+  session.defaultSession.setPermissionCheckHandler((_wc, permission, origin, details) => {
+    if (!own(`${origin}/`)) return false;
+    if (CLIPBOARD.has(permission)) return true;
+    return permission === "media" && (details as { mediaType?: string }).mediaType !== "audio";
+  });
+}
+
 /** Whether s is a Web3 Secret Storage keystore file: an encrypted key, never a plain one. */
 function isKeystoreFile(s: string): boolean {
   try {
@@ -273,7 +338,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: "Parallax Desktop",
+    title: PROFILE ? `Parallax Desktop (${PROFILE})` : "Parallax Desktop",
     backgroundColor: look.background,
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
     ...(isMac ? { trafficLightPosition: { x: 16, y: 19 } } : { titleBarOverlay: look.overlay }),
@@ -287,6 +352,8 @@ function createWindow() {
       spellcheck: false,
     },
   });
+  // A profile's name stays in the title, for telling the copies apart
+  if (PROFILE) win.on("page-title-updated", (e) => e.preventDefault());
   mainWindow = win;
   win.once("ready-to-show", () => win.show());
   const recolor = () => recolorWindow(win);
@@ -340,6 +407,7 @@ function restart(installer: string) {
 }
 
 function wireIpc() {
+  guardPermissions();
   ipcMain.handle("backend:call", async (event, method: unknown, args: unknown) => {
     if (!trusted(event) || typeof method !== "string" || !Array.isArray(args)) {
       return { error: "rejected" };
@@ -363,6 +431,17 @@ function wireIpc() {
   ipcMain.handle("wallet:saveBackup", async (event, fileName: unknown, contents: unknown) => {
     if (!trusted(event) || typeof fileName !== "string" || typeof contents !== "string") return false;
     return saveBackup(fileName, contents);
+  });
+  ipcMain.handle("offline:save", async (event, fileName: unknown, contents: unknown) => {
+    if (!trusted(event) || typeof fileName !== "string" || typeof contents !== "string") return false;
+    return saveSigningDoc(fileName, contents);
+  });
+  // macOS asks the user once for the camera; elsewhere access is the OS's
+  ipcMain.handle("camera:access", async (event) => {
+    if (!trusted(event)) return false;
+    if (!isMac) return true;
+    if (systemPreferences.getMediaAccessStatus("camera") === "granted") return true;
+    return systemPreferences.askForMediaAccess("camera");
   });
   ipcMain.handle("contacts:export", async (event, format: unknown, contents: unknown) => {
     if (!trusted(event) || (format !== "json" && format !== "csv") || typeof contents !== "string") return false;

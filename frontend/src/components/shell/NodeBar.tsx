@@ -1,6 +1,6 @@
 import { createContext, lazy, ReactNode, Suspense, useContext, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Loader2, Maximize2, Minimize2, Power, Server } from "lucide-react";
+import { Loader2, Maximize2, Minimize2, Power, Server, ShieldCheck } from "lucide-react";
 import { api } from "../../lib/api";
 import { formatDuration, formatInt } from "../../lib/format";
 import { nodeState, syncProgress, useNode, useRefresh } from "../../lib/live";
@@ -205,5 +205,27 @@ export default function NodeBar({ version }: { version: string }) {
         )}
       </AnimatePresence>
     </motion.section>
+  );
+}
+
+/**
+ * OfflineBar takes the node bar's place when the app is an offline signer:
+ * there is no node to show, only the promise that nothing goes online.
+ */
+export function OfflineBar({ version }: { version: string }) {
+  const t = useT();
+  return (
+    <section
+      aria-label={t("offline.mode")}
+      className="no-drag fixed z-40 flex items-center gap-3 border border-glass-edge bg-popover/80 px-3 text-sm text-muted-foreground shadow-[var(--glass-shine),var(--shadow-popover)] backdrop-blur-2xl"
+      style={{ left: NODE_BAR_GAP, right: NODE_BAR_GAP, bottom: NODE_BAR_GAP, height: NODE_BAR_HEIGHT, borderRadius: 16 }}
+    >
+      <IconBadge icon={ShieldCheck} tone="good" />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-[15px] font-semibold text-foreground">{t("offline.mode")}</span>
+        <span className="truncate">{t("offline.mode.bar")}</span>
+      </span>
+      {version && <span className="shrink-0 tabular-nums">{version}</span>}
+    </section>
   );
 }

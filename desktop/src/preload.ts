@@ -50,6 +50,14 @@ contextBridge.exposeInMainWorld("parallax", {
   exportContacts(format: "json" | "csv", contents: string): Promise<boolean> {
     return ipcRenderer.invoke("contacts:export", format, contents);
   },
+  /** Saves a signing request or signed transaction where the user picks; false if cancelled. */
+  saveSigningDoc(fileName: string, contents: string): Promise<boolean> {
+    return ipcRenderer.invoke("offline:save", fileName, contents);
+  },
+  /** Asks for the camera where the OS needs asking (macOS); whether it may be used. */
+  cameraAccess(): Promise<boolean> {
+    return ipcRenderer.invoke("camera:access");
+  },
   /** Holds off system sleep while on. */
   keepAwake(on: boolean) {
     ipcRenderer.send("power:keepAwake", on);

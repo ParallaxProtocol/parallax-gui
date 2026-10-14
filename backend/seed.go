@@ -687,9 +687,16 @@ func (w *Wallet) accountView(address string) WalletAccount {
 func (w *Wallet) viewLocked(address string) WalletAccount {
 	ref, fromSeed := w.meta.SeedOf[address]
 	index, standard := standardIndex(ref.Path)
+	watch := false
+	for _, a := range w.meta.Watch {
+		if a == address {
+			watch = true
+		}
+	}
 	return WalletAccount{
 		Address:      address,
 		Name:         w.meta.Names[address],
+		WatchOnly:    watch,
 		BackedUp:     w.meta.BackedUp[address] || fromSeed && w.meta.Seeds[ref.Seed].Confirmed,
 		FromSeed:     fromSeed,
 		SeedID:       ref.Seed,

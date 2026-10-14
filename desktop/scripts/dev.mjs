@@ -9,7 +9,15 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..", "..");
 const desktop = path.join(root, "desktop");
-const PORT = 5173;
+// make dev PROFILE=<name> runs a separate copy of the app beside the
+// default one (backend Profile, desktop main.ts): its own backend binary,
+// so a rebuild never replaces the other copy's running one, and the next
+// free port for its dev server
+const PROFILE = process.env.PROFILE ?? "";
+if (PROFILE && !/^[a-z0-9][a-z0-9-]{0,31}$/.test(PROFILE)) {
+  console.error(`PROFILE must be lower-case letters, digits and dashes, not "${PROFILE}"`);
+  process.exit(1);
+}
 // Both sides on IPv4 loopback: Vite's default "localhost" may bind only
 // ::1, where the wait below (and Electron's URL) would never reach it
 const HOST = "127.0.0.1";
@@ -21,7 +29,8 @@ const run = (cmd, args, opts) => {
 };
 
 const os = process.platform === "darwin" ? "mac" : win ? "win" : "linux";
-const bin = path.join(root, "build", "backend", `${os}-${process.arch}`, win ? "parallax-backend.exe" : "parallax-backend");
+const exe = `parallax-backend${PROFILE ? `-${PROFILE}` : ""}${win ? ".exe" : ""}`;
+const bin = path.join(root, "build", "backend", `${os}-${process.arch}`, exe);
 // The Parallax client's commit, from its module's origin, as the release
 // build stamps it (Makefile): the node page shows it with the version
 const daemonCommit = (() => {
@@ -39,6 +48,16 @@ run("go", ["build", "-ldflags", `-X github.com/ParallaxProtocol/parallax-gui/bac
   cwd: root,
 });
 run("node", ["build.mjs"], { cwd: desktop });
+
+// The first port from 5173 nobody listens on
+const free = (port) =>
+  new Promise((resolve) => {
+    const srv = net.createServer();
+    srv.once("error", () => resolve(false));
+    srv.listen(port, HOST, () => srv.close(() => resolve(true)));
+  });
+let PORT = 5173;
+while (!(await free(PORT))) PORT++;
 
 const vite = spawn("npx", ["vite", "--host", HOST, "--port", String(PORT), "--strictPort"], {
   cwd: path.join(root, "frontend"),
@@ -61,7 +80,13 @@ const electron = spawn("npx", ["electron", "."], {
   stdio: "inherit",
   shell: win,
   // PARALLAX_DEV unlocks the development-only settings (backend/devchain.go)
-  env: { ...process.env, PARALLAX_DEV_URL: `http://${HOST}:${PORT}`, PARALLAX_BACKEND_BIN: bin, PARALLAX_DEV: "1" },
+  env: {
+    ...process.env,
+    PARALLAX_DEV_URL: `http://${HOST}:${PORT}`,
+    PARALLAX_BACKEND_BIN: bin,
+    PARALLAX_DEV: "1",
+    PARALLAX_PROFILE: PROFILE,
+  },
 });
 electron.on("exit", (code) => {
   vite.kill();

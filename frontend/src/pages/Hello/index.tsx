@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Server, ShieldCheck } from "lucide-react";
+import { CONFIG_UPDATED_EVENT } from "../../App";
 import { api, GUIConfig, NodeStatus, SeedCandidate, walletError } from "../../lib/api";
 import { formatInt } from "../../lib/format";
 import { syncProgress } from "../../lib/live";
@@ -64,6 +65,7 @@ type Stage =
   | "greet"
   | "choose"
   | "language"
+  | "mode"
   | "datadir"
   | "networking"
   | "sync"
@@ -80,7 +82,8 @@ type Stage =
 /** Where Back goes from each stage that has one. */
 const BACK: Partial<Record<Stage, Stage>> = {
   language: "choose",
-  datadir: "language",
+  mode: "language",
+  datadir: "mode",
   networking: "datadir",
   confirm: "password",
   import: "offer",
@@ -206,7 +209,19 @@ export default function Hello({
               )}
             </Greeting>
           ) : stage === "language" ? (
-            <Language key="language" onNext={() => setStage("datadir")} />
+            <Language key="language" onNext={() => setStage("mode")} />
+          ) : stage === "mode" && cfg ? (
+            <Mode
+              key="mode"
+              onOnline={() => setStage("datadir")}
+              onOffline={async () => {
+                // An offline signer has no node to set up: straight to the wallet
+                await api.saveBootstrap({ ...cfg, offlineSigner: true, autoStartNode: false });
+                window.dispatchEvent(new Event(CONFIG_UPDATED_EVENT));
+                if (wallet) setStage("wallet");
+                else onDone(false);
+              }}
+            />
           ) : stage === "datadir" && cfg ? (
             <DataDir
               key="datadir"
@@ -842,6 +857,60 @@ function Language({ onNext }: { onNext: () => void }) {
         ))}
       </div>
       <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={onNext} autoFocus>
+        {t("common.continue")}
+        <ArrowRight className="size-4" />
+      </button>
+    </Screen>
+  );
+}
+
+/**
+ * Mode asks what this computer is for: a wallet with its own node, or an
+ * offline signer that never goes online and signs what a watch-only
+ * wallet elsewhere asks it to.
+ */
+function Mode({ onOnline, onOffline }: { onOnline: () => void; onOffline: () => Promise<void> }) {
+  const t = useT();
+  const [mode, setMode] = useState<"online" | "offline">("online");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <Screen title={t("onboarding.mode.title")} desc={t("onboarding.mode.desc")} wide>
+      <div role="radiogroup" aria-label={t("onboarding.mode.title")} className="flex w-full flex-col gap-2">
+        <Choice
+          selected={mode === "online"}
+          onClick={() => setMode("online")}
+          icon={<Server className="size-5 shrink-0 text-muted-foreground" />}
+          title={t("onboarding.mode.online")}
+          desc={t("onboarding.mode.onlineDesc")}
+        />
+        <Choice
+          selected={mode === "offline"}
+          onClick={() => setMode("offline")}
+          icon={<ShieldCheck className="size-5 shrink-0 text-muted-foreground" />}
+          title={t("onboarding.mode.offline")}
+          desc={t("onboarding.mode.offlineDesc")}
+        />
+      </div>
+      {error && <Notice tone="critical">{error}</Notice>}
+      <button
+        type="button"
+        className="btn btn-primary btn-lg min-w-64"
+        disabled={busy}
+        onClick={async () => {
+          if (mode === "online") return onOnline();
+          setBusy(true);
+          setError(null);
+          try {
+            await onOffline();
+          } catch (e) {
+            setError(e instanceof Error ? e.message : String(e));
+            setBusy(false);
+          }
+        }}
+        autoFocus
+      >
+        {busy && <Loader2 className="size-4 animate-spin" />}
         {t("common.continue")}
         <ArrowRight className="size-4" />
       </button>

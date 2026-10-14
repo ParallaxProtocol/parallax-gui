@@ -60,6 +60,7 @@ var (
 	ErrNodeSyncing       = errors.New("wallet: the node is still syncing")
 	ErrNoPeers           = errors.New("wallet: the node has no peers to send the transaction to")
 	ErrInsufficientFee   = errors.New("wallet: the balance does not cover the amount and the fee")
+	ErrWatchOnly         = errors.New("wallet: this account is watch-only: its key is on an offline signer")
 )
 
 const (
@@ -84,6 +85,10 @@ var walletScryptN, walletScryptP = keystore.StandardScryptN, keystore.StandardSc
 type WalletAccount struct {
 	Address string `json:"address"` // EIP-55 checksummed
 	Name    string `json:"name"`
+	// WatchOnly marks an account whose key is on an offline signer: the
+	// wallet follows its balance and activity, and sends from it by
+	// signing request (offline.go)
+	WatchOnly bool `json:"watchOnly"`
 	// BackedUp is set once the user saved the key's backup, brought the key
 	// from elsewhere (an import), or confirmed the recovery phrase it comes
 	// from: until then this computer holds the only copy.
@@ -122,6 +127,8 @@ type walletMeta struct {
 	// vault, are what derive the keys.
 	Seeds  map[string]seedMeta `json:"seeds"`
 	SeedOf map[string]seedRef  `json:"seedOf"`
+	// Watch lists the watch-only accounts, in the order they were added
+	Watch []string `json:"watch"`
 }
 
 // Wallet is the app's own wallet. It is safe for concurrent use.
@@ -141,6 +148,12 @@ type Wallet struct {
 	// 256 MB, and a send must assign its nonce, sign and submit before
 	// the next one reads the pending nonce.
 	keyMu sync.Mutex
+
+	// The signing requests it follows and, on a signer, what it signed
+	// (offline.go)
+	reqOnce  sync.Once
+	requests *requestStore
+	signedMu sync.Mutex
 }
 
 // NewWallet opens the wallet kept in configDir: the keystore in
@@ -222,6 +235,12 @@ func (w *Wallet) Info() WalletInfo {
 			selected = true
 		}
 	}
+	for _, addr := range w.meta.Watch {
+		info.Accounts = append(info.Accounts, w.viewLocked(addr))
+		if addr == w.meta.Selected {
+			selected = true
+		}
+	}
 	switch {
 	case selected:
 		info.Selected = w.meta.Selected
@@ -246,21 +265,60 @@ func (w *Wallet) find(address string) (wallet.Account, error) {
 	return acc, nil
 }
 
+// known returns a wallet account's address, a key in the keystore or a
+// watch-only one, and whether it is watch-only.
+func (w *Wallet) known(address string) (util.Address, bool, error) {
+	if acc, err := w.find(address); err == nil {
+		return acc.Address, false, nil
+	}
+	address = strings.TrimSpace(address)
+	if util.IsHexAddress(address) && w.isWatched(util.HexToAddress(address)) {
+		return util.HexToAddress(address), true, nil
+	}
+	return util.Address{}, false, ErrUnknownAccount
+}
+
+// isWatched reports whether addr is one of the watch-only accounts.
+func (w *Wallet) isWatched(addr util.Address) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, a := range w.meta.Watch {
+		if a == addr.Hex() {
+			return true
+		}
+	}
+	return false
+}
+
+// addresses lists every wallet account: the keys, then the watch-only ones.
+func (w *Wallet) addresses() []util.Address {
+	var out []util.Address
+	for _, acc := range w.ks.Accounts() {
+		out = append(out, acc.Address)
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, a := range w.meta.Watch {
+		out = append(out, util.HexToAddress(a))
+	}
+	return out
+}
+
 // Select makes address the account the app shows.
 func (w *Wallet) Select(address string) error {
-	acc, err := w.find(address)
+	addr, _, err := w.known(address)
 	if err != nil {
 		return err
 	}
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	w.meta.Selected = acc.Address.Hex()
+	w.meta.Selected = addr.Hex()
 	return w.saveMeta()
 }
 
 // Rename labels an account; an empty name clears the label.
 func (w *Wallet) Rename(address, name string) error {
-	acc, err := w.find(address)
+	addr, _, err := w.known(address)
 	if err != nil {
 		return err
 	}
@@ -271,9 +329,70 @@ func (w *Wallet) Rename(address, name string) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if name == "" {
-		delete(w.meta.Names, acc.Address.Hex())
+		delete(w.meta.Names, addr.Hex())
 	} else {
-		w.meta.Names[acc.Address.Hex()] = name
+		w.meta.Names[addr.Hex()] = name
+	}
+	return w.saveMeta()
+}
+
+// AddWatchOnly follows an account whose key is on an offline signer, by its
+// address: one typed (checksummed if mixed case) or scanned from the
+// signer's screen.
+func (w *Wallet) AddWatchOnly(name, address string) (WalletAccount, error) {
+	name, err := cleanName(name)
+	if err != nil {
+		return WalletAccount{}, err
+	}
+	addr, err := parseRecipient(address)
+	if err != nil {
+		return WalletAccount{}, err
+	}
+	if _, _, err := w.known(addr.Hex()); err == nil {
+		return WalletAccount{}, ErrAccountExists
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	hex := addr.Hex()
+	w.meta.Watch = append(w.meta.Watch, hex)
+	if name != "" {
+		w.meta.Names[hex] = name
+	}
+	// Nothing to lose: the key was never here
+	w.meta.BackedUp[hex] = true
+	w.meta.Selected = hex
+	if err := w.saveMeta(); err != nil {
+		w.meta.Watch = w.meta.Watch[:len(w.meta.Watch)-1]
+		return WalletAccount{}, err
+	}
+	logging.Info("Added a watch-only account", "address", hex)
+	return w.viewLocked(hex), nil
+}
+
+// RemoveWatchOnly stops following a watch-only account. It needs no
+// password: the wallet holds nothing of it but its address.
+func (w *Wallet) RemoveWatchOnly(address string) error {
+	addr, watch, err := w.known(address)
+	if err != nil {
+		return err
+	}
+	if !watch {
+		return ErrUnknownAccount
+	}
+	hex := addr.Hex()
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	kept := w.meta.Watch[:0:0]
+	for _, a := range w.meta.Watch {
+		if a != hex {
+			kept = append(kept, a)
+		}
+	}
+	w.meta.Watch = kept
+	delete(w.meta.Names, hex)
+	delete(w.meta.BackedUp, hex)
+	if w.meta.Selected == hex {
+		w.meta.Selected = ""
 	}
 	return w.saveMeta()
 }
@@ -501,11 +620,11 @@ func (w *Wallet) Remove(address, password string) error {
 // Summary reports one wallet account's balance and activity: the
 // transactions of the last week of blocks, and those waiting in the pool.
 func (w *Wallet) Summary(address string) (AddressView, error) {
-	acc, err := w.find(address)
+	addr, _, err := w.known(address)
 	if err != nil {
 		return AddressView{}, err
 	}
-	return w.node.AddressSummary(acc.Address.Hex())
+	return w.node.AddressSummary(addr.Hex())
 }
 
 // ---------------------------------------------------------------------------
@@ -636,10 +755,11 @@ func parseWei(s string, bad error) (*big.Int, error) {
 // one of the wallet's accounts to to, at gasPriceWei, or at the node's
 // suggested price when it is empty.
 func (w *Wallet) Quote(from, to, valueWei, gasPriceWei string) (SendQuote, error) {
-	acc, err := w.find(from)
+	fromAddr, _, err := w.known(from)
 	if err != nil {
 		return SendQuote{}, err
 	}
+	acc := wallet.Account{Address: fromAddr}
 	recipient, err := parseRecipient(to)
 	if err != nil {
 		return SendQuote{}, err
@@ -725,6 +845,9 @@ func (w *Wallet) Quote(from, to, valueWei, gasPriceWei string) (SendQuote, error
 func (w *Wallet) Send(req SendRequest) (SentTx, error) {
 	acc, err := w.find(req.From)
 	if err != nil {
+		if _, watch, _ := w.known(req.From); watch {
+			return SentTx{}, ErrWatchOnly
+		}
 		return SentTx{}, err
 	}
 	recipient, err := parseRecipient(req.To)

@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   ChevronRight,
   Clock,
+  Eye,
   FileKey2,
   HardDrive,
   KeyRound,
@@ -36,6 +37,7 @@ import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { RevealPhraseModal } from "./Phrase";
 import { Detail, DetailCard, Unfold } from "../Overview/parts";
 import { useContacts } from "../../lib/contacts";
+import { PendingRequests } from "../Offline/Requests";
 
 type Activity = {
   kind: "in" | "out" | "self";
@@ -154,7 +156,14 @@ function Overview() {
             <AddressAvatar address={account.address} size={36} />
             {/* The full address where the card has room for it, shortened where it hasn't */}
             <div className="@container flex min-w-0 flex-1 flex-col">
-              <span className="truncate font-semibold">{label}</span>
+              <span className="flex items-center gap-2">
+                <span className="truncate font-semibold">{label}</span>
+                {account.watchOnly && (
+                  <Tooltip content={t("offline.watchOnly.desc")}>
+                    <Pill tone="neutral">{t("offline.watchOnly")}</Pill>
+                  </Tooltip>
+                )}
+              </span>
               <span className="flex items-center gap-1 text-sm text-muted-foreground">
                 <span className="hidden @md:inline">
                   <GroupedAddress address={account.address} />
@@ -213,6 +222,8 @@ function Overview() {
 
       {!running && <Notice tone="info">{t("wallet.nodeOff")}</Notice>}
       {err && <Notice tone="critical">{err}</Notice>}
+
+      <PendingRequests />
 
       <Section
         title={t("wallet.activity")}
@@ -439,6 +450,10 @@ function Welcome() {
           onClick={() => navigate("/accounts/import")}
         />
       </div>
+      <button type="button" className="btn btn-ghost" onClick={() => navigate("/accounts/watch")}>
+        <Eye className="size-4" />
+        {t("offline.watch.welcome")}
+      </button>
       <p className="max-w-lg text-center text-sm text-muted-foreground">{t("wallet.welcome.local")}</p>
     </div>
   );

@@ -34,7 +34,7 @@ function Explainer({ lead, more, flag }: { lead?: ReactNode; more: string; flag?
   const t = useT();
   const stagger = useStagger();
   return (
-    <motion.div {...stagger} className="flex flex-col gap-4 p-5">
+    <motion.div {...stagger} className="flex flex-col gap-4 px-5 pt-1 pb-5">
       {lead && (
         <motion.p variants={STAGGER.item} className="text-[15px] font-medium leading-snug text-foreground">
           {lead}

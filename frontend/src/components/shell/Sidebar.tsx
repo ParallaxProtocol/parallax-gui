@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, BookUser, Check, ChevronsUpDown, Sparkles, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, BookUser, Check, ChevronsUpDown, FileCheck, FileSignature, PenLine, Radio, ShieldCheck, Sparkles, Wallet } from "lucide-react";
+import { useOfflineMode } from "../../lib/offline";
+import { api } from "../../lib/api";
 import { formatLax, shortHex } from "../../lib/format";
 import { FADE_OUT, GLIDE } from "../../lib/motion";
 import { accountLabel, useBalances, useWallet } from "../../lib/wallet";
@@ -10,6 +12,8 @@ import logo from "../../assets/logo.svg";
 import { NODE_BAR_ROOM } from "./NodeBar";
 import { SettingsButton, useSettingsSheet } from "./SettingsSheet";
 import { AddressAvatar } from "../ui/AddressAvatar";
+import { Pill } from "../ui/Pill";
+import { Tooltip } from "../ui/Tooltip";
 
 /**
  * Sidebar is the window's source list: the account the wallet shows and
@@ -23,6 +27,8 @@ export default function Sidebar() {
   const { info, account } = useWallet();
   const noAccount = !!info && !account;
   const locked = !!info && !info.hasPassword;
+  const offline = useOfflineMode();
+  const watching = !!info?.accounts.some((a) => a.watchOnly);
 
   return (
     <aside className="flex w-64 shrink-0 flex-col bg-sidebar">
@@ -32,21 +38,42 @@ export default function Sidebar() {
         <span className="traffic-light-gap" />
         <img src={logo} alt="" className="size-5" />
         <span className="text-[15px] font-semibold">Parallax</span>
+        <ProfileBadge />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col border-r border-border" style={{ paddingBottom: NODE_BAR_ROOM }}>
+        {/* Grouped by scope: what is about the account the switcher shows,
+            then what spans every account */}
         <nav className="flex flex-col gap-0.5 px-3 pt-3" aria-label={t("nav.label")}>
-          <h2 className="px-2.5 pb-1.5 text-sm font-semibold text-muted-foreground">{t("nav.wallet")}</h2>
+          <GroupHeading first>{t("nav.wallet")}</GroupHeading>
           {locked ? (
             // Until the wallet has its password, only the welcome
             <NavItem to="/" icon={Sparkles} label={t("nav.welcome")} />
+          ) : offline ? (
+            // The offline signer: its accounts, then signing, which the
+            // request's own account decides, not the switcher
+            <>
+              <AccountSwitcher />
+              <NavItem to="/receive" icon={ArrowDownLeft} label={t("nav.receive")} disabled={noAccount} />
+              <GroupHeading>{t("nav.group.signing")}</GroupHeading>
+              <NavItem to="/" icon={ShieldCheck} label={t("offline.nav.home")} />
+              <NavItem to="/sign" icon={PenLine} label={t("offline.nav.sign")} disabled={noAccount} />
+              <NavItem to="/messages/sign" icon={FileSignature} label={t("nav.signMessage")} disabled={noAccount} />
+              <NavItem to="/messages/verify" icon={FileCheck} label={t("nav.verifyMessage")} />
+              <NavItem to="/contacts" icon={BookUser} label={t("nav.contacts")} />
+            </>
           ) : (
             <>
               <AccountSwitcher />
               <NavItem to="/" icon={Wallet} label={t("nav.overview")} />
               <NavItem to="/send" icon={ArrowUpRight} label={t("nav.send")} disabled={noAccount} />
               <NavItem to="/receive" icon={ArrowDownLeft} label={t("nav.receive")} disabled={noAccount} />
+              <NavItem to="/messages/sign" icon={FileSignature} label={t("nav.signMessage")} disabled={noAccount} />
+              <GroupHeading>{t("nav.group.allAccounts")}</GroupHeading>
               <NavItem to="/contacts" icon={BookUser} label={t("nav.contacts")} />
+              <NavItem to="/messages/verify" icon={FileCheck} label={t("nav.verifyMessage")} />
+              {/* Takes a transaction signed offline for any watch-only account */}
+              {watching && <NavItem to="/broadcast" icon={Radio} label={t("offline.nav.broadcast")} />}
             </>
           )}
         </nav>
@@ -70,6 +97,8 @@ function AccountSwitcher() {
   const { openAt } = useSettingsSheet();
   const { info, account, select } = useWallet();
   const balances = useBalances();
+  // An offline signer has no chain to read balances from
+  const offline = useOfflineMode();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
@@ -107,10 +136,15 @@ function AccountSwitcher() {
       >
         <AddressAvatar address={account.address} size={34} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold">{accountLabel(account, accounts, t)}</span>
-          <span className="block truncate text-sm tabular-nums">
-            <Balance wei={balances[account.address]} />
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-[15px] font-semibold">{accountLabel(account, accounts, t)}</span>
+            {account.watchOnly && <WatchOnlyBadge />}
           </span>
+          {!offline && (
+            <span className="block truncate text-sm tabular-nums">
+              <Balance wei={balances[account.address]} />
+            </span>
+          )}
           <span className="block truncate font-mono text-xs text-muted-foreground">
             {shortHex(account.address, 8, 6)}
           </span>
@@ -145,14 +179,19 @@ function AccountSwitcher() {
                   >
                     <AddressAvatar address={a.address} size={32} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate">{accountLabel(a, accounts, t)}</span>
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span className="truncate">{accountLabel(a, accounts, t)}</span>
+                        {a.watchOnly && <WatchOnlyBadge />}
+                      </span>
                       <span className="block truncate font-mono text-xs text-muted-foreground">
                         {shortHex(a.address, 8, 6)}
                       </span>
                     </span>
-                    <span className="shrink-0 pl-2 text-right tabular-nums">
-                      <Balance wei={balances[a.address]} />
-                    </span>
+                    {!offline && (
+                      <span className="shrink-0 pl-2 text-right tabular-nums">
+                        <Balance wei={balances[a.address]} />
+                      </span>
+                    )}
                     <span className="grid size-3.5 shrink-0 place-items-center">
                       {here && <Check className="size-3.5 text-brand" />}
                     </span>
@@ -175,6 +214,36 @@ function AccountSwitcher() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/** ProfileBadge names the development profile this copy runs as, so two copies side by side can be told apart. */
+function ProfileBadge() {
+  const [profile, setProfile] = useState("");
+  useEffect(() => {
+    api
+      .profile()
+      .then((p) => setProfile(p ?? ""))
+      .catch(() => {});
+  }, []);
+  if (!profile) return null;
+  return (
+    <span className="truncate rounded-full bg-brand/15 px-2 py-0.5 font-mono text-xs font-medium text-brand">{profile}</span>
+  );
+}
+
+/** GroupHeading titles a group of the sidebar's items, as Settings' sidebar does. */
+function GroupHeading({ first, children }: { first?: boolean; children: string }) {
+  return <h2 className={`px-2.5 pb-1.5 text-sm font-semibold text-muted-foreground ${first ? "" : "pt-5"}`}>{children}</h2>;
+}
+
+/** WatchOnlyBadge marks an account whose key is on an offline signer. */
+function WatchOnlyBadge() {
+  const t = useT();
+  return (
+    <Tooltip content={t("offline.watchOnly.desc")}>
+      <Pill className="shrink-0">{t("offline.watchOnly")}</Pill>
+    </Tooltip>
   );
 }
 

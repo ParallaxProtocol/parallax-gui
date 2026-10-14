@@ -1,6 +1,4 @@
-import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import qrcode from "qrcode-generator";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { CopyButton, Notice } from "../../components/ui/bits";
@@ -8,6 +6,7 @@ import { Address } from "./common";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
+import { QRCode } from "../../components/ui/QRCode";
 
 /**
  * ReceivePage shows where to send LAX to the selected account: its address
@@ -47,39 +46,5 @@ export default function ReceivePage() {
       </GlowCard>
       <Notice tone="info">{t("wallet.receive.network")}</Notice>
     </div>
-  );
-}
-
-/**
- * QRCode draws value as a QR code: dark modules on white whatever the
- * theme, as scanners expect, with the standard four-module quiet zone
- * (inside the white tile it sits on).
- * Medium error correction keeps it readable off a screen at a small size.
- */
-function QRCode({ value, label }: { value: string; label: string }) {
-  const { size, path } = useMemo(() => {
-    const qr = qrcode(0, "M");
-    qr.addData(value, "Byte");
-    qr.make();
-    const n = qr.getModuleCount();
-    let d = "";
-    for (let y = 0; y < n; y++) {
-      for (let x = 0; x < n; x++) {
-        if (qr.isDark(y, x)) d += `M${x + 4} ${y + 4}h1v1h-1z`;
-      }
-    }
-    return { size: n + 8, path: d };
-  }, [value]);
-  return (
-    <svg
-      viewBox={`0 0 ${size} ${size}`}
-      className="size-52 shrink-0"
-      role="img"
-      aria-label={label}
-      shapeRendering="crispEdges"
-    >
-      <rect width={size} height={size} fill="#fff" />
-      <path d={path} fill="#000" />
-    </svg>
   );
 }

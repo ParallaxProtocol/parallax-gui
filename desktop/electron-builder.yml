@@ -44,6 +44,9 @@ mac:
   # opens the DMG for the user rather than replacing the app itself
   identity: "-"
   hardenedRuntime: false
+  # The offline signer scans signing QR codes with the camera
+  extendInfo:
+    NSCameraUsageDescription: Parallax Client uses the camera to scan offline signing QR codes.
   artifactName: Parallax-Client-${version}-macos-${env.DISPLAY_ARCH}.${ext}
 dmg:
   title: Parallax Client

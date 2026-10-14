@@ -15,7 +15,16 @@ import { AddressAvatar } from "../../components/ui/AddressAvatar";
  * it the wallet's selected account, so the rest of the app follows. With a
  * single account it shows just that one.
  */
-export function AccountSelect({ id, balanceWei }: { id?: string; balanceWei?: string }) {
+export function AccountSelect({
+  id,
+  balanceWei,
+  noBalance,
+}: {
+  id?: string;
+  balanceWei?: string;
+  /** Leave balances out: where there is no chain to read them from (an offline signer). */
+  noBalance?: boolean;
+}) {
   const t = useT();
   const listId = useId();
   const node = useNode();
@@ -43,7 +52,7 @@ export function AccountSelect({ id, balanceWei }: { id?: string; balanceWei?: st
 
   // Each account's balance, read as the list opens
   useEffect(() => {
-    if (!open || !running || !info) return;
+    if (!open || !running || !info || noBalance) return;
     let alive = true;
     for (const a of info.accounts) {
       api
@@ -75,7 +84,12 @@ export function AccountSelect({ id, balanceWei }: { id?: string; balanceWei?: st
           several ? "hover:border-brand-mark/60" : "cursor-default"
         } ${open ? "border-brand-mark shadow-[0_0_0_3px_var(--ring)]" : ""}`}
       >
-        <Row label={accountLabel(account, accounts, t)} address={account.address} balance={balanceOf(account.address)} />
+        <Row
+          label={accountLabel(account, accounts, t)}
+          address={account.address}
+          balance={balanceOf(account.address)}
+          noBalance={noBalance}
+        />
         {several && <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />}
       </button>
 
@@ -105,7 +119,12 @@ export function AccountSelect({ id, balanceWei }: { id?: string; balanceWei?: st
                     }}
                     className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left hover:bg-hover ${here ? "bg-selected" : ""}`}
                   >
-                    <Row label={accountLabel(a, accounts, t)} address={a.address} balance={balanceOf(a.address)} />
+                    <Row
+                      label={accountLabel(a, accounts, t)}
+                      address={a.address}
+                      balance={balanceOf(a.address)}
+                      noBalance={noBalance}
+                    />
                     <span className="grid size-3.5 shrink-0 place-items-center">
                       {here && <Check className="size-3.5 text-brand" />}
                     </span>
@@ -121,7 +140,17 @@ export function AccountSelect({ id, balanceWei }: { id?: string; balanceWei?: st
 }
 
 /** Row is an account in the picker: its name and address, and its balance on the right. */
-function Row({ label, address, balance }: { label: string; address: string; balance?: string }) {
+function Row({
+  label,
+  address,
+  balance,
+  noBalance,
+}: {
+  label: string;
+  address: string;
+  balance?: string;
+  noBalance?: boolean;
+}) {
   return (
     <>
       <AddressAvatar address={address} size={28} />
@@ -129,15 +158,17 @@ function Row({ label, address, balance }: { label: string; address: string; bala
         <span className="truncate font-medium">{label}</span>
         <span className="truncate font-mono text-xs text-muted-foreground">{shortHex(address, 10, 8)}</span>
       </span>
-      <span className="shrink-0 text-right tabular-nums">
-        {balance !== undefined ? (
-          <>
-            {formatLax(balance, 6)} <span className="text-muted-foreground">LAX</span>
-          </>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </span>
+      {!noBalance && (
+        <span className="shrink-0 text-right tabular-nums">
+          {balance !== undefined ? (
+            <>
+              {formatLax(balance, 6)} <span className="text-muted-foreground">LAX</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </span>
+      )}
     </>
   );
 }

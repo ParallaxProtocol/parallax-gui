@@ -156,8 +156,8 @@ func (w *Wallet) WalletActivity(after uint64) ([]WalletTx, uint64, error) {
 	}
 
 	mine := map[util.Address]bool{}
-	for _, acc := range w.ks.Accounts() {
-		mine[acc.Address] = true
+	for _, addr := range w.addresses() {
+		mine[addr] = true
 	}
 	signer := types.LatestSignerForChainID(bc.Config().ChainID)
 	for num := after + 1; num <= headNum; num++ {
@@ -216,8 +216,8 @@ func (w *Wallet) Balances() (map[string]string, error) {
 	if err != nil {
 		return out, nil
 	}
-	for _, acc := range w.ks.Accounts() {
-		out[acc.Address.Hex()] = st.GetBalance(acc.Address).String()
+	for _, addr := range w.addresses() {
+		out[addr.Hex()] = st.GetBalance(addr).String()
 	}
 	return out, nil
 }

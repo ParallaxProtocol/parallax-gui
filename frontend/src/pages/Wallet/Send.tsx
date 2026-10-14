@@ -1,12 +1,15 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDown, ArrowLeft, ArrowRight, BookUser, Check, Loader2, Send as SendIcon, UserPlus } from "lucide-react";
-import { api, SendQuote, SentTx, walletError } from "../../lib/api";
+import { ArrowDown, ArrowLeft, ArrowRight, BookUser, Check, Loader2, QrCode, ScanLine, Send as SendIcon, UserPlus } from "lucide-react";
+import { api, SendQuote, SentTx, SigningRequest, walletError } from "../../lib/api";
 import { formatGwei, formatInt, formatUnits, isAddress, parseUnits, sameAddress, shortHex } from "../../lib/format";
 import { useContacts } from "../../lib/contacts";
 import { FADE_OUT, GLIDE } from "../../lib/motion";
 import { ContactModal } from "../Contacts/ContactForm";
+import { DocCard } from "../../components/offline/parts";
+import { docFileName } from "../../lib/offline";
+import { BroadcastFlow } from "../Offline/Broadcast";
 import { useNode } from "../../lib/live";
 import { PAGE } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
@@ -39,6 +42,10 @@ export default function SendPage() {
   const { info, account } = useWallet();
   const [quote, setQuote] = useState<SendQuote | null>(null);
   const [sent, setSent] = useState<SentTx | null>(null);
+  // A watch-only account's send: its signing request, then scanning back
+  // the transaction the offline signer made of it
+  const [request, setRequest] = useState<SigningRequest | null>(null);
+  const [scanning, setScanning] = useState(false);
   // The form keeps what was typed while the review shows. The address book
   // opens it with a contact's address (/send?to=0x…)
   const [params, setParams] = useSearchParams();
@@ -51,6 +58,8 @@ export default function SendPage() {
   useEffect(() => {
     setQuote(null);
     setSent(null);
+    setRequest(null);
+    setScanning(false);
   }, [account?.address]);
 
   // Sent here again from a contact, while already on this page
@@ -81,15 +90,17 @@ export default function SendPage() {
     );
   }
   const label = accountLabel(account, info.accounts, t);
-  const step = sent ? "sent" : quote ? "review" : "form";
+  const watch = account.watchOnly;
+  const step = sent ? "sent" : scanning ? "scan" : request ? "request" : quote ? "review" : "form";
+  const steps = watch
+    ? [t("wallet.send.step.details"), t("wallet.send.review"), t("offline.send.step.sign"), t("offline.send.step.broadcast")]
+    : [t("wallet.send.step.details"), t("wallet.send.review"), t("wallet.sent.title")];
+  const current = watch ? (scanning ? 3 : request ? 2 : quote ? 1 : 0) : sent ? 3 : quote ? 1 : 0;
 
   return (
     <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
       <ToolbarAccessory>
-        <Steps
-          steps={[t("wallet.send.step.details"), t("wallet.send.review"), t("wallet.sent.title")]}
-          current={sent ? 3 : quote ? 1 : 0}
-        />
+        <Steps steps={steps} current={current} />
       </ToolbarAccessory>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={step} {...PAGE}>
@@ -104,8 +115,34 @@ export default function SendPage() {
                 setAmount("");
               }}
             />
+          ) : scanning && request ? (
+            <BroadcastFlow expect={request.tx.id} onBack={() => setScanning(false)} />
+          ) : request ? (
+            <div className="flex flex-col gap-5">
+              <DocCard
+                doc={request.doc}
+                fingerprint={request.tx.fingerprint}
+                fileName={docFileName("request", request.tx.nonce, request.tx.fingerprint)}
+                title={t("offline.send.requestTitle")}
+                desc={t("offline.send.requestDesc")}
+              />
+              <div className="flex justify-center">
+                <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={() => setScanning(true)}>
+                  <ScanLine className="size-4" />
+                  {t("offline.send.scanSigned")}
+                </button>
+              </div>
+              <p className="text-center text-sm text-muted-foreground">{t("offline.send.later")}</p>
+            </div>
           ) : quote ? (
-            <Review quote={quote} label={label} onBack={() => setQuote(null)} onSent={setSent} />
+            <Review
+              quote={quote}
+              label={label}
+              watchOnly={watch}
+              onBack={() => setQuote(null)}
+              onSent={setSent}
+              onRequest={setRequest}
+            />
           ) : (
             <SendForm
               from={account.address}
@@ -307,21 +344,48 @@ function SendForm({
 function Review({
   quote,
   label,
+  watchOnly,
   onBack,
   onSent,
+  onRequest,
 }: {
   quote: SendQuote;
   label: string;
+  watchOnly: boolean;
   onBack: () => void;
   onSent: (tx: SentTx) => void;
+  onRequest: (r: SigningRequest) => void;
 }) {
   const t = useT();
   const { byAddress } = useContacts();
   const contact = byAddress(quote.to);
   const [password, setPassword] = useState("");
+  const [memo, setMemo] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => () => setPassword(""), []);
+
+  // A watch-only account signs elsewhere: the review makes its request
+  const makeRequest = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      onRequest(
+        await api.offlineBuildRequest({
+          from: quote.from,
+          to: quote.to,
+          valueWei: quote.valueWei,
+          gasPriceWei: quote.gasPriceWei,
+          gasLimit: quote.gasLimit,
+          memo,
+        }),
+      );
+    } catch (e) {
+      setError(walletError(e, t));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const price = BigInt(quote.gasPriceWei);
   const suggested = BigInt(quote.suggestedPriceWei);
@@ -417,13 +481,31 @@ function Review({
         className="flex flex-col gap-5"
         onSubmit={(e) => {
           e.preventDefault();
-          if (password && quote.sufficient) send();
+          if (watchOnly) {
+            if (quote.sufficient && !busy) makeRequest();
+          } else if (password && quote.sufficient) send();
         }}
       >
         <Panel className="p-4">
-          <Field label={t("wallet.walletPassword")} hint={t("wallet.review.passwordHint")}>
-            {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus />}
-          </Field>
+          {watchOnly ? (
+            <Field label={t("offline.memo")} hint={t("offline.send.memoHint")}>
+              {(id) => (
+                <input
+                  id={id}
+                  className="input"
+                  value={memo}
+                  maxLength={200}
+                  placeholder={t("offline.send.memoPlaceholder")}
+                  onChange={(e) => setMemo(e.target.value)}
+                  autoFocus
+                />
+              )}
+            </Field>
+          ) : (
+            <Field label={t("wallet.walletPassword")} hint={t("wallet.review.passwordHint")}>
+              {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus />}
+            </Field>
+          )}
         </Panel>
         {error && <Notice tone="critical">{error}</Notice>}
         <div className="flex justify-center gap-3">
@@ -431,14 +513,21 @@ function Review({
             <ArrowLeft className="size-4" />
             {t("common.back")}
           </button>
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg min-w-56"
-            disabled={busy || !password || !quote.sufficient}
-          >
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
-            {busy ? t("wallet.review.signing") : t("wallet.review.cta")}
-          </button>
+          {watchOnly ? (
+            <button type="submit" className="btn btn-primary btn-lg min-w-56" disabled={busy || !quote.sufficient}>
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <QrCode className="size-4" />}
+              {t("offline.send.cta")}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg min-w-56"
+              disabled={busy || !password || !quote.sufficient}
+            >
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
+              {busy ? t("wallet.review.signing") : t("wallet.review.cta")}
+            </button>
+          )}
         </div>
       </form>
     </div>

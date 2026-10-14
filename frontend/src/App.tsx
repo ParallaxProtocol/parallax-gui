@@ -17,6 +17,12 @@ import WalletPage from "./pages/Wallet";
 const SendPage = lazy(() => import("./pages/Wallet/Send"));
 const ReceivePage = lazy(() => import("./pages/Wallet/Receive"));
 const ContactsPage = lazy(() => import("./pages/Contacts"));
+const SignPage = lazy(() => import("./pages/Offline/Sign"));
+const SignMessagePage = lazy(() => import("./pages/Messages").then((m) => ({ default: m.SignMessagePage })));
+const VerifyMessagePage = lazy(() => import("./pages/Messages").then((m) => ({ default: m.VerifyMessagePage })));
+const SignerHome = lazy(() => import("./pages/Offline/SignerHome"));
+const BroadcastPage = lazy(() => import("./pages/Offline/Broadcast"));
+const AddWatchOnlyPage = lazy(() => import("./pages/Wallet/WatchOnly").then((m) => ({ default: m.AddWatchOnlyPage })));
 const CreateAccountPage = lazy(() =>
   import("./pages/Wallet/AddAccount").then((m) => ({ default: m.CreateAccountPage })),
 );
@@ -29,7 +35,7 @@ const ImportAccountPage = lazy(() =>
 const Hello = lazy(() => import("./pages/Hello"));
 import Sidebar from "./components/shell/Sidebar";
 import Toolbar from "./components/shell/Toolbar";
-import NodeBar, { NODE_BAR_ROOM, NodeSheetProvider, useNodeSheet } from "./components/shell/NodeBar";
+import NodeBar, { NODE_BAR_ROOM, NodeSheetProvider, OfflineBar, useNodeSheet } from "./components/shell/NodeBar";
 import TopBar from "./components/shell/TopBar";
 import SettingsSheet, {
   SettingsSheetProvider,
@@ -38,6 +44,7 @@ import SettingsSheet, {
 } from "./components/shell/SettingsSheet";
 import { NotificationsProvider } from "./lib/notifications";
 import { ContactsProvider } from "./lib/contacts";
+import { OfflineMode, useOfflineMode } from "./lib/offline";
 import { UpdateProvider } from "./lib/update";
 import { useT } from "./i18n";
 import { BrandMark } from "./components/ui/BrandMark";
@@ -57,6 +64,7 @@ export default function App() {
   const [animationsDisabled, setAnimationsDisabled] = useState(false);
   const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>("jazzicon");
   const [desktop, setDesktop] = useState({ notifications: false, preventSleep: false });
+  const [offline, setOffline] = useState(false);
   const [version, setVersion] = useState("");
   const navigate = useNavigate();
 
@@ -104,6 +112,7 @@ export default function App() {
           setAnimationsDisabled(!!c.disableAnimations);
           setAvatarStyle(c.avatarStyle === "blockies" ? "blockies" : "jazzicon");
           setDesktop({ notifications: !!c.notifications, preventSleep: !!c.preventSleep });
+          setOffline(!!c.offlineSigner);
           applyTheme(c.theme || "system");
         })
         .catch(() => {
@@ -169,7 +178,7 @@ export default function App() {
                         </div>
                       </div>
                       <SettingsSheet />
-                      <NodeBar version={version} />
+                      {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
                     </SettingsSheetProvider>
                   </NodeSheetProvider>
                 </UpdateProvider>
@@ -182,6 +191,7 @@ export default function App() {
   }
 
   return (
+    <OfflineMode.Provider value={offline}>
     <AnimationsOff.Provider value={animationsDisabled}>
       <AvatarStyleContext.Provider value={avatarStyle}>
         <MotionConfig
@@ -192,23 +202,30 @@ export default function App() {
         </MotionConfig>
       </AvatarStyleContext.Provider>
     </AnimationsOff.Provider>
+    </OfflineMode.Provider>
   );
 }
 
 function RoutedContent({ animate }: { animate: boolean }) {
   const location = useLocation();
+  // An offline signer signs; it has no node to send through or broadcast with
+  const offline = useOfflineMode();
   // Suspense inside the transition, so a page still loading keeps its slot
   // blank for a moment rather than suspending the shell
   const routes = (
     <Suspense fallback={null}>
       <Routes location={location}>
-        <Route path="/" element={<WalletPage />} />
+        <Route path="/" element={offline ? <Unlocked><SignerHome /></Unlocked> : <WalletPage />} />
         <Route
           path="/send"
           element={
-            <Unlocked>
-              <SendPage />
-            </Unlocked>
+            offline ? (
+              <Navigate to="/sign" replace />
+            ) : (
+              <Unlocked>
+                <SendPage />
+              </Unlocked>
+            )
           }
         />
         <Route
@@ -230,6 +247,51 @@ function RoutedContent({ animate }: { animate: boolean }) {
         <Route path="/accounts" element={<OpenSettings section="accounts" />} />
         <Route path="/accounts/new" element={<CreateAccountPage />} />
         <Route path="/accounts/import" element={<ImportAccountPage />} />
+        <Route
+          path="/accounts/watch"
+          element={
+            <Unlocked>
+              <AddWatchOnlyPage />
+            </Unlocked>
+          }
+        />
+        <Route
+          path="/messages/sign"
+          element={
+            <Unlocked>
+              <SignMessagePage />
+            </Unlocked>
+          }
+        />
+        <Route
+          path="/messages/verify"
+          element={
+            <Unlocked>
+              <VerifyMessagePage />
+            </Unlocked>
+          }
+        />
+        <Route path="/messages" element={<Navigate to="/messages/sign" replace />} />
+        <Route
+          path="/sign"
+          element={
+            <Unlocked>
+              <SignPage />
+            </Unlocked>
+          }
+        />
+        <Route
+          path="/broadcast"
+          element={
+            offline ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Unlocked>
+                <BroadcastPage />
+              </Unlocked>
+            )
+          }
+        />
         <Route path="/setup" element={<SetupPasswordPage />} />
         <Route path="/node" element={<OpenNode />} />
         <Route path="/settings" element={<OpenSettings />} />

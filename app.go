@@ -105,10 +105,11 @@ func (a *App) startup(ctx context.Context) {
 		a.events.emit("update-progress", p)
 	})
 	a.updater.StartPeriodicCheck(30*time.Minute, func() bool {
-		return a.cfg != nil && !a.cfg.Get().NoUpdateCheck
+		// An offline signer never reaches out, not even for updates
+		return a.cfg != nil && !a.cfg.Get().NoUpdateCheck && !a.cfg.Get().OfflineSigner
 	})
 
-	if conf.Bootstrapped && conf.AutoStartNode {
+	if conf.Bootstrapped && conf.AutoStartNode && !conf.OfflineSigner {
 		go func() {
 			if err := a.node.Start(ctx); err != nil {
 				logging.Error("Failed to auto-start the node", "err", err)
@@ -163,6 +164,13 @@ func (a *App) UpdateConfig(c backend.GUIConfig) error {
 	c.TrustedPeers = cur.TrustedPeers
 	if err := a.cfg.Save(c); err != nil {
 		return err
+	}
+	// Becoming an offline signer takes the node down at once; the rest of
+	// the change waits on the app's restart
+	if c.OfflineSigner && !cur.OfflineSigner {
+		if err := a.node.Stop(); err != nil {
+			logging.Warn("Failed to stop the node for offline signing", "err", err)
+		}
 	}
 	if c.LogLevel != cur.LogLevel {
 		level := c.LogLevel
@@ -453,6 +461,161 @@ func (a *App) WalletSend(req backend.SendRequest) (backend.SentTx, error) {
 }
 
 // ---------------------------------------------------------------------------
+// Watch-only accounts and offline signing (backend/offline.go)
+// ---------------------------------------------------------------------------
+
+// WalletAddWatchOnly follows an account whose key is on an offline signer.
+func (a *App) WalletAddWatchOnly(name, address string) (backend.WalletAccount, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletAccount{}, err
+	}
+	return w.AddWatchOnly(name, address)
+}
+
+// WalletRemoveWatchOnly stops following a watch-only account.
+func (a *App) WalletRemoveWatchOnly(address string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.RemoveWatchOnly(address)
+}
+
+// OfflineBuildRequest makes a signing request for a send from a watch-only
+// account.
+func (a *App) OfflineBuildRequest(in backend.OfflineRequestInput) (backend.SigningRequest, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SigningRequest{}, err
+	}
+	return w.BuildRequest(in)
+}
+
+// OfflinePendingRequests lists the signing requests the wallet follows.
+func (a *App) OfflinePendingRequests() ([]backend.PendingRequest, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return nil, err
+	}
+	return w.PendingRequests()
+}
+
+func (a *App) OfflineDiscardRequest(id string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.DiscardRequest(id)
+}
+
+// OfflineReplaceRequest makes a request to cancel, or fill the nonce of,
+// another.
+func (a *App) OfflineReplaceRequest(id string) (backend.SigningRequest, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SigningRequest{}, err
+	}
+	return w.ReplaceRequest(id)
+}
+
+// OfflineReviewSigned checks a signed transaction before it is broadcast.
+func (a *App) OfflineReviewSigned(data string) (backend.SignedReview, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SignedReview{}, err
+	}
+	return w.ReviewSigned(data)
+}
+
+// OfflineBroadcast sends a signed transaction through the node.
+func (a *App) OfflineBroadcast(data string) (backend.SentTx, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SentTx{}, err
+	}
+	rev, err := w.ReviewSigned(data)
+	if err != nil {
+		return backend.SentTx{}, err
+	}
+	tx, err := w.Broadcast(data)
+	if err == nil && a.contacts != nil {
+		a.contacts.SentTo(rev.Tx.To)
+	}
+	return tx, err
+}
+
+// OfflineReviewRequest checks a signing request on the signer, before it
+// asks for the password.
+func (a *App) OfflineReviewRequest(data string) (backend.RequestReview, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.RequestReview{}, err
+	}
+	return w.ReviewRequest(data)
+}
+
+// OfflineSignRequest signs a signing request on the signer.
+func (a *App) OfflineSignRequest(data, password string) (backend.SignedOffline, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SignedOffline{}, err
+	}
+	return w.SignRequest(data, password)
+}
+
+// ---------------------------------------------------------------------------
+// Messages (backend/message.go)
+// ---------------------------------------------------------------------------
+
+// MessageSign signs a message with one of the wallet's keys.
+func (a *App) MessageSign(address, message, password string) (backend.SignedMessage, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SignedMessage{}, err
+	}
+	return w.SignMessage(address, message, password)
+}
+
+// MessageVerify checks a signature; it needs no wallet.
+func (a *App) MessageVerify(address, message, signature string) (backend.MessageCheck, error) {
+	return backend.VerifyMessage(address, message, signature)
+}
+
+// MessageBuildRequest makes a message signing request for a watch-only
+// account.
+func (a *App) MessageBuildRequest(address, message string) (backend.MessageRequest, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.MessageRequest{}, err
+	}
+	return w.BuildMessageRequest(address, message)
+}
+
+// MessageReviewRequest checks a message signing request on the signer.
+func (a *App) MessageReviewRequest(data string) (backend.MessageRequest, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.MessageRequest{}, err
+	}
+	return w.ReviewMessageRequest(data)
+}
+
+// MessageSignRequest signs a message signing request on the signer.
+func (a *App) MessageSignRequest(data, password string) (backend.SignedMessage, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SignedMessage{}, err
+	}
+	return w.SignMessageRequest(data, password)
+}
+
+// MessageReviewSigned checks a signed message brought back from a signer.
+func (a *App) MessageReviewSigned(data string) (backend.SignedMessageReview, error) {
+	return backend.ReviewSignedMessage(data)
+}
+
+// ---------------------------------------------------------------------------
 // Address book
 // ---------------------------------------------------------------------------
 
@@ -545,6 +708,10 @@ func (a *App) Version() string {
 	return fmt.Sprintf("Parallax Desktop %s", backend.GUIVersion)
 }
 
+// Profile is the development profile this copy of the app runs as, "" for
+// the default one (backend.Profile).
+func (a *App) Profile() string { return backend.Profile() }
+
 // ---------------------------------------------------------------------------
 // Auto-update
 // ---------------------------------------------------------------------------
@@ -552,17 +719,29 @@ func (a *App) Version() string {
 // CheckForUpdate queries GitHub Releases for a newer version. Returns nil if
 // the app is already up-to-date.
 func (a *App) CheckForUpdate() (*backend.UpdateInfo, error) {
+	if a.offline() {
+		return nil, backend.ErrOfflineSigner
+	}
 	return a.updater.CheckForUpdate()
 }
 
+// offline reports whether the app is an offline signer (backend/offline.go).
+func (a *App) offline() bool { return a.cfg != nil && a.cfg.Get().OfflineSigner }
+
 // GetLatestUpdate returns the cached update info from the last check, or nil.
 func (a *App) GetLatestUpdate() *backend.UpdateInfo {
+	if a.offline() {
+		return nil
+	}
 	return a.updater.Latest()
 }
 
 // ApplyUpdate downloads, verifies, and installs the latest update. Progress is
 // streamed via the "update-progress" event channel.
 func (a *App) ApplyUpdate() error {
+	if a.offline() {
+		return backend.ErrOfflineSigner
+	}
 	return a.updater.DownloadAndInstall(a.ctx)
 }
 

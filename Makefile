@@ -57,9 +57,11 @@ prlx-gui-package: backend frontend desktop-deps
 	@ls -lh build/package/Parallax-Client-* 2>/dev/null || true
 
 # dev runs the app against the Vite dev server: frontend edits hot-reload.
+# PROFILE=<name> runs a separate copy beside it, with its own config,
+# wallet and logs (make dev PROFILE=signer, for an offline signer)
 dev:
 	cd frontend && npm install
-	cd desktop && npm install && npm run dev
+	cd desktop && npm install && PROFILE=$(PROFILE) npm run dev
 
 clean:
 	rm -rf build/backend build/package frontend/dist desktop/dist

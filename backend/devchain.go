@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/ParallaxProtocol/parallax/v2/node"
@@ -38,6 +39,33 @@ var devFunds = new(big.Int).Mul(big.NewInt(1_000_000), big.NewInt(1e18))
 // PARALLAX_DEV in the environment. Release builds never offer the
 // development chain, whatever their config holds.
 func DevBuild() bool { return os.Getenv("PARALLAX_DEV") == "1" }
+
+// profileName is a valid profile name: lower-case letters, digits and
+// dashes, starting with a letter or digit, at most 32 long.
+var profileName = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
+
+// Profile is the development profile this app runs as (make dev
+// PROFILE=<name>), or "" for the default one. A profile is a separate copy
+// of the app's state, its config, wallet, address book and logs in
+// <user config>/Parallax-<name>, so two copies can run side by side, an
+// online wallet and an offline signer, say. Release builds have no
+// profiles, whatever their environment says.
+func Profile() string {
+	p := os.Getenv("PARALLAX_PROFILE")
+	if !DevBuild() || !profileName.MatchString(p) {
+		return ""
+	}
+	return p
+}
+
+// appDirName is the app's folder in the user's config directory: its own
+// for a profile.
+func appDirName() string {
+	if p := Profile(); p != "" {
+		return "Parallax-" + p
+	}
+	return "Parallax"
+}
 
 // devChain reports whether the node should run the development chain.
 func devChain(g GUIConfig) bool { return g.DevChain && DevBuild() }

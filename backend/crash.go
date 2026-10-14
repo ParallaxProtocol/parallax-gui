@@ -49,7 +49,7 @@ func writeCrashReport(name string, r interface{}, stack []byte) string {
 	if err != nil {
 		return ""
 	}
-	dir = filepath.Join(dir, "Parallax")
+	dir = filepath.Join(dir, appDirName())
 	_ = os.MkdirAll(dir, 0o755)
 
 	path := filepath.Join(dir, fmt.Sprintf("crash-%d.log", time.Now().Unix()))
