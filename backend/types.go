@@ -51,10 +51,6 @@ type GUIConfig struct {
 	TrieDirtyCacheMB int `json:"trieDirtyCacheMB"`
 	SnapshotCacheMB  int `json:"snapshotCacheMB"`
 
-	// WatchAddress is the address the Wallet page follows (balance and
-	// transactions).
-	WatchAddress string `json:"watchAddress"`
-
 	// StaticPeers and TrustedPeers are enode URLs the user added from the
 	// peer list, re-applied at every node start: the daemon keeps neither
 	// across restarts on its own. (Peers added by ip:port need no entry
@@ -286,8 +282,9 @@ type BlockView struct {
 	Difficulty string `json:"difficulty"`
 }
 
-// AddressView summarises one watched address for the Wallet page: its
-// balance at the head, and what the recent chain holds for it.
+// AddressView summarises one wallet account for the Wallet page: its
+// balance at the head, what the recent chain holds for it, and what waits
+// in the pool.
 type AddressView struct {
 	Address string `json:"address"`
 	// BalanceWei is empty while the head state is unavailable (e.g. during
@@ -298,6 +295,9 @@ type AddressView struct {
 	// ScannedFrom is the oldest block the activity below was gathered from.
 	ScannedFrom  uint64   `json:"scannedFrom"`
 	Transactions []TxView `json:"transactions"` // newest first, capped
+	// Pending are its transactions in the pool, not yet in a block: Block
+	// and Timestamp are zero.
+	Pending []TxView `json:"pending"`
 }
 
 // ---------------------------------------------------------------------------

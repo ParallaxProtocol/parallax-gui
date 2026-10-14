@@ -20,6 +20,32 @@ export function formatLax(weiStr: string, digits = 4): string {
   return negative ? `-${out}` : out;
 }
 
+/**
+ * parseUnits reads a decimal amount typed by the user ("1.5", "0.000001",
+ * "2") into the integer count of its smallest unit, exactly: 18 decimals
+ * for LAX into wei, 9 for gwei into wei. Null for anything else: a sign,
+ * an exponent, grouping, more decimals than the unit has.
+ */
+export function parseUnits(input: string, decimals: number): bigint | null {
+  const s = input.trim();
+  const m = /^(\d*)(?:\.(\d*))?$/.exec(s);
+  if (!m || (m[1] === "" && (m[2] ?? "") === "")) return null;
+  const frac = m[2] ?? "";
+  if (frac.length > decimals) return null;
+  return BigInt(m[1] || "0") * 10n ** BigInt(decimals) + BigInt(frac.padEnd(decimals, "0") || "0");
+}
+
+/** formatUnits renders an integer amount of the smallest unit exactly, without trailing zeros: the inverse of parseUnits. */
+export function formatUnits(v: bigint | string, decimals: number): string {
+  let n = typeof v === "bigint" ? v : BigInt(v || "0");
+  const negative = n < 0n;
+  if (negative) n = -n;
+  const base = 10n ** BigInt(decimals);
+  const frac = (n % base).toString().padStart(decimals, "0").replace(/0+$/, "");
+  const out = frac ? `${n / base}.${frac}` : (n / base).toString();
+  return negative ? `-${out}` : out;
+}
+
 export function shortHex(s: string, head = 6, tail = 4): string {
   if (!s || s.length < head + tail + 2) return s;
   return `${s.slice(0, head)}…${s.slice(-tail)}`;

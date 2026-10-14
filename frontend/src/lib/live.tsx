@@ -1,17 +1,15 @@
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
-import { api, BlockView, NodeStatus, WalletStatus } from "./api";
+import { api, BlockView, NodeStatus } from "./api";
 
 const POLL_MS = 2000;
-const WALLET_POLL_MS = 3000;
 const BLOCKS_SHOWN = 12;
 /** While syncing the head moves every poll: refetch the latest blocks at most this often. */
 const SYNC_BLOCKS_MS = 15_000;
 
 // One context per stream, so a component re-renders only when the data it
-// reads changes: the node's uptime moving every poll must not re-render a
-// page that only shows the wallet.
+// reads changes: a new block must not re-render a page that only shows
+// the node's state.
 const NodeContext = createContext<NodeStatus | null>(null);
-const WalletContext = createContext<WalletStatus>({ connected: false, lastSeenUnixMilli: 0 });
 const BlocksContext = createContext<BlockView[]>([]);
 const RefreshContext = createContext<() => void>(() => {});
 
@@ -34,13 +32,12 @@ function sameNode(a: NodeStatus | null, b: NodeStatus): boolean {
 }
 
 /**
- * LiveProvider polls the backend once for the whole app: node and wallet
+ * LiveProvider polls the backend once for the whole app: the node's
  * status, and the latest blocks.
  * Components read the stream they need through its own hook.
  */
 export function LiveProvider({ children }: { children: ReactNode }) {
   const [node, setNode] = useState<NodeStatus | null>(null);
-  const [wallet, setWallet] = useState<WalletStatus>({ connected: false, lastSeenUnixMilli: 0 });
   const [blocks, setBlocks] = useState<BlockView[]>([]);
   const head = useRef(-1);
   const blocksAt = useRef(0);
@@ -73,50 +70,25 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const pollWallet = async () => {
-      try {
-        const s = await api.walletStatus();
-        if (!alive) return;
-        setWallet((prev) =>
-          prev.connected === s.connected &&
-          // The last-seen time is shown to the second nowhere: a few seconds of drift needn't re-render
-          Math.abs(prev.lastSeenUnixMilli - s.lastSeenUnixMilli) < 10_000
-            ? prev
-            : s,
-        );
-      } catch {
-        /* backend not ready yet */
-      }
-    };
-
-    pollNow.current = () => {
-      poll();
-      pollWallet();
-    };
+    pollNow.current = poll;
     poll();
-    pollWallet();
     const a = setInterval(poll, POLL_MS);
-    const b = setInterval(pollWallet, WALLET_POLL_MS);
     return () => {
       alive = false;
       clearInterval(a);
-      clearInterval(b);
     };
   }, []);
 
   return (
     <RefreshContext.Provider value={refresh}>
       <NodeContext.Provider value={node}>
-        <WalletContext.Provider value={wallet}>
-          <BlocksContext.Provider value={blocks}>{children}</BlocksContext.Provider>
-        </WalletContext.Provider>
+        <BlocksContext.Provider value={blocks}>{children}</BlocksContext.Provider>
       </NodeContext.Provider>
     </RefreshContext.Provider>
   );
 }
 
 export const useNode = () => useContext(NodeContext);
-export const useWallet = () => useContext(WalletContext);
 export const useBlocks = () => useContext(BlocksContext);
 /** Polls again right away, after an action changed the backend's state. */
 export const useRefresh = () => useContext(RefreshContext);

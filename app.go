@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -22,11 +23,11 @@ type App struct {
 	ctx    context.Context
 	events *hub
 
-	cfg      *backend.ConfigStore
-	logs     *backend.LogTail
-	node     *backend.NodeController
-	metamask *backend.MetaMaskHelper
-	updater  *backend.Updater
+	cfg     *backend.ConfigStore
+	logs    *backend.LogTail
+	node    *backend.NodeController
+	wallet  *backend.Wallet
+	updater *backend.Updater
 }
 
 // NewApp constructs the App, emitting its events through events. The heavy
@@ -76,12 +77,12 @@ func (a *App) startup(ctx context.Context) {
 		a.events.emit("node", evt)
 	})
 
-	// Tiny localhost helper that serves a one-click "Add to MetaMask"
-	// page. Lives for the lifetime of the GUI process so the URL is
-	// stable across navigations.
-	a.metamask = backend.NewMetaMaskHelper(cfg)
-	if err := a.metamask.Start(); err != nil {
-		logging.Error("Failed to start the MetaMask helper", "err", err)
+	// The wallet works with the node stopped: only its balances and sends
+	// need the chain
+	if cfg != nil {
+		if a.wallet, err = backend.NewWallet(cfg.Dir(), a.node); err != nil {
+			logging.Error("Failed to open the wallet", "err", err)
+		}
 	}
 
 	// Auto-updater: check for new releases on startup and periodically.
@@ -106,9 +107,6 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) shutdown(ctx context.Context) {
 	if a.updater != nil {
 		a.updater.Stop()
-	}
-	if a.metamask != nil {
-		_ = a.metamask.Stop()
 	}
 	if a.node != nil {
 		_ = a.node.Stop()
@@ -180,7 +178,6 @@ func (a *App) BanPeer(subnet string, seconds int64) error { return a.node.Ban(su
 func (a *App) UnbanPeer(subnet string) error              { return a.node.Unban(subnet) }
 func (a *App) ClearBanned() error                         { return a.node.ClearBanned() }
 func (a *App) Banned() ([]backend.BanEntry, error)        { return a.node.Banned() }
-func (a *App) WalletStatus() backend.WalletStatus         { return a.node.WalletStatus() }
 func (a *App) Peers() []backend.PeerView                  { return a.node.Peers() }
 func (a *App) RecentBlocks(n int) []backend.BlockView {
 	return a.node.RecentBlocks(n)
@@ -189,24 +186,137 @@ func (a *App) RecentTransactions(n int) []backend.TxView {
 	return a.node.RecentTransactions(n)
 }
 
-// AddressSummary reports the balance and recent activity of one address,
-// for the Wallet page's watched address.
-func (a *App) AddressSummary(addr string) (backend.AddressView, error) {
-	return a.node.AddressSummary(addr)
+// ---------------------------------------------------------------------------
+// Wallet
+// ---------------------------------------------------------------------------
+
+// errNoWallet answers every wallet call when the wallet could not be
+// opened at startup (the log says why).
+var errNoWallet = errors.New("wallet: unavailable, see the log")
+
+func (a *App) walletOrErr() (*backend.Wallet, error) {
+	if a.wallet == nil {
+		return nil, errNoWallet
+	}
+	return a.wallet, nil
 }
 
-// ---------------------------------------------------------------------------
-// MetaMask helper
-// ---------------------------------------------------------------------------
-
-// MetaMaskHelperURL returns the loopback URL of the embedded "Add to
-// MetaMask" landing page. The frontend opens this in the user's default
-// browser via window.runtime.BrowserOpenURL.
-func (a *App) MetaMaskHelperURL() string {
-	if a.metamask == nil {
-		return ""
+// WalletInfo lists the wallet's accounts and the one the app shows.
+func (a *App) WalletInfo() (backend.WalletInfo, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletInfo{}, err
 	}
-	return a.metamask.URL()
+	return w.Info(), nil
+}
+
+func (a *App) WalletSelect(address string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.Select(address)
+}
+
+func (a *App) WalletRename(address, name string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.Rename(address, name)
+}
+
+// WalletCreate makes a new account, its key encrypted with password.
+func (a *App) WalletCreate(name, password string) (backend.WalletAccount, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletAccount{}, err
+	}
+	return w.Create(name, password)
+}
+
+// WalletImportPrivateKey adds an account from a raw private key in hex.
+func (a *App) WalletImportPrivateKey(name, privateKey, password string) (backend.WalletAccount, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletAccount{}, err
+	}
+	return w.ImportPrivateKey(name, privateKey, password)
+}
+
+// WalletImportKeyfile adds an account from a keystore file's contents.
+func (a *App) WalletImportKeyfile(name, keyJSON, filePassword, newPassword string) (backend.WalletAccount, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletAccount{}, err
+	}
+	return w.ImportKeyfile(name, keyJSON, filePassword, newPassword)
+}
+
+// WalletBackup returns an account's encrypted keystore file, once the
+// password opens it. The shell saves it where the user chooses.
+func (a *App) WalletBackup(address, password string) (backend.WalletBackup, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletBackup{}, err
+	}
+	return w.Backup(address, password)
+}
+
+// WalletMarkBackedUp records that the shell saved an account's backup.
+func (a *App) WalletMarkBackedUp(address string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.MarkBackedUp(address)
+}
+
+func (a *App) WalletChangePassword(address, oldPassword, newPassword string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.ChangePassword(address, oldPassword, newPassword)
+}
+
+// WalletRemove deletes an account's key from this computer.
+func (a *App) WalletRemove(address, password string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.Remove(address, password)
+}
+
+// WalletSummary reports an account's balance, recent activity and the
+// transactions it has waiting in the pool.
+func (a *App) WalletSummary(address string) (backend.AddressView, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.AddressView{}, err
+	}
+	return w.Summary(address)
+}
+
+// WalletQuote works out what a send would cost; gasPriceWei may be empty
+// for the node's suggestion.
+func (a *App) WalletQuote(from, to, valueWei, gasPriceWei string) (backend.SendQuote, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SendQuote{}, err
+	}
+	return w.Quote(from, to, valueWei, gasPriceWei)
+}
+
+// WalletSend signs a confirmed send with the account's password and hands
+// it to the node.
+func (a *App) WalletSend(req backend.SendRequest) (backend.SentTx, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SentTx{}, err
+	}
+	return w.Send(req)
 }
 
 // ---------------------------------------------------------------------------

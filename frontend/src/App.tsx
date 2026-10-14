@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { api } from "./lib/api";
 import { applyTheme } from "./lib/theme";
 import { LiveProvider } from "./lib/live";
+import { WalletProvider } from "./lib/wallet";
 import { DesktopBehaviors } from "./lib/desktop";
 import { AnimationsOff } from "./lib/prefs";
 import { PAGE } from "./lib/motion";
@@ -12,7 +13,11 @@ import WalletPage from "./pages/Wallet";
 
 // The landing page loads with the app; the rest load on first visit, so
 // the webview parses less JavaScript before the first paint
-const ConnectPage = lazy(() => import("./pages/Wallet/Connect"));
+const SendPage = lazy(() => import("./pages/Wallet/Send"));
+const ReceivePage = lazy(() => import("./pages/Wallet/Receive"));
+const AccountsPage = lazy(() => import("./pages/Wallet/Accounts"));
+const CreateAccountPage = lazy(() => import("./pages/Wallet/AddAccount").then((m) => ({ default: m.CreateAccountPage })));
+const ImportAccountPage = lazy(() => import("./pages/Wallet/AddAccount").then((m) => ({ default: m.ImportAccountPage })));
 const NodePage = lazy(() => import("./pages/Overview"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
@@ -128,18 +133,20 @@ export default function App() {
   } else {
     content = (
       <LiveProvider>
-        <DesktopBehaviors {...desktop} />
-        <div className="flex h-full flex-col">
-          <div className="flex min-h-0 flex-1">
-            <Sidebar />
-            <div className="flex min-w-0 flex-1 flex-col bg-background">
-              <Toolbar />
-              <RoutedContent animate={!animationsDisabled} />
+        <WalletProvider>
+          <DesktopBehaviors {...desktop} />
+          <div className="flex h-full flex-col">
+            <div className="flex min-h-0 flex-1">
+              <Sidebar />
+              <div className="flex min-w-0 flex-1 flex-col bg-background">
+                <Toolbar />
+                <RoutedContent animate={!animationsDisabled} />
+              </div>
             </div>
+            <StatusBar version={version} />
           </div>
-          <StatusBar version={version} />
-        </div>
-        <UpdateBanner />
+          <UpdateBanner />
+        </WalletProvider>
       </LiveProvider>
     );
   }
@@ -164,11 +171,16 @@ function RoutedContent({ animate }: { animate: boolean }) {
     <Suspense fallback={null}>
       <Routes location={location}>
         <Route path="/" element={<WalletPage />} />
-        <Route path="/connect" element={<ConnectPage />} />
+        <Route path="/send" element={<SendPage />} />
+        <Route path="/receive" element={<ReceivePage />} />
+        <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/accounts/new" element={<CreateAccountPage />} />
+        <Route path="/accounts/import" element={<ImportAccountPage />} />
         <Route path="/node" element={<NodePage />} />
         <Route path="/settings" element={<Settings />} />
         {/* Older routes, from before the redesign */}
         <Route path="/wallet" element={<Navigate to="/" replace />} />
+        <Route path="/connect" element={<Navigate to="/" replace />} />
         <Route path="/logs" element={<Navigate to="/settings" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

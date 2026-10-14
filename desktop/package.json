@@ -2,7 +2,7 @@
   "name": "parallax-client",
   "productName": "Parallax Client",
   "version": "0.0.0",
-  "description": "Desktop node and wallet connector for the Parallax network",
+  "description": "Desktop node and wallet for the Parallax network",
   "author": "Parallax Protocol",
   "license": "GPL-3.0",
   "private": true,

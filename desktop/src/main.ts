@@ -166,6 +166,40 @@ function openExternal(url: string) {
   }
 }
 
+/**
+ * Saves a wallet backup, an account's keystore file, where the user picks.
+ * Only an encrypted keystore file is written: the renderer can't use this
+ * to put arbitrary content on disk, nor choose the path itself. The file is
+ * readable by its owner only.
+ */
+async function saveBackup(fileName: string, contents: string): Promise<boolean> {
+  if (contents.length > 64 * 1024 || !isKeystoreFile(contents)) return false;
+  // The keystore's own name (UTC--<time>--<address>), stripped of anything a path could use
+  const name = path.basename(fileName).replace(/[^\w.-]/g, "_") || "parallax-keystore.json";
+  const opts = {
+    title: "Save wallet backup",
+    defaultPath: path.join(app.getPath("documents"), name.endsWith(".json") ? name : `${name}.json`),
+    filters: [{ name: "Keystore file", extensions: ["json"] }],
+  };
+  const res = mainWindow ? await dialog.showSaveDialog(mainWindow, opts) : await dialog.showSaveDialog(opts);
+  if (res.canceled || !res.filePath) return false;
+  await fs.promises.writeFile(res.filePath, contents, { mode: 0o600 });
+  // writeFile's mode applies only to a new file: tighten one it replaced too
+  await fs.promises.chmod(res.filePath, 0o600).catch(() => {});
+  return true;
+}
+
+/** Whether s is a Web3 Secret Storage keystore file: an encrypted key, never a plain one. */
+function isKeystoreFile(s: string): boolean {
+  try {
+    const v = JSON.parse(s) as { crypto?: { ciphertext?: unknown; kdf?: unknown }; Crypto?: unknown };
+    const c = (v.crypto ?? v.Crypto) as { ciphertext?: unknown; kdf?: unknown } | undefined;
+    return typeof c?.ciphertext === "string" && (c.kdf === "scrypt" || c.kdf === "pbkdf2");
+  } catch {
+    return false;
+  }
+}
+
 function serveFrontend(dir: string) {
   protocol.handle("app", async (req) => {
     const { pathname } = new URL(req.url);
@@ -307,6 +341,10 @@ function wireIpc() {
   });
   ipcMain.handle("login:set", (event, on: unknown) => {
     if (trusted(event) && app.isPackaged && typeof on === "boolean") setOpenAtLogin(on);
+  });
+  ipcMain.handle("wallet:saveBackup", async (event, fileName: unknown, contents: unknown) => {
+    if (!trusted(event) || typeof fileName !== "string" || typeof contents !== "string") return false;
+    return saveBackup(fileName, contents);
   });
   ipcMain.on("power:keepAwake", (event, on: unknown) => {
     if (trusted(event) && typeof on === "boolean") keepAwake(on);

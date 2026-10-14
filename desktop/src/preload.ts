@@ -42,6 +42,10 @@ contextBridge.exposeInMainWorld("parallax", {
   setLoginItem(on: boolean): Promise<void> {
     return ipcRenderer.invoke("login:set", on);
   },
+  /** Saves an account's encrypted keystore file where the user picks; false if cancelled. */
+  saveBackup(fileName: string, contents: string): Promise<boolean> {
+    return ipcRenderer.invoke("wallet:saveBackup", fileName, contents);
+  },
   /** Holds off system sleep while on. */
   keepAwake(on: boolean) {
     ipcRenderer.send("power:keepAwake", on);

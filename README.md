@@ -11,16 +11,17 @@ WebKitGTK on Linux, which could not).
 - One binary that runs a Parallax full node — no sidecars.
 - First-run wizard for picking a language, data directory, sync mode and
   inbound NAT policy.
-- A sidebar shell with the node's heartbeat pinned at the bottom (state,
-  block height, peers, uptime, sync progress and a power switch), and
-  a live chip in the sidebar while a wallet is connected.
+- A sidebar shell with the wallet's account switcher at the top and the
+  node's heartbeat pinned at the bottom (state, block height, peers,
+  uptime, sync progress and a power switch).
 - **Overview**: the block clock (best block and the wait since, against
   the 10 minute target), sync progress while catching up, node figures,
   the latest blocks and a slide-over list of connected peers.
-- **Wallet**: a step-by-step MetaMask connection (node, local RPC,
-  one-click *Add network*, live connection) with manual values for any
-  EVM wallet, and a watched address: balance and transactions over the
-  last week, all read from the local node.
+- **Wallet**: create or import accounts (keystore file or private key),
+  back them up, change their passwords, send LAX with a review of exactly
+  what is signed, receive with a QR code, and follow each account's
+  balance, pending and recent transactions, all through the local node.
+  See [The wallet](#the-wallet).
 - **Settings**: grouped sections with a scroll-tracking index, light /
   dark / system theme, a save bar that flags changes needing a node
   restart, cache sizes, the live log tail, and update checks.
@@ -145,13 +146,12 @@ are fine for a first pass — open a PR and we'll help fill the gaps.
 │   │                  lifecycle, status snapshot, bootnode wiring, DNS
 │   │                  discovery defaults, RPC endpoint formatting,
 │   │                  Peers() and RecentBlocks/Transactions() walkers.
-│   ├── address.go     Watched-address balance and activity.
+│   ├── wallet.go      The wallet: accounts in an encrypted keystore,
+│   │                  backups, quotes and signing/sending transfers.
+│   ├── address.go     An account's balance, activity and pool entries.
 │   ├── updater.go     Release checks, verified downloads, installs.
 │   ├── logs.go        LogTail: GlogHandler tee'd to stderr + ring buffer
 │   │                  + batched live frontend emitter.
-│   ├── metamask.go    Tiny localhost helper HTTP server that serves a
-│   │                  Parallax-themed page calling wallet_addEthereumChain
-│   │                  in the user's default browser.
 │   ├── crash.go       Crash report writer; installs a recover() hook.
 │   └── types.go       JSON structs shared with the frontend.
 ├── desktop/           The Electron shell (TypeScript).
@@ -167,8 +167,8 @@ are fine for a first pass — open a PR and we'll help fill the gaps.
         │                     transitions, splash screen.
         ├── styles.css        Design tokens (dark + light) and primitives.
         ├── lib/api.ts        Typed wrappers around the App methods.
-        ├── lib/live.tsx      One poller for node and wallet status and the
-        │                     latest blocks.
+        ├── lib/live.tsx      One poller for node status and the latest blocks.
+        ├── lib/wallet.tsx    The wallet's accounts and the selected one.
         ├── lib/format.ts     wei↔LAX, byte / duration / hash helpers.
         ├── components/
         │   ├── shell/        Sidebar (with the node dock) and TopBar.
@@ -177,7 +177,8 @@ are fine for a first pass — open a PR and we'll help fill the gaps.
         ├── pages/
         │   ├── Overview/     Block clock, node tiles, latest blocks,
         │   │                 peers drawer.
-        │   ├── Wallet/       MetaMask connection steps, watched address.
+        │   ├── Wallet/       Overview, send, receive, accounts and their
+        │   │                 create / import / backup / password flows.
         │   ├── Settings/     Grouped settings, save bar, live log tail.
         │   └── Onboarding/   First-run wizard.
         └── assets/           Logo mark (the logo gradient).
@@ -200,24 +201,39 @@ leaves the main process.
 - **Crash reports** are written to `<userConfigDir>/Parallax/crash-*.log`
   and never sent off the machine.
 
-## Connecting MetaMask
+## The wallet
 
-The Wallet page walks through connecting MetaMask; its **Add network** button
-opens a localhost helper page in the user's default browser
-which fires `wallet_addEthereumChain` (or `wallet_switchEthereumChain` if
-the network is already added). The helper auto-detects whether MetaMask
-is already on Parallax and shows a connected confirmation instead of the
-add button.
+The wallet is built on the daemon's own key management rather than new
+cryptography:
 
-For non-MetaMask wallets, the same Wallet page also shows the manual
-network values:
+- **Keys** are generated from the OS's secure random source and stored by
+  the daemon's `wallet/keystore` package: one Web3 Secret Storage file per
+  account (scrypt with the standard cost, AES-128-CTR), the same format
+  `parallaxd` and `parallax-wallet` use. Passwords must be at least 8
+  characters.
+- **Where**: `<userConfigDir>/Parallax/keystore` (e.g.
+  `~/.config/Parallax/keystore`), apart from the chain data directory so a
+  resync can't take keys with it. Directory `0700`, files `0600`. Labels
+  and backup status live beside it in `wallet.json`, which holds nothing
+  secret. The keystore is never attached to the node, so nothing that
+  connects to its RPC can list or use these accounts.
+- **Nothing is left unlocked.** A key is decrypted only for the one action
+  its password was typed for (signing a transaction, checking a backup,
+  changing the password) and zeroed right after.
+- **Sending**: the app asks the node for the fee and gas (a plain
+  transfer is exactly 21,000 gas; a contract recipient is estimated),
+  shows the full recipient address, amount, fee and total for review, and
+  signs an EIP-155 transaction bound to the running chain's ID once the
+  password is given. The backend re-checks every field and the signature,
+  then submits through the node's own `eth_sendRawTransaction` path, so the
+  fee cap and pool rules apply. Mixed-case recipients must pass the EIP-55
+  checksum; the zero address is refused.
+- **Backups** are the account's keystore file, still encrypted, saved
+  where the user picks (only after the password proves to open it). Any
+  compatible wallet can restore from the file and its password.
 
-| Field           | Value                          |
-| --------------- | ------------------------------ |
-| Network name    | Parallax                       |
-| RPC URL         | `http://127.0.0.1:8545`        |
-| Chain ID        | `2110`                         |
-| Currency symbol | `LAX`                          |
+To use these accounts from the command line, point `parallax-wallet` at
+the same directory with `--keystore`.
 
-Any EVM-compatible wallet that supports custom networks can use these
-values directly.
+The local HTTP-RPC endpoint is still there for local apps, dapps and
+developer tools (Settings → RPC); the wallet doesn't need it.

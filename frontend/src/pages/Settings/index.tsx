@@ -25,7 +25,6 @@ const LIVE_FIELDS = new Set<keyof GUIConfig>([
   "noUpdateCheck",
   "preventSleep",
   "notifications",
-  "watchAddress",
   "staticPeers",
   "trustedPeers",
 ]);

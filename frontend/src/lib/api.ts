@@ -12,6 +12,7 @@ declare global {
       loginItem: () => Promise<{ supported: boolean; enabled: boolean }>;
       setLoginItem: (on: boolean) => Promise<void>;
       keepAwake: (on: boolean) => void;
+      saveBackup: (fileName: string, contents: string) => Promise<boolean>;
       platform: string;
       material?: boolean;
     };
@@ -56,8 +57,6 @@ export type GUIConfig = {
   trieCleanCacheMB: number;
   trieDirtyCacheMB: number;
   snapshotCacheMB: number;
-  /** The Wallet page's watched address. */
-  watchAddress: string;
   /** Kept by the backend, which carries them over on save. */
   staticPeers?: string[] | null;
   trustedPeers?: string[] | null;
@@ -225,11 +224,6 @@ export type BanEntry = {
   bannedUntil: number;
 };
 
-export type WalletStatus = {
-  connected: boolean;
-  lastSeenUnixMilli: number;
-};
-
 export type LogLine = {
   ts: number;
   level: string;
@@ -285,7 +279,96 @@ export type AddressView = {
   /** The oldest block the activity below was gathered from. */
   scannedFrom: number;
   transactions: TxView[];
+  /** Its transactions in the pool, not yet in a block (block and timestamp are 0). */
+  pending: TxView[];
 };
+
+// ---------------------------------------------------------------------------
+// Wallet (backend/wallet.go)
+// ---------------------------------------------------------------------------
+
+export type WalletAccount = {
+  /** EIP-55 checksummed. */
+  address: string;
+  name: string;
+  /** Saved to a backup, or imported from elsewhere: not the only copy. */
+  backedUp: boolean;
+};
+
+export type WalletInfo = {
+  accounts: WalletAccount[];
+  /** Empty when there are no accounts. */
+  selected: string;
+  keystoreDir: string;
+};
+
+/** An account's keystore file, still encrypted. */
+export type WalletBackup = { fileName: string; keyfile: string };
+
+/** What a send would cost, worked out by the node. Amounts are decimal wei strings. */
+export type SendQuote = {
+  from: string;
+  to: string;
+  valueWei: string;
+  gasPriceWei: string;
+  suggestedPriceWei: string;
+  gasLimit: number;
+  feeWei: string;
+  totalWei: string;
+  balanceWei: string;
+  maxValueWei: string;
+  sufficient: boolean;
+  toContract: boolean;
+  toSelf: boolean;
+  chainId: number;
+};
+
+export type SendRequest = {
+  from: string;
+  to: string;
+  valueWei: string;
+  gasPriceWei: string;
+  gasLimit: number;
+  password: string;
+};
+
+export type SentTx = { hash: string; nonce: number };
+
+/**
+ * The wallet's errors the app says in the user's language, by the
+ * backend's message (backend/wallet.go): the key is the i18n key.
+ */
+const WALLET_ERRORS: Record<string, string> = {
+  "wallet: wrong password": "wallet.err.wrongPassword",
+  "wallet: the password must be at least 8 characters": "wallet.err.weakPassword",
+  "wallet: the password must be at most 1024 characters": "wallet.err.longPassword",
+  "wallet: no such account in this wallet": "wallet.err.unknownAccount",
+  "wallet: this account is already in the wallet": "wallet.err.exists",
+  "wallet: not a valid private key": "wallet.err.badKey",
+  "wallet: not a valid keystore file": "wallet.err.badKeyfile",
+  "wallet: not a valid recipient address": "wallet.err.badRecipient",
+  "wallet: the recipient address fails its checksum": "wallet.err.badChecksum",
+  "wallet: not a valid amount": "wallet.err.badAmount",
+  "wallet: not a valid fee": "wallet.err.badFee",
+  "wallet: the fee is below what the node suggests": "wallet.err.feeTooLow",
+  "wallet: the node is not running": "wallet.err.nodeStopped",
+  "wallet: the node is still syncing": "wallet.err.syncing",
+  "wallet: the node has no peers to send the transaction to": "wallet.err.noPeers",
+  "wallet: the balance does not cover the amount and the fee": "wallet.err.insufficient",
+};
+
+/** walletError says a wallet call's failure in the user's language when it is a known one. */
+export function walletError(e: unknown, t: (key: string) => string): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  const key = WALLET_ERRORS[msg];
+  return key ? t(key) : msg;
+}
+
+/** Saves an account's encrypted keystore file where the user picks; false if cancelled. */
+export function saveBackup(fileName: string, contents: string): Promise<boolean> {
+  if (!window.parallax) return Promise.reject(new Error("unavailable"));
+  return window.parallax.saveBackup(fileName, contents);
+}
 
 // ---------------------------------------------------------------------------
 // Auto-update
@@ -327,16 +410,31 @@ export const api = {
   unbanPeer: (subnet: string) => call<void>("UnbanPeer", subnet),
   clearBanned: () => call<void>("ClearBanned"),
   banned: () => call<BanEntry[]>("Banned"),
-  walletStatus: () => call<WalletStatus>("WalletStatus"),
   peers: () => call<PeerView[]>("Peers"),
   recentBlocks: (n: number) => call<BlockView[]>("RecentBlocks", n),
   recentTransactions: (n: number) => call<TxView[]>("RecentTransactions", n),
-  addressSummary: (addr: string) => call<AddressView>("AddressSummary", addr),
+
+  // Wallet. Passwords travel to the backend only, for the one action they're given for
+  walletInfo: () => call<WalletInfo>("WalletInfo"),
+  walletSelect: (address: string) => call<void>("WalletSelect", address),
+  walletRename: (address: string, name: string) => call<void>("WalletRename", address, name),
+  walletCreate: (name: string, password: string) => call<WalletAccount>("WalletCreate", name, password),
+  walletImportPrivateKey: (name: string, key: string, password: string) =>
+    call<WalletAccount>("WalletImportPrivateKey", name, key, password),
+  walletImportKeyfile: (name: string, keyJSON: string, filePassword: string, newPassword: string) =>
+    call<WalletAccount>("WalletImportKeyfile", name, keyJSON, filePassword, newPassword),
+  walletBackup: (address: string, password: string) => call<WalletBackup>("WalletBackup", address, password),
+  walletMarkBackedUp: (address: string) => call<void>("WalletMarkBackedUp", address),
+  walletChangePassword: (address: string, oldPassword: string, newPassword: string) =>
+    call<void>("WalletChangePassword", address, oldPassword, newPassword),
+  walletRemove: (address: string, password: string) => call<void>("WalletRemove", address, password),
+  walletSummary: (address: string) => call<AddressView>("WalletSummary", address),
+  walletQuote: (from: string, to: string, valueWei: string, gasPriceWei: string) =>
+    call<SendQuote>("WalletQuote", from, to, valueWei, gasPriceWei),
+  walletSend: (req: SendRequest) => call<SentTx>("WalletSend", req),
 
   getLogTail: (n: number) => call<LogLine[]>("GetLogTail", n),
   setLogVerbosity: (n: number) => call<void>("SetLogVerbosity", n),
-
-  metaMaskHelperURL: () => call<string>("MetaMaskHelperURL"),
 
   version: () => call<string>("Version"),
   clientVersion: () => call<string>("ClientVersion"),

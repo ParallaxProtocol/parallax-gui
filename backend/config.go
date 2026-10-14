@@ -57,6 +57,10 @@ func LoadConfigStore(path string) (*ConfigStore, error) {
 	return cs, nil
 }
 
+// Dir is the directory the config lives in: the app's own corner of the
+// user's config directory, where the wallet keeps its keystore too.
+func (c *ConfigStore) Dir() string { return filepath.Dir(c.path) }
+
 // Get returns a copy of the current config.
 func (c *ConfigStore) Get() GUIConfig {
 	c.mu.RLock()
@@ -99,7 +103,7 @@ func defaultGUIConfig() GUIConfig {
 		Bootstrapped:     false,
 		DataDir:          node.DefaultDataDir(),
 		SyncMode:         "snap",
-		HTTPRPCEnabled:   true, // MVP: on by default so MetaMask can connect.
+		HTTPRPCEnabled:   true, // on by default so local tools and dapps can reach the node.
 		HTTPRPCPort:      8545,
 		BlockInbound:     false, // help the network by accepting dials by default.
 		MaxPeers:         100,

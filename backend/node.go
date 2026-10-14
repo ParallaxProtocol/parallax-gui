@@ -43,12 +43,11 @@ import (
 type NodeController struct {
 	cfg *ConfigStore
 
-	mu            sync.RWMutex
-	stack         *node.Node
-	parallax      *protocol.Parallax
-	startedAt     time.Time
-	stopCh        chan struct{} // closed by Stop() so background goroutines exit
-	walletMonitor *WalletMonitor
+	mu        sync.RWMutex
+	stack     *node.Node
+	parallax  *protocol.Parallax
+	startedAt time.Time
+	stopCh    chan struct{} // closed by Stop() so background goroutines exit
 	// The free space below which monitorFreeDiskSpace stops the node; 0 when off
 	diskCritical uint64
 
@@ -150,22 +149,6 @@ func (n *NodeController) Start(ctx context.Context) error {
 	}
 	prlCfg.DatabaseHandles = tuneProcess(guiCfg, &prlCfg)
 
-	// HTTP-RPC interception. When enabled, we transparently rebind the
-	// embedded node to a free internal loopback port and run a tiny
-	// reverse proxy on the user-facing port. The proxy timestamps every
-	// request so the dashboard can show a "wallet connected" indicator.
-	// If we can't grab an internal port we fall back to a direct bind
-	// (no monitoring), since the proxy is purely a UX nicety. The proxy
-	// takes the user's listen address; the node itself stays on loopback.
-	var walletMon *WalletMonitor
-	if guiCfg.HTTPRPCEnabled {
-		if internal, perr := pickInternalRPCPort(); perr == nil {
-			walletMon = NewWalletMonitor(nodeCfg.HTTPHost, nodeCfg.HTTPPort, internal)
-			nodeCfg.HTTPHost = "127.0.0.1"
-			nodeCfg.HTTPPort = internal
-		}
-	}
-
 	stack, err := node.New(&nodeCfg)
 	if err != nil {
 		return fmt.Errorf("create node: %w", err)
@@ -209,23 +192,12 @@ func (n *NodeController) Start(ctx context.Context) error {
 		return fmt.Errorf("start node: %w", err)
 	}
 
-	// Bring up the wallet-activity proxy after the upstream HTTP RPC
-	// is listening. If the proxy fails to bind we just disable wallet
-	// monitoring rather than tearing the node back down.
-	if walletMon != nil {
-		if err := walletMon.Start(); err != nil {
-			logging.Warn("wallet monitor proxy failed to start", "err", err)
-			walletMon = nil
-		}
-	}
-
 	stopCh := make(chan struct{})
 	n.mu.Lock()
 	n.stack = stack
 	n.parallax = parallax
 	n.startedAt = time.Now()
 	n.stopCh = stopCh
-	n.walletMonitor = walletMon
 	n.mu.Unlock()
 
 	// Process metrics: cmd/parallaxd calls this exactly once in prepare(). It
@@ -261,11 +233,9 @@ func (n *NodeController) Stop() error {
 	n.mu.Lock()
 	stack := n.stack
 	stopCh := n.stopCh
-	walletMon := n.walletMonitor
 	n.stack = nil
 	n.parallax = nil
 	n.stopCh = nil
-	n.walletMonitor = nil
 	n.mu.Unlock()
 	if stack == nil {
 		return nil
@@ -275,25 +245,9 @@ func (n *NodeController) Stop() error {
 		// the stack so they don't race against a half-torn-down node.
 		close(stopCh)
 	}
-	if walletMon != nil {
-		_ = walletMon.Stop()
-	}
 	err := stack.Close()
 	n.emit("stopped", nil)
 	return err
-}
-
-// WalletStatus reports whether a local wallet is currently talking to
-// our HTTP RPC endpoint. Always returns Connected=false when the node
-// isn't running or HTTP-RPC is disabled.
-func (n *NodeController) WalletStatus() WalletStatus {
-	n.mu.RLock()
-	wm := n.walletMonitor
-	n.mu.RUnlock()
-	if wm == nil {
-		return WalletStatus{}
-	}
-	return wm.Status()
 }
 
 // ClientVersion returns the underlying parallax client version string —
@@ -606,10 +560,11 @@ func parseV2Bootnodes(entries []string) []addrman.NetAddr {
 	return out
 }
 
-// setAccountManagerBackends installs an empty-but-functional keystore
-// backend so that the node.Node accounts manager has at least one backend
-// registered. The MVP GUI does not surface any wallet functionality, but
-// the underlying account manager still expects a backend to be present.
+// setAccountManagerBackends installs the node's own keystore backend
+// (<datadir>/keystore, as parallaxd does) so that the node.Node accounts
+// manager has at least one backend registered. The app's wallet keeps its
+// keys elsewhere and never attaches them here (wallet.go), so no RPC client
+// can list or use them.
 func setAccountManagerBackends(stack *node.Node) error {
 	conf := stack.Config()
 	keydir := stack.KeyStoreDir()

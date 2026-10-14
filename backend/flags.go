@@ -160,9 +160,9 @@ func applyP2PFlags(g GUIConfig, cfg *p2p.Config) error {
 
 // applyRPCFlags mirrors setHTTP, setWS, setGraphQL and setIPC.
 func applyRPCFlags(g GUIConfig, cfg *node.Config) error {
-	// Browser dapps and the MetaMask extension make cross-origin calls; the
-	// listener is on loopback by default, so "*" only admits processes
-	// that already share the machine.
+	// Browser dapps make cross-origin calls; the listener is on loopback
+	// by default, so "*" only admits processes that already share the
+	// machine.
 	cfg.HTTPModules = orDefault(g.HTTPAPIs, defaultModules)
 	cfg.HTTPCors = orDefault(g.HTTPCors, []string{"*"})
 	// Both loopback names, so tools connecting by either pass the host check

@@ -22,7 +22,7 @@ const (
 
 // addressCache holds the last AddressSummary per address, valid while the
 // head has not moved. The Wallet page polls, and most polls land on the
-// same head.
+// same head. The pool's transactions are read afresh on every call.
 type addressCache struct {
 	mu      sync.Mutex
 	head    util.Hash
@@ -31,9 +31,9 @@ type addressCache struct {
 
 var addrCache = addressCache{entries: make(map[util.Address]AddressView)}
 
-// AddressSummary returns the balance of addr at the chain head and its
-// activity over the last addressLookback blocks: transactions from or to
-// it.
+// AddressSummary returns the balance of addr at the chain head, its
+// activity over the last addressLookback blocks (transactions from or to
+// it) and its transactions still waiting in the pool.
 func (n *NodeController) AddressSummary(addr string) (AddressView, error) {
 	addr = strings.TrimSpace(addr)
 	if !util.IsHexAddress(addr) {
@@ -57,6 +57,8 @@ func (n *NodeController) AddressSummary(addr string) (AddressView, error) {
 	}
 	if v, ok := addrCache.entries[account]; ok {
 		addrCache.mu.Unlock()
+		pending, queued := parallax.TxPool().Content()
+		v.Pending = poolActivity(pending, queued, account)
 		return v, nil
 	}
 	addrCache.mu.Unlock()
@@ -125,5 +127,42 @@ func (n *NodeController) AddressSummary(addr string) (AddressView, error) {
 		addrCache.entries[account] = view
 	}
 	addrCache.mu.Unlock()
+	pending, queued := parallax.TxPool().Content()
+	view.Pending = poolActivity(pending, queued, account)
 	return view, nil
+}
+
+// poolActivity lists the pool's transactions from or to account. Queued
+// ones (held back by a nonce gap or the balance) are listed with the
+// pending: both are waiting.
+func poolActivity(pending, queued map[util.Address]types.Transactions, account util.Address) []TxView {
+	out := []TxView{}
+	for _, pool := range []map[util.Address]types.Transactions{pending, queued} {
+		for from, txs := range pool {
+			for _, tx := range txs {
+				to := tx.To()
+				if from != account && (to == nil || *to != account) {
+					continue
+				}
+				v := TxView{
+					Hash:     tx.Hash().Hex(),
+					From:     from.Hex(),
+					ValueWei: tx.Value().String(),
+					GasUsed:  tx.Gas(),
+					Kind:     "call",
+				}
+				switch {
+				case to == nil:
+					v.Kind = "contract"
+				case len(tx.Data()) == 0:
+					v.Kind = "transfer"
+				}
+				if to != nil {
+					v.To = to.Hex()
+				}
+				out = append(out, v)
+			}
+		}
+	}
+	return out
 }

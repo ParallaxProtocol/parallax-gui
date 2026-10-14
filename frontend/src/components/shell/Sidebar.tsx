@@ -1,9 +1,11 @@
-import { NavLink } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { Plug, Settings2, Wallet } from "lucide-react";
-import { formatDuration, formatInt } from "../../lib/format";
-import { GLIDE, SPRING } from "../../lib/motion";
-import { nodeState, syncProgress, useNode, useWallet } from "../../lib/live";
+import { ArrowDownLeft, ArrowUpRight, Check, ChevronsUpDown, KeyRound, Settings2, Wallet } from "lucide-react";
+import { formatDuration, formatInt, shortHex } from "../../lib/format";
+import { FADE_OUT, GLIDE, SPRING } from "../../lib/motion";
+import { nodeState, syncProgress, useNode } from "../../lib/live";
+import { accountLabel, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Indicator, type Grade } from "../ui/Indicator";
 import { Meter } from "../ui/bits";
@@ -11,10 +13,9 @@ import { Counter } from "../ui/Counter";
 import logo from "../../assets/logo.svg";
 
 /**
- * Sidebar is the window's source list: the wallet's destinations, the
- * connection's with a live hint of its link, under a header that is part
- * of the window's title bar, and the node's card at its foot, the one way
- * into the node's page.
+ * Sidebar is the window's source list: the account the wallet shows and
+ * its destinations, under a header that is part of the window's title
+ * bar, and the node's card at its foot, the one way into the node's page.
  */
 export default function Sidebar() {
   const t = useT();
@@ -29,8 +30,11 @@ export default function Sidebar() {
 
       <nav className="flex flex-col gap-px px-2 pt-2" aria-label={t("nav.label")}>
         <h2 className="px-2 pt-1 pb-1 text-xs font-semibold text-muted-foreground">{t("nav.wallet")}</h2>
-        <NavItem to="/" icon={Wallet} label={t("nav.account")} />
-        <NavItem to="/connect" icon={Plug} label={t("nav.connect")} adornment={<WalletDot />} />
+        <AccountSwitcher />
+        <NavItem to="/" icon={Wallet} label={t("nav.overview")} />
+        <NavItem to="/send" icon={ArrowUpRight} label={t("nav.send")} />
+        <NavItem to="/receive" icon={ArrowDownLeft} label={t("nav.receive")} />
+        <NavItem to="/accounts" icon={KeyRound} label={t("nav.accounts")} />
       </nav>
 
       <div className="flex-1" />
@@ -44,19 +48,101 @@ export default function Sidebar() {
   );
 }
 
-// The adornment reads the live stream itself, so a wallet status change
-// re-renders one span rather than the whole sidebar
-function WalletDot() {
+/**
+ * AccountSwitcher shows the account the wallet pages are about, and opens
+ * a list of the others to switch to. Escape or a click outside closes it.
+ */
+function AccountSwitcher() {
   const t = useT();
-  const wallet = useWallet();
+  const navigate = useNavigate();
+  const { info, account, select } = useWallet();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  if (!info || !account) return null;
+  const accounts = info.accounts;
+
   return (
-    <AnimatePresence>
-      {wallet.connected && (
-        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={GLIDE}>
-          <Indicator grade="good" ping cause="wallet" label={t("nav.walletConnected")} />
-        </motion.span>
-      )}
-    </AnimatePresence>
+    <div ref={box} className="relative mb-1">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 rounded-md border border-border bg-surface/70 px-2 py-1.5 text-left transition-colors hover:border-border-strong"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium">{accountLabel(account, accounts, t)}</span>
+          <span className="block truncate font-mono text-xs text-muted-foreground">{shortHex(account.address, 8, 6)}</span>
+        </span>
+        <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            role="listbox"
+            aria-label={t("nav.accounts")}
+            className="absolute inset-x-0 top-full z-50 mt-1 flex flex-col gap-px rounded-lg border border-border-strong bg-background p-1 shadow-[0_8px_24px_rgb(0_0_0/22%)]"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, transition: FADE_OUT }}
+            transition={GLIDE}
+          >
+            <div className="flex max-h-64 flex-col gap-px overflow-y-auto">
+              {accounts.map((a) => {
+                const here = a.address === account.address;
+                return (
+                  <button
+                    key={a.address}
+                    type="button"
+                    role="option"
+                    aria-selected={here}
+                    onClick={() => {
+                      setOpen(false);
+                      if (!here) select(a.address);
+                    }}
+                    className="flex items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-hover"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate">{accountLabel(a, accounts, t)}</span>
+                      <span className="block truncate font-mono text-xs text-muted-foreground">{shortHex(a.address, 8, 6)}</span>
+                    </span>
+                    {here && <Check className="size-3.5 shrink-0 text-brand" />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="my-0.5 border-t border-border" />
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                navigate("/accounts");
+              }}
+              className="rounded-md px-2 py-1 text-left text-muted-foreground hover:bg-hover hover:text-foreground"
+            >
+              {t("nav.manageAccounts")}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -64,12 +150,10 @@ function NavItem({
   to,
   icon: Icon,
   label,
-  adornment,
 }: {
   to: string;
   icon: typeof Wallet;
   label: string;
-  adornment?: React.ReactNode;
 }) {
   return (
     <NavLink
@@ -99,7 +183,6 @@ function NavItem({
             strokeWidth={1.75}
           />
           <span className="relative flex-1 truncate">{label}</span>
-          <span className="relative">{adornment}</span>
         </>
       )}
     </NavLink>
