@@ -13,6 +13,7 @@ import {
   Menu,
   nativeTheme,
   net,
+  powerSaveBlocker,
   protocol,
   shell,
 } from "electron";
@@ -84,6 +85,71 @@ let mainWindow: BrowserWindow | null = null;
 let quitting = false;
 /** Runs once the backend has stopped, just before the process exits (restart after an update). */
 let afterStop: (() => void) | null = null;
+
+/**
+ * Starting the app at login. macOS and Windows keep login items
+ * themselves; on Linux it is an XDG autostart entry. It needs a packaged
+ * app: in development the executable is Electron itself.
+ */
+const AUTOSTART_FILE = path.join(app.getPath("appData"), "autostart", "parallax-client.desktop");
+
+/** The file to launch: the AppImage or portable executable the app runs from, else the app itself. */
+function launchTarget() {
+  return process.env.APPIMAGE || process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
+}
+
+function openAtLogin(): boolean {
+  if (!isMac && !isWindows) return fs.existsSync(AUTOSTART_FILE);
+  return app.getLoginItemSettings(isWindows ? { path: launchTarget() } : undefined).openAtLogin;
+}
+
+function setOpenAtLogin(on: boolean) {
+  if (isMac || isWindows) {
+    app.setLoginItemSettings({ openAtLogin: on, ...(isWindows ? { path: launchTarget() } : {}) });
+    return;
+  }
+  if (!on) {
+    fs.rmSync(AUTOSTART_FILE, { force: true });
+    return;
+  }
+  const exec = `"${launchTarget().replace(/(["\\`$])/g, "\\$1")}"`;
+  fs.mkdirSync(path.dirname(AUTOSTART_FILE), { recursive: true });
+  fs.writeFileSync(
+    AUTOSTART_FILE,
+    ["[Desktop Entry]", "Type=Application", "Name=Parallax Client", `Exec=${exec}`, "X-GNOME-Autostart-enabled=true", ""].join("\n"),
+  );
+}
+
+/** Holds the system awake while the frontend asks (mining or syncing, if the user wants it). */
+let sleepBlocker: number | null = null;
+
+function keepAwake(on: boolean) {
+  if (on && sleepBlocker === null) {
+    sleepBlocker = powerSaveBlocker.start("prevent-app-suspension");
+  } else if (!on && sleepBlocker !== null) {
+    powerSaveBlocker.stop(sleepBlocker);
+    sleepBlocker = null;
+  }
+}
+
+/**
+ * The backend's own command-line flags, from the saved config. Metrics
+ * collection is decided once, from argv, as the daemon starts
+ * (support/metrics), so this is how the Metrics setting reaches it.
+ * The path is Go's os.UserConfigDir()/Parallax/gui.json (backend/config.go).
+ */
+function backendArgs(): string[] {
+  try {
+    const file = path.join(app.getPath("appData"), "Parallax", "gui.json");
+    const cfg = JSON.parse(fs.readFileSync(file, "utf8")) as { metrics?: boolean; metricsExpensive?: boolean };
+    const args: string[] = [];
+    if (cfg.metrics) args.push("--metrics");
+    if (cfg.metrics && cfg.metricsExpensive) args.push("--metrics.expensive");
+    return args;
+  } catch {
+    return []; // no config yet: a fresh install
+  }
+}
 
 /** Only the app's own pages may use the bridge. */
 function trusted(event: IpcMainInvokeEvent | IpcMainEvent): boolean {
@@ -235,6 +301,16 @@ function wireIpc() {
   ipcMain.handle("shell:openExternal", (event, url: unknown) => {
     if (trusted(event) && typeof url === "string") openExternal(url);
   });
+  ipcMain.handle("login:get", (event) => {
+    if (!trusted(event)) return { supported: false, enabled: false };
+    return { supported: app.isPackaged, enabled: app.isPackaged && openAtLogin() };
+  });
+  ipcMain.handle("login:set", (event, on: unknown) => {
+    if (trusted(event) && app.isPackaged && typeof on === "boolean") setOpenAtLogin(on);
+  });
+  ipcMain.on("power:keepAwake", (event, on: unknown) => {
+    if (trusted(event) && typeof on === "boolean") keepAwake(on);
+  });
   ipcMain.on("theme:set", (event, pref: unknown) => {
     if (trusted(event) && (pref === "system" || pref === "light" || pref === "dark")) {
       nativeTheme.themeSource = pref;
@@ -269,7 +345,7 @@ async function boot() {
   );
 
   wireIpc();
-  backend.start(paths.backend, {
+  backend.start(paths.backend, backendArgs(), {
     ...process.env,
     // Lets the updater replace the portable executable rather than run an installer
     PARALLAX_PORTABLE_EXE: process.env.PORTABLE_EXECUTABLE_FILE ?? "",
@@ -306,6 +382,9 @@ async function singleInstance(): Promise<boolean> {
   }
   return false;
 }
+
+// Windows shows notifications only for an app with an AppUserModelID: the appId in electron-builder.yml
+if (isWindows) app.setAppUserModelId("org.parallaxprotocol.desktop");
 
 singleInstance().then((ok) => {
   if (!ok) {

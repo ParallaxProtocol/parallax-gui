@@ -69,6 +69,101 @@ type GUIConfig struct {
 	// here: the daemon's address book keeps those.)
 	StaticPeers  []string `json:"staticPeers"`
 	TrustedPeers []string `json:"trustedPeers"`
+
+	// The fields below mirror parallaxd's command-line flags, each named
+	// after its flag. An empty string, nil pointer or false keeps the CLI's
+	// default, so configs saved before a field existed behave exactly like
+	// a bare `parallaxd`. Pointers are used where 0 is a meaningful value
+	// of its own (0 = unlimited, 0 = disabled).
+
+	// Node
+	NodeName      string  `json:"nodeName"`      // --identity
+	ArchiveMode   bool    `json:"archiveMode"`   // --gcmode archive
+	TxLookupLimit *uint64 `json:"txLookupLimit"` // --txlookuplimit (0 = whole chain)
+	NoSnapshot    bool    `json:"noSnapshot"`    // --snapshot=false (ignored under snap sync)
+	AncientDir    string  `json:"ancientDir"`    // --datadir.ancient
+	MinFreeDiskMB *int    `json:"minFreeDiskMB"` // --datadir.minfreedisk (0 = never stop)
+	FDLimit       int     `json:"fdLimit"`       // --fdlimit (0 = the OS limit)
+	NoPrefetch    bool    `json:"noPrefetch"`    // --cache.noprefetch
+	Preimages     bool    `json:"preimages"`     // --cache.preimages
+
+	// Network
+	ListenPort      int      `json:"listenPort"`      // --port
+	NATMode         string   `json:"natMode"`         // --nat: "" (any) | "upnp" | "pmp" | "extip"; BlockInbound means none
+	ExternalIP      string   `json:"externalIp"`      // the address for --nat extip:<IP>
+	MaxPendingPeers int      `json:"maxPendingPeers"` // --maxpendpeers (0 = default)
+	NoDiscovery     bool     `json:"noDiscovery"`     // --nodiscover
+	LegacyDiscovery string   `json:"legacyDiscovery"` // --legacy-discovery: "" (auto) | "on" | "off"
+	NetRestrict     string   `json:"netRestrict"`     // --netrestrict, comma-separated CIDR masks
+	Bootnodes       []string `json:"bootnodes"`       // --bootnodes, enode URLs or ip:port (empty = built-in)
+
+	// Privacy (PIP-0007)
+	Proxy            string   `json:"proxy"`            // --proxy, SOCKS5 ip:port
+	OnionProxy       string   `json:"onionProxy"`       // --onion ("0" = no onion outbound)
+	OnlyNet          []string `json:"onlyNet"`          // --onlynet: ipv4 | ipv6 | onion
+	ProxyNoRandomize bool     `json:"proxyNoRandomize"` // --proxyrandomize=false
+	NoListenOnion    bool     `json:"noListenOnion"`    // --listenonion=false
+	TorControl       string   `json:"torControl"`       // --torcontrol
+	TorPassword      string   `json:"torPassword"`      // --torpassword
+
+	// RPC
+	HTTPHost            string   `json:"httpHost"`            // --http.addr (empty = 127.0.0.1)
+	HTTPAPIs            []string `json:"httpApis"`            // --http.api (empty = net, web3, eth, debug)
+	HTTPCors            []string `json:"httpCors"`            // --http.corsdomain (empty = *)
+	HTTPVirtualHosts    []string `json:"httpVhosts"`          // --http.vhosts (empty = localhost, 127.0.0.1)
+	WSEnabled           bool     `json:"wsEnabled"`           // --ws
+	WSHost              string   `json:"wsHost"`              // --ws.addr (empty = 127.0.0.1)
+	WSPort              int      `json:"wsPort"`              // --ws.port (0 = 8546)
+	WSAPIs              []string `json:"wsApis"`              // --ws.api (empty = net, web3, eth, debug)
+	WSOrigins           []string `json:"wsOrigins"`           // --ws.origins (empty = *)
+	GraphQL             bool     `json:"graphql"`             // --graphql
+	IPCDisabled         bool     `json:"ipcDisabled"`         // --ipcdisable
+	RPCGasCap           *uint64  `json:"rpcGasCap"`           // --rpc.gascap (0 = no cap)
+	RPCTxFeeCap         *float64 `json:"rpcTxFeeCap"`         // --rpc.txfeecap, in LAX (0 = no cap)
+	RPCPVMTimeoutSec    *int     `json:"rpcPvmTimeoutSec"`    // --rpc.pvmtimeout (0 = no timeout)
+	RPCLogQueryLimit    *int     `json:"rpcLogQueryLimit"`    // --rpc.logquerylimit (0 = no limit)
+	RPCBatchLimit       *int     `json:"rpcBatchLimit"`       // --rpc.batch-request-limit
+	AllowUnprotectedTxs bool     `json:"allowUnprotectedTxs"` // --rpc.allow-unprotected-txs
+
+	// Transaction pool
+	TxPoolLocals       []string `json:"txPoolLocals"`       // --txpool.locals
+	TxPoolNoLocals     bool     `json:"txPoolNoLocals"`     // --txpool.nolocals
+	TxPoolPriceLimit   *uint64  `json:"txPoolPriceLimit"`   // --txpool.pricelimit, in wei
+	TxPoolPriceBump    *uint64  `json:"txPoolPriceBump"`    // --txpool.pricebump, in percent
+	TxPoolAccountSlots *uint64  `json:"txPoolAccountSlots"` // --txpool.accountslots
+	TxPoolGlobalSlots  *uint64  `json:"txPoolGlobalSlots"`  // --txpool.globalslots
+	TxPoolAccountQueue *uint64  `json:"txPoolAccountQueue"` // --txpool.accountqueue
+	TxPoolGlobalQueue  *uint64  `json:"txPoolGlobalQueue"`  // --txpool.globalqueue
+	TxPoolLifetimeMin  *int     `json:"txPoolLifetimeMin"`  // --txpool.lifetime, in minutes
+
+	// Gas price oracle
+	GPOBlocks      *int   `json:"gpoBlocks"`      // --gpo.blocks
+	GPOPercentile  *int   `json:"gpoPercentile"`  // --gpo.percentile
+	GPOMaxPrice    string `json:"gpoMaxPrice"`    // --gpo.maxprice, decimal wei
+	GPOIgnorePrice string `json:"gpoIgnorePrice"` // --gpo.ignoreprice, decimal wei
+
+	// Mining with the node's own miner (solo modes)
+	MinerExtraData   string `json:"minerExtraData"`   // --miner.extradata
+	MinerGasLimit    uint64 `json:"minerGasLimit"`    // --miner.gaslimit (0 = default)
+	MinerGasPrice    string `json:"minerGasPrice"`    // --miner.gasprice, decimal wei
+	MinerRecommitSec int    `json:"minerRecommitSec"` // --miner.recommit (0 = default)
+
+	// Metrics. The daemon decides whether metrics are collected once, at
+	// process start, from its argv (support/metrics init), so these take
+	// effect on the next launch of the app: the shell passes --metrics and
+	// --metrics.expensive to the backend when they are on.
+	Metrics          bool   `json:"metrics"`          // --metrics
+	MetricsExpensive bool   `json:"metricsExpensive"` // --metrics.expensive
+	MetricsAddr      string `json:"metricsAddr"`      // --metrics.addr (empty = no HTTP endpoint)
+	MetricsPort      int    `json:"metricsPort"`      // --metrics.port (0 = 6060)
+
+	// Desktop
+	LogLevel       int    `json:"logLevel"`       // --verbosity, 1 (error) to 5 (trace); 0 = info
+	NoUpdateCheck  bool   `json:"noUpdateCheck"`  // don't look for new releases in the background
+	PreventSleep   bool   `json:"preventSleep"`   // keep the computer awake while mining or syncing
+	Notifications  bool   `json:"notifications"`  // desktop notifications: sync done, block found, node stopped
+	ResumeMining   bool   `json:"resumeMining"`   // restart mining at launch if it was running at quit
+	LastMiningMode string `json:"lastMiningMode"` // the mode mining was last started in; empty once the user stops it
 }
 
 // NodeDetails is the Overview's fuller picture of the running node: who it

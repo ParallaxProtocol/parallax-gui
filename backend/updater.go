@@ -81,8 +81,9 @@ func (u *Updater) emit(p UpdateProgress) {
 }
 
 // StartPeriodicCheck starts a background goroutine that checks for updates
-// immediately and then every interval.
-func (u *Updater) StartPeriodicCheck(interval time.Duration) {
+// shortly after startup and then every interval, skipping each check while
+// enabled reports false (the user turned background checks off).
+func (u *Updater) StartPeriodicCheck(interval time.Duration, enabled func() bool) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -97,8 +98,10 @@ func (u *Updater) StartPeriodicCheck(interval time.Duration) {
 			return
 		}
 
-		if _, err := u.CheckForUpdate(); err != nil {
-			logging.Warn("Auto-update check failed", "err", err)
+		if enabled() {
+			if _, err := u.CheckForUpdate(); err != nil {
+				logging.Warn("Auto-update check failed", "err", err)
+			}
 		}
 
 		ticker := time.NewTicker(interval)
@@ -106,6 +109,9 @@ func (u *Updater) StartPeriodicCheck(interval time.Duration) {
 		for {
 			select {
 			case <-ticker.C:
+				if !enabled() {
+					continue
+				}
 				if _, err := u.CheckForUpdate(); err != nil {
 					logging.Warn("Auto-update check failed", "err", err)
 				}

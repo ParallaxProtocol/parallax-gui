@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { AnimatePresence, motion, MotionConfig, MotionGlobalConfig } from "motion/react";
 import { Loader2 } from "lucide-react";
 import { api } from "./lib/api";
 import { applyTheme } from "./lib/theme";
 import { LiveProvider } from "./lib/live";
+import { DesktopBehaviors } from "./lib/desktop";
 import { AnimationsOff } from "./lib/prefs";
 import { PAGE } from "./lib/motion";
 import Overview from "./pages/Overview";
@@ -23,14 +24,15 @@ import { useT } from "./i18n";
 import { BrandMark } from "./components/ui/BrandMark";
 
 // Custom event the Settings page dispatches whenever it persists a new
-// config. App listens for it so globally-applied flags (animations, theme)
-// update instantly without a reload, instead of being polled on a timer.
+// config. App listens for it so globally-applied flags (animations, theme,
+// notifications, keeping awake) update instantly without a reload, instead of being polled on a timer.
 export const CONFIG_UPDATED_EVENT = "parallax:config-updated";
 
 export default function App() {
   const [bootChecked, setBootChecked] = useState(false);
   const [needsBootstrap, setNeedsBootstrap] = useState(false);
   const [animationsDisabled, setAnimationsDisabled] = useState(false);
+  const [desktop, setDesktop] = useState({ notifications: false, preventSleep: false });
   const [version, setVersion] = useState("");
   const navigate = useNavigate();
 
@@ -77,6 +79,7 @@ export default function App() {
         .then((c) => {
           if (!alive) return;
           setAnimationsDisabled(!!c.disableAnimations);
+          setDesktop({ notifications: !!c.notifications, preventSleep: !!c.preventSleep });
           applyTheme(c.theme || "system");
         })
         .catch(() => {
@@ -93,8 +96,11 @@ export default function App() {
 
   // The kill switch goes on <body> so the global CSS rule scopes from there,
   // surviving route transitions and onboarding-mode renders.
+  // Motion's own switch as well: components pass their own transitions,
+  // which a MotionConfig default alone doesn't override
   useEffect(() => {
     document.body.classList.toggle("no-anim", animationsDisabled);
+    MotionGlobalConfig.skipAnimations = animationsDisabled;
   }, [animationsDisabled]);
 
   let content;
@@ -122,6 +128,7 @@ export default function App() {
   } else {
     content = (
       <LiveProvider>
+        <DesktopBehaviors {...desktop} />
         <div className="flex h-full flex-col">
           <div className="flex min-h-0 flex-1">
             <Sidebar />
@@ -172,17 +179,15 @@ function RoutedContent({ animate }: { animate: boolean }) {
     // The scrollbar's gutter is always reserved, so a page growing past the
     // window (or one arriving mid-transition) never shifts the layout sideways
     <main className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable]">
-      {animate ? (
-        // A quick crossfade between pages; without animations the wrapper goes
-        // entirely, since Motion commits `initial` for one frame even at duration 0
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={location.pathname} className="h-full" {...PAGE}>
-            {routes}
-          </motion.div>
-        </AnimatePresence>
-      ) : (
-        routes
-      )}
+      {/* A quick crossfade between pages. The wrapper stays when animations
+          are off, only losing its motion props (Motion would commit `initial`
+          for a frame even at duration 0): swapping it out would remount the
+          page, losing its state, such as the Settings tab being toggled from */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={location.pathname} className="h-full" {...(animate ? PAGE : {})}>
+          {routes}
+        </motion.div>
+      </AnimatePresence>
     </main>
   );
 }

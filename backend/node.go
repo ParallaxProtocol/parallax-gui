@@ -8,10 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -28,9 +30,9 @@ import (
 	"github.com/ParallaxProtocol/parallax/v2/node/stats"
 	"github.com/ParallaxProtocol/parallax/v2/p2p/addrman"
 	"github.com/ParallaxProtocol/parallax/v2/p2p/enode"
-	"github.com/ParallaxProtocol/parallax/v2/p2p/nat"
 	"github.com/ParallaxProtocol/parallax/v2/p2p/netparams"
 	"github.com/ParallaxProtocol/parallax/v2/primitives/types"
+	"github.com/ParallaxProtocol/parallax/v2/rpc/graphql"
 	"github.com/ParallaxProtocol/parallax/v2/support/metrics"
 	"github.com/ParallaxProtocol/parallax/v2/util"
 	"github.com/ParallaxProtocol/parallax/v2/wallet/keystore"
@@ -146,19 +148,21 @@ func (n *NodeController) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	prlCfg.DatabaseHandles = tuneProcess(guiCfg, &prlCfg)
 
 	// HTTP-RPC interception. When enabled, we transparently rebind the
 	// embedded node to a free internal loopback port and run a tiny
 	// reverse proxy on the user-facing port. The proxy timestamps every
 	// request so the dashboard can show a "wallet connected" indicator.
 	// If we can't grab an internal port we fall back to a direct bind
-	// (no monitoring), since the proxy is purely a UX nicety.
+	// (no monitoring), since the proxy is purely a UX nicety. The proxy
+	// takes the user's listen address; the node itself stays on loopback.
 	var walletMon *WalletMonitor
-	publicRPCPort := nodeCfg.HTTPPort
 	if guiCfg.HTTPRPCEnabled {
 		if internal, perr := pickInternalRPCPort(); perr == nil {
+			walletMon = NewWalletMonitor(nodeCfg.HTTPHost, nodeCfg.HTTPPort, internal)
+			nodeCfg.HTTPHost = "127.0.0.1"
 			nodeCfg.HTTPPort = internal
-			walletMon = NewWalletMonitor(publicRPCPort, internal)
 		}
 	}
 
@@ -182,6 +186,14 @@ func (n *NodeController) Start(ctx context.Context) error {
 	// debug_traceTransaction / debug_traceCall etc. silently 404 over RPC,
 	// which breaks devtools and dapp debuggers connecting to our local node.
 	stack.RegisterAPIs(tracers.APIs(parallax.APIBackend))
+
+	// --graphql: served by the HTTP-RPC server at /graphql
+	if guiCfg.GraphQL {
+		if err := graphql.New(stack, parallax.APIBackend, nodeCfg.GraphQLCors, nodeCfg.GraphQLVirtualHosts); err != nil {
+			stack.Close()
+			return fmt.Errorf("register GraphQL service: %w", err)
+		}
+	}
 
 	// Public stats reporting, the GUI's equivalent of a bare --prlstats
 	// (cmd/utils RegisterPrlStatsService). A failure here only costs the
@@ -226,12 +238,12 @@ func (n *NodeController) Start(ctx context.Context) error {
 	// Free disk space monitor: triggers a graceful Stop() when free space
 	// on the data directory crosses below the critical threshold, matching
 	// the safeguard cmd/utils/cmd.go installs in StartNode.
-	criticalMB := uint64(2 * prlCfg.TrieDirtyCache) // 2× dirty cache, in MiB
+	critical := minFreeDiskBytes(guiCfg, &prlCfg)
 	n.mu.Lock()
-	n.diskCritical = criticalMB * 1024 * 1024
+	n.diskCritical = critical
 	n.mu.Unlock()
-	if criticalMB > 0 {
-		go n.monitorFreeDiskSpace(stack.InstanceDir(), criticalMB*1024*1024, stopCh)
+	if critical > 0 {
+		go n.monitorFreeDiskSpace(stack.InstanceDir(), critical, stopCh)
 	}
 
 	// Legacy receipts warning. This is purely informational — the chain
@@ -308,7 +320,7 @@ func (n *NodeController) Status() NodeStatus {
 		ClientVersion: "Parallax/v" + parallaxpkg.VersionWithMeta,
 	}
 	if guiCfg.HTTPRPCEnabled {
-		st.RPCEndpoint = fmt.Sprintf("http://127.0.0.1:%d", guiCfg.HTTPRPCPort)
+		st.RPCEndpoint = rpcEndpoint(guiCfg)
 	}
 	if stack == nil || parallax == nil {
 		return st
@@ -359,6 +371,15 @@ func (n *NodeController) Status() NodeStatus {
 	return st
 }
 
+// rpcEndpoint is the URL local apps reach the HTTP-RPC server at.
+func rpcEndpoint(g GUIConfig) string {
+	host := httpHost(g)
+	if ip := net.ParseIP(host); ip != nil && ip.IsUnspecified() {
+		host = "127.0.0.1"
+	}
+	return "http://" + net.JoinHostPort(host, strconv.Itoa(g.HTTPRPCPort))
+}
+
 // buildConfigs translates GUIConfig into a node.Config + nodeconfig.Config pair.
 func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 	nodeCfg := node.DefaultConfig
@@ -366,58 +387,30 @@ func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 	nodeCfg.Version = GUIVersion
 	nodeCfg.DataDir = g.DataDir
 	nodeCfg.IPCPath = "parallax.ipc"
+	nodeCfg.UserIdent = strings.TrimSpace(g.NodeName)
 
-	// Augment (don't replace) the default module lists from
-	// node/defaults.go: DefaultConfig provides {"net", "web3"} — we add
-	// "eth" so JSON-RPC clients (MetaMask, ethers, web3.js) can hit the
-	// chain namespace, plus "debug" so the tracer APIs we register in
-	// Start() are reachable. Same modules cmd/parallaxd ends up with after
-	// utils.SetNodeConfig + flag application.
-	nodeCfg.HTTPModules = append(nodeCfg.HTTPModules, "eth", "debug")
-	nodeCfg.WSModules = append(nodeCfg.WSModules, "eth", "debug")
-
-	// Allow both `localhost` and `127.0.0.1` as virtual hosts so dapps and
-	// CLI tools that connect via either name pass the host check.
-	nodeCfg.HTTPVirtualHosts = []string{"localhost", "127.0.0.1"}
-
-	// Browser-based dapps and the MetaMask extension issue cross-origin
-	// JSON-RPC requests. Without HTTPCors set, the node returns the data
-	// but the browser blocks it. The listener is bound to the loopback
-	// interface so allowing "*" only widens access to processes that
-	// already share localhost — same trust boundary as enabling RPC at
-	// all.
-	nodeCfg.HTTPCors = []string{"*"}
-	nodeCfg.WSOrigins = []string{"*"}
-
-	if g.HTTPRPCEnabled {
-		nodeCfg.HTTPHost = "127.0.0.1"
-		nodeCfg.HTTPPort = g.HTTPRPCPort
-	}
 	if g.MaxPeers > 0 {
 		nodeCfg.P2P.MaxPeers = g.MaxPeers
 	}
-	// nat.Any() opens an upnp/pmp port mapping so peers on the wider
-	// internet can dial us. A nil NAT interface (the equivalent of
-	// `--nat none` on the CLI) leaves us outbound-only — we still dial
-	// peers but they cannot dial us.
-	if g.BlockInbound {
-		nodeCfg.P2P.NAT = nil
-	} else {
-		nodeCfg.P2P.NAT = nat.Any()
-	}
-
 	// Without bootstrap nodes the embedded node has nothing to dial; the
 	// CLI binary wires these up via cmd/utils/flags.go. We replicate that
 	// here so the GUI can actually find peers on a fresh install. v2 splits
 	// bootstrapping into three paths: enode:// URLs feeding the legacy
 	// discv4 table, plain ip:port endpoints for the BIP324-style v2
 	// handshake, and DNS seeds resolved on a 24h cadence into addrman.
+	// Custom bootnodes from the config replace the first two.
 	nodeCfg.P2P.BootstrapNodes = parseEnodes(netparams.MainnetBootnodes)
 	nodeCfg.P2P.BootstrapNodesV2 = parseV2Bootnodes(netparams.MainnetBootnodesV2)
 	nodeCfg.P2P.DNSSeeds = netparams.MainnetDNSSeeds
 	// The peers the user pinned or trusted from the peer list
 	nodeCfg.P2P.StaticNodes = parseEnodes(g.StaticPeers)
 	nodeCfg.P2P.TrustedNodes = parseEnodes(g.TrustedPeers)
+	if err := applyP2PFlags(g, &nodeCfg.P2P); err != nil {
+		return nodeCfg, nodeconfig.Config{}, err
+	}
+	if err := applyRPCFlags(g, &nodeCfg); err != nil {
+		return nodeCfg, nodeconfig.Config{}, err
+	}
 
 	prlCfg := nodeconfig.Defaults
 	switch g.SyncMode {
@@ -441,26 +434,34 @@ func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 		prlCfg.SnapshotCache = g.SnapshotCacheMB
 	}
 
-	// Smart fee estimator toggle. Mirrors --gpo.smartfee on the CLI (on by
-	// default since v2.0.0): when enabled the gas-price oracle uses the
-	// Bitcoin Core-style algorithm instead of the legacy percentile
-	// estimator. The oracle is constructed
-	// once inside protocol.New(), so this only takes effect after a fresh node
-	// start — the Settings UI flags it as restart-required.
-	prlCfg.GPO.EnableSmartFeeEstimator = g.EnableSmartFee
-
 	// DNS discovery: same default the CLI applies for mainnet. Without
 	// these URLs the prl handler does not bootstrap a discovery iterator,
 	// so peers are only ever found via the static bootstrap nodes above.
+	// (--nodiscover clears them again in applyPrlFlags.)
 	if url := netparams.KnownDNSNetwork(chainparams.MainnetGenesisHash, "all"); url != "" {
 		prlCfg.ParallaxDiscoveryURLs = []string{url}
 		prlCfg.SnapDiscoveryURLs = []string{url}
+	}
+
+	// The smart fee estimator (--gpo.smartfee, on by default since v2.0.0)
+	// and the rest of the oracle, the pool, the RPC caps and the miner.
+	// All of them are read once inside protocol.New(), so they take effect
+	// on a fresh node start — the Settings UI flags them restart-required.
+	if err := applyPrlFlags(g, &prlCfg); err != nil {
+		return nodeCfg, prlCfg, err
 	}
 
 	if prlCfg.SyncMode == downloader.LightSync {
 		return nodeCfg, prlCfg, errors.New("light sync from GUI not supported yet")
 	}
 	return nodeCfg, prlCfg, nil
+}
+
+// ValidateConfig reports the first setting the node would refuse to start
+// with, so Settings can reject it on save rather than at the next start.
+func ValidateConfig(g GUIConfig) error {
+	_, _, err := buildConfigs(g)
+	return err
 }
 
 // monitorFreeDiskSpace polls the data directory's free space every 30s and
@@ -490,6 +491,7 @@ func (n *NodeController) monitorFreeDiskSpace(path string, criticalBytes uint64,
 			)
 			// Detach the shutdown so we don't deadlock against Stop() racing
 			// with this goroutine waking up.
+			n.emit("lowdisk", nil) // so the frontend can say why the node stopped
 			go func() { _ = n.Stop() }()
 			return false
 		}

@@ -6,10 +6,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/ParallaxProtocol/parallax-gui/backend"
 	"github.com/ParallaxProtocol/parallax/v2/logging"
+	"github.com/ParallaxProtocol/parallax/v2/support/metrics"
+	"github.com/ParallaxProtocol/parallax/v2/support/metrics/exp"
 )
 
 // App is what the frontend talks to. Every exported method is callable
@@ -51,6 +55,22 @@ func (a *App) startup(ctx context.Context) {
 		logging.Error("Failed to load config", "err", err)
 	}
 	a.cfg = cfg
+	var conf backend.GUIConfig
+	if cfg != nil {
+		conf = cfg.Get()
+	}
+	if conf.LogLevel > 0 {
+		a.logs.SetVerbosity(conf.LogLevel)
+	}
+	// --metrics.addr. Whether metrics are collected at all was settled at
+	// process start: the shell passes --metrics when the setting is on.
+	if metrics.Enabled && conf.MetricsAddr != "" {
+		port := conf.MetricsPort
+		if port == 0 {
+			port = metrics.DefaultConfig.Port
+		}
+		exp.Setup(net.JoinHostPort(conf.MetricsAddr, strconv.Itoa(port)))
+	}
 
 	a.node = backend.NewNodeController(cfg)
 	a.node.SetEmitter(func(evt backend.NodeEvent) {
@@ -76,7 +96,47 @@ func (a *App) startup(ctx context.Context) {
 	a.updater.SetEmitter(func(p backend.UpdateProgress) {
 		a.events.emit("update-progress", p)
 	})
-	a.updater.StartPeriodicCheck(30 * time.Minute)
+	a.updater.StartPeriodicCheck(30*time.Minute, func() bool {
+		return a.cfg != nil && !a.cfg.Get().NoUpdateCheck
+	})
+
+	if conf.Bootstrapped {
+		go a.autoStart(ctx, conf)
+	}
+}
+
+// autoStart starts the node if the user asked for it at launch, then
+// resumes mining if it was running when the app last quit. Solo modes mine
+// on the node's own chain, so they wait until it has caught up.
+func (a *App) autoStart(ctx context.Context, conf backend.GUIConfig) {
+	if conf.AutoStartNode {
+		if err := a.node.Start(ctx); err != nil {
+			logging.Error("Failed to auto-start the node", "err", err)
+		}
+	}
+	mode := conf.LastMiningMode
+	if !conf.ResumeMining || mode == "" {
+		return
+	}
+	if mode != "pool" {
+		tick := time.NewTicker(5 * time.Second)
+		defer tick.Stop()
+		for st := a.node.Status(); !st.Running || st.Syncing; st = a.node.Status() {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+			}
+			// The user may have started or stopped mining by hand meanwhile
+			if a.miner.Status().Running || a.cfg.Get().LastMiningMode != mode {
+				return
+			}
+		}
+	}
+	logging.Info("Resuming mining", "mode", mode)
+	if err := a.miner.Start(ctx, mode); err != nil {
+		logging.Error("Failed to resume mining", "mode", mode, "err", err)
+	}
 }
 
 func (a *App) shutdown(ctx context.Context) {
@@ -112,8 +172,33 @@ func (a *App) SaveBootstrap(cfg backend.GUIConfig) error {
 	return a.cfg.Save(cfg)
 }
 
-func (a *App) GetConfig() backend.GUIConfig           { return a.cfg.Get() }
-func (a *App) UpdateConfig(c backend.GUIConfig) error { return a.cfg.Save(c) }
+func (a *App) GetConfig() backend.GUIConfig { return a.cfg.Get() }
+
+// UpdateConfig saves the config the frontend edited, once the node would
+// accept it. Fields the backend keeps itself (the peer lists, the last
+// mining mode) are carried over from the stored config, so a page holding
+// an older copy can't roll them back.
+func (a *App) UpdateConfig(c backend.GUIConfig) error {
+	if err := backend.ValidateConfig(c); err != nil {
+		return err
+	}
+	cur := a.cfg.Get()
+	c.Bootstrapped = cur.Bootstrapped
+	c.StaticPeers = cur.StaticPeers
+	c.TrustedPeers = cur.TrustedPeers
+	c.LastMiningMode = cur.LastMiningMode
+	if err := a.cfg.Save(c); err != nil {
+		return err
+	}
+	if c.LogLevel != cur.LogLevel {
+		level := c.LogLevel
+		if level == 0 {
+			level = int(logging.LvlInfo)
+		}
+		a.logs.SetVerbosity(level)
+	}
+	return nil
+}
 
 // ---------------------------------------------------------------------------
 // Node lifecycle
@@ -178,8 +263,31 @@ func (a *App) SetLogVerbosity(level int) { a.logs.SetVerbosity(level) }
 // Mining
 // ---------------------------------------------------------------------------
 
-func (a *App) StartMining(mode string) error             { return a.miner.Start(a.ctx, mode) }
-func (a *App) StopMining() error                         { return a.miner.Stop() }
+// StartMining and StopMining remember the mode for ResumeMining: mining
+// the user stopped stays stopped, mining still running at quit resumes.
+func (a *App) StartMining(mode string) error {
+	if err := a.miner.Start(a.ctx, mode); err != nil {
+		return err
+	}
+	return a.setLastMiningMode(mode)
+}
+
+func (a *App) StopMining() error {
+	if err := a.miner.Stop(); err != nil {
+		return err
+	}
+	return a.setLastMiningMode("")
+}
+
+func (a *App) setLastMiningMode(mode string) error {
+	c := a.cfg.Get()
+	if c.LastMiningMode == mode {
+		return nil
+	}
+	c.LastMiningMode = mode
+	return a.cfg.Save(c)
+}
+
 func (a *App) MinerStatus() backend.MinerStatus          { return a.miner.Status() }
 func (a *App) DetectGPUs() ([]backend.DeviceInfo, error) { return a.miner.DetectGPUs() }
 func (a *App) DefaultPools() []backend.PoolInfo          { return a.miner.DefaultPools() }

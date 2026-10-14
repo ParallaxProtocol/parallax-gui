@@ -35,8 +35,8 @@ export class Backend extends EventEmitter {
     });
   }
 
-  start(bin: string, env: NodeJS.ProcessEnv) {
-    const proc = spawn(bin, [], { env, stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
+  start(bin: string, args: string[], env: NodeJS.ProcessEnv) {
+    const proc = spawn(bin, args, { env, stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
     this.proc = proc;
 
     readline.createInterface({ input: proc.stdout }).on("line", (line) => {

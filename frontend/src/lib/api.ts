@@ -9,6 +9,9 @@ declare global {
       on: (event: string, cb: (data: any) => void) => () => void;
       openExternal: (url: string) => Promise<void>;
       setTheme: (pref: "system" | "light" | "dark") => void;
+      loginItem: () => Promise<{ supported: boolean; enabled: boolean }>;
+      setLoginItem: (on: boolean) => Promise<void>;
+      keepAwake: (on: boolean) => void;
       platform: string;
       material?: boolean;
     };
@@ -62,6 +65,90 @@ export type GUIConfig = {
   customPools: PoolInfo[];
   /** The Wallet page's watched address; empty follows miningWallet. */
   watchAddress: string;
+  /** Kept by the backend, which carries them over on save. */
+  staticPeers?: string[] | null;
+  trustedPeers?: string[] | null;
+  lastMiningMode?: string;
+
+  // The daemon's command-line flags (backend/types.go). An empty string,
+  // null or false keeps the CLI default.
+  nodeName: string;
+  archiveMode: boolean;
+  txLookupLimit: number | null;
+  noSnapshot: boolean;
+  ancientDir: string;
+  minFreeDiskMB: number | null;
+  fdLimit: number;
+  noPrefetch: boolean;
+  preimages: boolean;
+
+  listenPort: number;
+  natMode: "" | "upnp" | "pmp" | "extip";
+  externalIp: string;
+  maxPendingPeers: number;
+  noDiscovery: boolean;
+  legacyDiscovery: "" | "on" | "off";
+  netRestrict: string;
+  bootnodes: string[] | null;
+
+  proxy: string;
+  onionProxy: string;
+  onlyNet: string[] | null;
+  proxyNoRandomize: boolean;
+  noListenOnion: boolean;
+  torControl: string;
+  torPassword: string;
+
+  httpHost: string;
+  httpApis: string[] | null;
+  httpCors: string[] | null;
+  httpVhosts: string[] | null;
+  wsEnabled: boolean;
+  wsHost: string;
+  wsPort: number;
+  wsApis: string[] | null;
+  wsOrigins: string[] | null;
+  graphql: boolean;
+  ipcDisabled: boolean;
+  rpcGasCap: number | null;
+  rpcTxFeeCap: number | null;
+  rpcPvmTimeoutSec: number | null;
+  rpcLogQueryLimit: number | null;
+  rpcBatchLimit: number | null;
+  allowUnprotectedTxs: boolean;
+
+  txPoolLocals: string[] | null;
+  txPoolNoLocals: boolean;
+  txPoolPriceLimit: number | null;
+  txPoolPriceBump: number | null;
+  txPoolAccountSlots: number | null;
+  txPoolGlobalSlots: number | null;
+  txPoolAccountQueue: number | null;
+  txPoolGlobalQueue: number | null;
+  txPoolLifetimeMin: number | null;
+
+  gpoBlocks: number | null;
+  gpoPercentile: number | null;
+  gpoMaxPrice: string;
+  gpoIgnorePrice: string;
+
+  minerExtraData: string;
+  minerGasLimit: number;
+  minerGasPrice: string;
+  minerRecommitSec: number;
+
+  metrics: boolean;
+  metricsExpensive: boolean;
+  metricsAddr: string;
+  metricsPort: number;
+
+  // Desktop
+  /** 1 (errors) to 5 (trace); 0 is the default, info. */
+  logLevel: number;
+  noUpdateCheck: boolean;
+  preventSleep: boolean;
+  notifications: boolean;
+  resumeMining: boolean;
 };
 
 export type NodeStatus = {

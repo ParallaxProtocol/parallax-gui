@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -38,9 +39,10 @@ type WalletMonitor struct {
 	mu       sync.RWMutex
 	lastSeen time.Time
 
-	// User-facing port the wallet connects to (the value the dashboard
+	// User-facing address the wallet connects to (the value the dashboard
 	// shows in RPCEndpoint). The actual parallax HTTP listener is
-	// rebound to internalPort and we sit between them.
+	// rebound to loopback:internalPort and we sit between them.
+	publicHost   string
 	publicPort   int
 	internalPort int
 
@@ -49,8 +51,9 @@ type WalletMonitor struct {
 
 // NewWalletMonitor builds a stopped monitor. Call Start to bind the
 // proxy and tear it down with Stop on shutdown.
-func NewWalletMonitor(publicPort, internalPort int) *WalletMonitor {
+func NewWalletMonitor(publicHost string, publicPort, internalPort int) *WalletMonitor {
 	return &WalletMonitor{
+		publicHost:   publicHost,
 		publicPort:   publicPort,
 		internalPort: internalPort,
 	}
@@ -92,12 +95,13 @@ func (w *WalletMonitor) Start() error {
 		return fmt.Errorf("wallet proxy target url: %w", err)
 	}
 	proxy := &httputil.ReverseProxy{
-		// Preserve the upstream Host header so geth's virtual-host
-		// check (configured to allow "localhost"/"127.0.0.1") doesn't
-		// reject the proxied request.
+		// Pass the client's Host header through, so the node's
+		// virtual-host check (--http.vhosts) judges the real request:
+		// it is what stops a web page from reaching the node through
+		// DNS rebinding.
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(target)
-			pr.Out.Host = target.Host
+			pr.Out.Host = pr.In.Host
 		},
 	}
 
@@ -111,7 +115,7 @@ func (w *WalletMonitor) Start() error {
 		proxy.ServeHTTP(rw, r)
 	})
 
-	addr := fmt.Sprintf("127.0.0.1:%d", w.publicPort)
+	addr := net.JoinHostPort(w.publicHost, strconv.Itoa(w.publicPort))
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("wallet proxy listen %s: %w", addr, err)

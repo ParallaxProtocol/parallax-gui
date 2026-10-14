@@ -35,6 +35,17 @@ contextBridge.exposeInMainWorld("parallax", {
   setTheme(pref: "system" | "light" | "dark") {
     ipcRenderer.send("theme:set", pref);
   },
+  /** Whether the app starts at login; `supported` is false in development. */
+  loginItem(): Promise<{ supported: boolean; enabled: boolean }> {
+    return ipcRenderer.invoke("login:get");
+  },
+  setLoginItem(on: boolean): Promise<void> {
+    return ipcRenderer.invoke("login:set", on);
+  },
+  /** Holds off system sleep while on. */
+  keepAwake(on: boolean) {
+    ipcRenderer.send("power:keepAwake", on);
+  },
   platform: process.platform,
   /** Whether the window shows an OS material (vibrancy, Mica) behind transparent surfaces. */
   material: process.argv.includes("--parallax-material"),
