@@ -1,9 +1,9 @@
 import { Link, NavLink } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { LayoutGrid, Pickaxe, Settings2, Wallet } from "lucide-react";
-import { formatDuration, formatHashrate, formatInt } from "../../lib/format";
+import { LayoutGrid, Settings2, Wallet } from "lucide-react";
+import { formatDuration, formatInt } from "../../lib/format";
 import { GLIDE, SPRING } from "../../lib/motion";
-import { nodeState, syncProgress, useMiner, useNode, useWallet } from "../../lib/live";
+import { nodeState, syncProgress, useNode, useWallet } from "../../lib/live";
 import { useT } from "../../i18n";
 import { Indicator, type Grade } from "../ui/Indicator";
 import { Meter } from "../ui/bits";
@@ -11,8 +11,8 @@ import { Counter } from "../ui/Counter";
 import logo from "../../assets/logo.svg";
 
 /**
- * Sidebar is the window's source list: the four destinations, each with
- * a live hint (the wallet's link, the miner's rate), under a header that
+ * Sidebar is the window's source list: the three destinations, the
+ * wallet's with a live hint of its link, under a header that
  * is part of the window's title bar, and the node's card at its foot.
  */
 export default function Sidebar() {
@@ -29,7 +29,6 @@ export default function Sidebar() {
       <nav className="flex flex-col gap-px px-2 pt-2" aria-label={t("nav.label")}>
         <NavItem to="/" icon={LayoutGrid} label={t("nav.overview")} />
         <NavItem to="/wallet" icon={Wallet} label={t("nav.wallet")} adornment={<WalletDot />} />
-        <NavItem to="/mining" icon={Pickaxe} label={t("nav.mining")} adornment={<MinerRate />} />
       </nav>
 
       <div className="flex-1" />
@@ -43,8 +42,8 @@ export default function Sidebar() {
   );
 }
 
-// The adornments read the live streams themselves, so a new hashrate every
-// poll re-renders one span rather than the whole sidebar
+// The adornment reads the live stream itself, so a wallet status change
+// re-renders one span rather than the whole sidebar
 function WalletDot() {
   const t = useT();
   const wallet = useWallet();
@@ -53,25 +52,6 @@ function WalletDot() {
       {wallet.connected && (
         <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={GLIDE}>
           <Indicator grade="good" ping cause="wallet" label={t("nav.walletConnected")} />
-        </motion.span>
-      )}
-    </AnimatePresence>
-  );
-}
-
-function MinerRate() {
-  const { status } = useMiner();
-  return (
-    <AnimatePresence>
-      {status?.running && (
-        <motion.span
-          className="text-sm text-muted-foreground"
-          initial={{ opacity: 0, x: 4 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0 }}
-          transition={GLIDE}
-        >
-          <Counter value={status.hashrate} format={formatHashrate} />
         </motion.span>
       )}
     </AnimatePresence>

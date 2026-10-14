@@ -11,7 +11,6 @@ import { Tooltip } from "../ui/Tooltip";
 const TITLES: Record<string, string> = {
   "/": "nav.overview",
   "/wallet": "nav.wallet",
-  "/mining": "nav.mining",
   "/settings": "nav.settings",
 };
 

@@ -25,8 +25,8 @@ export function openExternal(url: string) {
 }
 
 /**
- * onEvent subscribes to a backend event (logs, update-progress,
- * hashwarp-install…) and returns the unsubscribe function.
+ * onEvent subscribes to a backend event (logs, update-progress, node…)
+ * and returns the unsubscribe function.
  */
 export function onEvent<T = any>(event: string, cb: (data: T) => void): () => void {
   return window.parallax ? window.parallax.on(event, cb) : () => {};
@@ -56,19 +56,11 @@ export type GUIConfig = {
   trieCleanCacheMB: number;
   trieDirtyCacheMB: number;
   snapshotCacheMB: number;
-  // Mining
-  miningWallet: string;
-  miningWorker: string;
-  miningPool: string;
-  miningThreads: number;
-  miningDevices: number[];
-  customPools: PoolInfo[];
-  /** The Wallet page's watched address; empty follows miningWallet. */
+  /** The Wallet page's watched address. */
   watchAddress: string;
   /** Kept by the backend, which carries them over on save. */
   staticPeers?: string[] | null;
   trustedPeers?: string[] | null;
-  lastMiningMode?: string;
 
   // The daemon's command-line flags (backend/types.go). An empty string,
   // null or false keeps the CLI default.
@@ -132,11 +124,6 @@ export type GUIConfig = {
   gpoMaxPrice: string;
   gpoIgnorePrice: string;
 
-  minerExtraData: string;
-  minerGasLimit: number;
-  minerGasPrice: string;
-  minerRecommitSec: number;
-
   metrics: boolean;
   metricsExpensive: boolean;
   metricsAddr: string;
@@ -148,7 +135,6 @@ export type GUIConfig = {
   noUpdateCheck: boolean;
   preventSleep: boolean;
   notifications: boolean;
-  resumeMining: boolean;
 };
 
 export type NodeStatus = {
@@ -275,7 +261,6 @@ export type BlockView = {
   gasUsed: number;
   gasLimit: number;
   sizeBytes: number;
-  coinbase: string;
   rewardWei: string;
   difficulty: string;
 };
@@ -299,47 +284,7 @@ export type AddressView = {
   headBlock: number;
   /** The oldest block the activity below was gathered from. */
   scannedFrom: number;
-  blocksMined: number;
-  minedWei: string;
-  minedBlocks: BlockView[];
   transactions: TxView[];
-};
-
-// ---------------------------------------------------------------------------
-// Mining
-// ---------------------------------------------------------------------------
-
-export type MiningMode = "off" | "pool" | "sologpu" | "solo";
-
-export type PoolInfo = {
-  name: string;
-  url: string;
-  region: string;
-  builtin: boolean;
-};
-
-export type DeviceInfo = {
-  index: number;
-  pciId: string;
-  type: string;
-  name: string;
-  memory: string;
-  cuda: boolean;
-  openCl: boolean;
-};
-
-export type GPUDeviceStatus = {
-  index: number;
-  name: string;
-  mode: string;
-  hashrate: number;
-  tempC: number;
-  fanPct: number;
-  powerW: number;
-  paused: boolean;
-  accepted: number;
-  rejected: number;
-  failed: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -360,25 +305,6 @@ export type UpdateProgress = {
   step: "downloading" | "verifying" | "extracting" | "ready" | "ready-manual" | "error";
   percent: number;
   detail: string;
-};
-
-export type MinerStatus = {
-  mode: MiningMode;
-  running: boolean;
-  hashrate: number;
-  uptimeSeconds: number;
-  poolConnected: boolean;
-  poolUri: string;
-  sharesAccepted: number;
-  sharesRejected: number;
-  sharesFailed: number;
-  secsSinceLastShare: number;
-  epoch: number;
-  generatingDag: boolean;
-  devices: GPUDeviceStatus[];
-  soloDifficulty: string;
-  soloBlocksFound: number;
-  error: string;
 };
 
 export const api = {
@@ -411,16 +337,6 @@ export const api = {
   setLogVerbosity: (n: number) => call<void>("SetLogVerbosity", n),
 
   metaMaskHelperURL: () => call<string>("MetaMaskHelperURL"),
-
-  // Mining
-  startMining: (mode: MiningMode) => call<void>("StartMining", mode),
-  stopMining: () => call<void>("StopMining"),
-  minerStatus: () => call<MinerStatus>("MinerStatus"),
-  detectGPUs: () => call<DeviceInfo[]>("DetectGPUs"),
-  defaultPools: () => call<PoolInfo[]>("DefaultPools"),
-  hashwarpInstalled: () => call<boolean>("HashwarpInstalled"),
-  installHashwarp: (gpuType: "cuda" | "opencl") => call<void>("InstallHashwarp", gpuType),
-  addDefenderExclusion: () => call<void>("AddDefenderExclusion"),
 
   version: () => call<string>("Version"),
   clientVersion: () => call<string>("ClientVersion"),

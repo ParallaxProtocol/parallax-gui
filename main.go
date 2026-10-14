@@ -2,9 +2,8 @@
 // This file is part of the Parallax library.
 //
 // parallax-backend is the engine of Parallax Desktop: it embeds a Parallax
-// full node, the miner controller and the updater, and serves them to the
-// Electron shell (desktop/) over a token-guarded loopback bridge
-// (bridge.go). The shell starts it, reads the handshake line it prints, and
+// full node and the updater, and serves them to the Electron shell
+// (desktop/) over a token-guarded loopback bridge (bridge.go). The shell starts it, reads the handshake line it prints, and
 // stops it on quit.
 package main
 
@@ -70,6 +69,6 @@ func main() {
 	fmt.Fprintf(os.Stdout, "%s%s\n", handshakePrefix, hello)
 
 	<-ctx.Done()
-	// Stops the miner and the node, flushing the chain database
+	// Stops the node, flushing the chain database
 	app.shutdown(context.Background())
 }

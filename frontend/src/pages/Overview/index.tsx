@@ -26,7 +26,6 @@ export default function Overview() {
   // Bumped after a peer action, to fetch the peers again at once
   const [peerTick, setPeerTick] = useState(0);
   const [details, setDetails] = useState<NodeDetails | null>(null);
-  const [mine, setMine] = useState("");
   const running = !!node?.running;
   const stagger = useStagger();
 
@@ -70,13 +69,6 @@ export default function Overview() {
     };
   }, [running]);
 
-  useEffect(() => {
-    api
-      .getConfig()
-      .then((c) => setMine(c.miningWallet))
-      .catch(() => {});
-  }, []);
-
   if (!node) return null;
   if (!running) return <Stopped />;
 
@@ -87,7 +79,7 @@ export default function Overview() {
     // The page's one orchestrated entrance: its blocks arrive in turn
     <motion.div className="flex flex-col gap-5 p-5" {...stagger}>
       <motion.div variants={STAGGER.item}>
-        <BlockHero mine={mine} />
+        <BlockHero />
       </motion.div>
 
       {/* The node's figures. Opening the peers or the mempool widens that

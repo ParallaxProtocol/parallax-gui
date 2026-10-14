@@ -210,8 +210,8 @@ func applyRPCFlags(g GUIConfig, cfg *node.Config) error {
 	return nil
 }
 
-// applyPrlFlags mirrors the parts of SetPrlConfig, setTxPool, setGPO and
-// setMiner that the GUI exposes. Cache sizes and the sync mode are applied
+// applyPrlFlags mirrors the parts of SetPrlConfig, setTxPool and setGPO
+// that the GUI exposes. Cache sizes and the sync mode are applied
 // by buildConfigs.
 func applyPrlFlags(g GUIConfig, cfg *nodeconfig.Config) error {
 	if g.AncientDir != "" {
@@ -289,26 +289,7 @@ func applyPrlFlags(g GUIConfig, cfg *nodeconfig.Config) error {
 	if err := setWei(&gpo.MaxPrice, g.GPOMaxPrice, "maximum gas price"); err != nil {
 		return err
 	}
-	if err := setWei(&gpo.IgnorePrice, g.GPOIgnorePrice, "ignored gas price"); err != nil {
-		return err
-	}
-
-	if g.MinerExtraData != "" {
-		if len(g.MinerExtraData) > 32 {
-			return errors.New("miner extra data is limited to 32 bytes")
-		}
-		cfg.Miner.ExtraData = []byte(g.MinerExtraData)
-	}
-	if g.MinerGasLimit > 0 {
-		cfg.Miner.GasCeil = g.MinerGasLimit
-	}
-	if err := setWei(&cfg.Miner.GasPrice, g.MinerGasPrice, "minimum mining gas price"); err != nil {
-		return err
-	}
-	if g.MinerRecommitSec > 0 {
-		cfg.Miner.Recommit = time.Duration(g.MinerRecommitSec) * time.Second
-	}
-	return nil
+	return setWei(&gpo.IgnorePrice, g.GPOIgnorePrice, "ignored gas price")
 }
 
 // tuneProcess applies the process-wide settings parallaxd makes before

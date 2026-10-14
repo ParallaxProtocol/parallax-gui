@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, Pencil, Pickaxe } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Pencil } from "lucide-react";
 import { api, AddressView } from "../../lib/api";
 import { formatInt, formatLax, isAddress, sameAddress, shortHex } from "../../lib/format";
 import { useNode } from "../../lib/live";
@@ -12,14 +12,12 @@ import { Panel, Section, Stat, StatStrip } from "../../components/ui/Panel";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 
-type Activity =
-  | { kind: "in" | "out"; block: number; time: number; amountWei: string; other: string; hash: string }
-  | { kind: "mined"; block: number; time: number; amountWei: string; hash: string };
+type Activity = { kind: "in" | "out"; block: number; time: number; amountWei: string; other: string; hash: string };
 
 /**
  * Watched follows one address through the local node: its balance at the
- * head, the blocks it mined and the transactions it sent or received in
- * the last week of blocks. Nothing leaves the machine: it all comes from
+ * head and the transactions it sent or received in the last week of
+ * blocks. Nothing leaves the machine: it all comes from
  * the node's own chain.
  */
 export default function Watched({ title }: { title: string }) {
@@ -38,7 +36,7 @@ export default function Watched({ title }: { title: string }) {
     api
       .getConfig()
       .then((c) => {
-        const a = c.watchAddress || c.miningWallet || "";
+        const a = c.watchAddress || "";
         setAddress(a);
         setDraft(a);
         if (!a) setEditing(true);
@@ -81,7 +79,8 @@ export default function Watched({ title }: { title: string }) {
 
   const activity = useMemo<Activity[]>(() => {
     if (!view) return [];
-    const items: Activity[] = view.transactions.map((tx) => {
+    // The backend lists them newest first
+    return view.transactions.slice(0, 20).map((tx) => {
       const out = sameAddress(tx.from, view.address);
       return {
         kind: out ? "out" : "in",
@@ -92,10 +91,6 @@ export default function Watched({ title }: { title: string }) {
         hash: tx.hash,
       };
     });
-    for (const b of view.minedBlocks) {
-      items.push({ kind: "mined", block: b.number, time: b.timestamp, amountWei: b.rewardWei, hash: b.hash });
-    }
-    return items.sort((a, b) => b.block - a.block).slice(0, 20);
   }, [view]);
 
   if (address === null) return null;
@@ -170,7 +165,7 @@ export default function Watched({ title }: { title: string }) {
       {!running && <Notice tone="info">{t("wallet.watch.nodeOff")}</Notice>}
       {err && <Notice tone="critical">{err}</Notice>}
 
-      <StatStrip columns="2fr 1fr 1fr">
+      <StatStrip columns="2fr 1fr">
         <Stat
           label={t("wallet.balance")}
           value={
@@ -188,11 +183,6 @@ export default function Watched({ title }: { title: string }) {
                 ? t("wallet.balanceAt", { block: formatInt(view.headBlock) })
                 : t("wallet.balanceSyncing")
           }
-        />
-        <Stat
-          label={t("wallet.mined")}
-          value={view ? formatInt(view.blocksMined) : "—"}
-          detail={view ? t("wallet.minedReward", { lax: formatLax(view.minedWei, 2) }) : t("wallet.window")}
         />
         <Stat label={t("wallet.sent")} value={view ? formatInt(view.nonce) : "—"} detail={t("wallet.sentDesc")} />
       </StatStrip>
@@ -221,7 +211,7 @@ export default function Watched({ title }: { title: string }) {
                   <div>{t(`wallet.kind.${a.kind}`)}</div>
                   <div className="truncate text-sm text-muted-foreground tabular-nums">
                     {t("wallet.inBlock", { block: formatInt(a.block) })}
-                    {a.kind !== "mined" && a.other && (
+                    {a.other && (
                       <>
                         {" · "}
                         <span className="font-mono">{shortHex(a.other, 8, 6)}</span>
@@ -246,7 +236,7 @@ export default function Watched({ title }: { title: string }) {
 }
 
 function ActivityIcon({ kind }: { kind: Activity["kind"] }) {
-  const Icon = kind === "in" ? ArrowDownLeft : kind === "out" ? ArrowUpRight : Pickaxe;
+  const Icon = kind === "in" ? ArrowDownLeft : ArrowUpRight;
   return (
     <span
       className={`grid size-7 shrink-0 place-items-center rounded-full ${

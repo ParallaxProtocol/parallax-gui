@@ -28,7 +28,7 @@ linux:
   executableName: parallax-client
   icon: resources/icon.png
   category: Utility
-  synopsis: Parallax node, wallet connector and miner
+  synopsis: Parallax node and wallet connector
   artifactName: Parallax-Client-${version}-linux-${env.DISPLAY_ARCH}.${ext}
   desktop:
     entry:

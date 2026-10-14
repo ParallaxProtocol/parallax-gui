@@ -1,36 +1,19 @@
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
-import { api, BlockView, MinerStatus, NodeStatus, WalletStatus } from "./api";
-
-/** One reading in a rolling history, at a wall-clock time in ms. */
-export type Sample = { t: number; v: number };
-
-export type MinerLive = {
-  status: MinerStatus | null;
-  /** Hashrate while mining, one sample per poll, cleared when mining starts. */
-  hashrate: Sample[];
-};
+import { api, BlockView, NodeStatus, WalletStatus } from "./api";
 
 const POLL_MS = 2000;
 const WALLET_POLL_MS = 3000;
 const BLOCKS_SHOWN = 12;
 /** While syncing the head moves every poll: refetch the latest blocks at most this often. */
 const SYNC_BLOCKS_MS = 15_000;
-/** Ten minutes of 2s samples. */
-const HISTORY = 300;
 
 // One context per stream, so a component re-renders only when the data it
-// reads changes: the miner's hashrate moving every poll must not re-render
-// the Overview, and the node's uptime must not re-render the Mining page.
+// reads changes: the node's uptime moving every poll must not re-render a
+// page that only shows the wallet.
 const NodeContext = createContext<NodeStatus | null>(null);
-const MinerContext = createContext<MinerLive>({ status: null, hashrate: [] });
 const WalletContext = createContext<WalletStatus>({ connected: false, lastSeenUnixMilli: 0 });
 const BlocksContext = createContext<BlockView[]>([]);
 const RefreshContext = createContext<() => void>(() => {});
-
-function push(history: Sample[], v: number): Sample[] {
-  const next = [...history, { t: Date.now(), v }];
-  return next.length > HISTORY ? next.slice(next.length - HISTORY) : next;
-}
 
 // The fields a render depends on: uptime and memory are compared coarsely,
 // since they change on every poll while only their rounded format shows.
@@ -51,18 +34,16 @@ function sameNode(a: NodeStatus | null, b: NodeStatus): boolean {
 }
 
 /**
- * LiveProvider polls the backend once for the whole app: node, miner and
- * wallet status, the latest blocks, and the hashrate history for its chart.
+ * LiveProvider polls the backend once for the whole app: node and wallet
+ * status, and the latest blocks.
  * Components read the stream they need through its own hook.
  */
 export function LiveProvider({ children }: { children: ReactNode }) {
   const [node, setNode] = useState<NodeStatus | null>(null);
-  const [miner, setMiner] = useState<MinerLive>({ status: null, hashrate: [] });
   const [wallet, setWallet] = useState<WalletStatus>({ connected: false, lastSeenUnixMilli: 0 });
   const [blocks, setBlocks] = useState<BlockView[]>([]);
   const head = useRef(-1);
   const blocksAt = useRef(0);
-  const lastMiner = useRef("");
   const pollNow = useRef<() => void>(() => {});
   const [refresh] = useState(() => () => pollNow.current());
 
@@ -70,10 +51,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     let alive = true;
 
     const poll = async () => {
-      const [ns, ms] = await Promise.all([
-        api.nodeStatus().catch(() => null),
-        api.minerStatus().catch(() => null),
-      ]);
+      const ns = await api.nodeStatus().catch(() => null);
       if (!alive) return;
 
       if (ns) {
@@ -92,22 +70,6 @@ export function LiveProvider({ children }: { children: ReactNode }) {
           head.current = -1;
           setBlocks([]);
         }
-      }
-
-      if (ms) {
-        if (ms.running) {
-          setMiner((m) => ({
-            status: ms,
-            // A fresh run starts a fresh chart
-            hashrate: push(m.status?.running ? m.hashrate : [], ms.hashrate),
-          }));
-        } else {
-          // Idle status rarely changes: skip the update when it is the same
-          const key = JSON.stringify(ms);
-          if (key !== lastMiner.current) setMiner((m) => ({ status: ms, hashrate: m.hashrate }));
-          lastMiner.current = key;
-        }
-        if (ms.running) lastMiner.current = "";
       }
     };
 
@@ -145,18 +107,15 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   return (
     <RefreshContext.Provider value={refresh}>
       <NodeContext.Provider value={node}>
-        <MinerContext.Provider value={miner}>
-          <WalletContext.Provider value={wallet}>
-            <BlocksContext.Provider value={blocks}>{children}</BlocksContext.Provider>
-          </WalletContext.Provider>
-        </MinerContext.Provider>
+        <WalletContext.Provider value={wallet}>
+          <BlocksContext.Provider value={blocks}>{children}</BlocksContext.Provider>
+        </WalletContext.Provider>
       </NodeContext.Provider>
     </RefreshContext.Provider>
   );
 }
 
 export const useNode = () => useContext(NodeContext);
-export const useMiner = () => useContext(MinerContext);
 export const useWallet = () => useContext(WalletContext);
 export const useBlocks = () => useContext(BlocksContext);
 /** Polls again right away, after an action changed the backend's state. */

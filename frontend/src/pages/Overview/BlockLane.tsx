@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BlockView } from "../../lib/api";
-import { formatInt, sameAddress, TARGET_BLOCK_SECONDS } from "../../lib/format";
+import { formatInt, TARGET_BLOCK_SECONDS } from "../../lib/format";
 import { SPRING } from "../../lib/motion";
 import { useAgo, useT } from "../../i18n";
 
@@ -19,7 +19,7 @@ const LANE = 56;
  * Positions step once a second with `now`; a one-second linear transition
  * on `left` turns the steps into a continuous drift.
  */
-export default function BlockLane({ blocks, now, mine }: { blocks: BlockView[]; now: number; mine?: string }) {
+export default function BlockLane({ blocks, now }: { blocks: BlockView[]; now: number }) {
   const t = useT();
   const ago = useAgo();
   const [hover, setHover] = useState<number | null>(null);
@@ -92,7 +92,6 @@ export default function BlockLane({ blocks, now, mine }: { blocks: BlockView[]; 
           {shown.map((b, i) => {
             const full = b.gasLimit > 0 ? b.gasUsed / b.gasLimit : 0;
             const h = 14 + full * (LANE - 22);
-            const ours = sameAddress(b.coinbase, mine);
             return (
               <motion.button
                 type="button"
@@ -111,9 +110,8 @@ export default function BlockLane({ blocks, now, mine }: { blocks: BlockView[]; 
                 <span
                   className={`absolute inset-0 rounded-[3px] transition-[filter] duration-150 ${hover === b.number ? "brightness-125" : ""}`}
                   style={{
-                    background: ours
-                      ? "linear-gradient(to top, #0080ff, #00ff80)"
-                      : "linear-gradient(to top, color-mix(in oklab, var(--brand-mark) 55%, transparent), var(--brand-mark))",
+                    background:
+                      "linear-gradient(to top, color-mix(in oklab, var(--brand-mark) 55%, transparent), var(--brand-mark))",
                     boxShadow: i === 0 ? "0 0 12px var(--glow)" : undefined,
                   }}
                 />

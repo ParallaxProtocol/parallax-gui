@@ -25,24 +25,16 @@ const LIVE_FIELDS = new Set<keyof GUIConfig>([
   "noUpdateCheck",
   "preventSleep",
   "notifications",
-  "resumeMining",
-  "miningWallet",
-  "miningWorker",
-  "miningPool",
-  "miningThreads",
-  "miningDevices",
-  "customPools",
   "watchAddress",
   "staticPeers",
   "trustedPeers",
-  "lastMiningMode",
 ]);
 
 // Fields the daemon reads only as its process starts, from its argv:
 // they wait on a restart of the whole app
 const APP_FIELDS = new Set<keyof GUIConfig>(["metrics", "metricsExpensive", "metricsAddr", "metricsPort"]);
 
-const SECTIONS = ["general", "appearance", "node", "network", "rpc", "mining", "diagnostics", "about"] as const;
+const SECTIONS = ["general", "appearance", "node", "network", "rpc", "diagnostics", "about"] as const;
 type Section = (typeof SECTIONS)[number];
 
 const LOOPBACK = new Set(["", "127.0.0.1", "localhost", "::1"]);
@@ -1116,82 +1108,6 @@ export default function Settings() {
                           checked={cfg.allowUnprotectedTxs}
                           onChange={(v) => update({ allowUnprotectedTxs: v })}
                           label={t("settings.rpc.unprotected")}
-                        />
-                      </Setting>
-                    </Advanced>
-                  </Group>
-                </>
-              )}
-
-              {section === "mining" && (
-                <>
-                  <Group title={t("settings.group.mining")}>
-                    <Rows>
-                      <Setting
-                        title={t("settings.resumeMining")}
-                        more={t("settings.resumeMining.more")}
-                        desc={t("settings.resumeMining.desc")}
-                      >
-                        <Toggle
-                          checked={cfg.resumeMining}
-                          onChange={(v) => update({ resumeMining: v })}
-                          label={t("settings.resumeMining")}
-                        />
-                      </Setting>
-                    </Rows>
-                  </Group>
-                  <Group title={t("settings.group.solo")} desc={t("settings.miner.desc")}>
-                    <Advanced
-                      id="solo"
-                      changed={countSet([cfg.minerExtraData, cfg.minerGasLimit, cfg.minerGasPrice, cfg.minerRecommitSec])}
-                    >
-                      <Setting
-                        title={t("settings.miner.extraData")}
-                        desc={t("settings.miner.extraData.desc")}
-                        restart={restart("minerExtraData")}
-                      >
-                        <TextInput
-                          value={cfg.minerExtraData}
-                          placeholder={t("settings.miner.extraData.placeholder")}
-                          onChange={(v) => update({ minerExtraData: v })}
-                        />
-                      </Setting>
-                      <Setting
-                        title={t("settings.miner.gasLimit")}
-                        desc={t("settings.miner.gasLimit.desc")}
-                        restart={restart("minerGasLimit")}
-                      >
-                        <NumberInput
-                          optional
-                          width="w-32"
-                          value={cfg.minerGasLimit || null}
-                          placeholder={600000000}
-                          onChange={(v) => update({ minerGasLimit: v ?? 0 })}
-                        />
-                      </Setting>
-                      <Setting
-                        title={t("settings.miner.gasPrice")}
-                        desc={t("settings.miner.gasPrice.desc")}
-                        restart={restart("minerGasPrice")}
-                      >
-                        <WeiInput
-                          value={cfg.minerGasPrice}
-                          placeholder="1000000000"
-                          onChange={(v) => update({ minerGasPrice: v })}
-                        />
-                      </Setting>
-                      <Setting
-                        title={t("settings.miner.recommit")}
-                        desc={t("settings.miner.recommit.desc")}
-                        restart={restart("minerRecommitSec")}
-                      >
-                        <NumberInput
-                          optional
-                          min={1}
-                          value={cfg.minerRecommitSec || null}
-                          placeholder={20}
-                          unit="s"
-                          onChange={(v) => update({ minerRecommitSec: v ?? 0 })}
                         />
                       </Setting>
                     </Advanced>

@@ -26,7 +26,6 @@ type App struct {
 	logs     *backend.LogTail
 	node     *backend.NodeController
 	metamask *backend.MetaMaskHelper
-	miner    *backend.MinerController
 	updater  *backend.Updater
 }
 
@@ -85,11 +84,6 @@ func (a *App) startup(ctx context.Context) {
 		logging.Error("Failed to start the MetaMask helper", "err", err)
 	}
 
-	a.miner = backend.NewMinerController(cfg, a.node)
-	a.miner.SetEmitter(func(evt backend.MinerEvent) {
-		a.events.emit("miner", evt)
-	})
-
 	// Auto-updater: check for new releases on startup and periodically.
 	backend.CleanupOldBinary()
 	a.updater = backend.NewUpdater()
@@ -100,51 +94,18 @@ func (a *App) startup(ctx context.Context) {
 		return a.cfg != nil && !a.cfg.Get().NoUpdateCheck
 	})
 
-	if conf.Bootstrapped {
-		go a.autoStart(ctx, conf)
-	}
-}
-
-// autoStart starts the node if the user asked for it at launch, then
-// resumes mining if it was running when the app last quit. Solo modes mine
-// on the node's own chain, so they wait until it has caught up.
-func (a *App) autoStart(ctx context.Context, conf backend.GUIConfig) {
-	if conf.AutoStartNode {
-		if err := a.node.Start(ctx); err != nil {
-			logging.Error("Failed to auto-start the node", "err", err)
-		}
-	}
-	mode := conf.LastMiningMode
-	if !conf.ResumeMining || mode == "" {
-		return
-	}
-	if mode != "pool" {
-		tick := time.NewTicker(5 * time.Second)
-		defer tick.Stop()
-		for st := a.node.Status(); !st.Running || st.Syncing; st = a.node.Status() {
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
+	if conf.Bootstrapped && conf.AutoStartNode {
+		go func() {
+			if err := a.node.Start(ctx); err != nil {
+				logging.Error("Failed to auto-start the node", "err", err)
 			}
-			// The user may have started or stopped mining by hand meanwhile
-			if a.miner.Status().Running || a.cfg.Get().LastMiningMode != mode {
-				return
-			}
-		}
-	}
-	logging.Info("Resuming mining", "mode", mode)
-	if err := a.miner.Start(ctx, mode); err != nil {
-		logging.Error("Failed to resume mining", "mode", mode, "err", err)
+		}()
 	}
 }
 
 func (a *App) shutdown(ctx context.Context) {
 	if a.updater != nil {
 		a.updater.Stop()
-	}
-	if a.miner != nil {
-		_ = a.miner.Stop()
 	}
 	if a.metamask != nil {
 		_ = a.metamask.Stop()
@@ -175,9 +136,9 @@ func (a *App) SaveBootstrap(cfg backend.GUIConfig) error {
 func (a *App) GetConfig() backend.GUIConfig { return a.cfg.Get() }
 
 // UpdateConfig saves the config the frontend edited, once the node would
-// accept it. Fields the backend keeps itself (the peer lists, the last
-// mining mode) are carried over from the stored config, so a page holding
-// an older copy can't roll them back.
+// accept it. Fields the backend keeps itself (the peer lists) are carried
+// over from the stored config, so a page holding an older copy can't roll
+// them back.
 func (a *App) UpdateConfig(c backend.GUIConfig) error {
 	if err := backend.ValidateConfig(c); err != nil {
 		return err
@@ -186,7 +147,6 @@ func (a *App) UpdateConfig(c backend.GUIConfig) error {
 	c.Bootstrapped = cur.Bootstrapped
 	c.StaticPeers = cur.StaticPeers
 	c.TrustedPeers = cur.TrustedPeers
-	c.LastMiningMode = cur.LastMiningMode
 	if err := a.cfg.Save(c); err != nil {
 		return err
 	}
@@ -258,49 +218,6 @@ func (a *App) GetLogTail(n int) []backend.LogLine { return a.logs.Tail(n) }
 // SetLogVerbosity changes the active log level (0 = silent, 3 = info,
 // 5 = trace).
 func (a *App) SetLogVerbosity(level int) { a.logs.SetVerbosity(level) }
-
-// ---------------------------------------------------------------------------
-// Mining
-// ---------------------------------------------------------------------------
-
-// StartMining and StopMining remember the mode for ResumeMining: mining
-// the user stopped stays stopped, mining still running at quit resumes.
-func (a *App) StartMining(mode string) error {
-	if err := a.miner.Start(a.ctx, mode); err != nil {
-		return err
-	}
-	return a.setLastMiningMode(mode)
-}
-
-func (a *App) StopMining() error {
-	if err := a.miner.Stop(); err != nil {
-		return err
-	}
-	return a.setLastMiningMode("")
-}
-
-func (a *App) setLastMiningMode(mode string) error {
-	c := a.cfg.Get()
-	if c.LastMiningMode == mode {
-		return nil
-	}
-	c.LastMiningMode = mode
-	return a.cfg.Save(c)
-}
-
-func (a *App) MinerStatus() backend.MinerStatus          { return a.miner.Status() }
-func (a *App) DetectGPUs() ([]backend.DeviceInfo, error) { return a.miner.DetectGPUs() }
-func (a *App) DefaultPools() []backend.PoolInfo          { return a.miner.DefaultPools() }
-func (a *App) HashwarpInstalled() bool                   { return a.miner.HashwarpInstalled() }
-func (a *App) AddDefenderExclusion() error               { return a.miner.AddDefenderExclusion() }
-func (a *App) InstallHashwarp(gpuType string) error {
-	return a.miner.InstallHashwarp(gpuType, func(step, detail string) {
-		a.events.emit("hashwarp-install", map[string]string{
-			"step":   step,
-			"detail": detail,
-		})
-	})
-}
 
 // ---------------------------------------------------------------------------
 // Misc

@@ -5,7 +5,6 @@ package backend
 
 import (
 	"fmt"
-	"math/big"
 	"strings"
 	"sync"
 
@@ -19,7 +18,6 @@ const (
 	// result is cached per head.
 	addressLookback = 1008
 	addressMaxTxs   = 25
-	addressMaxMined = 10
 )
 
 // addressCache holds the last AddressSummary per address, valid while the
@@ -35,7 +33,7 @@ var addrCache = addressCache{entries: make(map[util.Address]AddressView)}
 
 // AddressSummary returns the balance of addr at the chain head and its
 // activity over the last addressLookback blocks: transactions from or to
-// it, and blocks it mined.
+// it.
 func (n *NodeController) AddressSummary(addr string) (AddressView, error) {
 	addr = strings.TrimSpace(addr)
 	if !util.IsHexAddress(addr) {
@@ -67,8 +65,6 @@ func (n *NodeController) AddressSummary(addr string) (AddressView, error) {
 	view := AddressView{
 		Address:      account.Hex(),
 		HeadBlock:    headNum,
-		MinedWei:     "0",
-		MinedBlocks:  []BlockView{},
 		Transactions: []TxView{},
 	}
 	// The head state is missing until a snap sync has finished
@@ -78,7 +74,6 @@ func (n *NodeController) AddressSummary(addr string) (AddressView, error) {
 	}
 
 	signer := types.LatestSignerForChainID(bc.Config().ChainID)
-	mined := new(big.Int)
 	view.ScannedFrom = headNum
 	for i := uint64(0); i < addressLookback && i <= headNum; i++ {
 		num := headNum - i
@@ -87,27 +82,8 @@ func (n *NodeController) AddressSummary(addr string) (AddressView, error) {
 			break
 		}
 		view.ScannedFrom = num
-		if block.Coinbase() == account {
-			reward := blockRewardAt(num)
-			view.BlocksMined++
-			mined.Add(mined, reward)
-			if len(view.MinedBlocks) < addressMaxMined {
-				view.MinedBlocks = append(view.MinedBlocks, BlockView{
-					Number:     num,
-					Hash:       block.Hash().Hex(),
-					Timestamp:  int64(block.Time()),
-					TxCount:    len(block.Transactions()),
-					GasUsed:    block.GasUsed(),
-					GasLimit:   block.GasLimit(),
-					SizeBytes:  uint64(block.Size()),
-					Coinbase:   block.Coinbase().Hex(),
-					RewardWei:  reward.String(),
-					Difficulty: block.Difficulty().String(),
-				})
-			}
-		}
 		if len(view.Transactions) >= addressMaxTxs {
-			continue
+			break
 		}
 		for _, tx := range block.Transactions() {
 			from, err := types.Sender(signer, tx)
@@ -143,7 +119,6 @@ func (n *NodeController) AddressSummary(addr string) (AddressView, error) {
 			}
 		}
 	}
-	view.MinedWei = mined.String()
 
 	addrCache.mu.Lock()
 	if addrCache.head == head.Hash() {

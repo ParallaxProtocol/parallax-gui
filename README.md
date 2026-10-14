@@ -13,18 +13,14 @@ WebKitGTK on Linux, which could not).
   inbound NAT policy.
 - A sidebar shell with the node's heartbeat pinned at the bottom (state,
   block height, peers, uptime, sync progress and a power switch), and
-  live chips in the top bar while a wallet is connected or the miner runs.
+  a live chip in the sidebar while a wallet is connected.
 - **Overview**: the block clock (best block and the wait since, against
   the 10 minute target), sync progress while catching up, node figures,
-  the latest blocks (blocks your mining address found are marked) and a
-  slide-over list of connected peers.
+  the latest blocks and a slide-over list of connected peers.
 - **Wallet**: a step-by-step MetaMask connection (node, local RPC,
   one-click *Add network*, live connection) with manual values for any
-  EVM wallet, and a watched address: balance, blocks mined and
-  transactions over the last week, all read from the local node.
-- **Mining**: GPU pool, GPU solo and CPU solo modes, hashwarp install
-  with Windows Defender recovery, custom pools, device selection, and a
-  live view with a hashrate chart, shares and per-GPU stats.
+  EVM wallet, and a watched address: balance and transactions over the
+  last week, all read from the local node.
 - **Settings**: grouped sections with a scroll-tracking index, light /
   dark / system theme, a save bar that flags changes needing a node
   restart, cache sizes, the live log tail, and update checks.
@@ -54,9 +50,6 @@ portable executable. Pick another platform with `GOOS`/`GOARCH`
 (`make prlx-gui-package GOOS=darwin GOARCH=arm64`); the backend
 cross-compiles anywhere, though electron-builder can only make a DMG on
 macOS.
-
-To bundle the hashwarp GPU miner, point `HASHWARP_BIN` at its binary, or
-`HASHWARP_DIR` at a directory holding `hashwarp-<goos>-<goarch>[.exe]`.
 
 ### Development
 
@@ -153,8 +146,6 @@ are fine for a first pass — open a PR and we'll help fill the gaps.
 │   │                  discovery defaults, RPC endpoint formatting,
 │   │                  Peers() and RecentBlocks/Transactions() walkers.
 │   ├── address.go     Watched-address balance and activity.
-│   ├── miner.go       MinerController: GPU pool mining (hashwarp) and
-│   │                  CPU solo mining, device detection, live stats.
 │   ├── updater.go     Release checks, verified downloads, installs.
 │   ├── logs.go        LogTail: GlogHandler tee'd to stderr + ring buffer
 │   │                  + batched live frontend emitter.
@@ -176,18 +167,17 @@ are fine for a first pass — open a PR and we'll help fill the gaps.
         │                     transitions, splash screen.
         ├── styles.css        Design tokens (dark + light) and primitives.
         ├── lib/api.ts        Typed wrappers around the App methods.
-        ├── lib/live.tsx      One poller for node, miner and wallet status,
-        │                     latest blocks and chart histories.
+        ├── lib/live.tsx      One poller for node and wallet status and the
+        │                     latest blocks.
         ├── lib/format.ts     wei↔LAX, byte / duration / hash helpers.
         ├── components/
         │   ├── shell/        Sidebar (with the node dock) and TopBar.
         │   └── ui/           Plate, Tile, Rolling digits, Indicator,
-        │                     charts, Drawer, Segmented, Toggle.
+        │                     Drawer, Segmented, Toggle.
         ├── pages/
         │   ├── Overview/     Block clock, node tiles, latest blocks,
         │   │                 peers drawer.
         │   ├── Wallet/       MetaMask connection steps, watched address.
-        │   ├── Mining/       Mode, setup, hashwarp install, live stats.
         │   ├── Settings/     Grouped settings, save bar, live log tail.
         │   └── Onboarding/   First-run wizard.
         └── assets/           Logo mark (the logo gradient).

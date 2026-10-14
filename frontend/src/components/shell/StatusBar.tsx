@@ -1,7 +1,5 @@
-import { Link } from "react-router-dom";
-import { Pickaxe } from "lucide-react";
-import { formatDuration, formatHashrate, formatInt } from "../../lib/format";
-import { nodeState, syncProgress, useMiner, useNode } from "../../lib/live";
+import { formatDuration, formatInt } from "../../lib/format";
+import { nodeState, syncProgress, useNode } from "../../lib/live";
 import { useT } from "../../i18n";
 import { Indicator, type Grade } from "../ui/Indicator";
 import { Meter } from "../ui/bits";
@@ -17,12 +15,11 @@ const STATE_GRADE: Record<ReturnType<typeof nodeState>, Grade> = {
 /**
  * StatusBar runs along the window's foot with the node's heartbeat, in
  * view from every page: its state, sync progress, the block height,
- * peers and uptime, and the miner's rate while it runs.
+ * peers and uptime.
  */
 export default function StatusBar({ version }: { version: string }) {
   const t = useT();
   const node = useNode();
-  const { status: miner } = useMiner();
   const state = nodeState(node);
   const progress = syncProgress(node);
 
@@ -58,12 +55,6 @@ export default function StatusBar({ version }: { version: string }) {
 
       <span className="flex-1" />
 
-      {miner?.running && (
-        <Link to="/mining" className="flex items-center gap-1.5 hover:text-foreground">
-          <Pickaxe className="size-3 text-brand" />
-          <Counter value={miner.hashrate} format={formatHashrate} />
-        </Link>
-      )}
       {version && <span className="text-faint">{version}</span>}
     </footer>
   );

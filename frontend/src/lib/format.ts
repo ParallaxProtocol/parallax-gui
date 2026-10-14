@@ -68,18 +68,6 @@ export function formatDifficulty(raw: string): string {
   return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${units[i]}`;
 }
 
-export function formatHashrate(hps: number): string {
-  if (!hps || hps <= 0) return "0 H/s";
-  const units = ["H/s", "KH/s", "MH/s", "GH/s", "TH/s"];
-  let i = 0,
-    v = hps;
-  while (v >= 1000 && i < units.length - 1) {
-    v /= 1000;
-    i++;
-  }
-  return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${units[i]}`;
-}
-
 export function formatDuration(seconds: number): string {
   if (!seconds || seconds < 0) return "0s";
   const d = Math.floor(seconds / 86400);

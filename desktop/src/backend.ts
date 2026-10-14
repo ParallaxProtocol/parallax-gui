@@ -127,8 +127,8 @@ export class Backend extends EventEmitter {
 
   /**
    * Stops the backend: closing its stdin tells it to shut down, which stops
-   * the miner and the node and flushes the chain database. Killed if it
-   * hasn't exited within STOP_TIMEOUT_MS.
+   * the node and flushes the chain database. Killed if it hasn't exited
+   * within STOP_TIMEOUT_MS.
    */
   stop(): Promise<void> {
     const proc = this.proc;

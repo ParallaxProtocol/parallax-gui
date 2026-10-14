@@ -35,7 +35,7 @@ func TestBuildConfigsDefaults(t *testing.T) {
 	d := nodeconfig.Defaults
 	if prlCfg.TxLookupLimit != d.TxLookupLimit || prlCfg.NoPruning || prlCfg.RPCGasCap != d.RPCGasCap ||
 		prlCfg.TxPool.PriceLimit != d.TxPool.PriceLimit || prlCfg.GPO.MaxPrice.Cmp(d.GPO.MaxPrice) != 0 ||
-		prlCfg.Miner.GasCeil != d.Miner.GasCeil || len(prlCfg.ParallaxDiscoveryURLs) == 0 {
+		len(prlCfg.ParallaxDiscoveryURLs) == 0 {
 		t.Errorf("prl defaults changed")
 	}
 	if !prlCfg.GPO.EnableSmartFeeEstimator {
@@ -71,8 +71,6 @@ func TestBuildConfigsFlags(t *testing.T) {
 	g.TxPoolPriceLimit = u(5)
 	g.TxPoolLifetimeMin = i(30)
 	g.GPOMaxPrice = "1000"
-	g.MinerExtraData = "hello"
-	g.MinerGasPrice = "7"
 
 	nodeCfg, prlCfg, err := buildConfigs(g)
 	if err != nil {
@@ -90,8 +88,7 @@ func TestBuildConfigsFlags(t *testing.T) {
 	}
 	if !prlCfg.NoPruning || !prlCfg.Preimages || prlCfg.TxLookupLimit != 0 || len(prlCfg.ParallaxDiscoveryURLs) != 0 ||
 		prlCfg.RPCGasCap != 0 || prlCfg.RPCPVMTimeout != 10*time.Second || len(prlCfg.TxPool.Locals) != 1 ||
-		prlCfg.TxPool.PriceLimit != 5 || prlCfg.TxPool.Lifetime != 30*time.Minute || prlCfg.GPO.MaxPrice.Int64() != 1000 ||
-		string(prlCfg.Miner.ExtraData) != "hello" || prlCfg.Miner.GasPrice.Int64() != 7 {
+		prlCfg.TxPool.PriceLimit != 5 || prlCfg.TxPool.Lifetime != 30*time.Minute || prlCfg.GPO.MaxPrice.Int64() != 1000 {
 		t.Errorf("prl flags not applied")
 	}
 	if got := rpcEndpoint(g); got != "http://127.0.0.1:8545" {
@@ -107,8 +104,7 @@ func TestValidateConfigRejects(t *testing.T) {
 		"bad proxy":      func(g *GUIConfig) { g.Proxy = "9050" },
 		"bad onlynet":    func(g *GUIConfig) { g.OnlyNet = []string{"i2p"} },
 		"bad local":      func(g *GUIConfig) { g.TxPoolLocals = []string{"0x12"} },
-		"bad wei":        func(g *GUIConfig) { g.MinerGasPrice = "1.5" },
-		"long extradata": func(g *GUIConfig) { g.MinerExtraData = strings.Repeat("x", 33) },
+		"bad wei":        func(g *GUIConfig) { g.GPOMaxPrice = "1.5" },
 		"graphql no rpc": func(g *GUIConfig) { g.GraphQL = true; g.HTTPRPCEnabled = false },
 		"ws on rpc port": func(g *GUIConfig) { g.WSEnabled = true; g.WSPort = g.HTTPRPCPort },
 		"bad legacy":     func(g *GUIConfig) { g.LegacyDiscovery = "maybe" },

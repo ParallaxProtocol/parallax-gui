@@ -19,13 +19,13 @@ import BlockLane from "./BlockLane";
  * it catches up, and once synced the best block over the live block lane.
  * While the node is off the Overview shows <Stopped> instead.
  */
-export default function BlockHero({ mine }: { mine?: string }) {
+export default function BlockHero() {
   const node = useNode();
   const blocks = useBlocks();
   const state = nodeState(node);
 
   if (state === "syncing") return <Syncing node={node!} />;
-  if (state === "synced") return <Clock node={node!} blocks={blocks} mine={mine} />;
+  if (state === "synced") return <Clock node={node!} blocks={blocks} />;
   return null;
 }
 
@@ -147,12 +147,12 @@ function clock(s: number): string {
   return h ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
 }
 
-function Clock({ node, blocks, mine }: { node: NodeStatus; blocks: BlockView[]; mine?: string }) {
+function Clock({ node, blocks }: { node: NodeStatus; blocks: BlockView[] }) {
   const t = useT();
   const now = useNow(1000);
   const head = blocks[0];
   const foundAt = head && head.number === node.currentBlock ? head.timestamp : 0;
-  // Miners' clocks may run a little ahead of ours
+  // A block's timestamp may run a little ahead of our clock
   const elapsed = foundAt ? Math.max(0, Math.floor(now / 1000 - foundAt)) : 0;
   const g: Grade = foundAt ? grade(elapsed) : "off";
   // Intervals are exponential: the share of blocks that take longer than this
@@ -183,7 +183,7 @@ function Clock({ node, blocks, mine }: { node: NodeStatus; blocks: BlockView[]; 
           )}
         </div>
 
-        <BlockLane blocks={blocks} now={now} mine={mine} />
+        <BlockLane blocks={blocks} now={now} />
       </div>
     </HeroPanel>
   );

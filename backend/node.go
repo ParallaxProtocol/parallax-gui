@@ -444,7 +444,7 @@ func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 	}
 
 	// The smart fee estimator (--gpo.smartfee, on by default since v2.0.0)
-	// and the rest of the oracle, the pool, the RPC caps and the miner.
+	// and the rest of the oracle, the pool and the RPC caps.
 	// All of them are read once inside protocol.New(), so they take effect
 	// on a fresh node start — the Settings UI flags them restart-required.
 	if err := applyPrlFlags(g, &prlCfg); err != nil {
@@ -724,7 +724,6 @@ func (n *NodeController) RecentBlocks(count int) []BlockView {
 			GasUsed:    block.GasUsed(),
 			GasLimit:   block.GasLimit(),
 			SizeBytes:  uint64(block.Size()),
-			Coinbase:   block.Coinbase().Hex(),
 			RewardWei:  blockRewardAt(num).String(),
 			Difficulty: block.Difficulty().String(),
 		})

@@ -36,7 +36,7 @@ type GUIConfig struct {
 	EnableSmartFee bool `json:"enableSmartFee"`
 
 	// ReportStats registers the prlstats service so the node reports its
-	// status (block height, peer count, sync/mining state, client version,
+	// status (block height, peer count, sync state, client version,
 	// OS) to the public dashboard at status.parallaxprotocol.org under a
 	// random name kept in the datadir — the same as a bare --prlstats on the
 	// CLI. Offered on by default in the onboarding wizard; configs persisted
@@ -51,16 +51,8 @@ type GUIConfig struct {
 	TrieDirtyCacheMB int `json:"trieDirtyCacheMB"`
 	SnapshotCacheMB  int `json:"snapshotCacheMB"`
 
-	// Mining
-	MiningWallet  string     `json:"miningWallet"`  // 0x... reward address
-	MiningWorker  string     `json:"miningWorker"`  // worker name (defaults to hostname)
-	MiningPool    string     `json:"miningPool"`    // selected pool URL
-	MiningThreads int        `json:"miningThreads"` // CPU threads for solo mode (0 = auto)
-	MiningDevices []int      `json:"miningDevices"` // GPU device indices (nil = all)
-	CustomPools   []PoolInfo `json:"customPools"`   // user-added pool entries
-
-	// WatchAddress is the address the Wallet page follows (balance, mined
-	// blocks, transactions). Empty means it follows MiningWallet.
+	// WatchAddress is the address the Wallet page follows (balance and
+	// transactions).
 	WatchAddress string `json:"watchAddress"`
 
 	// StaticPeers and TrustedPeers are enode URLs the user added from the
@@ -142,12 +134,6 @@ type GUIConfig struct {
 	GPOMaxPrice    string `json:"gpoMaxPrice"`    // --gpo.maxprice, decimal wei
 	GPOIgnorePrice string `json:"gpoIgnorePrice"` // --gpo.ignoreprice, decimal wei
 
-	// Mining with the node's own miner (solo modes)
-	MinerExtraData   string `json:"minerExtraData"`   // --miner.extradata
-	MinerGasLimit    uint64 `json:"minerGasLimit"`    // --miner.gaslimit (0 = default)
-	MinerGasPrice    string `json:"minerGasPrice"`    // --miner.gasprice, decimal wei
-	MinerRecommitSec int    `json:"minerRecommitSec"` // --miner.recommit (0 = default)
-
 	// Metrics. The daemon decides whether metrics are collected once, at
 	// process start, from its argv (support/metrics init), so these take
 	// effect on the next launch of the app: the shell passes --metrics and
@@ -158,12 +144,10 @@ type GUIConfig struct {
 	MetricsPort      int    `json:"metricsPort"`      // --metrics.port (0 = 6060)
 
 	// Desktop
-	LogLevel       int    `json:"logLevel"`       // --verbosity, 1 (error) to 5 (trace); 0 = info
-	NoUpdateCheck  bool   `json:"noUpdateCheck"`  // don't look for new releases in the background
-	PreventSleep   bool   `json:"preventSleep"`   // keep the computer awake while mining or syncing
-	Notifications  bool   `json:"notifications"`  // desktop notifications: sync done, block found, node stopped
-	ResumeMining   bool   `json:"resumeMining"`   // restart mining at launch if it was running at quit
-	LastMiningMode string `json:"lastMiningMode"` // the mode mining was last started in; empty once the user stops it
+	LogLevel      int  `json:"logLevel"`      // --verbosity, 1 (error) to 5 (trace); 0 = info
+	NoUpdateCheck bool `json:"noUpdateCheck"` // don't look for new releases in the background
+	PreventSleep  bool `json:"preventSleep"`  // keep the computer awake while syncing
+	Notifications bool `json:"notifications"` // desktop notifications: sync done, node stopped
 }
 
 // NodeDetails is the Overview's fuller picture of the running node: who it
@@ -298,7 +282,6 @@ type BlockView struct {
 	GasUsed    uint64 `json:"gasUsed"`
 	GasLimit   uint64 `json:"gasLimit"`
 	SizeBytes  uint64 `json:"sizeBytes"`
-	Coinbase   string `json:"coinbase"`
 	RewardWei  string `json:"rewardWei"` // base subsidy for this height
 	Difficulty string `json:"difficulty"`
 }
@@ -313,83 +296,8 @@ type AddressView struct {
 	Nonce      uint64 `json:"nonce"`
 	HeadBlock  uint64 `json:"headBlock"`
 	// ScannedFrom is the oldest block the activity below was gathered from.
-	ScannedFrom  uint64      `json:"scannedFrom"`
-	BlocksMined  int         `json:"blocksMined"`  // blocks in the window with this coinbase
-	MinedWei     string      `json:"minedWei"`     // their base subsidy
-	MinedBlocks  []BlockView `json:"minedBlocks"`  // newest first, capped
-	Transactions []TxView    `json:"transactions"` // newest first, capped
-}
-
-// ---------------------------------------------------------------------------
-// Mining
-// ---------------------------------------------------------------------------
-
-// PoolInfo describes one mining pool endpoint.
-type PoolInfo struct {
-	Name    string `json:"name"`
-	URL     string `json:"url"`     // stratum+tcp://host:port
-	Region  string `json:"region"`  // "US", "EU", "Asia", etc.
-	Builtin bool   `json:"builtin"` // true = shipped with app
-}
-
-// DeviceInfo describes one GPU detected by hashwarp --list-devices.
-type DeviceInfo struct {
-	Index  int    `json:"index"`
-	PciID  string `json:"pciId"` // "01:00.0"
-	Type   string `json:"type"`  // "Gpu" | "Cpu" | "Acc"
-	Name   string `json:"name"`
-	Memory string `json:"memory"` // "8.00 GB"
-	CUDA   bool   `json:"cuda"`
-	OpenCL bool   `json:"openCl"`
-}
-
-// GPUDeviceStatus is per-device live stats from hashwarp API.
-type GPUDeviceStatus struct {
-	Index    int     `json:"index"`
-	Name     string  `json:"name"`
-	Mode     string  `json:"mode"` // "CUDA" | "OpenCL"
-	Hashrate float64 `json:"hashrate"`
-	TempC    int     `json:"tempC"`
-	FanPct   int     `json:"fanPct"`
-	PowerW   float64 `json:"powerW"`
-	Paused   bool    `json:"paused"`
-	Accepted uint64  `json:"accepted"`
-	Rejected uint64  `json:"rejected"`
-	Failed   uint64  `json:"failed"`
-}
-
-// MinerStatus is the unified snapshot polled by Mining.tsx every 2s.
-type MinerStatus struct {
-	Mode    string `json:"mode"` // "off" | "pool" | "solo"
-	Running bool   `json:"running"`
-
-	// Aggregate
-	Hashrate      float64 `json:"hashrate"` // H/s
-	UptimeSeconds int64   `json:"uptimeSeconds"`
-
-	// Pool mode (GPU via hashwarp)
-	PoolConnected      bool              `json:"poolConnected"`
-	PoolURI            string            `json:"poolUri"`
-	SharesAccepted     uint64            `json:"sharesAccepted"`
-	SharesRejected     uint64            `json:"sharesRejected"`
-	SharesFailed       uint64            `json:"sharesFailed"`
-	SecsSinceLastShare uint64            `json:"secsSinceLastShare"`
-	Epoch              int               `json:"epoch"`
-	GeneratingDAG      bool              `json:"generatingDag"`
-	Devices            []GPUDeviceStatus `json:"devices"`
-
-	// Solo mode (CPU via embedded node)
-	SoloDifficulty  string `json:"soloDifficulty"`
-	SoloBlocksFound uint64 `json:"soloBlocksFound"`
-
-	// Error surfaced to UI
-	Error string `json:"error,omitempty"`
-}
-
-// MinerEvent is broadcast as the "miner" event.
-type MinerEvent struct {
-	Kind    string      `json:"kind"` // "started" | "stopped" | "error" | "dag" | "stats"
-	Payload interface{} `json:"payload,omitempty"`
+	ScannedFrom  uint64   `json:"scannedFrom"`
+	Transactions []TxView `json:"transactions"` // newest first, capped
 }
 
 // ---------------------------------------------------------------------------

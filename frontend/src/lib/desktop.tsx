@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { onEvent } from "./api";
-import { useMiner, useNode } from "./live";
+import { useNode } from "./live";
 import { useT } from "../i18n";
 
 /** A sync shorter than this (a new block arriving at the tip) isn't worth a notification. */
@@ -14,17 +14,14 @@ function notify(title: string, body: string) {
 
 /**
  * DesktopBehaviors carries out the Settings that act outside the window:
- * keeping the computer awake while mining or syncing, and notifying the
- * user when a long sync finishes, a solo block is found, or the node stops
- * itself to protect its database from a full disk. It renders nothing.
+ * keeping the computer awake while syncing, and notifying the user when
+ * a long sync finishes or the node stops itself to protect its database from a full disk. It renders nothing.
  */
 export function DesktopBehaviors({ notifications, preventSleep }: { notifications: boolean; preventSleep: boolean }) {
   const t = useT();
   const node = useNode();
-  const { status: miner } = useMiner();
 
-  const busy = !!miner?.running || (!!node?.running && node.syncing);
-  const awake = preventSleep && busy;
+  const awake = preventSleep && !!node?.running && node.syncing;
   useEffect(() => {
     window.parallax?.keepAwake?.(awake);
   }, [awake]);
@@ -47,16 +44,6 @@ export function DesktopBehaviors({ notifications, preventSleep }: { notification
       notify(t("notify.synced"), t("notify.synced.body", { block: node.currentBlock.toLocaleString() }));
     }
   }, [node?.running, node?.syncing, node?.currentBlock, notifications, t]);
-
-  // A solo block found: the count rises within one mining run
-  const found = useRef<number | null>(null);
-  const blocks = miner?.running ? miner.soloBlocksFound : null;
-  useEffect(() => {
-    if (blocks !== null && found.current !== null && blocks > found.current && notifications) {
-      notify(t("notify.blockFound"), t("notify.blockFound.body", { n: blocks }));
-    }
-    found.current = blocks;
-  }, [blocks, notifications, t]);
 
   // The free disk space guard stopped the node
   const on = useRef(notifications);

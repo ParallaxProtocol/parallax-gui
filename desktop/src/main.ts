@@ -120,7 +120,7 @@ function setOpenAtLogin(on: boolean) {
   );
 }
 
-/** Holds the system awake while the frontend asks (mining or syncing, if the user wants it). */
+/** Holds the system awake while the frontend asks (syncing, if the user wants it). */
 let sleepBlocker: number | null = null;
 
 function keepAwake(on: boolean) {

@@ -23,23 +23,14 @@ EB_PLATFORM  := $(if $(filter darwin,$(GOOS)),--mac,$(if $(filter windows,$(GOOS
 
 BACKEND_DIR := build/backend/$(EB_OS)-$(EB_ARCH)
 BACKEND_EXE := parallax-backend$(if $(filter windows,$(GOOS)),.exe,)
-HASHWARP_EXE := hashwarp$(if $(filter windows,$(GOOS)),.exe,)
 
-# A hashwarp binary to ship next to the backend: HASHWARP_BIN for this
-# build, or HASHWARP_DIR holding hashwarp-<goos>-<goarch>[.exe] per target.
-HASHWARP_BIN ?= $(if $(HASHWARP_DIR),$(HASHWARP_DIR)/hashwarp-$(GOOS)-$(GOARCH)$(if $(filter windows,$(GOOS)),.exe,),$(shell which hashwarp 2>/dev/null))
-
-# backend builds the Go engine (the node, miner and updater behind the
+# backend builds the Go engine (the node and updater behind the
 # bridge). Pure Go, so it cross-compiles with no C toolchain.
 backend:
 	@mkdir -p $(BACKEND_DIR)
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -trimpath \
 	  -ldflags "$(LDFLAGS) -X github.com/ParallaxProtocol/parallax-gui/backend.GUIVersion=$(VERSION)" \
 	  -o $(BACKEND_DIR)/$(BACKEND_EXE) .
-	@if [ -n "$(HASHWARP_BIN)" ] && [ -f "$(HASHWARP_BIN)" ]; then \
-	  cp "$(HASHWARP_BIN)" "$(BACKEND_DIR)/$(HASHWARP_EXE)"; \
-	  echo "  Bundled hashwarp from $(HASHWARP_BIN)"; \
-	fi
 
 frontend:
 	cd frontend && npm ci && npm run build

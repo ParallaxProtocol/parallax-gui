@@ -5,7 +5,6 @@ go 1.26.0
 require (
 	github.com/ParallaxProtocol/parallax/v2 v2.1.3
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible
-	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/sys v0.48.0
 )
 

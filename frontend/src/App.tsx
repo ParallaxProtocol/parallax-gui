@@ -13,7 +13,6 @@ import Overview from "./pages/Overview";
 // The landing page loads with the app; the rest load on first visit, so
 // the webview parses less JavaScript before the first paint
 const WalletPage = lazy(() => import("./pages/Wallet"));
-const Mining = lazy(() => import("./pages/Mining"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 import Sidebar from "./components/shell/Sidebar";
@@ -165,7 +164,6 @@ function RoutedContent({ animate }: { animate: boolean }) {
       <Routes location={location}>
         <Route path="/" element={<Overview />} />
         <Route path="/wallet" element={<WalletPage />} />
-        <Route path="/mining" element={<Mining />} />
         <Route path="/settings" element={<Settings />} />
         {/* Older routes, from before the redesign */}
         <Route path="/connect" element={<Navigate to="/wallet" replace />} />
