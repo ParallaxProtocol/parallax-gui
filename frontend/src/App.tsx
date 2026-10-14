@@ -1,10 +1,12 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { MotionConfig } from "motion/react";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { Loader2 } from "lucide-react";
 import { api } from "./lib/api";
 import { applyTheme } from "./lib/theme";
 import { LiveProvider } from "./lib/live";
+import { AnimationsOff } from "./lib/prefs";
+import { PAGE } from "./lib/motion";
 import Overview from "./pages/Overview";
 
 // The landing page loads with the app; the rest load on first visit, so
@@ -18,7 +20,7 @@ import Toolbar from "./components/shell/Toolbar";
 import StatusBar from "./components/shell/StatusBar";
 import UpdateBanner from "./components/UpdateBanner";
 import { useT } from "./i18n";
-import logo from "./assets/logo.svg";
+import { BrandMark } from "./components/ui/BrandMark";
 
 // Custom event the Settings page dispatches whenever it persists a new
 // config. App listens for it so globally-applied flags (animations, theme)
@@ -123,9 +125,9 @@ export default function App() {
         <div className="flex h-full flex-col">
           <div className="flex min-h-0 flex-1">
             <Sidebar />
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 flex-1 flex-col bg-background">
               <Toolbar />
-              <RoutedContent />
+              <RoutedContent animate={!animationsDisabled} />
             </div>
           </div>
           <StatusBar version={version} />
@@ -136,32 +138,51 @@ export default function App() {
   }
 
   return (
+    <AnimationsOff.Provider value={animationsDisabled}>
       <MotionConfig
         reducedMotion={animationsDisabled ? "always" : "never"}
         transition={animationsDisabled ? { duration: 0 } : undefined}
       >
         {content}
       </MotionConfig>
+    </AnimationsOff.Provider>
   );
 }
 
-function RoutedContent() {
-  // Pages switch in place, as a native window's panes do. Suspense keeps a
-  // page still loading blank for a moment rather than suspending the shell
+function RoutedContent({ animate }: { animate: boolean }) {
+  const location = useLocation();
+  // Suspense inside the transition, so a page still loading keeps its slot
+  // blank for a moment rather than suspending the shell
+  const routes = (
+    <Suspense fallback={null}>
+      <Routes location={location}>
+        <Route path="/" element={<Overview />} />
+        <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/mining" element={<Mining />} />
+        <Route path="/settings" element={<Settings />} />
+        {/* Older routes, from before the redesign */}
+        <Route path="/connect" element={<Navigate to="/wallet" replace />} />
+        <Route path="/logs" element={<Navigate to="/settings" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
+  );
+
   return (
-    <main className="min-h-0 flex-1 overflow-y-auto">
-      <Suspense fallback={null}>
-        <Routes>
-          <Route path="/" element={<Overview />} />
-          <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/mining" element={<Mining />} />
-          <Route path="/settings" element={<Settings />} />
-          {/* Older routes, from before the redesign */}
-          <Route path="/connect" element={<Navigate to="/wallet" replace />} />
-          <Route path="/logs" element={<Navigate to="/settings" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+    // The scrollbar's gutter is always reserved, so a page growing past the
+    // window (or one arriving mid-transition) never shifts the layout sideways
+    <main className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable]">
+      {animate ? (
+        // A quick crossfade between pages; without animations the wrapper goes
+        // entirely, since Motion commits `initial` for one frame even at duration 0
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div key={location.pathname} className="h-full" {...PAGE}>
+            {routes}
+          </motion.div>
+        </AnimatePresence>
+      ) : (
+        routes
+      )}
     </main>
   );
 }
@@ -170,13 +191,18 @@ function SplashScreen() {
   const t = useT();
   return (
     <div className="drag grid h-full place-items-center">
-      <div className="flex flex-col items-center gap-3">
-        <img src={logo} className="size-12" alt="Parallax" />
+      <motion.div
+        className="flex flex-col items-center gap-4"
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <BrandMark size={56} />
         <span className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" />
           {t("splash.loading")}
         </span>
-      </div>
+      </motion.div>
     </div>
   );
 }

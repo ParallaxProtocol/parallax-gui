@@ -21,8 +21,24 @@ function scale(samples: Sample[], height: number, floorZero: boolean) {
 }
 
 /**
- * AreaChart draws a live series as a line in the accent over a faint
- * fill. Hovering reads off the nearest sample through `format`.
+ * smooth draws a line through the points as a curve: each segment a cubic
+ * whose handles run halfway along the x step, so the line passes every
+ * point without overshooting between them.
+ */
+function smooth(pts: (readonly [number, number])[]): string {
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1];
+    const [x1, y1] = pts[i];
+    const mx = (x0 + x1) / 2;
+    d += `C${mx.toFixed(1)},${y0.toFixed(1)} ${mx.toFixed(1)},${y1.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)}`;
+  }
+  return d;
+}
+
+/**
+ * AreaChart draws a live series as a smooth line in the accent over a
+ * faint fill, its live end pulsing. Hovering reads off the nearest sample through `format`.
  */
 export function AreaChart({
   samples,
@@ -44,7 +60,7 @@ export function AreaChart({
     if (samples.length < 2) return null;
     const s = scale(samples, height, floorZero);
     const pts = samples.map((p) => [s.x(p.t), s.y(p.v)] as const);
-    const line = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join("");
+    const line = smooth(pts);
     const area = `${line}L${W},${height}L0,${height}Z`;
     return { s, pts, line, area };
   }, [samples, height, floorZero]);
@@ -87,6 +103,10 @@ export function AreaChart({
             <stop offset="0%" stopColor="var(--brand-mark)" stopOpacity="0.16" />
             <stop offset="100%" stopColor="var(--brand-mark)" stopOpacity="0" />
           </linearGradient>
+          <linearGradient id={`stroke-${id}`} x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="var(--brand-fill)" />
+            <stop offset="100%" stopColor="var(--brand-mark)" />
+          </linearGradient>
         </defs>
         {[0.25, 0.5, 0.75].map((f) => (
           <line
@@ -103,8 +123,9 @@ export function AreaChart({
         <path
           d={geom.line}
           fill="none"
-          stroke="var(--brand-mark)"
-          strokeWidth="1.5"
+          stroke={`url(#stroke-${id})`}
+          strokeWidth="2"
+          strokeLinecap="round"
           strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
         />
@@ -120,14 +141,18 @@ export function AreaChart({
           />
         )}
       </svg>
-      {/* The dot is HTML so the stretched viewBox does not squash it */}
+      {/* The dot is HTML so the stretched viewBox does not squash it. It
+          glides to each point; at the live end it carries a halo */}
       <span
-        className="pointer-events-none absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-mark ring-2 ring-surface"
+        className="pointer-events-none absolute size-2 -translate-x-1/2 -translate-y-1/2 transition-[left,top] duration-200 ease-out"
         style={{ left: `${(fx / W) * 100}%`, top: fy }}
-      />
+      >
+        {hover === null && <span className="halo absolute inset-0 rounded-full bg-brand-mark" />}
+        <span className="absolute inset-0 rounded-full bg-brand-mark ring-2 ring-surface" />
+      </span>
       {hover !== null && (
         <span
-          className="pointer-events-none absolute -top-1 -translate-x-1/2 -translate-y-full rounded-md border border-border-strong bg-surface-raised px-2 py-1 text-sm whitespace-nowrap tabular-nums shadow-md"
+          className="pointer-events-none absolute -top-1 -translate-x-1/2 -translate-y-full rounded-lg border border-border-strong bg-surface-raised px-2 py-1 text-sm whitespace-nowrap tabular-nums shadow-[var(--shadow-popover)] transition-[left] duration-200 ease-out"
           style={{ left: `${(fx / W) * 100}%` }}
         >
           {format(samples[hover].v)}

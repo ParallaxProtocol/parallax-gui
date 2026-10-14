@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "motion/react";
 import { ArrowDownLeft, ArrowUpRight, Pencil, Pickaxe } from "lucide-react";
 import { api, AddressView } from "../../lib/api";
 import { formatInt, formatLax, isAddress, sameAddress, shortHex } from "../../lib/format";
 import { useNode } from "../../lib/live";
 import { useNow } from "../../lib/useNow";
+import { STAGGER, useStagger } from "../../lib/motion";
+import { Counter } from "../../components/ui/Counter";
 import { useAgo, useT } from "../../i18n";
 import { Panel, Section, Stat, StatStrip } from "../../components/ui/Panel";
 import { CopyButton, Notice } from "../../components/ui/bits";
+import { Tooltip } from "../../components/ui/Tooltip";
 
 type Activity =
   | { kind: "in" | "out"; block: number; time: number; amountWei: string; other: string; hash: string }
@@ -20,6 +24,7 @@ type Activity =
  */
 export default function Watched({ title }: { title: string }) {
   const t = useT();
+  const stagger = useStagger();
   const ago = useAgo();
   const now = useNow(5000);
   const node = useNode();
@@ -145,19 +150,20 @@ export default function Watched({ title }: { title: string }) {
       title={title}
       aside={
         <>
-          <span className="font-mono" title={address}>
-            {shortHex(address, 10, 8)}
-          </span>
+          <Tooltip content={address} mono>
+            <span className="font-mono">{shortHex(address, 10, 8)}</span>
+          </Tooltip>
           <CopyButton value={address} />
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm btn-icon"
-            onClick={() => setEditing(true)}
-            aria-label={t("wallet.watch.change")}
-            title={t("wallet.watch.change")}
-          >
-            <Pencil className="size-3.5" />
-          </button>
+          <Tooltip content={t("wallet.watch.change")}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm btn-icon"
+              onClick={() => setEditing(true)}
+              aria-label={t("wallet.watch.change")}
+            >
+              <Pencil className="size-3.5" />
+            </button>
+          </Tooltip>
         </>
       }
     >
@@ -167,7 +173,13 @@ export default function Watched({ title }: { title: string }) {
       <StatStrip columns="2fr 1fr 1fr">
         <Stat
           label={t("wallet.balance")}
-          value={balanceKnown ? formatLax(view!.balanceWei, 4) : "—"}
+          value={
+            balanceKnown ? (
+              <Counter value={Number(formatLax(view!.balanceWei, 4))} format={(v) => formatAmount(v)} />
+            ) : (
+              "—"
+            )
+          }
           unit="LAX"
           detail={
             !view
@@ -197,9 +209,13 @@ export default function Watched({ title }: { title: string }) {
         {activity.length === 0 ? (
           <p className="py-10 text-center text-muted-foreground">{view ? t("wallet.activityEmpty") : "…"}</p>
         ) : (
-          <ul>
+          <motion.ul {...stagger}>
             {activity.map((a) => (
-              <li key={`${a.kind}-${a.hash}`} className="flex h-11 items-center gap-3 px-4 even:bg-muted/40">
+              <motion.li
+                variants={STAGGER.item}
+                key={`${a.kind}-${a.hash}`}
+                className="flex h-11 items-center gap-3 px-4 transition-colors even:bg-muted/40 hover:bg-hover"
+              >
                 <ActivityIcon kind={a.kind} />
                 <div className="min-w-0 flex-1">
                   <div>{t(`wallet.kind.${a.kind}`)}</div>
@@ -220,9 +236,9 @@ export default function Watched({ title }: { title: string }) {
                   </div>
                   <div className="text-sm text-muted-foreground">{ago(a.time, now)}</div>
                 </div>
-              </li>
+              </motion.li>
             ))}
-          </ul>
+          </motion.ul>
         )}
       </Panel>
     </Section>
@@ -240,4 +256,9 @@ function ActivityIcon({ kind }: { kind: Activity["kind"] }) {
       <Icon className="size-3.5" />
     </span>
   );
+}
+
+/** Up to four decimals, without trailing zeros, as formatLax shows a balance. */
+function formatAmount(v: number): string {
+  return v.toLocaleString("en-US", { maximumFractionDigits: 4, useGrouping: false });
 }

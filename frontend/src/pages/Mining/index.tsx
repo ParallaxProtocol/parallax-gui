@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { Check, Cpu, Loader2, Network, Pencil, Play, Plus, Zap } from "lucide-react";
 import { api, DeviceInfo, GUIConfig, MiningMode, PoolInfo } from "../../lib/api";
 import { useMiner, useNode, useRefresh } from "../../lib/live";
+import { GLIDE, PAGE } from "../../lib/motion";
+import { StepMark } from "../../components/ui/StepMark";
 import { useT } from "../../i18n";
 import { Panel, Rows, Section } from "../../components/ui/Panel";
 import { Notice } from "../../components/ui/bits";
@@ -9,6 +12,7 @@ import { isAddress } from "../../lib/format";
 import HashwarpSetup from "./Hashwarp";
 import Live from "./Live";
 import PoolDrawer, { FormRow } from "./PoolDrawer";
+import { Tooltip } from "../../components/ui/Tooltip";
 
 type Mode = Exclude<MiningMode, "off">;
 
@@ -147,34 +151,54 @@ export default function Mining() {
     <div className="flex flex-col gap-6 p-5">
       {(err || miner.error) && <Notice tone="critical">{err || miner.error}</Notice>}
 
+      <AnimatePresence mode="wait" initial={false}>
       {running ? (
-        <Live status={miner} history={hashrate} onStop={stop} />
+        <motion.div key="live" className="flex flex-col gap-6" {...PAGE}>
+          <Live status={miner} history={hashrate} onStop={stop} />
+        </motion.div>
       ) : (
-        <>
+        <motion.div key="setup" className="flex flex-col gap-6" {...PAGE}>
           <Section title={t("mining.section.mode")}>
             <div role="radiogroup" aria-label={t("mining.section.mode")} className="grid grid-cols-3 gap-3">
               {MODES.map(({ mode: m, icon: Icon, gpu }) => {
                 const disabled = isMac && gpu;
                 const here = mode === m;
-                return (
+                const card = (
                   <button
                     key={m}
                     type="button"
                     role="radio"
                     aria-checked={here}
                     disabled={disabled}
-                    title={disabled ? t("mining.mac.disabled") : undefined}
                     onClick={() => setMode(m)}
-                    className={`flex items-start gap-3 rounded-lg border bg-surface p-3 text-left shadow-[var(--shadow-panel)] transition-colors disabled:opacity-40 ${
-                      here ? "border-brand-mark ring-1 ring-brand-mark" : "border-border hover:border-border-strong"
+                    className={`relative flex items-start gap-3 rounded-lg border bg-surface p-3 text-left shadow-[var(--shadow-panel)] transition-colors disabled:opacity-40 ${
+                      here ? "border-transparent" : "border-border hover:border-border-strong"
                     }`}
                   >
-                    <Icon className={`mt-px size-4 shrink-0 ${here ? "text-brand" : "text-muted-foreground"}`} />
-                    <span className="flex flex-col gap-0.5">
+                    {/* The selection ring glides between the modes */}
+                    {here && (
+                      <motion.span
+                        layoutId="mining-mode"
+                        layoutDependency={mode}
+                        transition={GLIDE}
+                        className="absolute -inset-px rounded-lg border-2 border-brand-mark"
+                        style={{ background: "linear-gradient(to bottom, var(--brand-muted), transparent 70%)" }}
+                      />
+                    )}
+                    <Icon className={`relative mt-px size-4 shrink-0 transition-colors ${here ? "text-brand" : "text-muted-foreground"}`} />
+                    <span className="relative flex flex-col gap-0.5">
                       <span className="font-medium">{t(`mining.mode.${m}`)}</span>
                       <span className="text-sm text-muted-foreground">{t(`mining.mode.${m}.desc`)}</span>
                     </span>
                   </button>
+                );
+                // A disabled button gets no pointer events: its tooltip hangs on a wrapper
+                return disabled ? (
+                  <Tooltip key={m} content={t("mining.mac.disabled")}>
+                    <div className="grid">{card}</div>
+                  </Tooltip>
+                ) : (
+                  card
                 );
               })}
             </div>
@@ -219,25 +243,27 @@ export default function Mining() {
                             ))}
                           </select>
                           {selectedPool && !selectedPool.builtin && (
+                            <Tooltip content={t("mining.edit")}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-icon"
+                                aria-label={t("mining.edit")}
+                                onClick={() => setPoolDrawer({ open: true, editing: selectedPool })}
+                              >
+                                <Pencil className="size-3.5" />
+                              </button>
+                            </Tooltip>
+                          )}
+                          <Tooltip content={t("mining.pool.add")}>
                             <button
                               type="button"
                               className="btn btn-secondary btn-icon"
-                              title={t("mining.edit")}
-                              aria-label={t("mining.edit")}
-                              onClick={() => setPoolDrawer({ open: true, editing: selectedPool })}
+                              aria-label={t("mining.pool.add")}
+                              onClick={() => setPoolDrawer({ open: true, editing: null })}
                             >
-                              <Pencil className="size-3.5" />
+                              <Plus className="size-3.5" />
                             </button>
-                          )}
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-icon"
-                            title={t("mining.pool.add")}
-                            aria-label={t("mining.pool.add")}
-                            onClick={() => setPoolDrawer({ open: true, editing: null })}
-                          >
-                            <Plus className="size-3.5" />
-                          </button>
+                          </Tooltip>
                         </div>
                       </FormRow>
                       <FormRow label={t("mining.worker")}>
@@ -279,11 +305,17 @@ export default function Mining() {
                                 className="-mx-2 flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left hover:bg-hover"
                               >
                                 <span
-                                  className={`grid size-4 shrink-0 place-items-center rounded-[4px] ${
+                                  className={`grid size-4 shrink-0 place-items-center rounded-[4px] transition-colors ${
                                     on ? "bg-brand-fill text-brand-foreground" : "border border-border-strong bg-field"
                                   }`}
                                 >
-                                  {on && <Check className="size-3" strokeWidth={3} />}
+                                  <AnimatePresence initial={false}>
+                                    {on && (
+                                      <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={GLIDE}>
+                                        <Check className="size-3" strokeWidth={3} />
+                                      </motion.span>
+                                    )}
+                                  </AnimatePresence>
                                 </span>
                                 <span className="min-w-0 flex-1 truncate">
                                   GPU {g.index}: {g.name}
@@ -359,8 +391,9 @@ export default function Mining() {
               </div>
             )}
           </Section>
-        </>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <PoolDrawer
         open={poolDrawer.open}
@@ -377,14 +410,8 @@ export default function Mining() {
 function Check_({ ok, label, action }: { ok: boolean; label: string; action?: React.ReactNode }) {
   return (
     <li className="flex items-center gap-2.5">
-      <span
-        className={`grid size-4 shrink-0 place-items-center rounded-full ${
-          ok ? "bg-brand-fill text-brand-foreground" : "border border-border-strong"
-        }`}
-      >
-        {ok && <Check className="size-2.5" strokeWidth={3.5} />}
-      </span>
-      <span className={`flex-1 ${ok ? "" : "text-muted-foreground"}`}>{label}</span>
+      <StepMark state={ok ? "done" : "todo"} size={16} />
+      <span className={`flex-1 transition-colors ${ok ? "" : "text-muted-foreground"}`}>{label}</span>
       {action}
     </li>
   );

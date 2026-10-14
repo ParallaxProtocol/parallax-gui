@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { motion } from "motion/react";
 import { SPRING } from "../../lib/motion";
+import { Tooltip } from "./Tooltip";
 
 export type SegmentOption<T extends string> = {
   value: T;
@@ -28,17 +29,16 @@ export function Segmented<T extends string>({
 }) {
   const id = useId();
   return (
-    <div role="radiogroup" className={`inline-flex rounded-md bg-muted p-0.5 ${className}`}>
+    <div role="radiogroup" className={`inline-flex rounded-md bg-segment-well p-0.5 shadow-[0_1px_2px_rgb(0_0_0/20%)_inset] ${className}`}>
       {options.map((o) => {
         const here = o.value === value;
-        return (
+        const button = (
           <button
             key={o.value}
             type="button"
             role="radio"
             aria-checked={here}
             disabled={o.disabled}
-            title={o.title}
             onClick={() => !o.disabled && onChange(o.value)}
             className={`relative min-w-16 rounded-[5px] font-medium transition-colors disabled:opacity-40 ${
               size === "sm" ? "h-5 px-2.5 text-sm" : "h-6 px-3"
@@ -49,11 +49,18 @@ export function Segmented<T extends string>({
                 layoutId={`segment-${id}`}
                 layoutDependency={value}
                 transition={SPRING}
-                className="absolute inset-0 rounded-[5px] bg-surface-raised shadow-[var(--shadow-control)]"
+                className="absolute inset-0 rounded-[5px] bg-segment-thumb shadow-[var(--shadow-segment)]"
               />
             )}
             <span className="relative">{o.label}</span>
           </button>
+        );
+        return o.title ? (
+          <Tooltip key={o.value} content={o.title}>
+            {button}
+          </Tooltip>
+        ) : (
+          button
         );
       })}
     </div>

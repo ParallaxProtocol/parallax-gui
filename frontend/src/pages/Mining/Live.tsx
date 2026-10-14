@@ -5,9 +5,11 @@ import { formatDifficulty, formatDuration, formatHashrate, formatInt, formatPerc
 import { Sample } from "../../lib/live";
 import { useT } from "../../i18n";
 import { AreaChart } from "../../components/ui/Chart";
+import { Counter } from "../../components/ui/Counter";
 import { Indicator } from "../../components/ui/Indicator";
 import { Label, Panel, Rows, Section, Stat, StatStrip } from "../../components/ui/Panel";
 import { Fill, Meter } from "../../components/ui/bits";
+import { Tooltip } from "../../components/ui/Tooltip";
 
 /**
  * Live is the miner while it runs: the hashrate over its chart,
@@ -31,8 +33,13 @@ export default function Live({
 
   return (
     <>
-      <Panel className="flex flex-col gap-4 p-4">
-        <div className="flex items-start justify-between gap-6">
+      <Panel className="relative flex flex-col gap-4 overflow-hidden p-5">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-40 -left-40 size-[30rem]"
+          style={{ background: "radial-gradient(closest-side, var(--glow), transparent 75%)" }}
+        />
+        <div className="relative flex items-start justify-between gap-6">
           <div className="flex flex-col gap-1">
             <span className="flex items-center gap-2">
               <Indicator grade={status.generatingDag ? "info" : "good"} ping cause={String(status.generatingDag)} />
@@ -40,7 +47,9 @@ export default function Live({
                 {status.generatingDag ? t("mining.generatingDag") : t("mining.mining")} · {t(`mining.mode.${status.mode}`)}
               </Label>
             </span>
-            <span className="text-2xl font-semibold tabular-nums">{formatHashrate(status.hashrate)}</span>
+            <span className="text-[30px] leading-9 font-semibold tracking-tight">
+              <Counter value={status.hashrate} format={formatHashrate} />
+            </span>
             <span className="text-sm text-muted-foreground tabular-nums">
               {t("mining.avg", { rate: formatHashrate(avg) })} · {t("mining.for", { time: formatDuration(status.uptimeSeconds) })}
             </span>
@@ -79,7 +88,7 @@ export default function Live({
         {gpu ? (
           <Stat
             label={t("mining.shares")}
-            value={formatInt(status.sharesAccepted)}
+            value={<Counter value={status.sharesAccepted} format={(v) => formatInt(Math.round(v))} />}
             detail={
               <span className={acceptedShare < 0.9 ? "text-warn-ink" : ""}>
                 {shares > 0 && `${formatPercent(acceptedShare)} · `}
@@ -117,9 +126,9 @@ export default function Live({
           }
           detail={
             status.poolUri ? (
-              <span className="font-mono" title={status.poolUri}>
-                {status.poolUri}
-              </span>
+              <Tooltip content={status.poolUri} mono overflowOnly>
+                <span className="block truncate font-mono">{status.poolUri}</span>
+              </Tooltip>
             ) : undefined
           }
         />
@@ -153,10 +162,10 @@ export default function Live({
                     )}
                     {d.fanPct > 0 && <span className="text-muted-foreground">{t("mining.fan", { pct: d.fanPct })}</span>}
                     {d.powerW > 0 && <span className="text-muted-foreground">{d.powerW.toFixed(0)} W</span>}
-                    <span className="w-24 text-right text-base font-medium">{formatHashrate(d.hashrate)}</span>
+                    <Counter value={d.hashrate} format={formatHashrate} className="w-24 text-right text-base font-medium" />
                   </div>
                   <div className="relative col-span-2 h-1 overflow-hidden rounded-full bg-muted">
-                    <Fill value={share} className="bg-brand-mark" />
+                    <Fill value={share} className="bg-gradient-to-r from-brand-fill to-brand-mark" />
                   </div>
                 </div>
               );

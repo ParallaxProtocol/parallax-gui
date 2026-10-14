@@ -28,8 +28,16 @@
   --faint: #6c6d74;
   --border: rgb(255 255 255 / 8%);
   --border-strong: rgb(255 255 255 / 13%);
-  --shadow-panel: none;
-  --shadow-control: 0 1px 0 rgb(255 255 255 / 4%) inset, 0 1px 2px rgb(0 0 0 / 30%);
+  /* Panels are lit from above: a faint top highlight and a soft drop */
+  --shadow-panel: 0 1px 0 rgb(255 255 255 / 4%) inset, 0 1px 2px rgb(0 0 0 / 20%), 0 8px 24px -16px rgb(0 0 0 / 50%);
+  --shadow-control: 0 1px 0 rgb(255 255 255 / 5%) inset, 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-popover: 0 0 0 1px rgb(255 255 255 / 6%) inset, 0 12px 40px -8px rgb(0 0 0 / 60%);
+  /* The accent's light, for the hero and live marks */
+  --glow: rgb(43 188 188 / 22%);
+  /* Segmented controls: a recessed well, the selected segment raised and lit */
+  --segment-well: rgb(0 0 0 / 28%);
+  --segment-thumb: #4a4c53;
+  --shadow-segment: 0 1px 0 rgb(255 255 255 / 10%) inset, 0 1px 3px rgb(0 0 0 / 45%);
 
   /* The accent: --brand for text and icons, --brand-mark for chart marks,
      --brand-fill for solid controls carrying --brand-foreground */
@@ -71,8 +79,13 @@
   --faint: #a1a1a6;
   --border: rgb(0 0 0 / 9%);
   --border-strong: rgb(0 0 0 / 16%);
-  --shadow-panel: 0 1px 1px rgb(0 0 0 / 3%);
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 4%), 0 8px 24px -16px rgb(0 0 0 / 12%);
   --shadow-control: 0 1px 1px rgb(0 0 0 / 6%);
+  --shadow-popover: 0 0 0 1px rgb(0 0 0 / 6%), 0 12px 40px -8px rgb(0 0 0 / 22%);
+  --glow: rgb(14 143 143 / 16%);
+  --segment-well: rgb(0 0 0 / 6%);
+  --segment-thumb: #ffffff;
+  --shadow-segment: 0 0 0 0.5px rgb(0 0 0 / 8%), 0 1px 3px rgb(0 0 0 / 14%);
   --brand: #00797a;
   --brand-mark: #0e8f8f;
   --brand-fill: #0b7f80;
@@ -89,6 +102,15 @@
   --critical-ink: #c42b2b;
   --info-ink: #0065cd;
   --off: #b4b4b9;
+}
+
+/* With an OS material behind the window (vibrancy, Mica) the sidebar and
+   status bar are see-through, and only the content column is painted */
+:root[data-material] {
+  --sidebar: transparent;
+}
+:root[data-material] body {
+  background-color: transparent;
 }
 
 @theme inline {
@@ -122,6 +144,9 @@
   --color-critical-ink: var(--critical-ink);
   --color-info-ink: var(--info-ink);
   --color-off: var(--off);
+  --color-glow: var(--glow);
+  --color-segment-well: var(--segment-well);
+  --color-segment-thumb: var(--segment-thumb);
 
   /* The OS's UI font where it has one (SF on macOS, Segoe UI Variable on
      Windows); Linux desktops vary too much, so Geist stands in there */
@@ -274,9 +299,13 @@
     line-height: 1;
     white-space: nowrap;
     transition:
-      background-color 120ms ease,
-      border-color 120ms ease,
-      color 120ms ease;
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      filter 100ms ease;
+  }
+  .btn:active:not(:disabled) {
+    filter: brightness(0.94);
   }
   .btn:disabled {
     opacity: 0.45;
@@ -393,6 +422,53 @@
 /* Motion                                                              */
 /* ------------------------------------------------------------------ */
 
+/* A live mark's halo: a ring that spreads and fades, on transform and
+   opacity only so the compositor runs it */
+@keyframes halo {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.halo {
+  animation: halo 2s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+/* Something waiting: a slow breath */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.breathe {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+/* A light that runs along a filling track while it is still filling */
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer {
+  animation: shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 35%), transparent);
+}
+
 /* Work of unknown length: a band that sweeps the track */
 @keyframes indeterminate {
   from {
@@ -405,20 +481,6 @@
 
 .indeterminate {
   animation: indeterminate 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-/* A block that arrives while the table is shown is highlighted briefly */
-@keyframes row-flash {
-  from {
-    background-color: var(--brand-muted);
-  }
-  to {
-    background-color: transparent;
-  }
-}
-
-.row-flash {
-  animation: row-flash 1.8s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {

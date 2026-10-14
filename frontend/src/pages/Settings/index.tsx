@@ -1,7 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { Check, Loader2, RefreshCw, RotateCcw } from "lucide-react";
 import { api, GUIConfig, UpdateInfo } from "../../lib/api";
 import { applyTheme } from "../../lib/theme";
+import { FADE_IN, FADE_OUT, GLIDE, PAGE, SPRING } from "../../lib/motion";
 import { CONFIG_UPDATED_EVENT } from "../../App";
 import { useLang, useT, LANG_NAMES, Lang } from "../../i18n";
 import { Indicator } from "../../components/ui/Indicator";
@@ -111,17 +113,30 @@ export default function Settings() {
             type="button"
             onClick={() => setSection(id)}
             aria-current={section === id ? "page" : undefined}
-            className={`flex h-7 items-center rounded-md px-2 text-left ${
-              section === id ? "bg-selected font-medium" : "text-foreground/80 hover:bg-hover"
+            className={`relative flex h-7 items-center rounded-md px-2 text-left transition-colors ${
+              section === id ? "font-medium" : "text-foreground/80 hover:bg-hover"
             }`}
           >
-            {t(`settings.section.${id}`)}
+            {section === id && (
+              <motion.span
+                layoutId="settings-selection"
+                layoutDependency={section}
+                transition={GLIDE}
+                className="absolute inset-0 rounded-md bg-selected"
+              />
+            )}
+            <span className="relative">{t(`settings.section.${id}`)}</span>
           </button>
         ))}
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className={`min-h-0 flex-1 ${section === "diagnostics" ? "flex flex-col" : "overflow-y-auto"}`}>
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={section}
+          {...PAGE}
+          className={`min-h-0 flex-1 [scrollbar-gutter:stable] ${section === "diagnostics" ? "flex flex-col" : "overflow-y-auto"}`}
+        >
           <div className={`flex flex-col gap-4 p-5 ${section === "diagnostics" ? "min-h-0 flex-1" : "max-w-3xl"}`}>
             {err && <Notice tone="critical">{err}</Notice>}
 
@@ -275,7 +290,8 @@ export default function Settings() {
 
             {section === "about" && <About />}
           </div>
-        </div>
+        </motion.div>
+        </AnimatePresence>
 
         <SaveBar
           dirty={dirty}
@@ -303,12 +319,20 @@ function Setting({ title, desc, restart, children }: { title: string; desc?: Rea
       title={title}
       desc={desc}
       badge={
-        restart && (
-          <span className="badge bg-warn/15 text-warn-ink">
-            <RotateCcw className="size-2.5" />
-            {t("settings.restartBadge")}
-          </span>
-        )
+        <AnimatePresence>
+          {restart && (
+            <motion.span
+              className="badge bg-warn/15 text-warn-ink"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={GLIDE}
+            >
+              <RotateCcw className="size-2.5" />
+              {t("settings.restartBadge")}
+            </motion.span>
+          )}
+        </AnimatePresence>
       }
     >
       {children}
@@ -406,40 +430,63 @@ function SaveBar({
   onRestart: () => void;
 }) {
   const t = useT();
-  if (!dirty && !saved && !restartPending) return null;
-  // A footer along the pane, as a preferences window's Apply/Revert row
+  const visible = dirty || saved || restartPending;
+  const kind = dirty ? "dirty" : restartPending ? "restart" : "saved";
+  // A footer along the pane, as a preferences window's Apply/Revert row: it
+  // slides up while there is something to apply, its message swapping in place
   return (
-    <div className="flex h-12 shrink-0 items-center gap-2 border-t border-border bg-background px-5">
-      {dirty ? (
-        <>
-          <span className="flex-1">
-            {t("settings.save.unsaved")}
-            {dirtyNeedsRestart && <span className="ml-2 text-sm text-warn-ink">{t("settings.save.needsRestart")}</span>}
-          </span>
-          <button type="button" onClick={onDiscard} className="btn btn-secondary">
-            {t("common.discard")}
-          </button>
-          <button type="button" onClick={onSave} className="btn btn-primary">
-            {t("common.save")}
-          </button>
-        </>
-      ) : restartPending ? (
-        <>
-          <span className="flex flex-1 items-center gap-2">
-            <Indicator grade="warn" />
-            {t("settings.save.restartRequired")}
-          </span>
-          <button type="button" onClick={onRestart} disabled={restarting} className="btn btn-primary">
-            {restarting && <Loader2 className="size-3.5 animate-spin" />}
-            {restarting ? t("settings.save.restarting") : t("settings.save.restart")}
-          </button>
-        </>
-      ) : (
-        <span className="flex items-center gap-2 text-good-ink">
-          <Check className="size-3.5" />
-          {t("settings.save.saved")}
-        </span>
+    <AnimatePresence initial={false}>
+      {visible && (
+        <motion.div
+          key="save-bar"
+          className="shrink-0 overflow-hidden border-t border-border bg-background"
+          initial={{ height: 0 }}
+          animate={{ height: 48 }}
+          exit={{ height: 0 }}
+          transition={SPRING}
+        >
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={kind}
+              className="flex h-12 items-center gap-2 px-5"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0, transition: FADE_IN }}
+              exit={{ opacity: 0, y: -10, transition: FADE_OUT }}
+            >
+          {dirty ? (
+            <>
+              <span className="flex-1">
+                {t("settings.save.unsaved")}
+                {dirtyNeedsRestart && <span className="ml-2 text-sm text-warn-ink">{t("settings.save.needsRestart")}</span>}
+              </span>
+              <button type="button" onClick={onDiscard} className="btn btn-secondary">
+                {t("common.discard")}
+              </button>
+              <button type="button" onClick={onSave} className="btn btn-primary">
+                {t("common.save")}
+              </button>
+            </>
+          ) : restartPending ? (
+            <>
+              <span className="flex flex-1 items-center gap-2">
+                <Indicator grade="warn" />
+                {t("settings.save.restartRequired")}
+              </span>
+              <button type="button" onClick={onRestart} disabled={restarting} className="btn btn-primary">
+                {restarting && <Loader2 className="size-3.5 animate-spin" />}
+                {restarting ? t("settings.save.restarting") : t("settings.save.restart")}
+              </button>
+            </>
+          ) : (
+            <span className="flex items-center gap-2 text-good-ink">
+              <Check className="size-3.5" />
+              {t("settings.save.saved")}
+            </span>
+          )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
       )}
-    </div>
+    </AnimatePresence>
   );
 }

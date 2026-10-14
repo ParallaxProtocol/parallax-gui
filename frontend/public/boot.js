@@ -13,4 +13,6 @@ try {
 // lights at the sidebar's top left (see createWindow in desktop/src/main.ts)
 try {
   document.documentElement.dataset.platform = (window.parallax && window.parallax.platform) || "web";
+  // The window shows an OS material behind the sidebar (see MATERIAL in main.ts)
+  if (window.parallax && window.parallax.material) document.documentElement.dataset.material = "";
 } catch (e) {}

@@ -7,6 +7,7 @@ import { SPRING } from "../lib/motion";
 import { useT } from "../i18n";
 import { Indicator } from "./ui/Indicator";
 import { Meter } from "./ui/bits";
+import { Tooltip } from "./ui/Tooltip";
 
 type BannerState =
   | { kind: "hidden" }
@@ -170,9 +171,9 @@ export default function UpdateBanner() {
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-3">
                 <Indicator grade="critical" className="mt-1.5" />
-                <span className="selectable line-clamp-3 flex-1 text-critical-ink" title={state.message}>
-                  {state.message}
-                </span>
+                <Tooltip content={state.message} overflowOnly>
+                  <span className="selectable line-clamp-3 flex-1 text-critical-ink">{state.message}</span>
+                </Tooltip>
                 <Close />
               </div>
               <div className="flex justify-end">

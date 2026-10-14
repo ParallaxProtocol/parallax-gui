@@ -1,19 +1,33 @@
 import { useState, type ReactNode } from "react";
 import { AlertTriangle, Check, Copy, Info, OctagonAlert } from "lucide-react";
 import { useT } from "../../i18n";
+import { Tooltip } from "./Tooltip";
 
 /**
  * Meter is a thin progress track in the accent; with no `value` it shows
- * work of unknown length as a sweeping band.
+ * work of unknown length as a sweeping band. A `live` meter (still
+ * filling) carries a light running along its fill.
  *
  * The fill is full width and slides in from the left by transform, which
  * the compositor animates on its own; transitioning `width` instead re-lays
  * out the page on every frame.
  */
-export function Meter({ value, className = "", label }: { value?: number; className?: string; label?: string }) {
+export function Meter({
+  value,
+  live,
+  thick,
+  className = "",
+  label,
+}: {
+  value?: number;
+  live?: boolean;
+  thick?: boolean;
+  className?: string;
+  label?: string;
+}) {
   return (
     <div
-      className={`relative h-1 overflow-hidden rounded-full bg-muted ${className}`}
+      className={`relative ${thick ? "h-1.5" : "h-1"} overflow-hidden rounded-full bg-muted ${className}`}
       role="progressbar"
       aria-label={label}
       aria-valuemin={0}
@@ -23,7 +37,9 @@ export function Meter({ value, className = "", label }: { value?: number; classN
       {value === undefined ? (
         <div className="indeterminate absolute inset-y-0 w-2/5 rounded-full bg-brand-mark" />
       ) : (
-        <Fill value={value} className="bg-brand-mark" />
+        <Fill value={value} className="overflow-hidden bg-gradient-to-r from-brand-fill to-brand-mark">
+          {live && <div className="shimmer absolute inset-0" />}
+        </Fill>
       )}
     </div>
   );
@@ -33,13 +49,25 @@ export function Meter({ value, className = "", label }: { value?: number; classN
  * Fill is a bar's filled part, 0..1 of its track (which must clip), moved
  * by transform so updates animate on the compositor.
  */
-export function Fill({ value, className = "", style }: { value: number; className?: string; style?: React.CSSProperties }) {
+export function Fill({
+  value,
+  className = "",
+  style,
+  children,
+}: {
+  value: number;
+  className?: string;
+  style?: React.CSSProperties;
+  children?: ReactNode;
+}) {
   const v = Math.max(0, Math.min(1, value));
   return (
     <div
-      className={`absolute inset-0 rounded-full transition-transform duration-500 ease-out ${className}`}
+      className={`absolute inset-0 rounded-full transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${className}`}
       style={{ transform: `translateX(${(v - 1) * 100}%)`, ...style }}
-    />
+    >
+      {children}
+    </div>
   );
 }
 
@@ -84,7 +112,7 @@ export function Notice({
 export function CopyButton({ value, label, className = "" }: { value: string; label?: boolean; className?: string }) {
   const t = useT();
   const [copied, setCopied] = useState(false);
-  return (
+  const button = (
     <button
       type="button"
       onClick={async () => {
@@ -98,10 +126,10 @@ export function CopyButton({ value, label, className = "" }: { value: string; la
       }}
       className={`btn ${label ? "btn-secondary" : "btn-ghost btn-sm btn-icon"} ${className}`}
       aria-label={copied ? t("common.copied") : t("common.copy")}
-      title={label ? undefined : t("common.copy")}
     >
       {copied ? <Check className="size-3.5 text-brand" /> : <Copy className="size-3.5" />}
       {label && (copied ? t("common.copied") : t("common.copy"))}
     </button>
   );
+  return label ? button : <Tooltip content={copied ? t("common.copied") : t("common.copy")}>{button}</Tooltip>;
 }

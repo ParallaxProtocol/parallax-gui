@@ -130,3 +130,16 @@ export function isAddress(s: string): boolean {
 
 /** Seconds per block the protocol aims for. */
 export const TARGET_BLOCK_SECONDS = 600;
+
+/** formatGwei renders a wei amount in gwei: 1.5 gwei, 0.02 gwei, 120 gwei. */
+export function formatGwei(weiStr: string): string {
+  let wei: bigint;
+  try {
+    wei = BigInt(weiStr || "0");
+  } catch {
+    return "—";
+  }
+  const gwei = Number(wei) / 1e9;
+  const digits = gwei >= 100 ? 0 : gwei >= 1 ? 2 : 4;
+  return `${Number(gwei.toFixed(digits))} gwei`;
+}

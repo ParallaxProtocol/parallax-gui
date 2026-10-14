@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, Loader2 } from "lucide-react";
 import { api, GUIConfig } from "../../lib/api";
-import { SPRING } from "../../lib/motion";
+import { GLIDE, SPRING } from "../../lib/motion";
+import { StepMark } from "../../components/ui/StepMark";
 import Toggle from "../../components/ui/Toggle";
 import { Row, Rows } from "../../components/ui/Panel";
 import { Notice } from "../../components/ui/bits";
@@ -82,20 +83,32 @@ export default function Onboarding({ onFinished }: { onFinished: () => void }) {
               <li
                 key={s}
                 aria-current={here ? "step" : undefined}
-                className={`flex h-7 items-center gap-2.5 rounded-md px-2 ${here ? "bg-selected font-medium" : ""}`}
+                className={`relative flex h-7 items-center gap-2.5 rounded-md px-2 ${here ? "font-medium" : ""}`}
               >
-                <span
-                  className={`grid size-4 place-items-center rounded-full text-[10px] tabular-nums ${
-                    done
-                      ? "bg-brand-fill text-brand-foreground"
-                      : here
-                        ? "border border-brand-mark text-brand"
-                        : "border border-border-strong text-muted-foreground"
-                  }`}
-                >
-                  {done ? <Check className="size-2.5" strokeWidth={3.5} /> : i + 1}
+                {here && (
+                  <motion.span
+                    layoutId="onboarding-selection"
+                    layoutDependency={step}
+                    transition={GLIDE}
+                    className="absolute inset-0 rounded-md bg-selected"
+                  />
+                )}
+                <span className="relative grid size-4 place-items-center">
+                  {done ? (
+                    <StepMark state="done" size={16} />
+                  ) : (
+                    <span
+                      className={`grid size-4 place-items-center rounded-full border text-[10px] tabular-nums transition-colors ${
+                        here ? "border-brand-mark text-brand" : "border-border-strong text-muted-foreground"
+                      }`}
+                    >
+                      {i + 1}
+                    </span>
+                  )}
                 </span>
-                <span className={here || done ? "" : "text-muted-foreground"}>{t(`onboarding.step.${s}`)}</span>
+                <span className={`relative transition-colors ${here || done ? "" : "text-muted-foreground"}`}>
+                  {t(`onboarding.step.${s}`)}
+                </span>
               </li>
             );
           })}
@@ -266,11 +279,21 @@ function Choice({ selected, onClick, title, desc }: { selected: boolean; onClick
       }`}
     >
       <span
-        className={`mt-px grid size-4 shrink-0 place-items-center rounded-full ${
+        className={`mt-px grid size-4 shrink-0 place-items-center rounded-full transition-colors ${
           selected ? "bg-brand-fill" : "border border-border-strong bg-field"
         }`}
       >
-        {selected && <span className="size-1.5 rounded-full bg-brand-foreground" />}
+        <AnimatePresence initial={false}>
+          {selected && (
+            <motion.span
+              className="size-1.5 rounded-full bg-brand-foreground"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={GLIDE}
+            />
+          )}
+        </AnimatePresence>
       </span>
       <span className="flex flex-col gap-0.5">
         <span className="font-medium">{title}</span>

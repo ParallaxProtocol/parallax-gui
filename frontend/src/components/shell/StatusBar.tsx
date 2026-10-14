@@ -5,6 +5,8 @@ import { nodeState, syncProgress, useMiner, useNode } from "../../lib/live";
 import { useT } from "../../i18n";
 import { Indicator, type Grade } from "../ui/Indicator";
 import { Meter } from "../ui/bits";
+import { Counter } from "../ui/Counter";
+import { Tooltip } from "../ui/Tooltip";
 
 const STATE_GRADE: Record<ReturnType<typeof nodeState>, Grade> = {
   stopped: "off",
@@ -35,18 +37,22 @@ export default function StatusBar({ version }: { version: string }) {
         <>
           {state === "syncing" && (
             <span className="flex items-center gap-2">
-              <Meter value={progress} className="w-28" label={t("node.state.syncing")} />
-              {(progress * 100).toFixed(1)}%
+              <Meter value={progress} live className="w-28" label={t("node.state.syncing")} />
+              <Counter value={progress * 100} format={(v) => `${v.toFixed(1)}%`} />
             </span>
           )}
           <Divider />
-          <span title={t("clock.bestBlock")}>
-            {t("status.block")} {formatInt(node.currentBlock)}
-          </span>
+          <Tooltip content={t("clock.bestBlock")}>
+            <span>
+              {t("status.block")} <Counter value={node.currentBlock} format={(v) => formatInt(Math.round(v))} />
+            </span>
+          </Tooltip>
           <Divider />
           <span>{t(node.peers === 1 ? "node.peer" : "node.peers", { n: node.peers })}</span>
           <Divider />
-          <span title={t("overview.uptime")}>{t("status.uptime", { time: formatDuration(node.uptimeSeconds) })}</span>
+          <Tooltip content={t("overview.uptime")}>
+            <span>{t("status.uptime", { time: formatDuration(node.uptimeSeconds) })}</span>
+          </Tooltip>
         </>
       )}
 
@@ -55,7 +61,7 @@ export default function StatusBar({ version }: { version: string }) {
       {miner?.running && (
         <Link to="/mining" className="flex items-center gap-1.5 hover:text-foreground">
           <Pickaxe className="size-3 text-brand" />
-          {formatHashrate(miner.hashrate)}
+          <Counter value={miner.hashrate} format={formatHashrate} />
         </Link>
       )}
       {version && <span className="text-faint">{version}</span>}

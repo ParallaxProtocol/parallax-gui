@@ -1,15 +1,15 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Check, ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import { api, openExternal } from "../../lib/api";
 import { useNode, useRefresh, useWallet } from "../../lib/live";
 import { useNow } from "../../lib/useNow";
 import { useAgo, useT } from "../../i18n";
 import { Indicator } from "../../components/ui/Indicator";
 import { Property, Rows, Section } from "../../components/ui/Panel";
+import { StepMark, type StepState } from "../../components/ui/StepMark";
 import { CopyButton, Notice } from "../../components/ui/bits";
 
-type StepState = "done" | "current" | "todo";
 
 /**
  * Connection walks the user from a stopped node to a wallet signing
@@ -129,16 +129,6 @@ function ManualRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const STEP_ICON: Record<StepState, ReactNode> = {
-  done: (
-    <span className="grid size-5 place-items-center rounded-full bg-brand-fill text-brand-foreground">
-      <Check className="size-3" strokeWidth={3} />
-    </span>
-  ),
-  current: <span className="size-5 rounded-full border-2 border-brand-mark" />,
-  todo: <span className="size-5 rounded-full border border-border-strong" />,
-};
-
 /** Step is one row of the checklist: its state, what it is, and the action that completes it. */
 function Step({
   state,
@@ -153,9 +143,9 @@ function Step({
 }) {
   return (
     <li className="flex min-h-14 items-center gap-3 px-4 py-2.5">
-      <span className="shrink-0">{STEP_ICON[state]}</span>
+      <StepMark state={state} />
       <div className="min-w-0 flex-1">
-        <div className={state === "todo" ? "text-muted-foreground" : ""}>{title}</div>
+        <div className={`transition-colors ${state === "todo" ? "text-muted-foreground" : ""}`}>{title}</div>
         <div className="text-sm text-muted-foreground">{desc}</div>
       </div>
       {children && <div className="shrink-0">{children}</div>}

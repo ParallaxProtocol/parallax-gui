@@ -10,6 +10,7 @@ declare global {
       openExternal: (url: string) => Promise<void>;
       setTheme: (pref: "system" | "light" | "dark") => void;
       platform: string;
+      material?: boolean;
     };
   }
 }
@@ -78,6 +79,77 @@ export type NodeStatus = {
   memUsedBytes: number;
   clientVersion: string;
   rpcEndpoint: string;
+};
+
+/** The Overview's fuller picture of the running node (backend NodeDetails). Amounts are decimal wei strings. */
+export type NodeDetails = {
+  running: boolean;
+  nodeId: string;
+  /** Empty in v2-only mode, where no persistent identity is dialable. */
+  enode: string;
+  clientName: string;
+  daemonVersion: string;
+  externalIp: string;
+  listenPort: number;
+  inboundAllowed: boolean;
+  maxPeers: number;
+  v2Only: boolean;
+  totalDifficulty: string;
+  blockRewardWei: string;
+  nextHalvingBlock: number;
+  blocksToHalving: number;
+  txPending: number;
+  txQueued: number;
+  /** The pool's size: its transactions' encoded bytes. */
+  txBytes: number;
+  gasPriceWei: string;
+  smartFee: boolean;
+  smartFeeWei: string;
+  smartFeeTarget: number;
+  smartFeeBlocks: number;
+  smartFeeFallback: boolean;
+  diskFreeBytes: number;
+  diskStopBelowBytes: number;
+  syncModeConfigured: string;
+  syncModeActive: string;
+  archiveMode: boolean;
+  snapAccounts: number;
+  snapStorage: number;
+  snapBytes: number;
+  snapHealing: number;
+  statsName: string;
+  statsHost: string;
+};
+
+/** One transaction waiting in the node's pool (backend MempoolTx). `to` is empty for a contract creation. */
+export type MempoolTx = {
+  hash: string;
+  from: string;
+  to: string;
+  nonce: number;
+  valueWei: string;
+  gasPriceWei: string;
+  gas: number;
+  sizeBytes: number;
+  dataBytes: number;
+  type: number;
+  /** Not minable yet: a nonce gap, or too little balance, holds it back. */
+  queued: boolean;
+};
+
+/** A page of the pool: its totals, how many match the query, and the first of them. */
+export type MempoolView = {
+  pending: number;
+  queued: number;
+  matched: number;
+  txs: MempoolTx[];
+};
+
+/** One entry of the node's ban list. Times are unix seconds. */
+export type BanEntry = {
+  subnet: string;
+  createdAt: number;
+  bannedUntil: number;
 };
 
 export type WalletStatus = {
@@ -231,6 +303,17 @@ export const api = {
   startNode: () => call<void>("StartNode"),
   stopNode: () => call<void>("StopNode"),
   nodeStatus: () => call<NodeStatus>("NodeStatus"),
+  nodeDetails: () => call<NodeDetails>("NodeDetails"),
+  mempool: (query: string, limit: number) => call<MempoolView>("Mempool", query, limit),
+
+  // Peer management: targets are enode URLs or ip:port; bans take an IP, a CIDR or a host:port
+  addPeer: (target: string) => call<void>("AddPeer", target),
+  disconnectPeer: (target: string) => call<void>("DisconnectPeer", target),
+  setPeerTrusted: (enode: string, trusted: boolean) => call<void>("SetPeerTrusted", enode, trusted),
+  banPeer: (subnet: string, seconds: number) => call<void>("BanPeer", subnet, seconds),
+  unbanPeer: (subnet: string) => call<void>("UnbanPeer", subnet),
+  clearBanned: () => call<void>("ClearBanned"),
+  banned: () => call<BanEntry[]>("Banned"),
   walletStatus: () => call<WalletStatus>("WalletStatus"),
   peers: () => call<PeerView[]>("Peers"),
   recentBlocks: (n: number) => call<BlockView[]>("RecentBlocks", n),
