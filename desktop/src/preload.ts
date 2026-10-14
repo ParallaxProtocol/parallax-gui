@@ -36,4 +36,6 @@ contextBridge.exposeInMainWorld("parallax", {
     ipcRenderer.send("theme:set", pref);
   },
   platform: process.platform,
+  /** Whether the window shows an OS material (vibrancy, Mica) behind transparent surfaces. */
+  material: process.argv.includes("--parallax-material"),
 });

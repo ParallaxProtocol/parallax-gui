@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -122,8 +123,14 @@ function serveFrontend(dir: string) {
  * macOS keeps its traffic lights, inset to sit centred in the toolbar;
  * Windows and Linux draw their controls over the toolbar's right end, in
  * the toolbar's colours (the frontend's --background), which follow the theme.
+ *
+ * Where the OS has a window material, the sidebar and status bar show it
+ * through: vibrancy on macOS, Mica on Windows 11 (22H2, build 22621, and
+ * later). The frontend learns of it from the --parallax-material argument
+ * (preload.ts) and leaves those surfaces transparent.
  */
 const TOOLBAR_HEIGHT = 44;
+const MATERIAL = isMac || (isWindows && Number(os.release().split(".")[2] ?? 0) >= 22621);
 
 function chrome() {
   const dark = nativeTheme.shouldUseDarkColors;
@@ -142,7 +149,8 @@ function createWindow() {
     minHeight: 600,
     show: false,
     title: "Parallax Desktop",
-    backgroundColor: look.background,
+    backgroundColor: MATERIAL ? "#00000000" : look.background,
+    ...(MATERIAL ? (isMac ? { vibrancy: "sidebar" as const } : { backgroundMaterial: "mica" as const }) : {}),
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
     ...(isMac ? { trafficLightPosition: { x: 16, y: 15 } } : { titleBarOverlay: look.overlay }),
     icon: isWindows || isMac ? undefined : path.join(__dirname, "..", "resources", "icon.png"),
@@ -153,6 +161,7 @@ function createWindow() {
       sandbox: true,
       nodeIntegration: false,
       spellcheck: false,
+      additionalArguments: MATERIAL ? ["--parallax-material"] : [],
     },
   });
   mainWindow = win;
@@ -160,7 +169,7 @@ function createWindow() {
   const recolor = () => {
     if (isMac || win.isDestroyed()) return;
     const next = chrome();
-    win.setBackgroundColor(next.background);
+    if (!MATERIAL) win.setBackgroundColor(next.background);
     win.setTitleBarOverlay(next.overlay);
   };
   nativeTheme.on("updated", recolor);
