@@ -328,6 +328,38 @@ export default function Settings() {
 
               {section === "node" && (
                 <>
+                  {import.meta.env.DEV && (
+                    <Group title={t("settings.group.devChain")} desc={t("settings.devChain.notice")}>
+                      <Rows>
+                        <Setting
+                          title={t("settings.devChain")}
+                          flag="--dev"
+                          desc={t("settings.devChain.desc")}
+                          restart={restart("devChain")}
+                        >
+                          <Toggle
+                            checked={cfg.devChain}
+                            onChange={(v) => update({ devChain: v })}
+                            label={t("settings.devChain")}
+                          />
+                        </Setting>
+                        {cfg.devChain && (
+                          <Setting
+                            title={t("settings.devFund")}
+                            desc={t("settings.devFund.desc")}
+                            restart={restart("devFundAddress")}
+                          >
+                            <TextInput
+                              width="w-96"
+                              value={cfg.devFundAddress}
+                              placeholder="0x…"
+                              onChange={(v) => update({ devFundAddress: v.trim() })}
+                            />
+                          </Setting>
+                        )}
+                      </Rows>
+                    </Group>
+                  )}
                   <Group title={t("settings.group.storage")}>
                     <Rows>
                       <Setting

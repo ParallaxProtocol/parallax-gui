@@ -152,6 +152,12 @@ type GUIConfig struct {
 	// ClearLogsOnStartup starts each run with an empty log; otherwise the
 	// latest lines are kept across restarts (backend/logfile.go)
 	ClearLogsOnStartup bool `json:"clearLogsOnStartup"`
+
+	// Development builds only (make dev, devchain.go): run a private
+	// `parallaxd --dev` chain instead of mainnet, its genesis funding
+	// DevFundAddress
+	DevChain       bool   `json:"devChain"`
+	DevFundAddress string `json:"devFundAddress"`
 }
 
 // NodeDetails is the Overview's fuller picture of the running node: who it
@@ -231,6 +237,7 @@ type NodeStatus struct {
 	MemUsedBytes  uint64 `json:"memUsedBytes"`
 	ClientVersion string `json:"clientVersion"`
 	RPCEndpoint   string `json:"rpcEndpoint"` // empty if HTTP-RPC disabled
+	DevChain      bool   `json:"devChain"`    // running the private development chain
 }
 
 // NodeEvent is broadcast as the "node" event.

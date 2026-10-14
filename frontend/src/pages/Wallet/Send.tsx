@@ -110,7 +110,8 @@ function useNotReady(): string | null {
   const t = useT();
   const node = useNode();
   if (!node?.running) return t("wallet.err.nodeStopped");
-  if (node.peers === 0) return t("wallet.err.noPeers");
+  // The development chain has no peers: it seals what it is sent itself
+  if (node.peers === 0 && !node.devChain) return t("wallet.err.noPeers");
   if (node.syncing) return t("wallet.err.syncing");
   return null;
 }

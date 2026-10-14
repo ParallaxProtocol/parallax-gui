@@ -958,7 +958,9 @@ const SYNC_POLL_MS = 1000;
  * that has peers but hasn't started downloading from looking caught up.
  */
 function synced(node: NodeStatus | null): boolean {
-  return !!node && node.running && !node.syncing && node.peers > 0 && node.currentBlock > 0;
+  if (!node?.running || node.syncing) return false;
+  // The development chain is its own head, from genesis on, with no peers
+  return node.devChain || (node.peers > 0 && node.currentBlock > 0);
 }
 
 /**
@@ -990,7 +992,7 @@ function Sync({ onNext }: { onNext: () => void }) {
 
   const done = synced(node);
   const stopped = !!node && !node.running;
-  const searching = !node || node.peers === 0;
+  const searching = !node || (node.peers === 0 && !node.devChain);
   const progress = done ? 1 : syncProgress(node);
   const left = node ? Math.max(0, node.highestBlock - node.currentBlock) : 0;
 

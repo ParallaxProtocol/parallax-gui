@@ -137,6 +137,12 @@ export type GUIConfig = {
   notifications: boolean;
   /** Start each run with an empty log; otherwise the latest lines are kept across restarts. */
   clearLogsOnStartup: boolean;
+
+  // Development builds only (make dev)
+  /** Run a private `parallaxd --dev` chain instead of mainnet. */
+  devChain: boolean;
+  /** The address the development chain's genesis funds. */
+  devFundAddress: string;
 };
 
 export type NodeStatus = {
@@ -154,6 +160,8 @@ export type NodeStatus = {
   memUsedBytes: number;
   clientVersion: string;
   rpcEndpoint: string;
+  /** Running the private development chain (make dev only). */
+  devChain: boolean;
 };
 
 /**

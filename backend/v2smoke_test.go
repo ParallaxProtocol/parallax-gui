@@ -36,9 +36,7 @@ func TestV2EmbeddedNodeStarts(t *testing.T) {
 		t.Fatalf("node.New: %v", err)
 	}
 	defer stack.Close()
-	if err := setAccountManagerBackends(stack); err != nil {
-		t.Fatalf("setAccountManagerBackends: %v", err)
-	}
+	setAccountManagerBackends(stack)
 	backend, err := protocol.New(stack, &prlCfg)
 	if err != nil {
 		t.Fatalf("protocol.New: %v", err)

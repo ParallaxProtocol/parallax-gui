@@ -48,6 +48,7 @@ type NodeController struct {
 	parallax  *protocol.Parallax
 	startedAt time.Time
 	stopCh    chan struct{} // closed by Stop() so background goroutines exit
+	dev       bool          // running the development chain (devchain.go)
 	// The free space below which monitorFreeDiskSpace stops the node; 0 when off
 	diskCritical uint64
 
@@ -153,9 +154,13 @@ func (n *NodeController) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("create node: %w", err)
 	}
-	if err := setAccountManagerBackends(stack); err != nil {
-		stack.Close()
-		return err
+	ks := setAccountManagerBackends(stack)
+	dev := devChain(guiCfg)
+	if dev {
+		if err := prepareDevChain(stack, ks, guiCfg, &prlCfg); err != nil {
+			stack.Close()
+			return err
+		}
 	}
 
 	parallax, err := protocol.New(stack, &prlCfg)
@@ -181,7 +186,7 @@ func (n *NodeController) Start(ctx context.Context) error {
 	// Public stats reporting, the GUI's equivalent of a bare --prlstats
 	// (cmd/utils RegisterPrlStatsService). A failure here only costs the
 	// dashboard entry, so log it instead of refusing to start the node.
-	if guiCfg.ReportStats {
+	if guiCfg.ReportStats && !dev {
 		if err := stats.New(stack, parallax.APIBackend, parallax.Engine(), stats.DefaultHost); err != nil {
 			logging.Warn("Failed to register the Parallax Stats service", "err", err)
 		}
@@ -198,7 +203,16 @@ func (n *NodeController) Start(ctx context.Context) error {
 	n.parallax = parallax
 	n.startedAt = time.Now()
 	n.stopCh = stopCh
+	n.dev = dev
 	n.mu.Unlock()
+
+	// The development chain seals a block for each transaction, as
+	// `parallaxd --dev` does
+	if dev {
+		if err := parallax.StartMining(1); err != nil {
+			logging.Error("Failed to start sealing the development chain", "err", err)
+		}
+	}
 
 	// Process metrics: cmd/parallaxd calls this exactly once in prepare(). It
 	// runs forever, so we wrap it in sync.Once and let restarts share the
@@ -236,6 +250,7 @@ func (n *NodeController) Stop() error {
 	n.stack = nil
 	n.parallax = nil
 	n.stopCh = nil
+	n.dev = false
 	n.mu.Unlock()
 	if stack == nil {
 		return nil
@@ -256,11 +271,12 @@ func (n *NodeController) Status() NodeStatus {
 	stack := n.stack
 	parallax := n.parallax
 	startedAt := n.startedAt
+	dev := n.dev
 	n.mu.RUnlock()
 
 	guiCfg := n.cfg.Get()
 	st := NodeStatus{
-		DataDir:   guiCfg.DataDir,
+		DataDir:   nodeDataDir(guiCfg),
 		ChainID:   chainparams.MainnetChainConfig.ChainID.Uint64(),
 		NetworkID: 2110,
 		// The daemon's version, which is what "client" means to a node
@@ -309,9 +325,14 @@ func (n *NodeController) Status() NodeStatus {
 	}
 
 	caughtUp := st.HighestBlock == 0 || st.CurrentBlock >= st.HighestBlock
-	st.Syncing = st.Peers == 0 || !caughtUp
+	// The development chain has no peers to sync from: it is its own tip
+	st.Syncing = !dev && (st.Peers == 0 || !caughtUp)
+	st.DevChain = dev
+	if dev {
+		st.NetworkID = devNetworkID
+	}
 
-	st.DiskUsedBytes = n.diskUsage(guiCfg.DataDir)
+	st.DiskUsedBytes = n.diskUsage(st.DataDir)
 
 	var ms runtime.MemStats
 	runtime.ReadMemStats(&ms)
@@ -330,6 +351,13 @@ func rpcEndpoint(g GUIConfig) string {
 
 // buildConfigs translates GUIConfig into a node.Config + nodeconfig.Config pair.
 func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
+	dev := devChain(g)
+	if dev {
+		if _, err := devFundAddress(g); err != nil {
+			return node.Config{}, nodeconfig.Config{}, err
+		}
+		g = devGUIConfig(g)
+	}
 	nodeCfg := node.DefaultConfig
 	nodeCfg.Name = "ParallaxGUI"
 	// The node goes by the Parallax client's version, as parallaxd does
@@ -400,6 +428,10 @@ func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 	// on a fresh node start — the Settings UI flags them restart-required.
 	if err := applyPrlFlags(g, &prlCfg); err != nil {
 		return nodeCfg, prlCfg, err
+	}
+
+	if dev {
+		applyDevChain(&nodeCfg, &prlCfg)
 	}
 
 	if prlCfg.SyncMode == downloader.LightSync {
@@ -562,7 +594,7 @@ func parseV2Bootnodes(entries []string) []addrman.NetAddr {
 // manager has at least one backend registered. The app's wallet keeps its
 // keys elsewhere and never attaches them here (wallet.go), so no RPC client
 // can list or use them.
-func setAccountManagerBackends(stack *node.Node) error {
+func setAccountManagerBackends(stack *node.Node) *keystore.KeyStore {
 	conf := stack.Config()
 	keydir := stack.KeyStoreDir()
 	scryptN := keystore.StandardScryptN
@@ -571,8 +603,9 @@ func setAccountManagerBackends(stack *node.Node) error {
 		scryptN = keystore.LightScryptN
 		scryptP = keystore.LightScryptP
 	}
-	stack.AccountManager().AddBackend(keystore.NewKeyStore(keydir, scryptN, scryptP))
-	return nil
+	ks := keystore.NewKeyStore(keydir, scryptN, scryptP)
+	stack.AccountManager().AddBackend(ks)
+	return ks
 }
 
 // Peers returns a snapshot of the current peer set, suitable for both the

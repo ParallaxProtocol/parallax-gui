@@ -60,7 +60,8 @@ const electron = spawn("npx", ["electron", "."], {
   cwd: desktop,
   stdio: "inherit",
   shell: win,
-  env: { ...process.env, PARALLAX_DEV_URL: `http://${HOST}:${PORT}`, PARALLAX_BACKEND_BIN: bin },
+  // PARALLAX_DEV unlocks the development-only settings (backend/devchain.go)
+  env: { ...process.env, PARALLAX_DEV_URL: `http://${HOST}:${PORT}`, PARALLAX_BACKEND_BIN: bin, PARALLAX_DEV: "1" },
 });
 electron.on("exit", (code) => {
   vite.kill();

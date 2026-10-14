@@ -24,6 +24,7 @@ function sameNode(a: NodeStatus | null, b: NodeStatus): boolean {
     a.highestBlock === b.highestBlock &&
     a.startingBlock === b.startingBlock &&
     a.peers === b.peers &&
+    a.devChain === b.devChain &&
     a.diskUsedBytes === b.diskUsedBytes &&
     a.rpcEndpoint === b.rpcEndpoint &&
     Math.floor(a.uptimeSeconds / 60) === Math.floor(b.uptimeSeconds / 60) &&

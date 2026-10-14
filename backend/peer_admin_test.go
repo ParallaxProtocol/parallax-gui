@@ -35,9 +35,7 @@ func TestPeerAdmin(t *testing.T) {
 		t.Fatalf("node.New: %v", err)
 	}
 	defer stack.Close()
-	if err := setAccountManagerBackends(stack); err != nil {
-		t.Fatal(err)
-	}
+	setAccountManagerBackends(stack)
 	prl, err := protocol.New(stack, &prlCfg)
 	if err != nil {
 		t.Fatal(err)

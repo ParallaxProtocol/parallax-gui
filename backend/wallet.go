@@ -556,7 +556,7 @@ func (w *Wallet) nodeReady() error {
 	switch {
 	case !st.Running:
 		return ErrNodeStopped
-	case st.Peers == 0:
+	case st.Peers == 0 && !st.DevChain:
 		return ErrNoPeers
 	case st.Syncing:
 		return ErrNodeSyncing
