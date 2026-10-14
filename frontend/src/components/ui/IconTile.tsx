@@ -35,11 +35,11 @@ export function IconTile({
     <span
       aria-hidden
       className={`grid shrink-0 place-items-center text-white shadow-[inset_0_1px_0_rgb(255_255_255/25%),0_1px_2px_rgb(0_0_0/25%)] ${
-        large ? "size-12 rounded-[14px]" : "size-6 rounded-[7px]"
+        large ? "size-12 rounded-[14px]" : "size-7 rounded-[8px]"
       } ${className}`}
       style={{ background: `linear-gradient(180deg, color-mix(in oklab, ${color}, white 18%), ${color})` }}
     >
-      <Icon className={large ? "size-6" : "size-3.5"} strokeWidth={2} />
+      <Icon className={large ? "size-6" : "size-4"} strokeWidth={2} />
     </span>
   );
 }

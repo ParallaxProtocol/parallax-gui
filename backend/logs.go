@@ -30,6 +30,9 @@ type LogTail struct {
 	// per line kept the webview busy whether or not the logs were open.
 	pending []LogLine
 	flush   *time.Timer
+
+	// Where the lines are kept across restarts, once Persist is called
+	file *logFile
 }
 
 // logFlushInterval is how often buffered lines are pushed to the frontend.
@@ -57,6 +60,7 @@ func (l *LogTail) Install() {
 			Timestamp: r.Time.Unix(),
 			Level:     r.Lvl.AlignedString(),
 			Message:   formatRecord(r),
+			Source:    recordSource(r),
 		})
 		return nil
 	})
@@ -88,6 +92,9 @@ func (l *LogTail) SetVerbosity(level int) {
 // frontend reconnect.
 func (l *LogTail) Close() {
 	l.mu.Lock()
+	if l.file != nil {
+		l.file.w.Flush()
+	}
 	l.emitter = nil
 	if l.flush != nil {
 		l.flush.Stop()
@@ -105,6 +112,18 @@ func (l *LogTail) SetEmitter(fn func([]LogLine)) {
 	l.mu.Unlock()
 }
 
+// Clear forgets every line: the in-memory tail, any not yet sent to the
+// frontend, and the file.
+func (l *LogTail) Clear() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.buf = l.buf[:0]
+	l.pending = nil
+	if l.file != nil {
+		l.file.clear()
+	}
+}
+
 // Tail returns the most recent up to n log lines, oldest first. If n <= 0
 // the entire buffer is returned.
 func (l *LogTail) Tail(n int) []LogLine {
@@ -116,6 +135,19 @@ func (l *LogTail) Tail(n int) []LogLine {
 	out := make([]LogLine, n)
 	copy(out, l.buf[len(l.buf)-n:])
 	return out
+}
+
+// appPackages is the prefix of this app's own Go packages, as a call
+// site's function names them; anything else logged is the node's.
+const appPackages = "github.com/ParallaxProtocol/parallax-gui"
+
+// recordSource tells the app's own lines from the node's, by where the
+// record was logged.
+func recordSource(r *logging.Record) string {
+	if strings.HasPrefix(r.Call.Frame().Function, appPackages) {
+		return "app"
+	}
+	return "node"
 }
 
 // formatRecord renders a log record as "msg key=value key=value …", matching
@@ -178,6 +210,9 @@ func (l *LogTail) append(line LogLine) {
 		l.buf[l.cap-1] = line
 	} else {
 		l.buf = append(l.buf, line)
+	}
+	if l.file != nil {
+		l.file.write(line)
 	}
 	if l.emitter == nil {
 		return

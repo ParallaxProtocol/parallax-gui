@@ -160,7 +160,7 @@ export default function Overview() {
       </motion.div>
 
       <motion.div variants={STAGGER.item}>
-        <NodeInfo node={node} details={details} headHash={blocks[0]?.hash} />
+        <NodeInfo node={node} details={details} head={blocks[0]} peers={peerList} />
       </motion.div>
     </motion.div>
   );

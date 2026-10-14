@@ -250,12 +250,6 @@ func (n *NodeController) Stop() error {
 	return err
 }
 
-// ClientVersion returns the underlying parallax client version string —
-// the same value `parallaxd version` would print, e.g. "2.0.0-unstable".
-func (n *NodeController) ClientVersion() string {
-	return parallaxpkg.VersionWithMeta
-}
-
 // Status returns the dashboard snapshot.
 func (n *NodeController) Status() NodeStatus {
 	n.mu.RLock()
@@ -338,7 +332,10 @@ func rpcEndpoint(g GUIConfig) string {
 func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 	nodeCfg := node.DefaultConfig
 	nodeCfg.Name = "ParallaxGUI"
-	nodeCfg.Version = GUIVersion
+	// The node goes by the Parallax client's version, as parallaxd does
+	// (2.1.3-stable-71d7cead), not the app's: it is the client peers and
+	// the logs should know it by
+	nodeCfg.Version = parallaxpkg.VersionWithCommit(daemonCommit(), "")
 	nodeCfg.DataDir = g.DataDir
 	nodeCfg.IPCPath = "parallax.ipc"
 	nodeCfg.UserIdent = strings.TrimSpace(g.NodeName)

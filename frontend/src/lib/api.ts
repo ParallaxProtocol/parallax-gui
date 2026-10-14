@@ -135,6 +135,8 @@ export type GUIConfig = {
   noUpdateCheck: boolean;
   preventSleep: boolean;
   notifications: boolean;
+  /** Start each run with an empty log; otherwise the latest lines are kept across restarts. */
+  clearLogsOnStartup: boolean;
 };
 
 export type NodeStatus = {
@@ -154,6 +156,26 @@ export type NodeStatus = {
   rpcEndpoint: string;
 };
 
+/**
+ * What the node takes of the computer (backend Usage): byte counts since
+ * the app started (peers, disk), the CPU time it has used (seconds), and
+ * the machine's CPU load and I/O wait as shares (0..1) of all its cores.
+ * counted is false when the daemon isn't collecting metrics; cpuCounted
+ * when the system wouldn't give the CPU time.
+ */
+export type Usage = {
+  counted: boolean;
+  inBytes: number;
+  outBytes: number;
+  diskReadBytes: number;
+  diskWriteBytes: number;
+  cpuCounted: boolean;
+  cpuSeconds: number;
+  cpuSystem: number;
+  cpuWait: number;
+  cores: number;
+};
+
 /** The Overview's fuller picture of the running node (backend NodeDetails). Amounts are decimal wei strings. */
 export type NodeDetails = {
   running: boolean;
@@ -162,6 +184,10 @@ export type NodeDetails = {
   enode: string;
   clientName: string;
   daemonVersion: string;
+  /** The Parallax client's version in parts: number, label ("stable"), commit (empty when unknown). */
+  daemonRelease: string;
+  daemonMeta: string;
+  daemonCommit: string;
   externalIp: string;
   listenPort: number;
   inboundAllowed: boolean;
@@ -229,6 +255,8 @@ export type LogLine = {
   ts: number;
   level: string;
   msg: string;
+  /** "app" for this app's own code (wallet, updater, setup), "node" for the Parallax client's. */
+  source: "app" | "node";
 };
 
 export type PeerView = {
@@ -451,6 +479,7 @@ export const api = {
   stopNode: () => call<void>("StopNode"),
   nodeStatus: () => call<NodeStatus>("NodeStatus"),
   nodeDetails: () => call<NodeDetails>("NodeDetails"),
+  nodeUsage: () => call<Usage>("NodeUsage"),
   mempool: (query: string, limit: number) => call<MempoolView>("Mempool", query, limit),
 
   // Peer management: targets are enode URLs or ip:port; bans take an IP, a CIDR or a host:port
@@ -498,10 +527,10 @@ export const api = {
   walletSend: (req: SendRequest) => call<SentTx>("WalletSend", req),
 
   getLogTail: (n: number) => call<LogLine[]>("GetLogTail", n),
+  clearLogs: () => call<void>("ClearLogs"),
   setLogVerbosity: (n: number) => call<void>("SetLogVerbosity", n),
 
   version: () => call<string>("Version"),
-  clientVersion: () => call<string>("ClientVersion"),
 
   // Auto-update
   checkForUpdate: () => call<UpdateInfo | null>("CheckForUpdate"),

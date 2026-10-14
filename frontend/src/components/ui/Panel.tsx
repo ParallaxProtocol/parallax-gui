@@ -166,3 +166,11 @@ export function Stat({
     </div>
   );
 }
+
+/**
+ * Tile is a figure's own inset within a panel, as a widget is: a softly
+ * filled rounded square, for a chart or a reading that stands alone.
+ */
+export function Tile({ className = "", children }: { className?: string; children: ReactNode }) {
+  return <div className={`rounded-2xl bg-muted/50 p-4 ${className}`}>{children}</div>;
+}

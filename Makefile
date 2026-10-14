@@ -3,6 +3,9 @@
 SHELL := /bin/bash
 
 LDFLAGS ?= -s -w
+# The commit of the Parallax client the app embeds, from its module's origin,
+# for the version the app shows (empty if the module cache can't say)
+DAEMON_COMMIT := $(shell go mod download -json $$(go list -m github.com/ParallaxProtocol/parallax/v2 | tr ' ' @) 2>/dev/null | sed -n 's/.*"Hash": "\([0-9a-f]*\)".*/\1/p' | head -n1)
 # A plain x.y.z: electron-builder and the in-app updater both compare it
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0)
 ifeq ($(strip $(VERSION)),)
@@ -29,7 +32,7 @@ BACKEND_EXE := parallax-backend$(if $(filter windows,$(GOOS)),.exe,)
 backend:
 	@mkdir -p $(BACKEND_DIR)
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -trimpath \
-	  -ldflags "$(LDFLAGS) -X github.com/ParallaxProtocol/parallax-gui/backend.GUIVersion=$(VERSION)" \
+	  -ldflags "$(LDFLAGS) -X github.com/ParallaxProtocol/parallax-gui/backend.GUIVersion=$(VERSION) -X github.com/ParallaxProtocol/parallax-gui/backend.DaemonCommit=$(DAEMON_COMMIT)" \
 	  -o $(BACKEND_DIR)/$(BACKEND_EXE) .
 
 frontend:

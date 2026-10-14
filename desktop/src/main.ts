@@ -134,19 +134,20 @@ function keepAwake(on: boolean) {
 /**
  * The backend's own command-line flags, from the saved config. Metrics
  * collection is decided once, from argv, as the daemon starts
- * (support/metrics), so this is how the Metrics setting reaches it.
+ * (support/metrics). The cheap counters are always on, as the app shows
+ * some of them (the network traffic); the Metrics setting adds the costly
+ * ones, and the endpoint serving them (app.go).
  * The path is Go's os.UserConfigDir()/Parallax/gui.json (backend/config.go).
  */
 function backendArgs(): string[] {
   try {
     const file = path.join(app.getPath("appData"), "Parallax", "gui.json");
     const cfg = JSON.parse(fs.readFileSync(file, "utf8")) as { metrics?: boolean; metricsExpensive?: boolean };
-    const args: string[] = [];
-    if (cfg.metrics) args.push("--metrics");
+    const args = ["--metrics"];
     if (cfg.metrics && cfg.metricsExpensive) args.push("--metrics.expensive");
     return args;
   } catch {
-    return []; // no config yet: a fresh install
+    return ["--metrics"]; // no config yet: a fresh install
   }
 }
 
@@ -224,7 +225,7 @@ function serveFrontend(dir: string) {
  * the window's colours (the frontend's --background: black, or a soft
  * white in the light theme), which follow the theme.
  */
-const TOOLBAR_HEIGHT = 44;
+const TOOLBAR_HEIGHT = 52;
 
 function chrome() {
   const dark = nativeTheme.shouldUseDarkColors;
@@ -255,7 +256,7 @@ function createWindow() {
     title: "Parallax Desktop",
     backgroundColor: look.background,
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
-    ...(isMac ? { trafficLightPosition: { x: 16, y: 15 } } : { titleBarOverlay: look.overlay }),
+    ...(isMac ? { trafficLightPosition: { x: 16, y: 19 } } : { titleBarOverlay: look.overlay }),
     icon: isWindows || isMac ? undefined : path.join(__dirname, "..", "resources", "icon.png"),
     autoHideMenuBar: true,
     webPreferences: {

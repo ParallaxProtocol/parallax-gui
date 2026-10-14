@@ -34,6 +34,9 @@ func (n *NodeController) Details() NodeDetails {
 	guiCfg := n.cfg.Get()
 	d := NodeDetails{
 		DaemonVersion:      parallaxpkg.VersionWithMeta,
+		DaemonRelease:      parallaxpkg.Version,
+		DaemonMeta:         parallaxpkg.VersionMeta,
+		DaemonCommit:       daemonCommit(),
 		SyncModeConfigured: guiCfg.SyncMode,
 		SmartFee:           guiCfg.EnableSmartFee,
 		SmartFeeTarget:     smartFeeTarget,

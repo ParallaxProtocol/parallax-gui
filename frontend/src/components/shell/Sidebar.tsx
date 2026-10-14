@@ -25,18 +25,18 @@ export default function Sidebar() {
   const locked = !!info && !info.hasPassword;
 
   return (
-    <aside className="flex w-52 shrink-0 flex-col bg-sidebar">
+    <aside className="flex w-60 shrink-0 flex-col bg-sidebar">
       {/* The title bar's part over the sidebar: the line under it runs on
           under the page's part, and the sidebar's own line starts below it */}
-      <div className="drag flex h-11 shrink-0 items-center gap-2 border-b border-border px-4">
+      <div className="drag flex h-13 shrink-0 items-center gap-2.5 border-b border-border px-4">
         <span className="traffic-light-gap" />
-        <img src={logo} alt="" className="size-4.5" />
-        <span className="font-semibold">Parallax</span>
+        <img src={logo} alt="" className="size-5" />
+        <span className="text-[15px] font-semibold">Parallax</span>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col border-r border-border" style={{ paddingBottom: NODE_BAR_ROOM }}>
-        <nav className="flex flex-col gap-px px-2 pt-1" aria-label={t("nav.label")}>
-          <h2 className="px-2 pt-1 pb-1 text-xs font-semibold text-muted-foreground">{t("nav.wallet")}</h2>
+        <nav className="flex flex-col gap-0.5 px-3 pt-3" aria-label={t("nav.label")}>
+          <h2 className="px-2.5 pb-1.5 text-sm font-semibold text-muted-foreground">{t("nav.wallet")}</h2>
           {locked ? (
             // Until the wallet has its password, only the welcome
             <NavItem to="/" icon={Sparkles} label={t("nav.welcome")} />
@@ -52,7 +52,7 @@ export default function Sidebar() {
 
         <div className="flex-1" />
 
-        <div className="flex flex-col px-2 pb-2">
+        <div className="flex flex-col px-3 pb-3">
           <SettingsButton />
         </div>
       </div>
@@ -95,22 +95,22 @@ function AccountSwitcher() {
   const accounts = info.accounts;
 
   return (
-    <div ref={box} className="relative mb-1">
+    <div ref={box} className="relative mb-2">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="glass flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:border-border-strong"
+        className="glass flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:border-border-strong"
       >
-        <AddressAvatar address={account.address} size={26} />
+        <AddressAvatar address={account.address} size={34} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{accountLabel(account, accounts, t)}</span>
-          <span className="block truncate font-mono text-xs text-muted-foreground">
+          <span className="block truncate text-[15px] font-semibold">{accountLabel(account, accounts, t)}</span>
+          <span className="block truncate font-mono text-sm text-muted-foreground">
             {shortHex(account.address, 8, 6)}
           </span>
         </span>
-        <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
       </button>
       <AnimatePresence>
         {open && (
@@ -138,7 +138,7 @@ function AccountSwitcher() {
                     }}
                     className="menu-item py-1"
                   >
-                    <AddressAvatar address={a.address} size={22} />
+                    <AddressAvatar address={a.address} size={28} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate">{accountLabel(a, accounts, t)}</span>
                       <span className="block truncate font-mono text-xs text-muted-foreground">
@@ -184,9 +184,9 @@ function NavItem({
     return (
       <span
         aria-disabled="true"
-        className="flex h-9 cursor-default items-center gap-2.5 rounded-lg px-2.5 text-foreground/35"
+        className="flex h-10 cursor-default items-center gap-3 rounded-lg px-2.5 text-[15px] text-foreground/35"
       >
-        <Icon className="size-4 text-muted-foreground/50" strokeWidth={1.75} />
+        <Icon className="size-[18px] text-muted-foreground/50" strokeWidth={1.75} />
         <span className="flex-1 truncate">{label}</span>
       </span>
     );
@@ -196,7 +196,7 @@ function NavItem({
       to={to}
       end={to === "/"}
       className={({ isActive }) =>
-        `group relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 transition-colors ${
+        `group relative flex h-10 items-center gap-3 rounded-lg px-2.5 text-[15px] transition-colors ${
           isActive ? "text-foreground" : "text-foreground/80 hover:bg-hover"
         }`
       }
@@ -213,7 +213,7 @@ function NavItem({
             />
           )}
           <Icon
-            className={`relative size-4 transition-[color,transform] duration-200 group-active:scale-90 ${
+            className={`relative size-[18px] transition-[color,transform] duration-200 group-active:scale-90 ${
               isActive ? "text-brand" : "text-muted-foreground"
             }`}
             strokeWidth={1.75}

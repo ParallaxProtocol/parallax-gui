@@ -11,7 +11,7 @@ import UpdatePanel from "../UpdatePanel";
 import { IconBadge } from "../ui/IconBadge";
 
 /** The top bar's height, the window's title bar. */
-export const TOP_BAR_HEIGHT = 44;
+export const TOP_BAR_HEIGHT = 52;
 
 /**
  * TopBar is the window's title bar over the page (the sidebar has its own

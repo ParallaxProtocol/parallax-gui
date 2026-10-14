@@ -21,6 +21,8 @@ import { CONFIG_UPDATED_EVENT } from "../../App";
 import { useLang, useT, LANG_NAMES, Lang } from "../../i18n";
 import { useSettingsSheet, type SettingsSection } from "../../components/shell/SettingsSheet";
 import { Select } from "../../components/ui/Select";
+import { Tooltip } from "../../components/ui/Tooltip";
+import logo from "../../assets/logo.svg";
 import { IconTile, TILE } from "../../components/ui/IconTile";
 import { AccountsSettings } from "../Wallet/Accounts";
 import { Indicator } from "../../components/ui/Indicator";
@@ -169,11 +171,11 @@ export default function Settings() {
     <div className="flex min-h-0 flex-1">
       <nav
         aria-label={t("nav.settings")}
-        className="flex w-52 shrink-0 flex-col gap-px overflow-y-auto border-r border-border p-2"
+        className="flex w-60 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-border p-3"
       >
         {NAV_GROUPS.map((group, gi) => (
           <div key={group.title} className="flex flex-col gap-px">
-            <h3 className={`px-2.5 pb-1 text-xs font-semibold text-muted-foreground ${gi === 0 ? "pt-1" : "pt-4"}`}>
+            <h3 className={`px-2.5 pb-1.5 text-sm font-semibold text-muted-foreground ${gi === 0 ? "" : "pt-5"}`}>
               {t(group.title)}
             </h3>
             {group.sections.map((id) => (
@@ -182,7 +184,7 @@ export default function Settings() {
                 type="button"
                 onClick={() => setSection(id)}
                 aria-current={section === id ? "page" : undefined}
-                className={`relative flex h-9 shrink-0 items-center rounded-lg px-2.5 text-left transition-colors ${
+                className={`relative flex h-10 shrink-0 items-center rounded-lg px-2 text-left text-[15px] transition-colors ${
                   section === id ? "font-medium" : "text-foreground/80 hover:bg-hover"
                 }`}
               >
@@ -194,7 +196,7 @@ export default function Settings() {
                     className="absolute inset-0 rounded-lg bg-selected"
                   />
                 )}
-                <span className="relative flex items-center gap-2.5">
+                <span className="relative flex items-center gap-3">
                   <SectionTile id={id} />
                   {t(`settings.section.${id}`)}
                 </span>
@@ -209,9 +211,9 @@ export default function Settings() {
           <motion.div
             key={section}
             {...PAGE}
-            className={`min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] ${section === "diagnostics" ? "flex flex-col" : ""}`}
+            className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]"
           >
-            <div className={`flex flex-col gap-7 px-6 py-6 ${section === "diagnostics" ? "flex-1" : "max-w-3xl"}`}>
+            <div className="flex flex-col gap-7 px-6 py-6">
               {/* The section's own header, as in System Settings */}
               <div className="flex items-center gap-4">
                 <SectionTile id={section} large />
@@ -1235,6 +1237,13 @@ export default function Settings() {
                           options={[1, 2, 3, 4, 5].map((l) => ({ value: l, label: t(`settings.logLevel.${l}`) }))}
                         />
                       </Setting>
+                      <Setting title={t("settings.clearLogs")} desc={t("settings.clearLogs.desc")}>
+                        <Toggle
+                          checked={cfg.clearLogsOnStartup}
+                          onChange={(v) => instant({ clearLogsOnStartup: v })}
+                          label={t("settings.clearLogs")}
+                        />
+                      </Setting>
                     </Rows>
                   </Group>
                   <Group title={t("settings.group.metrics")}>
@@ -1294,11 +1303,7 @@ export default function Settings() {
                       </Advanced>
                     )}
                   </Group>
-                  <Group
-                    title={t("settings.group.logs")}
-                    desc={t("settings.diagnostics.desc")}
-                    className="min-h-80 flex-1"
-                  >
+                  <Group title={t("settings.group.logs")} desc={t("settings.diagnostics.desc")}>
                     <LogsPanel />
                   </Group>
                 </>
@@ -1378,7 +1383,7 @@ function NetworkPicker({ value, onChange }: { value: string[]; onChange: (v: str
 function About() {
   const t = useT();
   const [appVersion, setAppVersion] = useState("");
-  const [clientVersion, setClientVersion] = useState("");
+  const [client, setClient] = useState<{ release: string; meta: string; commit: string } | null>(null);
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [info, setInfo] = useState<UpdateInfo | null>(null);
@@ -1389,9 +1394,10 @@ function About() {
       .version()
       .then(setAppVersion)
       .catch(() => {});
+    // The client's version parts are there whether or not the node runs
     api
-      .clientVersion()
-      .then(setClientVersion)
+      .nodeDetails()
+      .then((d) => setClient({ release: d.daemonRelease, meta: d.daemonMeta, commit: d.daemonCommit }))
       .catch(() => {});
   }, []);
 
@@ -1413,41 +1419,75 @@ function About() {
     setChecking(false);
   };
 
+  // The backend answers "Parallax Desktop 0.2.3": the name, then the version
+  const m = appVersion.match(/^(.*?)\s+v?(\d[\w.+-]*)$/);
+  const appName = m ? m[1] : appVersion || "Parallax Desktop";
+  const appNumber = m ? m[2] : "";
+
   return (
-    <Rows>
-      <Row title={t("settings.about.desktop")}>
-        <span className="selectable font-mono text-sm">{appVersion || "—"}</span>
-      </Row>
-      <Row title={t("settings.about.client")}>
-        <span className="selectable font-mono text-sm">prlx {clientVersion || "—"}</span>
-      </Row>
-      <Row title={t("settings.about.updates")} desc={result ?? undefined}>
-        {info ? (
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={updating}
-            onClick={async () => {
-              setUpdating(true);
-              try {
-                await api.applyUpdate();
-              } catch (e: any) {
-                setResult(e?.message || t("settings.about.updateFailed"));
-                setUpdating(false);
-              }
-            }}
-          >
-            {updating && <Loader2 className="size-3.5 animate-spin" />}
-            {updating ? t("settings.about.updating") : t("settings.about.updateNow")}
-          </button>
-        ) : (
-          <button type="button" className="btn btn-secondary" disabled={checking} onClick={check}>
-            <RefreshCw className={`size-3.5 ${checking ? "animate-spin" : ""}`} />
-            {checking ? t("settings.about.checking") : t("settings.about.check")}
-          </button>
-        )}
-      </Row>
-    </Rows>
+    <div className="flex flex-col gap-7">
+      {/* The app, as an About window shows it */}
+      <div className="flex flex-col items-center gap-3 pt-2 text-center">
+        <img src={logo} alt="" className="size-20" />
+        <div className="flex flex-col gap-1">
+          <h3 className="text-2xl font-semibold tracking-tight">{appName}</h3>
+          {appNumber && (
+            <span className="selectable text-muted-foreground">
+              {t("settings.about.version", { version: appNumber })}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <Rows>
+        <Row
+          title={t("settings.about.backend")}
+          desc={
+            client && (client.meta || client.commit) ? (
+              <span className="flex items-center gap-1.5">
+                {client.meta}
+                {client.commit && (
+                  <>
+                    {client.meta && <span>·</span>}
+                    <Tooltip content={client.commit} mono>
+                      <span className="selectable font-mono">{client.commit.slice(0, 8)}</span>
+                    </Tooltip>
+                  </>
+                )}
+              </span>
+            ) : undefined
+          }
+        >
+          <span className="selectable font-medium tabular-nums">{client ? `v${client.release}` : "—"}</span>
+        </Row>
+        <Row title={t("settings.about.updates")} desc={result ?? undefined}>
+          {info ? (
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              disabled={updating}
+              onClick={async () => {
+                setUpdating(true);
+                try {
+                  await api.applyUpdate();
+                } catch (e: any) {
+                  setResult(e?.message || t("settings.about.updateFailed"));
+                  setUpdating(false);
+                }
+              }}
+            >
+              {updating && <Loader2 className="size-3 animate-spin" />}
+              {updating ? t("settings.about.updating") : t("settings.about.updateNow")}
+            </button>
+          ) : (
+            <button type="button" className="btn btn-tinted btn-sm" disabled={checking} onClick={check}>
+              <RefreshCw className={`size-3 ${checking ? "animate-spin" : ""}`} />
+              {checking ? t("settings.about.checking") : t("settings.about.check")}
+            </button>
+          )}
+        </Row>
+      </Rows>
+    </div>
   );
 }
 
@@ -1542,8 +1582,8 @@ function SaveBar({
 
 /** The sections, grouped under headings in the list, in SETTINGS_SECTIONS' order. */
 const NAV_GROUPS: { title: string; sections: SettingsSection[] }[] = [
-  { title: "nav.wallet", sections: ["accounts"] },
   { title: "settings.navGroup.app", sections: ["general", "appearance"] },
+  { title: "nav.wallet", sections: ["accounts"] },
   { title: "nav.node", sections: ["node", "network", "rpc"] },
   { title: "settings.navGroup.support", sections: ["diagnostics", "about"] },
 ];

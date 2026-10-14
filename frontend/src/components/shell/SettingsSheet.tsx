@@ -11,7 +11,7 @@ const Settings = lazy(() => import("../../pages/Settings"));
 /** How Settings grows out of its button, and shrinks back into it. */
 export const SETTINGS_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35 } as const;
 
-export const SETTINGS_SECTIONS = ["accounts", "general", "appearance", "node", "network", "rpc", "diagnostics", "about"] as const;
+export const SETTINGS_SECTIONS = ["general", "appearance", "accounts", "node", "network", "rpc", "diagnostics", "about"] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 // Whether Settings is open, over the page it was opened from, and the
@@ -27,14 +27,14 @@ type Sheet = {
 const SheetContext = createContext<Sheet>({
   open: false,
   setOpen: () => {},
-  section: "accounts",
+  section: "general",
   setSection: () => {},
   openAt: () => {},
 });
 
 export function SettingsSheetProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [section, setSection] = useState<SettingsSection>("accounts");
+  const [section, setSection] = useState<SettingsSection>("general");
   const value = useMemo(
     () => ({
       open,
@@ -61,14 +61,14 @@ export const useSettingsSheet = () => useContext(SheetContext);
 export function SettingsButton() {
   const t = useT();
   const { open, setOpen } = useSettingsSheet();
-  if (open) return <div className="h-9" />;
+  if (open) return <div className="h-10" />;
   return (
     <motion.button
       type="button"
       layoutId="settings-surface"
       transition={SETTINGS_SPRING}
       onClick={() => setOpen(true)}
-      className="group flex h-9 w-full items-center px-2.5 text-left text-foreground/80 hover:bg-hover"
+      className="group flex h-10 w-full items-center px-2.5 text-left text-[15px] text-foreground/80 hover:bg-hover"
       style={{ borderRadius: 10 }}
     >
       <SettingsTitle label={t("nav.settings")} />
@@ -78,8 +78,8 @@ export function SettingsButton() {
 
 function SettingsTitle({ label, large }: { label: string; large?: boolean }) {
   return (
-    <motion.span layoutId="settings-title" transition={SETTINGS_SPRING} className="flex items-center gap-2.5">
-      <Settings2 className="size-4 text-muted-foreground" strokeWidth={1.75} />
+    <motion.span layoutId="settings-title" transition={SETTINGS_SPRING} className="flex items-center gap-3">
+      <Settings2 className="size-[18px] text-muted-foreground" strokeWidth={1.75} />
       <span className={large ? "text-base font-semibold text-foreground" : ""}>{label}</span>
     </motion.span>
   );

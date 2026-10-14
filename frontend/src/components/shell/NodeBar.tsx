@@ -15,7 +15,7 @@ import { TOP_BAR_HEIGHT } from "./TopBar";
 const NodePage = lazy(() => import("../../pages/Overview"));
 
 /** The bar's height, collapsed. */
-export const NODE_BAR_HEIGHT = 56;
+export const NODE_BAR_HEIGHT = 64;
 /** How far the collapsed bar floats from the window's edges. */
 export const NODE_BAR_GAP = 12;
 /** The room the shell keeps at the window's foot for the floating bar. */
@@ -113,14 +113,14 @@ export default function NodeBar({ version }: { version: string }) {
             state, and a line of figures under it */}
         <span className="flex min-w-0 items-center gap-3">
           <span className="relative shrink-0">
-            <IconBadge icon={Server} size="sm" />
+            <IconBadge icon={Server} />
             <span className="absolute -right-0.5 -bottom-0.5 grid place-items-center rounded-full bg-popover p-[3px]">
               <Indicator grade={STATE_GRADE[state]} ping={running} cause={state} />
             </span>
           </span>
           <span className="flex min-w-0 flex-col">
-            <span className="truncate font-semibold text-foreground">{open ? t("nav.node") : t(`node.state.${state}`)}</span>
-            <span className="truncate text-xs">
+            <span className="truncate text-[15px] font-semibold text-foreground">{open ? t("nav.node") : t(`node.state.${state}`)}</span>
+            <span className="truncate text-sm">
               {running ? (
                 <>
                   <Tooltip content={t("clock.bestBlock")}>
@@ -145,7 +145,7 @@ export default function NodeBar({ version }: { version: string }) {
 
         {running && state === "syncing" && (
           <span className="flex items-center gap-2.5">
-            <Meter value={progress} live thick className="w-48" label={t("node.state.syncing")} />
+            <Meter value={progress} live thick className="w-56" label={t("node.state.syncing")} />
             <Counter value={progress * 100} format={(v) => `${v.toFixed(1)}%`} className="font-medium text-foreground" />
           </span>
         )}
@@ -153,7 +153,7 @@ export default function NodeBar({ version }: { version: string }) {
         {err && <span className="selectable min-w-0 truncate text-critical-ink">{err}</span>}
 
         <span className="flex-1" />
-        {version && !open && <span className="text-xs text-faint">{version}</span>}
+        {version && !open && <span className="text-sm text-faint">{version}</span>}
 
         {running ? (
           <Tooltip content={switchLabel}>

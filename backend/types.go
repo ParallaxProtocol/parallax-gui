@@ -3,8 +3,10 @@
 
 package backend
 
-// GUIVersion is the user-facing version of the desktop app.
-var GUIVersion = "0.1.0"
+// GUIVersion is the user-facing version of the desktop app: the release
+// being worked towards. Release builds stamp in their git tag instead
+// (Makefile); development builds (make dev) show this.
+var GUIVersion = "1.0.0"
 
 // GUIConfig is the persisted configuration that the wizard / settings screens
 // edit. It is intentionally a flat struct so that it serialises to JSON
@@ -147,6 +149,9 @@ type GUIConfig struct {
 	NoUpdateCheck bool `json:"noUpdateCheck"` // don't look for new releases in the background
 	PreventSleep  bool `json:"preventSleep"`  // keep the computer awake while syncing
 	Notifications bool `json:"notifications"` // desktop notifications: sync done, node stopped
+	// ClearLogsOnStartup starts each run with an empty log; otherwise the
+	// latest lines are kept across restarts (backend/logfile.go)
+	ClearLogsOnStartup bool `json:"clearLogsOnStartup"`
 }
 
 // NodeDetails is the Overview's fuller picture of the running node: who it
@@ -162,6 +167,11 @@ type NodeDetails struct {
 	Enode         string `json:"enode"` // empty in v2-only mode, where no persistent identity is dialable
 	ClientName    string `json:"clientName"`
 	DaemonVersion string `json:"daemonVersion"`
+	// The Parallax client's version in parts: its number (2.1.3), its
+	// label ("stable"), and its commit when known
+	DaemonRelease string `json:"daemonRelease"`
+	DaemonMeta    string `json:"daemonMeta"`
+	DaemonCommit  string `json:"daemonCommit"`
 
 	// Network
 	ExternalIP     string `json:"externalIp"`
@@ -234,6 +244,9 @@ type LogLine struct {
 	Timestamp int64  `json:"ts"`
 	Level     string `json:"level"`
 	Message   string `json:"msg"`
+	// Source is "app" for what this app's own code logged (the wallet, the
+	// updater, the setup), "node" for the Parallax client's
+	Source string `json:"source"`
 }
 
 // PeerView is one row of the dashboard's peer list.

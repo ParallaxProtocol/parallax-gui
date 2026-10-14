@@ -22,7 +22,22 @@ const run = (cmd, args, opts) => {
 
 const os = process.platform === "darwin" ? "mac" : win ? "win" : "linux";
 const bin = path.join(root, "build", "backend", `${os}-${process.arch}`, win ? "parallax-backend.exe" : "parallax-backend");
-run("go", ["build", "-o", bin, "."], { cwd: root });
+// The Parallax client's commit, from its module's origin, as the release
+// build stamps it (Makefile): the node page shows it with the version
+const daemonCommit = (() => {
+  const daemon = "github.com/ParallaxProtocol/parallax/v2";
+  const out = (args) => spawnSync("go", args, { cwd: root, encoding: "utf8", shell: win }).stdout ?? "";
+  const mod = out(["list", "-m", daemon]).trim().replace(" ", "@");
+  if (!mod) return "";
+  try {
+    return JSON.parse(out(["mod", "download", "-json", mod])).Origin?.Hash ?? "";
+  } catch {
+    return "";
+  }
+})();
+run("go", ["build", "-ldflags", `-X github.com/ParallaxProtocol/parallax-gui/backend.DaemonCommit=${daemonCommit}`, "-o", bin, "."], {
+  cwd: root,
+});
 run("node", ["build.mjs"], { cwd: desktop });
 
 const vite = spawn("npx", ["vite", "--host", HOST, "--port", String(PORT), "--strictPort"], {

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -62,9 +63,17 @@ func (a *App) startup(ctx context.Context) {
 	if conf.LogLevel > 0 {
 		a.logs.SetVerbosity(conf.LogLevel)
 	}
-	// --metrics.addr. Whether metrics are collected at all was settled at
-	// process start: the shell passes --metrics when the setting is on.
-	if metrics.Enabled && conf.MetricsAddr != "" {
+	// The logs are kept in the app's folder across restarts, unless the
+	// user asked for each run to start with a clean log
+	if cfg != nil {
+		if err := a.logs.Persist(filepath.Join(cfg.Dir(), "logs"), conf.ClearLogsOnStartup); err != nil {
+			logging.Warn("Failed to keep the logs on disk", "err", err)
+		}
+	}
+	// --metrics.addr. The shell always starts the daemon collecting the
+	// cheap metrics (the app shows its network traffic from them); serving
+	// them is what the Metrics setting turns on.
+	if metrics.Enabled && conf.Metrics && conf.MetricsAddr != "" {
 		port := conf.MetricsPort
 		if port == 0 {
 			port = metrics.DefaultConfig.Port
@@ -169,6 +178,7 @@ func (a *App) StartNode() error                 { return a.node.Start(a.ctx) }
 func (a *App) StopNode() error                  { return a.node.Stop() }
 func (a *App) NodeStatus() backend.NodeStatus   { return a.node.Status() }
 func (a *App) NodeDetails() backend.NodeDetails { return a.node.Details() }
+func (a *App) NodeUsage() backend.Usage         { return backend.NodeUsage() }
 func (a *App) Mempool(query string, limit int) backend.MempoolView {
 	return a.node.Mempool(query, limit)
 }
@@ -420,17 +430,15 @@ func (a *App) GetLogTail(n int) []backend.LogLine { return a.logs.Tail(n) }
 // 5 = trace).
 func (a *App) SetLogVerbosity(level int) { a.logs.SetVerbosity(level) }
 
+// ClearLogs empties the logs: the panel's tail and the file they're kept in.
+func (a *App) ClearLogs() { a.logs.Clear() }
+
 // ---------------------------------------------------------------------------
 // Misc
 // ---------------------------------------------------------------------------
 
 func (a *App) Version() string {
 	return fmt.Sprintf("Parallax Desktop %s", backend.GUIVersion)
-}
-
-// ClientVersion returns the embedded prlx client version string.
-func (a *App) ClientVersion() string {
-	return a.node.ClientVersion()
 }
 
 // ---------------------------------------------------------------------------

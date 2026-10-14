@@ -160,7 +160,7 @@ export default function Hello({
     <div className="hello fixed inset-0 overflow-hidden bg-background">
       <Glow />
       {/* The window's title bar: draggable, with room for its controls */}
-      <div className="drag absolute inset-x-0 top-0 z-10 flex h-11 items-center">
+      <div className="drag absolute inset-x-0 top-0 z-10 flex h-13 items-center">
         <span className="traffic-light-gap" />
         <span className="flex-1" />
         <span className="window-controls-gap" />
