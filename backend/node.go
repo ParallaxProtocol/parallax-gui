@@ -47,6 +47,8 @@ type NodeController struct {
 	startedAt     time.Time
 	stopCh        chan struct{} // closed by Stop() so background goroutines exit
 	walletMonitor *WalletMonitor
+	// The free space below which monitorFreeDiskSpace stops the node; 0 when off
+	diskCritical uint64
 
 	emitter func(NodeEvent)
 
@@ -225,6 +227,9 @@ func (n *NodeController) Start(ctx context.Context) error {
 	// on the data directory crosses below the critical threshold, matching
 	// the safeguard cmd/utils/cmd.go installs in StartNode.
 	criticalMB := uint64(2 * prlCfg.TrieDirtyCache) // 2× dirty cache, in MiB
+	n.mu.Lock()
+	n.diskCritical = criticalMB * 1024 * 1024
+	n.mu.Unlock()
 	if criticalMB > 0 {
 		go n.monitorFreeDiskSpace(stack.InstanceDir(), criticalMB*1024*1024, stopCh)
 	}
@@ -295,10 +300,12 @@ func (n *NodeController) Status() NodeStatus {
 
 	guiCfg := n.cfg.Get()
 	st := NodeStatus{
-		DataDir:       guiCfg.DataDir,
-		ChainID:       chainparams.MainnetChainConfig.ChainID.Uint64(),
-		NetworkID:     2110,
-		ClientVersion: "Parallax/" + GUIVersion,
+		DataDir:   guiCfg.DataDir,
+		ChainID:   chainparams.MainnetChainConfig.ChainID.Uint64(),
+		NetworkID: 2110,
+		// The daemon's version, which is what "client" means to a node
+		// operator; the GUI's own version shows in the status bar
+		ClientVersion: "Parallax/v" + parallaxpkg.VersionWithMeta,
 	}
 	if guiCfg.HTTPRPCEnabled {
 		st.RPCEndpoint = fmt.Sprintf("http://127.0.0.1:%d", guiCfg.HTTPRPCPort)
@@ -307,6 +314,10 @@ func (n *NodeController) Status() NodeStatus {
 		return st
 	}
 	st.Running = true
+	// The running chain's own ID, rather than the mainnet constant
+	if cfg := parallax.BlockChain().Config(); cfg != nil && cfg.ChainID != nil {
+		st.ChainID = cfg.ChainID.Uint64()
+	}
 	st.UptimeSeconds = int64(time.Since(startedAt).Seconds())
 	st.Peers = stack.Server().PeerCount()
 
@@ -404,6 +415,9 @@ func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 	nodeCfg.P2P.BootstrapNodes = parseEnodes(netparams.MainnetBootnodes)
 	nodeCfg.P2P.BootstrapNodesV2 = parseV2Bootnodes(netparams.MainnetBootnodesV2)
 	nodeCfg.P2P.DNSSeeds = netparams.MainnetDNSSeeds
+	// The peers the user pinned or trusted from the peer list
+	nodeCfg.P2P.StaticNodes = parseEnodes(g.StaticPeers)
+	nodeCfg.P2P.TrustedNodes = parseEnodes(g.TrustedPeers)
 
 	prlCfg := nodeconfig.Defaults
 	switch g.SyncMode {
@@ -561,7 +575,7 @@ func parseEnodes(urls []string) []*enode.Node {
 		}
 		n, err := enode.Parse(enode.ValidSchemes, url)
 		if err != nil {
-			logging.Error("invalid bootstrap enode", "enode", url, "err", err)
+			logging.Error("invalid enode", "enode", url, "err", err)
 			continue
 		}
 		out = append(out, n)

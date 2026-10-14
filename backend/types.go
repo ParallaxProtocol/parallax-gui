@@ -62,6 +62,69 @@ type GUIConfig struct {
 	// WatchAddress is the address the Wallet page follows (balance, mined
 	// blocks, transactions). Empty means it follows MiningWallet.
 	WatchAddress string `json:"watchAddress"`
+
+	// StaticPeers and TrustedPeers are enode URLs the user added from the
+	// peer list, re-applied at every node start: the daemon keeps neither
+	// across restarts on its own. (Peers added by ip:port need no entry
+	// here: the daemon's address book keeps those.)
+	StaticPeers  []string `json:"staticPeers"`
+	TrustedPeers []string `json:"trustedPeers"`
+}
+
+// NodeDetails is the Overview's fuller picture of the running node: who it
+// is, how the network reaches it, the chain and mempool as it sees them,
+// and its storage. It costs more than NodeStatus (a fee estimate, a free
+// space reading), so the frontend polls it less often. Zero-valued while
+// the node is stopped. Amounts are decimal wei strings.
+type NodeDetails struct {
+	Running bool `json:"running"`
+
+	// Identity
+	NodeID        string `json:"nodeId"`
+	Enode         string `json:"enode"` // empty in v2-only mode, where no persistent identity is dialable
+	ClientName    string `json:"clientName"`
+	DaemonVersion string `json:"daemonVersion"`
+
+	// Network
+	ExternalIP     string `json:"externalIp"`
+	ListenPort     int    `json:"listenPort"`
+	InboundAllowed bool   `json:"inboundAllowed"`
+	MaxPeers       int    `json:"maxPeers"`
+	V2Only         bool   `json:"v2Only"` // the legacy (v1) handshake is refused
+
+	// Chain
+	TotalDifficulty  string `json:"totalDifficulty"`
+	BlockRewardWei   string `json:"blockRewardWei"`
+	NextHalvingBlock uint64 `json:"nextHalvingBlock"`
+	BlocksToHalving  uint64 `json:"blocksToHalving"`
+
+	// Mempool and fees
+	TxPending        int    `json:"txPending"`
+	TxQueued         int    `json:"txQueued"`
+	TxBytes          uint64 `json:"txBytes"`          // the pool's size: its transactions' encoded bytes
+	GasPriceWei      string `json:"gasPriceWei"`      // what eth_gasPrice would suggest now
+	SmartFee         bool   `json:"smartFee"`         // the smart fee estimator is on
+	SmartFeeWei      string `json:"smartFeeWei"`      // its estimate for SmartFeeTarget blocks; empty while it has none
+	SmartFeeTarget   int    `json:"smartFeeTarget"`   // the confirmation target asked of it, in blocks
+	SmartFeeBlocks   int    `json:"smartFeeBlocks"`   // blocks of data it has gathered: its warm-up
+	SmartFeeFallback bool   `json:"smartFeeFallback"` // the estimate came from the legacy oracle
+
+	// Storage
+	DiskFreeBytes      uint64 `json:"diskFreeBytes"`
+	DiskStopBelowBytes uint64 `json:"diskStopBelowBytes"` // the node stops itself below this much free space
+
+	// Sync
+	SyncModeConfigured string `json:"syncModeConfigured"`
+	SyncModeActive     string `json:"syncModeActive"`
+	ArchiveMode        bool   `json:"archiveMode"`
+	SnapAccounts       uint64 `json:"snapAccounts"` // snap sync's state download, while it runs
+	SnapStorage        uint64 `json:"snapStorage"`
+	SnapBytes          uint64 `json:"snapBytes"`
+	SnapHealing        uint64 `json:"snapHealing"` // trie nodes still to heal
+
+	// Public status page
+	StatsName string `json:"statsName"` // empty unless reporting
+	StatsHost string `json:"statsHost"`
 }
 
 // NodeStatus is the high-level snapshot the dashboard polls.

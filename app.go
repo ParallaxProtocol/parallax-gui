@@ -119,11 +119,24 @@ func (a *App) UpdateConfig(c backend.GUIConfig) error { return a.cfg.Save(c) }
 // Node lifecycle
 // ---------------------------------------------------------------------------
 
-func (a *App) StartNode() error                   { return a.node.Start(a.ctx) }
-func (a *App) StopNode() error                    { return a.node.Stop() }
-func (a *App) NodeStatus() backend.NodeStatus     { return a.node.Status() }
-func (a *App) WalletStatus() backend.WalletStatus { return a.node.WalletStatus() }
-func (a *App) Peers() []backend.PeerView          { return a.node.Peers() }
+func (a *App) StartNode() error                 { return a.node.Start(a.ctx) }
+func (a *App) StopNode() error                  { return a.node.Stop() }
+func (a *App) NodeStatus() backend.NodeStatus   { return a.node.Status() }
+func (a *App) NodeDetails() backend.NodeDetails { return a.node.Details() }
+func (a *App) Mempool(query string, limit int) backend.MempoolView {
+	return a.node.Mempool(query, limit)
+}
+
+// Peer management, from the Overview's peer list
+func (a *App) AddPeer(target string) error                { return a.node.AddPeer(target) }
+func (a *App) DisconnectPeer(target string) error         { return a.node.DisconnectPeer(target) }
+func (a *App) SetPeerTrusted(enode string, on bool) error { return a.node.SetTrusted(enode, on) }
+func (a *App) BanPeer(subnet string, seconds int64) error { return a.node.Ban(subnet, seconds) }
+func (a *App) UnbanPeer(subnet string) error              { return a.node.Unban(subnet) }
+func (a *App) ClearBanned() error                         { return a.node.ClearBanned() }
+func (a *App) Banned() ([]backend.BanEntry, error)        { return a.node.Banned() }
+func (a *App) WalletStatus() backend.WalletStatus         { return a.node.WalletStatus() }
+func (a *App) Peers() []backend.PeerView                  { return a.node.Peers() }
 func (a *App) RecentBlocks(n int) []backend.BlockView {
 	return a.node.RecentBlocks(n)
 }
