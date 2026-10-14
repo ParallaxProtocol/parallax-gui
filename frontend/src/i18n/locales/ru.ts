@@ -196,7 +196,9 @@ const ru: Dict = {
 
   // Redesign
   "nav.label": "Основное",
-  "nav.overview": "Обзор",
+  "nav.account": "Аккаунт",
+  "nav.connect": "Подключение",
+  "nav.node": "Нода",
   "node.state.stopped": "Офлайн",
   "node.state.syncing": "Синхронизация",
   "node.state.synced": "Синхронизирован",

@@ -9,8 +9,9 @@ import { useT } from "../../i18n";
 import { Tooltip } from "../ui/Tooltip";
 
 const TITLES: Record<string, string> = {
-  "/": "nav.overview",
-  "/wallet": "nav.wallet",
+  "/": "nav.account",
+  "/connect": "nav.connect",
+  "/node": "nav.node",
   "/settings": "nav.settings",
 };
 

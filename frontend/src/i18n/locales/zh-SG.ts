@@ -196,7 +196,9 @@ const zhSG: Dict = {
 
   // Redesign
   "nav.label": "主菜单",
-  "nav.overview": "概览",
+  "nav.account": "账户",
+  "nav.connect": "连接",
+  "nav.node": "节点",
   "node.state.stopped": "离线",
   "node.state.syncing": "同步中",
   "node.state.synced": "已同步",

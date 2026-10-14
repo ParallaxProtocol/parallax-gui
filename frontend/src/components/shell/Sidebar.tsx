@@ -1,6 +1,6 @@
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { LayoutGrid, Settings2, Wallet } from "lucide-react";
+import { Plug, Settings2, Wallet } from "lucide-react";
 import { formatDuration, formatInt } from "../../lib/format";
 import { GLIDE, SPRING } from "../../lib/motion";
 import { nodeState, syncProgress, useNode, useWallet } from "../../lib/live";
@@ -11,9 +11,10 @@ import { Counter } from "../ui/Counter";
 import logo from "../../assets/logo.svg";
 
 /**
- * Sidebar is the window's source list: the three destinations, the
- * wallet's with a live hint of its link, under a header that
- * is part of the window's title bar, and the node's card at its foot.
+ * Sidebar is the window's source list: the wallet's destinations, the
+ * connection's with a live hint of its link, under a header that is part
+ * of the window's title bar, and the node's card at its foot, the one way
+ * into the node's page.
  */
 export default function Sidebar() {
   const t = useT();
@@ -27,8 +28,9 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex flex-col gap-px px-2 pt-2" aria-label={t("nav.label")}>
-        <NavItem to="/" icon={LayoutGrid} label={t("nav.overview")} />
-        <NavItem to="/wallet" icon={Wallet} label={t("nav.wallet")} adornment={<WalletDot />} />
+        <h2 className="px-2 pt-1 pb-1 text-xs font-semibold text-muted-foreground">{t("nav.wallet")}</h2>
+        <NavItem to="/" icon={Wallet} label={t("nav.account")} />
+        <NavItem to="/connect" icon={Plug} label={t("nav.connect")} adornment={<WalletDot />} />
       </nav>
 
       <div className="flex-1" />
@@ -65,7 +67,7 @@ function NavItem({
   adornment,
 }: {
   to: string;
-  icon: typeof LayoutGrid;
+  icon: typeof Wallet;
   label: string;
   adornment?: React.ReactNode;
 }) {
@@ -113,8 +115,8 @@ const STATE_GRADE: Record<ReturnType<typeof nodeState>, Grade> = {
 /**
  * NodeCard is the node at a glance from every page: its state, the best
  * block, peers and uptime, and the sync's progress while it catches up.
- * It opens the Overview, and grows and shrinks smoothly as its lines
- * come and go.
+ * It opens the node's page, lit while that page shows, and grows and
+ * shrinks smoothly as its lines come and go.
  */
 function NodeCard() {
   const t = useT();
@@ -124,10 +126,14 @@ function NodeCard() {
   const running = !!node?.running;
 
   return (
-    <Link
-      to="/"
-      aria-label={`${t("nav.overview")}: ${t(`node.state.${state}`)}`}
-      className="m-2 block rounded-lg border border-border bg-surface/70 shadow-[var(--shadow-panel)] transition-colors hover:border-border-strong"
+    <NavLink
+      to="/node"
+      aria-label={`${t("nav.node")}: ${t(`node.state.${state}`)}`}
+      className={({ isActive }) =>
+        `m-2 block rounded-lg border shadow-[var(--shadow-panel)] transition-colors ${
+          isActive ? "border-brand/50 bg-selected" : "border-border bg-surface/70 hover:border-border-strong"
+        }`
+      }
     >
       <motion.div layout transition={SPRING} className="flex flex-col gap-1.5 p-3">
         <motion.div layout="position" className="flex items-center justify-between gap-2">
@@ -186,6 +192,6 @@ function NodeCard() {
           )}
         </AnimatePresence>
       </motion.div>
-    </Link>
+    </NavLink>
   );
 }

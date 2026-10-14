@@ -196,7 +196,9 @@ const zhTW: Dict = {
 
   // Redesign
   "nav.label": "主選單",
-  "nav.overview": "總覽",
+  "nav.account": "帳戶",
+  "nav.connect": "連線",
+  "nav.node": "節點",
   "node.state.stopped": "離線",
   "node.state.syncing": "同步中",
   "node.state.synced": "已同步",

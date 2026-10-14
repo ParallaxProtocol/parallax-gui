@@ -196,7 +196,9 @@ const ptBR: Dict = {
 
   // Redesign
   "nav.label": "Principal",
-  "nav.overview": "Visão geral",
+  "nav.account": "Conta",
+  "nav.connect": "Conectar",
+  "nav.node": "Nó",
   "node.state.stopped": "Offline",
   "node.state.syncing": "Sincronizando",
   "node.state.synced": "Sincronizado",

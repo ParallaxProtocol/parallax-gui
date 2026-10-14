@@ -196,7 +196,9 @@ const fr: Dict = {
 
   // Redesign
   "nav.label": "Principal",
-  "nav.overview": "Vue d'ensemble",
+  "nav.account": "Compte",
+  "nav.connect": "Connexion",
+  "nav.node": "Nœud",
   "node.state.stopped": "Hors ligne",
   "node.state.syncing": "Synchronisation",
   "node.state.synced": "Synchronisé",

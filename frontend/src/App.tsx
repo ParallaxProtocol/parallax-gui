@@ -8,11 +8,12 @@ import { LiveProvider } from "./lib/live";
 import { DesktopBehaviors } from "./lib/desktop";
 import { AnimationsOff } from "./lib/prefs";
 import { PAGE } from "./lib/motion";
-import Overview from "./pages/Overview";
+import WalletPage from "./pages/Wallet";
 
 // The landing page loads with the app; the rest load on first visit, so
 // the webview parses less JavaScript before the first paint
-const WalletPage = lazy(() => import("./pages/Wallet"));
+const ConnectPage = lazy(() => import("./pages/Wallet/Connect"));
+const NodePage = lazy(() => import("./pages/Overview"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 import Sidebar from "./components/shell/Sidebar";
@@ -162,11 +163,12 @@ function RoutedContent({ animate }: { animate: boolean }) {
   const routes = (
     <Suspense fallback={null}>
       <Routes location={location}>
-        <Route path="/" element={<Overview />} />
-        <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/" element={<WalletPage />} />
+        <Route path="/connect" element={<ConnectPage />} />
+        <Route path="/node" element={<NodePage />} />
         <Route path="/settings" element={<Settings />} />
         {/* Older routes, from before the redesign */}
-        <Route path="/connect" element={<Navigate to="/wallet" replace />} />
+        <Route path="/wallet" element={<Navigate to="/" replace />} />
         <Route path="/logs" element={<Navigate to="/settings" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

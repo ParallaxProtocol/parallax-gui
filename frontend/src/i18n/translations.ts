@@ -221,7 +221,9 @@ export const en: Dict = {
 
   // Redesign
   "nav.label": "Main",
-  "nav.overview": "Overview",
+  "nav.account": "Account",
+  "nav.connect": "Connect",
+  "nav.node": "Node",
   "node.state.stopped": "Offline",
   "node.state.syncing": "Syncing",
   "node.state.synced": "Synced",
