@@ -8,6 +8,7 @@ import { LanguageProvider } from "./i18n";
 import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
 import "./styles.css";
+import "./lib/scrollbars";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

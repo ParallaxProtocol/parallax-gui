@@ -330,21 +330,45 @@ button.glass:hover,
   width: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
 }
 
-/* Thin overlay-style scrollbars */
+/* Thin overlay-style scrollbars that show only while scrolling, as on macOS.
+   The thumb's colour is a registered property so it can fade: scrolling marks
+   the scroller with data-scrolling (src/lib/scrollbars.ts) and the colour
+   eases in, then out again a moment after scrolling stops. Hovering or
+   dragging the thumb shows it outright. Every element sets its own value,
+   so a scroller's thumb (which inherits from it) lights up without lighting
+   the scrollers inside it; in the base layer so an element's own transition
+   utilities still win */
+@property --scrollbar-thumb {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@layer base {
+  * {
+    --scrollbar-thumb: transparent;
+    transition: --scrollbar-thumb 0.6s ease;
+  }
+  [data-scrolling] {
+    --scrollbar-thumb: var(--border-strong);
+    transition-duration: 0.1s;
+  }
+}
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
-::-webkit-scrollbar-track {
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+  background: var(--scrollbar-thumb);
   border: 3px solid transparent;
   background-clip: padding-box;
   border-radius: 6px;
 }
-::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
   background-color: var(--faint);
 }
 
