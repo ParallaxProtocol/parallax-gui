@@ -5,13 +5,12 @@ import { formatGwei, formatInt, formatLax } from "../../lib/format";
 import { useT } from "../../i18n";
 import { Notice } from "../../components/ui/bits";
 import { Modal, ModalForm } from "../../components/ui/Modal";
-import { Field, PasswordInput } from "./common";
 
 /**
  * ReplaceModal speeds up or cancels a transaction the account has waiting
  * in the pool: a new one at the same nonce, paying enough more for the
  * network to take it instead. It quotes the replacement on opening, and
- * signs it with the wallet password.
+ * signs it once confirmed.
  */
 export function ReplaceModal({
   target,
@@ -24,14 +23,12 @@ export function ReplaceModal({
 }) {
   const t = useT();
   const [quote, setQuote] = useState<ReplaceQuote | null>(null);
-  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setQuote(null);
     setError(null);
-    setPassword("");
     if (!target) return;
     let alive = true;
     api
@@ -47,7 +44,7 @@ export function ReplaceModal({
   const cancel = target?.kind === "cancel";
 
   const go = async () => {
-    if (!quote || busy || !password || !quote.sufficient) return;
+    if (!quote || busy || !quote.sufficient) return;
     setBusy(true);
     setError(null);
     try {
@@ -56,9 +53,7 @@ export function ReplaceModal({
         hash: quote.hash,
         kind: quote.kind,
         gasPriceWei: quote.gasPriceWei,
-        password,
       });
-      setPassword("");
       onReplaced(tx);
     } catch (e) {
       setError(walletError(e, t));
@@ -86,7 +81,8 @@ export function ReplaceModal({
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={busy || !quote || !password || !quote.sufficient}
+                disabled={busy || !quote || !quote.sufficient}
+                autoFocus
               >
                 {busy && <Loader2 className="size-3.5 animate-spin" />}
                 {cancel ? t("wallet.replace.cancelCta") : t("wallet.replace.speedUpCta")}
@@ -117,9 +113,6 @@ export function ReplaceModal({
                 <Row label={t("mempool.value")}>{formatLax(quote.valueWei, 18)} LAX</Row>
               </dl>
               {!quote.sufficient && <Notice tone="critical">{t("wallet.err.insufficient")}</Notice>}
-              <Field label={t("wallet.walletPassword")} hint={t("wallet.review.passwordHint")}>
-                {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus />}
-              </Field>
               <p className="text-sm text-muted-foreground">{t("wallet.replace.race")}</p>
             </>
           )}

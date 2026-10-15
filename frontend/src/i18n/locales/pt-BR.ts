@@ -7,6 +7,10 @@ const ptBR: Dict = {
   "nav.collapseSidebar": "Recolher barra lateral",
   "nav.expandSidebar": "Expandir barra lateral",
   "splash.loading": "Carregando",
+  "lock.title": "Carteira bloqueada",
+  "lock.desc": "Digite a senha da carteira para desbloqueá-la.",
+  "lock.cta": "Desbloquear",
+  "lock.now": "Bloquear carteira",
 
   // Hello: the first launch
   "hello.leadNode": "Vamos configurar seu nó. Leva só um minuto.",
@@ -359,7 +363,6 @@ const ptBR: Dict = {
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Senha da carteira",
-  "wallet.walletPasswordHint": "A senha que protege todas as contas desta carteira.",
   "wallet.locked.title": "Bem-vindo ao Parallax",
   "wallet.locked.desc":
     "Um nó Parallax completo e uma carteira em um só app. Guarde, envie e receba LAX pelo seu próprio nó, sem intermediários.",
@@ -378,7 +381,7 @@ const ptBR: Dict = {
   "wallet.locked.ctaHint": "Primeiro, você vai definir a senha da carteira.",
   "wallet.setup.title": "Defina a senha da carteira",
   "wallet.setup.desc":
-    "Uma única senha protege todas as contas e frases de recuperação desta carteira. Você vai digitá-la sempre que enviar, fizer backup ou adicionar uma conta.",
+    "Uma única senha protege todas as contas e frases de recuperação desta carteira. Você vai digitá-la para desbloquear a carteira e de novo para mostrar uma frase de recuperação ou remover uma conta.",
   "wallet.setup.existingDesc":
     "Esta carteira já tem chaves. Digite a senha com que elas foram criadas: ela passa a ser a senha da carteira.",
   "wallet.setup.noRecovery":
@@ -392,6 +395,14 @@ const ptBR: Dict = {
   "wallet.offer.cta": "Criar frase de recuperação",
   "wallet.security": "Segurança",
   "wallet.securityDesc": "Protege todas as contas e frases de recuperação desta carteira.",
+  "wallet.autoLock": "Bloquear automaticamente",
+  "wallet.autoLockDesc":
+    "Após esse tempo sem usar o app. A carteira também é bloqueada quando o computador entra em repouso.",
+  "wallet.autoLock.minute": "Após 1 minuto",
+  "wallet.autoLock.minutes": "Após {n} minutos",
+  "wallet.autoLock.hour": "Após 1 hora",
+  "wallet.autoLock.hours": "Após {n} horas",
+  "wallet.autoLock.never": "Nunca",
 
   // Wallet: passwords
   "wallet.password.new": "Senha",
@@ -406,7 +417,7 @@ const ptBR: Dict = {
 
   // Wallet: create
   "wallet.create.title": "Criar uma conta",
-  "wallet.create.introNext": "Em seguida, você vai escolher um nome e uma senha.",
+  "wallet.create.introNext": "Em seguida, você vai escolher um nome.",
   "wallet.create.kindTitle": "Escolha um tipo",
   "wallet.create.kindDesc": "Como esta conta deve ser protegida por backup?",
   "wallet.create.kind.derive": "Outra conta de uma frase de recuperação",
@@ -422,7 +433,7 @@ const ptBR: Dict = {
   "wallet.create.keyFact1": "Uma nova chave",
   "wallet.create.keyFact1Desc":
     "Gerada aqui a partir da fonte aleatória segura do seu sistema. É ela que permite gastar.",
-  "wallet.create.keyFact2Desc": "A chave é criptografada com a senha que você escolher na próxima página.",
+  "wallet.create.keyFact2Desc": "A chave é criptografada com a senha da carteira.",
   "wallet.create.keyNext": "Em seguida, você vai salvar um arquivo de backup da chave.",
   "wallet.create.keyBackupWhy":
     "Com o arquivo e a senha dele, qualquer carteira compatível pode restaurar a conta. Sem eles, ela não pode ser recuperada.",
@@ -438,8 +449,7 @@ const ptBR: Dict = {
   "wallet.create.words24Desc":
     "256 bits, como Ledger e Trezor geram. O dobro para anotar, e 12 palavras já estão muito além de qualquer adivinhação. Ambas funcionam no MetaMask e em outras carteiras.",
   "wallet.create.fact2": "Protegida pela sua senha",
-  "wallet.create.fact2Desc":
-    "A frase e a chave da sua conta são criptografadas com a senha que você escolher na próxima página.",
+  "wallet.create.fact2Desc": "A frase e a chave da sua conta são criptografadas com a senha da carteira.",
   "wallet.create.fact3": "Guardada neste computador",
   "wallet.create.fact3Desc": "Só a chave criptografada é armazenada, aqui. Nada é enviado a lugar nenhum.",
   "wallet.create.optional": "Opcional",
@@ -495,8 +505,8 @@ const ptBR: Dict = {
   "wallet.import.inWallet": "Já na carteira",
   "wallet.import.more": "Mostrar mais",
   "wallet.import.picked": "{n} selecionada(s)",
-  "wallet.import.passwordLead":
-    "A frase de recuperação e as {n} contas escolhidas serão criptografadas com esta senha neste computador. O nome vai para a primeira conta.",
+  "wallet.import.detailsLead":
+    "A frase de recuperação e as {n} contas escolhidas serão criptografadas com a senha da carteira neste computador. O nome vai para a primeira conta.",
   "wallet.import.keyDesc": "A chave bruta da conta: 64 caracteres hexadecimais.",
   "wallet.import.keyfile": "Arquivo keystore",
   "wallet.import.key": "Chave privada",
@@ -509,7 +519,6 @@ const ptBR: Dict = {
   "wallet.import.filePasswordHint": "A senha com que o arquivo foi salvo.",
   "wallet.import.keyLabel": "Chave privada",
   "wallet.import.keyHint": "64 caracteres hexadecimais, com ou sem 0x.",
-  "wallet.import.reencrypt": "A chave é criptografada de novo com a senha da carteira.",
   "wallet.import.keyWarn":
     "Qualquer pessoa que tenha visto esta chave pode gastar os fundos da conta. Só importe uma chave que tenha sido mantida em sigilo.",
 
@@ -521,8 +530,6 @@ const ptBR: Dict = {
   "wallet.backup.restore": "Para restaurar a conta, você vai precisar do {file} e da {password}.",
   "wallet.backup.restore.file": "arquivo de backup",
   "wallet.backup.restore.password": "senha",
-  "wallet.backup.passwordLabel": "Senha da conta",
-  "wallet.backup.passwordHint": "Verificada antes de salvar, para você saber que o backup vai abrir.",
   "wallet.backup.saved": "Backup salvo",
   "wallet.backup.missingTitle": "Esta conta não tem backup",
   "wallet.backup.missingDesc":
@@ -563,8 +570,6 @@ const ptBR: Dict = {
   "wallet.add.watchDesc":
     "Só o endereço é trazido: a chave fica no assinador offline, que assina o que você envia a partir dela.",
   "wallet.find.cta": "Encontrar contas",
-  "wallet.find.desc":
-    "{name} pode ter mais contas do que a carteira mostra: criadas em outra carteira ou em outro caminho. A senha da carteira a abre para procurá-las.",
   "wallet.find.pathGroup": "Caminho",
   "wallet.find.pathDesc":
     "As carteiras guardam as contas de uma frase em caminhos diferentes. Procure no que a outra carteira usou: MetaMask, Trezor e a maioria das carteiras usam o Padrão.",
@@ -605,7 +610,6 @@ const ptBR: Dict = {
   "wallet.review.toContract":
     "O destinatário é um contrato. Ele executa código ao receber LAX; confirme que ele foi feito para isso.",
   "wallet.review.dear": "Este preço é mais de três vezes os {price} que seu nó sugere.",
-  "wallet.review.passwordHint": "Descriptografa a chave só para esta assinatura.",
   "wallet.review.cta": "Assinar e enviar",
   "wallet.review.signing": "Assinando…",
   "wallet.sent.title": "Enviado",
@@ -686,6 +690,7 @@ const ptBR: Dict = {
 
   // Wallet: errors
   "wallet.err.wrongPassword": "Senha incorreta.",
+  "wallet.err.locked": "A carteira está bloqueada. Desbloqueie-a e tente novamente.",
   "wallet.err.weakPassword": "A senha precisa ter pelo menos 8 caracteres.",
   "wallet.err.longPassword": "A senha é longa demais.",
   "wallet.err.unknownAccount": "Esta conta não está mais na carteira.",

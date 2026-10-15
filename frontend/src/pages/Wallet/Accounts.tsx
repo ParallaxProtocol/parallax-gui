@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import {
@@ -12,6 +12,7 @@ import {
   Plus,
   ScrollText,
   Search,
+  Timer,
   Trash2,
   X,
 } from "lucide-react";
@@ -32,8 +33,9 @@ import { GroupedAddress } from "../../components/ui/AccountParts";
 import { RevealPhraseModal } from "./Phrase";
 import { useSettingsSheet, type SettingsPage } from "../../components/shell/SettingsSheet";
 import { AccountPage } from "../Settings/accounts";
-import { FindAccountsModal } from "../Settings/accounts/Find";
 import { RemoveWatchOnlyModal } from "./WatchOnly";
+import { Select } from "../../components/ui/Select";
+import { CONFIG_UPDATED_EVENT } from "../../App";
 
 type Action = "backup" | "remove";
 type SeedAction = "reveal" | "derive" | "remove";
@@ -54,7 +56,6 @@ export function AccountsSettings() {
   const navigate = useNavigate();
   const [seedAction, setSeedAction] = useState<{ kind: SeedAction; seed: SeedInfo } | null>(null);
   const [changing, setChanging] = useState(false);
-  const [finding, setFinding] = useState<SeedInfo | null>(null);
   const [action, setAction] = useState<{ kind: Action; account: WalletAccount } | null>(null);
 
   const info = wallet.info;
@@ -113,7 +114,9 @@ export function AccountsSettings() {
             <Panel key={seed.id} className="overflow-hidden">
               <SeedRow
                 seed={seed}
-                onAction={(kind) => (kind === "find" ? setFinding(seed) : setSeedAction({ kind, seed }))}
+                onAction={(kind) =>
+                  kind === "find" ? drill({ kind: "accounts.find", seedId: seed.id }) : setSeedAction({ kind, seed })
+                }
               />
               <Rows accounts={ofSeed(seed.id)} row={row} />
               <AddRow
@@ -144,15 +147,18 @@ export function AccountsSettings() {
 
       {info.hasPassword && (
         <Section title={t("wallet.security")}>
-          <Panel className="flex h-full items-center gap-3.5 p-5">
-            <IconBadge icon={Lock} />
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span>{t("wallet.walletPassword")}</span>
-              <span className="text-sm text-muted-foreground">{t("wallet.securityDesc")}</span>
+          <Panel className="flex h-full flex-col divide-y divide-border">
+            <div className="flex items-center gap-3.5 p-5">
+              <IconBadge icon={Lock} />
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span>{t("wallet.walletPassword")}</span>
+                <span className="text-sm text-muted-foreground">{t("wallet.securityDesc")}</span>
+              </div>
+              <button type="button" className="btn btn-tinted btn-sm shrink-0" onClick={() => setChanging(true)}>
+                {t("wallet.changePassword.title")}
+              </button>
             </div>
-            <button type="button" className="btn btn-tinted btn-sm shrink-0" onClick={() => setChanging(true)}>
-              {t("wallet.changePassword.title")}
-            </button>
+            <AutoLockRow />
           </Panel>
         </Section>
       )}
@@ -177,14 +183,6 @@ export function AccountsSettings() {
         label={target ? label(target) : ""}
       />
       <PasswordModal open={changing} onClose={() => setChanging(false)} />
-      <FindAccountsModal
-        seed={finding}
-        onClose={() => setFinding(null)}
-        onOpen={(seed, password, first) => {
-          setFinding(null);
-          drill({ kind: "accounts.find", seedId: seed.id, password, first });
-        }}
-      />
       <RevealPhraseModal
         open={seedAction?.kind === "reveal"}
         onClose={() => setSeedAction(null)}
@@ -521,5 +519,69 @@ function RenameForm({
         <X className="size-3.5" />
       </button>
     </form>
+  );
+}
+
+/** The auto-lock times on offer, in minutes; -1 for as long as the app runs. */
+const AUTO_LOCK = [1, 5, 15, 30, 60, 240, -1];
+
+/**
+ * AutoLockRow picks how long the wallet stays unlocked with nothing done in
+ * the app (backend/session.go), saved at once.
+ */
+function AutoLockRow() {
+  const t = useT();
+  const [minutes, setMinutes] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    api
+      .getConfig()
+      // 0 is the default, 15 minutes
+      .then((c) => setMinutes(c.autoLockMinutes || 15))
+      .catch(() => {});
+  }, []);
+
+  const label = (m: number) =>
+    m < 0
+      ? t("wallet.autoLock.never")
+      : m < 60
+        ? t(m === 1 ? "wallet.autoLock.minute" : "wallet.autoLock.minutes", { n: m })
+        : t(m === 60 ? "wallet.autoLock.hour" : "wallet.autoLock.hours", { n: m / 60 });
+  const change = async (m: number) => {
+    setMinutes(m);
+    setError(null);
+    try {
+      const fresh = await api.getConfig();
+      await api.updateConfig({ ...fresh, autoLockMinutes: m });
+      window.dispatchEvent(new Event(CONFIG_UPDATED_EVENT));
+    } catch (e) {
+      setError(walletError(e, t));
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3 p-5">
+      <div className="flex items-center gap-3.5">
+        <IconBadge icon={Timer} />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span>{t("wallet.autoLock")}</span>
+          <span className="text-sm text-muted-foreground">{t("wallet.autoLockDesc")}</span>
+        </div>
+        {minutes !== null && (
+          <Select
+            value={minutes}
+            // A time saved outside the menu (by hand in the config) shows too
+            options={(AUTO_LOCK.includes(minutes) ? AUTO_LOCK : [...AUTO_LOCK, minutes]).map((m) => ({
+              value: m,
+              label: label(m),
+            }))}
+            onChange={change}
+            size="sm"
+            aria-label={t("wallet.autoLock")}
+          />
+        )}
+      </div>
+      {error && <Notice tone="critical">{error}</Notice>}
+    </div>
   );
 }

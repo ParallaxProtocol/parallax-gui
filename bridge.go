@@ -145,7 +145,8 @@ type callResponse struct {
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 // secretMethods are the calls that carry a password, a recovery phrase or a
-// key, in their arguments or their result. Each is decoded, run and its
+// key, in their arguments or their result, or that use the password the
+// unlocked wallet keeps (backend/session.go). Each is decoded, run and its
 // response encoded under erasing, which wipes what it leaves in memory
 // (secret_erase.go).
 var secretMethods = map[string]bool{
@@ -172,6 +173,7 @@ var secretMethods = map[string]bool{
 	"WalletScanWalletSeed":   true,
 	"WalletSend":             true,
 	"WalletSetupPassword":    true,
+	"WalletUnlock":           true,
 }
 
 func (b *bridge) handleCall(w http.ResponseWriter, r *http.Request) {

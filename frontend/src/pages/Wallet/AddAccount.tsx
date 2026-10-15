@@ -21,13 +21,13 @@ import { Choice } from "../../components/ui/Choice";
 /**
  * The pages that add an account to the wallet, each a few steps laid out
  * as the rest of the app is (flow.tsx). They run once the wallet has its
- * password (set from the Welcome page, before anything else), and ask for
- * it where it is needed. Passwords, words and keys typed here stay in the
- * page's own state and are gone once it is left.
+ * password (set from the Welcome page, before anything else) and is
+ * unlocked, which encrypts what they add with it. Words and keys typed
+ * here stay in the page's own state and are gone once it is left.
  */
 
-/** useUnlocked sends a page back to Welcome while the wallet has no password. */
-function useUnlocked(): ReactNode | null {
+/** useNoPassword sends a page back to Welcome while the wallet has no password. */
+function useNoPassword(): ReactNode | null {
   const wallet = useWallet();
   return wallet.info && !wallet.info.hasPassword ? <Navigate to="/" replace /> : null;
 }
@@ -43,22 +43,13 @@ export function SetupPasswordPage() {
   const navigate = useNavigate();
   const wallet = useWallet();
   const [existing] = useState(() => !!wallet.info?.needsSetup);
-  // The password just set, kept only to make the phrase if the user wants one
-  const [password, setPassword] = useState("");
   const [phrase, setPhrase] = useState<{ seedId: string; words: string[] } | null>(null);
   const [offered, setOffered] = useState(false);
   const { busy, error, run } = useBusy();
-  useEffect(
-    () => () => {
-      setPassword("");
-      setPhrase(null);
-    },
-    [],
-  );
+  useEffect(() => () => setPhrase(null), []);
 
   const steps = [t("wallet.setup.step"), t("wallet.create.step.phrase"), t("wallet.create.step.confirm")];
   const done = () => {
-    setPassword("");
     setPhrase(null);
     navigate("/", { replace: true });
   };
@@ -95,9 +86,8 @@ export function SetupPasswordPage() {
               disabled={busy}
               autoFocus
               onClick={async () => {
-                const made = await run(() => api.walletCreateSeed(defaultName, password, ""));
+                const made = await run(() => api.walletCreateSeed(defaultName, ""));
                 if (made) {
-                  setPassword("");
                   setPhrase({ seedId: made.seedId, words: made.words });
                   await wallet.refresh();
                 }
@@ -118,11 +108,10 @@ export function SetupPasswordPage() {
       <SetupPasswordStep
         existing={existing}
         onBack={() => navigate(-1)}
-        onSet={async (pass) => {
+        onSet={async () => {
           await wallet.refresh();
           // A wallet that already has keys needs no new phrase offered
           if (existing) return done();
-          setPassword(pass);
           setOffered(true);
         }}
       />
@@ -145,12 +134,12 @@ export function CreateAccountPage() {
   const t = useT();
   const navigate = useNavigate();
   const wallet = useWallet();
-  const locked = useUnlocked();
+  const noPassword = useNoPassword();
   const [kind, setKind] = useState<CreateKind | null>(null);
   const back = () => setKind(null);
   const seeds = wallet.info?.seeds ?? [];
 
-  if (locked) return locked;
+  if (noPassword) return noPassword;
   if (kind === "key") return <CreateKey onBack={back} />;
   if (kind === "phrase") return <CreateWallet onBack={back} />;
   if (kind === "derive") return <DeriveAccount seeds={seeds} onBack={back} />;
@@ -192,7 +181,7 @@ type PhraseStage = "intro" | "details" | "phrase" | "confirm";
 
 /**
  * CreateWallet makes a new recovery phrase and its first account: what will
- * happen, a name and the wallet password, an optional passphrase,
+ * happen, a name, an optional passphrase,
  * the words to write down, and three of them typed back to prove it.
  */
 function CreateWallet({ onBack }: { onBack: () => void }) {
@@ -234,8 +223,8 @@ function CreateWallet({ onBack }: { onBack: () => void }) {
           next={t("wallet.create.next")}
           allowPassphrase
           onBack={() => setStage("intro")}
-          onSubmit={async (name, password, passphrase) => {
-            const phrase = await run(() => api.walletCreateSeed(name.trim() || defaultName, password, passphrase));
+          onSubmit={async (name, passphrase) => {
+            const phrase = await run(() => api.walletCreateSeed(name.trim() || defaultName, passphrase));
             if (phrase) {
               setSeedId(phrase.seedId);
               setWords(phrase.words);
@@ -382,8 +371,7 @@ function PhraseSteps({
 
 /**
  * DeriveAccount makes another account from one of the wallet's recovery
- * phrases, which already backs it up: which phrase, a name, and the wallet
- * password.
+ * phrases, which already backs it up: which phrase, and a name.
  */
 function DeriveAccount({ seeds, onBack }: { seeds: SeedInfo[]; onBack: () => void }) {
   const t = useT();
@@ -392,17 +380,15 @@ function DeriveAccount({ seeds, onBack }: { seeds: SeedInfo[]; onBack: () => voi
   const wallet = useWallet();
   const [seedId, setSeedId] = useState(seeds[0]?.id ?? "");
   const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
   const { busy, error, run } = useBusy();
-  useEffect(() => () => setPassword(""), []);
-  const ready = !!seedId && !!password && !busy;
+  const ready = !!seedId && !busy;
 
   return (
     <FlowPage title={t("wallet.derive.title")} steps={[]} current={0}>
       <StepPanel
         onSubmit={async () => {
           if (!ready) return;
-          const acc = await run(() => api.walletDeriveAccount(seedId, name.trim() || defaultName, password));
+          const acc = await run(() => api.walletDeriveAccount(seedId, name.trim() || defaultName));
           if (acc) {
             await wallet.refresh();
             navigate("/", { replace: true });
@@ -431,9 +417,6 @@ function DeriveAccount({ seeds, onBack }: { seeds: SeedInfo[]; onBack: () => voi
         )}
         <Part className="gap-4">
           <NameField value={name} onChange={setName} />
-          <Field label={t("wallet.walletPassword")}>
-            {(id) => <PasswordInput id={id} value={password} onChange={setPassword} />}
-          </Field>
           {error && <Notice tone="critical">{error}</Notice>}
         </Part>
         <StepFooter onBack={onBack}>
@@ -451,8 +434,7 @@ type KeyStage = "intro" | "details" | "backup";
 
 /**
  * CreateKey makes a single account with a key of its own: what will happen,
- * a name and the wallet password, then the key's backup, its
- * keystore file.
+ * a name, then the key's backup, its keystore file.
  */
 function CreateKey({ onBack }: { onBack: () => void }) {
   const t = useT();
@@ -460,13 +442,9 @@ function CreateKey({ onBack }: { onBack: () => void }) {
   const navigate = useNavigate();
   const wallet = useWallet();
   const [stage, setStage] = useState<KeyStage>("intro");
-  const [password, setPassword] = useState("");
   const [created, setCreated] = useState<WalletAccount | null>(null);
   const [saved, setSaved] = useState(false);
   const { busy, error, run } = useBusy();
-
-  // Kept only so the backup right after needn't ask again
-  useEffect(() => () => setPassword(""), []);
 
   const steps = [t("wallet.create.step.intro"), t("wallet.create.step.details"), t("wallet.create.step.backup")];
   const done = () => navigate("/", { replace: true });
@@ -487,10 +465,9 @@ function CreateKey({ onBack }: { onBack: () => void }) {
           error={error}
           next={t("wallet.create.keyNext")}
           onBack={() => setStage("intro")}
-          onSubmit={async (name, pass) => {
-            const acc = await run(() => api.walletCreate(name.trim() || defaultName, pass));
+          onSubmit={async (name) => {
+            const acc = await run(() => api.walletCreate(name.trim() || defaultName));
             if (acc) {
-              setPassword(pass);
               setCreated(acc);
               setStage("backup");
               await wallet.refresh();
@@ -555,9 +532,8 @@ function CreateKey({ onBack }: { onBack: () => void }) {
                 className="btn btn-primary"
                 disabled={busy}
                 onClick={async () => {
-                  const ok = await run(() => backUp(created.address, password));
+                  const ok = await run(() => backUp(created.address));
                   if (ok) {
-                    setPassword("");
                     setSaved(true);
                     await wallet.refresh();
                   }
@@ -583,11 +559,11 @@ type ImportKind = "phrase" | "keyfile" | "key";
 export function ImportAccountPage() {
   const t = useT();
   const navigate = useNavigate();
-  const locked = useUnlocked();
+  const noPassword = useNoPassword();
   const [kind, setKind] = useState<ImportKind | null>(null);
   const steps = [t("wallet.import.step.source"), t("wallet.import.step.details")];
 
-  if (locked) return locked;
+  if (noPassword) return noPassword;
   if (kind === "phrase") return <PhraseImport onBack={() => setKind(null)} />;
 
   if (!kind) {
@@ -674,7 +650,6 @@ function ImportDetails({ kind, onBack }: { kind: "keyfile" | "key"; onBack: () =
   const [key, setKey] = useState("");
   const [file, setFile] = useState<{ name: string; json: string } | null>(null);
   const [filePassword, setFilePassword] = useState("");
-  const [password, setPassword] = useState("");
   const { busy, error, setError, run } = useBusy();
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -683,15 +658,13 @@ function ImportDetails({ kind, onBack }: { kind: "keyfile" | "key"; onBack: () =
     () => () => {
       setKey("");
       setFilePassword("");
-      setPassword("");
     },
     [],
   );
 
   const keyHex = key.trim().replace(/^0x/i, "");
   const keyOk = /^[0-9a-fA-F]{64}$/.test(keyHex);
-  const walletPassword = password;
-  const ready = !busy && !!walletPassword && (kind === "key" ? keyOk : !!file && !!filePassword);
+  const ready = !busy && (kind === "key" ? keyOk : !!file && !!filePassword);
 
   const readFile = async (f: File | undefined) => {
     setFile(null);
@@ -717,8 +690,8 @@ function ImportDetails({ kind, onBack }: { kind: "keyfile" | "key"; onBack: () =
         if (!ready) return;
         const acc = await run(() =>
           kind === "key"
-            ? api.walletImportPrivateKey(name.trim() || defaultName, keyHex, walletPassword)
-            : api.walletImportKeyfile(name.trim() || defaultName, file!.json, filePassword, walletPassword),
+            ? api.walletImportPrivateKey(name.trim() || defaultName, keyHex)
+            : api.walletImportKeyfile(name.trim() || defaultName, file!.json, filePassword),
         );
         if (acc) {
           await wallet.refresh();
@@ -768,12 +741,11 @@ function ImportDetails({ kind, onBack }: { kind: "keyfile" | "key"; onBack: () =
           </Field>
         </Part>
       )}
-      <Part className="gap-4">
-        <Field label={t("wallet.walletPassword")} hint={t("wallet.import.reencrypt")}>
-          {(id) => <PasswordInput id={id} value={password} onChange={setPassword} />}
-        </Field>
-        {error && <Notice tone="critical">{error}</Notice>}
-      </Part>
+      {error && (
+        <Part>
+          <Notice tone="critical">{error}</Notice>
+        </Part>
+      )}
       <StepFooter onBack={onBack}>
         <button type="submit" className="btn btn-primary" disabled={!ready}>
           {busy && <Loader2 className="size-3.5 animate-spin" />}

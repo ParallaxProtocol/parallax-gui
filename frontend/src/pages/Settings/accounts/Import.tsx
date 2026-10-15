@@ -1,6 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { FileKey2, Loader2, ScrollText, TriangleAlert } from "lucide-react";
+import { FileKey2, Loader2, TriangleAlert } from "lucide-react";
 import { api, SeedCandidate, SeedScheme, walletError } from "../../../lib/api";
 import { FADE_IN, FADE_OUT, SPRING } from "../../../lib/motion";
 import { useWallet } from "../../../lib/wallet";
@@ -14,33 +14,31 @@ import { PhraseInput } from "../../Wallet/Phrase";
 import { type Found, PHRASE_LENGTHS, pickKey, picksOf } from "../../Wallet/PhraseImport";
 import { Group } from "../fields";
 import { FieldRow, SettingsFlow, Step, StepFooter, ToggleRow } from "./flow";
-import { UnlockModal } from "./common";
 import { BATCH, PhrasePicker } from "./Picker";
 
 /**
  * Bringing accounts into Settings' Accounts section, chosen on its Import
  * accounts page: a recovery phrase and the accounts it holds, or a single
  * key, each step laid out as a Settings section. What comes in takes the
- * next Account N names (renamed in the list), and the wallet password is
- * asked for in a modal as it comes in. Each ends back in the list with
- * what came in selected. Words and keys typed here stay in the page's own
- * state and are gone once it is left.
+ * next Account N names (renamed in the list), encrypted with the unlocked
+ * wallet's password. Each ends back in the list with what came in
+ * selected. Words and keys typed here stay in the page's own state and
+ * are gone once it is left.
  */
 
 /**
  * ImportKey brings in a single key, from a keystore file or as hex typed
- * in, encrypted again under the wallet password, asked for as it comes in.
+ * in, encrypted again under the wallet password.
  */
 export function ImportKey({ lead, onBack, onDone }: { lead: string; onBack: () => void; onDone: () => void }) {
   const t = useT();
   const defaultName = useDefaultName();
   const wallet = useWallet();
   const [kind, setKind] = useState<"keyfile" | "key">("keyfile");
-  const [asking, setAsking] = useState(false);
   const [key, setKey] = useState("");
   const [file, setFile] = useState<{ name: string; json: string } | null>(null);
   const [filePassword, setFilePassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const { busy, error, setError, run } = useBusy();
   const fileInput = useRef<HTMLInputElement>(null);
 
   // Nothing typed here outlives the page
@@ -76,7 +74,20 @@ export function ImportKey({ lead, onBack, onDone }: { lead: string; onBack: () =
 
   return (
     <SettingsFlow title={t("wallet.add.importKey")} steps={[lead, t("wallet.create.step.details")]} current={1}>
-      <Step onSubmit={() => ready && setAsking(true)}>
+      <Step
+        onSubmit={async () => {
+          if (!ready || busy) return;
+          const acc = await run(() =>
+            kind === "key"
+              ? api.walletImportPrivateKey(defaultName, keyHex)
+              : api.walletImportKeyfile(defaultName, file!.json, filePassword),
+          );
+          if (acc) {
+            await wallet.refresh();
+            onDone();
+          }
+        }}
+      >
         <Group
           title={t("wallet.import.step.source")}
           desc={kind === "keyfile" ? t("wallet.import.keyfileDesc") : t("wallet.import.keyDesc")}
@@ -146,26 +157,12 @@ export function ImportKey({ lead, onBack, onDone }: { lead: string; onBack: () =
         {error && <Notice tone="critical">{error}</Notice>}
 
         <StepFooter onBack={onBack}>
-          <button type="submit" className="btn btn-primary" disabled={!ready}>
-            {t("wallet.import.cta")}
+          <button type="submit" className="btn btn-primary" disabled={!ready || busy}>
+            {busy && <Loader2 className="size-3.5 animate-spin" />}
+            {busy ? t("wallet.import.busy") : t("wallet.import.cta")}
           </button>
         </StepFooter>
       </Step>
-      <UnlockModal
-        open={asking}
-        title={t("wallet.add.importKey")}
-        desc={t("wallet.import.reencrypt")}
-        icon={<FileKey2 className="size-4" />}
-        cta={t("wallet.import.cta")}
-        onClose={() => setAsking(false)}
-        onUnlock={async (password) => {
-          await (kind === "key"
-            ? api.walletImportPrivateKey(defaultName, keyHex, password)
-            : api.walletImportKeyfile(defaultName, file!.json, filePassword, password));
-          await wallet.refresh();
-          onDone();
-        }}
-      />
     </SettingsFlow>
   );
 }
@@ -222,7 +219,6 @@ export function PhraseImport({ lead, onBack, onDone }: { lead: string; onBack: (
   const [passphrase, setPassphrase] = useState("");
   const [found, setFound] = useState<Found>({ standard: [], ledgerlive: [], legacy: [] });
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [asking, setAsking] = useState(false);
   const { busy, error, setError, run } = useBusy();
 
   // Nothing typed here outlives the page
@@ -340,27 +336,21 @@ export function PhraseImport({ lead, onBack, onDone }: { lead: string; onBack: (
           <button
             type="button"
             className="btn btn-primary"
-            disabled={picks.length === 0}
-            onClick={() => setAsking(true)}
+            disabled={busy || picks.length === 0}
+            onClick={async () => {
+              const acc = await run(() => api.walletImportSeed("", words, pass, namePicks(picks, "")));
+              if (acc) {
+                setWords("");
+                await wallet.refresh();
+                onDone();
+              }
+            }}
           >
-            {t("wallet.import.cta")}
+            {busy && <Loader2 className="size-3.5 animate-spin" />}
+            {busy ? t("wallet.import.busy") : t("wallet.import.cta")}
           </button>
         </StepFooter>
       </Step>
-      <UnlockModal
-        open={asking}
-        title={t("wallet.add.importPhrase")}
-        desc={t("wallet.import.passwordLead", { n: picks.length })}
-        icon={<ScrollText className="size-4" />}
-        cta={t("wallet.import.cta")}
-        onClose={() => setAsking(false)}
-        onUnlock={async (password) => {
-          await api.walletImportSeed("", words, pass, password, namePicks(picks, ""));
-          setWords("");
-          await wallet.refresh();
-          onDone();
-        }}
-      />
     </SettingsFlow>
   );
 }

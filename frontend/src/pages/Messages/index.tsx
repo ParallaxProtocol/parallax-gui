@@ -17,7 +17,7 @@ import { CopyButton, Notice } from "../../components/ui/bits";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { ScanCard } from "../../components/offline/QRScanner";
 import { DocCard } from "../../components/offline/parts";
-import { Address, DrawnCheck, Field, PasswordInput } from "../Wallet/common";
+import { Address, DrawnCheck, Field } from "../Wallet/common";
 import { AccountSelect } from "../Wallet/AccountSelect";
 import { Steps } from "../Wallet/flow";
 
@@ -48,13 +48,11 @@ export function SignMessagePage() {
   const offline = useOfflineMode();
   const { info, account } = useWallet();
   const [message, setMessage] = useState("");
-  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SignedMessage | null>(null);
   const [request, setRequest] = useState<MessageRequest | null>(null);
   const [scanning, setScanning] = useState(false);
-  useEffect(() => () => setPassword(""), []);
   // Another account: start over
   useEffect(() => {
     setResult(null);
@@ -97,7 +95,7 @@ export function SignMessagePage() {
     : [t("message.step.write"), t("message.step.signed")];
   const current = result ? steps.length : watch && request ? 1 : 0;
   const step = result ? "signed" : scanning ? "scan" : request ? "request" : "write";
-  const ready = messageOk(message) && (watch ? !offline : !!password) && !busy;
+  const ready = messageOk(message) && (!watch || !offline) && !busy;
 
   return (
     <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
@@ -154,9 +152,7 @@ export function SignMessagePage() {
                 if (watch) run(async () => setRequest(await api.messageBuildRequest(account.address, message)));
                 else
                   run(async () => {
-                    const s = await api.messageSign(account.address, message, password);
-                    setPassword("");
-                    setResult(s);
+                    setResult(await api.messageSign(account.address, message));
                   });
               }}
             >
@@ -165,20 +161,11 @@ export function SignMessagePage() {
                 <MessageInput value={message} onChange={setMessage} autoFocus />
               </GlowCard>
 
-              {/* Who signs it, and with what */}
-              <Panel className="flex flex-col divide-y divide-border">
-                <div className="p-4">
-                  <Field label={t("message.signingAs")} hint={watch ? t("message.watchHint") : undefined}>
-                    {(id) => <AccountSelect id={id} noBalance />}
-                  </Field>
-                </div>
-                {!watch && (
-                  <div className="p-4">
-                    <Field label={t("wallet.walletPassword")} hint={t("message.passwordHint")}>
-                      {(id) => <PasswordInput id={id} value={password} onChange={setPassword} tall />}
-                    </Field>
-                  </div>
-                )}
+              {/* Who signs it */}
+              <Panel className="p-4">
+                <Field label={t("message.signingAs")} hint={watch ? t("message.watchHint") : undefined}>
+                  {(id) => <AccountSelect id={id} noBalance />}
+                </Field>
               </Panel>
 
               <Notice tone="info">{t("message.caution")}</Notice>

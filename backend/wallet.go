@@ -112,6 +112,9 @@ type WalletInfo struct {
 	// keystore has keys but the wallet no password yet.
 	HasPassword bool `json:"hasPassword"`
 	NeedsSetup  bool `json:"needsSetup"`
+	// Locked is set while the wallet has a password and isn't unlocked
+	// (session.go)
+	Locked bool `json:"locked"`
 	// Seeds are the recovery phrases, in the order they were added.
 	Seeds []SeedInfo `json:"seeds"`
 }
@@ -154,6 +157,9 @@ type Wallet struct {
 	reqOnce  sync.Once
 	requests *requestStore
 	signedMu sync.Mutex
+
+	// The wallet password, kept while the wallet is unlocked (session.go)
+	sess session
 }
 
 // NewWallet opens the wallet kept in configDir: the keystore in
@@ -225,6 +231,7 @@ func (w *Wallet) Info() WalletInfo {
 		KeystoreDir: w.dir,
 		HasPassword: v != nil,
 		NeedsSetup:  v == nil && err == nil && len(accs) > 0,
+		Locked:      v != nil && !w.Unlocked(),
 		Seeds:       w.seedInfosLocked(v),
 	}
 	selected := false
@@ -658,7 +665,9 @@ type SendRequest struct {
 	ValueWei    string `json:"valueWei"`
 	GasPriceWei string `json:"gasPriceWei"`
 	GasLimit    uint64 `json:"gasLimit"`
-	Password    string `json:"password"`
+	// Password is the wallet's, from the unlocked session (app.go), never
+	// from the frontend
+	Password string `json:"-"`
 }
 
 // SentTx is a transaction the node accepted into its pool.

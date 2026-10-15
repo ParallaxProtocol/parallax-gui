@@ -29,7 +29,7 @@ import { useAgo, useT } from "../../i18n";
 import { Panel, Property, Rows } from "../../components/ui/Panel";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Segmented } from "../../components/ui/Segmented";
-import { Address, DrawnCheck, Field, PasswordInput, useSummary } from "./common";
+import { Address, DrawnCheck, Field, useSummary } from "./common";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { Steps } from "./flow";
 import { AccountSelect } from "./AccountSelect";
@@ -468,11 +468,9 @@ function Review({
   const t = useT();
   const { byAddress } = useContacts();
   const contact = byAddress(quote.to);
-  const [password, setPassword] = useState("");
   const [memo, setMemo] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => () => setPassword(""), []);
 
   // A watch-only account signs elsewhere: the review makes its request
   const makeRequest = async () => {
@@ -510,9 +508,7 @@ function Review({
         valueWei: quote.valueWei,
         gasPriceWei: quote.gasPriceWei,
         gasLimit: quote.gasLimit,
-        password,
       });
-      setPassword("");
       onSent(tx);
     } catch (e) {
       setError(walletError(e, t));
@@ -594,11 +590,11 @@ function Review({
           e.preventDefault();
           if (watchOnly) {
             if (quote.sufficient && !busy) makeRequest();
-          } else if (password && quote.sufficient) send();
+          } else if (quote.sufficient && !busy) send();
         }}
       >
-        <Panel className="p-4">
-          {watchOnly ? (
+        {watchOnly && (
+          <Panel className="p-4">
             <Field label={t("offline.memo")} hint={t("offline.send.memoHint")}>
               {(id) => (
                 <input
@@ -612,12 +608,8 @@ function Review({
                 />
               )}
             </Field>
-          ) : (
-            <Field label={t("wallet.walletPassword")} hint={t("wallet.review.passwordHint")}>
-              {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus />}
-            </Field>
-          )}
-        </Panel>
+          </Panel>
+        )}
         {error && <Notice tone="critical">{error}</Notice>}
         <div className="flex justify-center gap-3">
           <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onBack} disabled={busy}>
@@ -633,7 +625,8 @@ function Review({
             <button
               type="submit"
               className="btn btn-primary btn-lg min-w-56"
-              disabled={busy || !password || !quote.sufficient}
+              disabled={busy || !quote.sufficient}
+              autoFocus
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
               {busy ? t("wallet.review.signing") : t("wallet.review.cta")}

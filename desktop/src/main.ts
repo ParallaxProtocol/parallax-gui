@@ -12,6 +12,7 @@ import {
   Menu,
   nativeTheme,
   net,
+  powerMonitor,
   powerSaveBlocker,
   protocol,
   shell,
@@ -418,6 +419,17 @@ function restart(installer: string) {
   app.quit();
 }
 
+/**
+ * Locks the wallet (backend/session.go) when the user steps away: the
+ * system going to sleep, or its screen locking (macOS and Windows; Linux
+ * desktops don't tell Electron).
+ */
+function lockOnAway() {
+  const lock = () => void backend.call("WalletLock", []).catch(() => {});
+  powerMonitor.on("suspend", lock);
+  powerMonitor.on("lock-screen", lock);
+}
+
 function wireIpc() {
   guardPermissions();
   ipcMain.handle("backend:call", async (event, method: unknown, args: unknown) => {
@@ -499,6 +511,7 @@ async function boot() {
   );
 
   wireIpc();
+  lockOnAway();
   backend.start(paths.backend, backendArgs(), {
     ...process.env,
     // Lets the updater replace the portable executable rather than run an installer

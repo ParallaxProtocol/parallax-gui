@@ -453,6 +453,9 @@ func ValidateConfig(g GUIConfig) error {
 			return ErrOfflineFeeCap
 		}
 	}
+	if g.AutoLockMinutes < -1 || g.AutoLockMinutes > maxAutoLockMinutes {
+		return errors.New("the auto-lock time must be at most a day")
+	}
 	if g.MCPPort < 0 || g.MCPPort > 65535 {
 		return errors.New("the AI assistant port must be between 1 and 65535")
 	}

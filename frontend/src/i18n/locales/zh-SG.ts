@@ -7,6 +7,10 @@ const zhSG: Dict = {
   "nav.collapseSidebar": "收起边栏",
   "nav.expandSidebar": "展开边栏",
   "splash.loading": "加载中",
+  "lock.title": "钱包已锁定",
+  "lock.desc": "输入钱包密码以解锁。",
+  "lock.cta": "解锁",
+  "lock.now": "锁定钱包",
 
   // Hello: the first launch
   "hello.leadNode": "我们来设置你的节点，只需一分钟。",
@@ -351,7 +355,6 @@ const zhSG: Dict = {
 
   // Wallet: the wallet password
   "wallet.walletPassword": "钱包密码",
-  "wallet.walletPasswordHint": "保护此钱包中每个账户的密码。",
   "wallet.locked.title": "欢迎使用 Parallax",
   "wallet.locked.desc":
     "一个应用中包含完整的 Parallax 节点和钱包。通过您自己的节点持有、发送和接收 LAX，无需任何第三方。",
@@ -365,7 +368,8 @@ const zhSG: Dict = {
   "wallet.locked.cta": "开始使用",
   "wallet.locked.ctaHint": "首先，您将设置钱包密码。",
   "wallet.setup.title": "设置钱包密码",
-  "wallet.setup.desc": "一个密码即可保护此钱包中的每个账户和助记词。每次发送、备份或添加账户时，您都需要输入它。",
+  "wallet.setup.desc":
+    "一个密码即可保护此钱包中的每个账户和助记词。解锁钱包时需要输入它，显示助记词或移除账户时也需要再次输入。",
   "wallet.setup.existingDesc": "此钱包中已有私钥。请输入创建这些私钥时使用的密码：它将成为钱包密码。",
   "wallet.setup.noRecovery":
     "此密码用于在这台电脑上加密您的私钥，无法重置，也无法找回。如果遗失，只有您的助记词和备份文件才能找回您的账户。",
@@ -377,6 +381,13 @@ const zhSG: Dict = {
   "wallet.offer.cta": "创建恢复短语",
   "wallet.security": "安全",
   "wallet.securityDesc": "保护此钱包中的每个账户和助记词。",
+  "wallet.autoLock": "自动锁定",
+  "wallet.autoLockDesc": "在这段时间未使用应用后锁定。电脑进入睡眠时，钱包也会锁定。",
+  "wallet.autoLock.minute": "1 分钟后",
+  "wallet.autoLock.minutes": "{n} 分钟后",
+  "wallet.autoLock.hour": "1 小时后",
+  "wallet.autoLock.hours": "{n} 小时后",
+  "wallet.autoLock.never": "从不",
 
   // Wallet: passwords
   "wallet.password.new": "密码",
@@ -391,7 +402,7 @@ const zhSG: Dict = {
 
   // Wallet: create
   "wallet.create.title": "创建账户",
-  "wallet.create.introNext": "接下来，您将设置名称和密码。",
+  "wallet.create.introNext": "接下来，您将设置名称。",
   "wallet.create.kindTitle": "选择类型",
   "wallet.create.kindDesc": "这个账户要如何备份？",
   "wallet.create.kind.derive": "从助记词生成另一个账户",
@@ -406,7 +417,7 @@ const zhSG: Dict = {
   "wallet.create.recommended": "推荐",
   "wallet.create.keyFact1": "一个新密钥",
   "wallet.create.keyFact1Desc": "在此由系统的安全随机源生成。花费资金靠的就是它。",
-  "wallet.create.keyFact2Desc": "密钥将用您在下一页设置的密码加密。",
+  "wallet.create.keyFact2Desc": "密钥将用钱包密码加密。",
   "wallet.create.keyNext": "接下来，您将保存密钥的备份文件。",
   "wallet.create.keyBackupWhy": "有了文件和它的密码，任何兼容的钱包都能恢复此账户。没有它们，账户将无法找回。",
   "wallet.create.done": "账户已创建",
@@ -420,7 +431,7 @@ const zhSG: Dict = {
   "wallet.create.words24Desc":
     "256 位，与 Ledger 和 Trezor 生成的相同。需要抄写的内容翻倍，而 12 个单词已远超可被猜中的范围。两者都可在 MetaMask 和其他钱包中使用。",
   "wallet.create.fact2": "用您的密码锁定",
-  "wallet.create.fact2Desc": "助记词和您账户的密钥会用您在下一页设置的密码加密。",
+  "wallet.create.fact2Desc": "助记词和您账户的密钥会用钱包密码加密。",
   "wallet.create.fact3": "保存在这台电脑上",
   "wallet.create.fact3Desc": "这里只保存加密后的密钥，不会发送到任何地方。",
   "wallet.create.optional": "可选",
@@ -473,7 +484,7 @@ const zhSG: Dict = {
   "wallet.import.inWallet": "已在钱包中",
   "wallet.import.more": "显示更多",
   "wallet.import.picked": "已选择 {n} 个",
-  "wallet.import.passwordLead": "助记词和您选择的 {n} 个账户将在这台电脑上用此密码加密。名称将用于第一个账户。",
+  "wallet.import.detailsLead": "助记词和您选择的 {n} 个账户将在这台电脑上用钱包密码加密。名称将用于第一个账户。",
   "wallet.import.keyDesc": "账户的原始私钥：64 个十六进制字符。",
   "wallet.import.keyfile": "Keystore 文件",
   "wallet.import.key": "私钥",
@@ -486,7 +497,6 @@ const zhSG: Dict = {
   "wallet.import.filePasswordHint": "保存该文件时使用的密码。",
   "wallet.import.keyLabel": "私钥",
   "wallet.import.keyHint": "64 个十六进制字符，带不带 0x 均可。",
-  "wallet.import.reencrypt": "私钥将使用您的钱包密码重新加密。",
   "wallet.import.keyWarn": "任何看到过此私钥的人都能动用该账户的资金。请只导入一直妥善保密的私钥。",
 
   // Wallet: backup
@@ -496,8 +506,6 @@ const zhSG: Dict = {
   "wallet.backup.restore": "要恢复此账户，您需要{file}和{password}。",
   "wallet.backup.restore.file": "备份文件",
   "wallet.backup.restore.password": "密码",
-  "wallet.backup.passwordLabel": "账户密码",
-  "wallet.backup.passwordHint": "保存前会先验证，确保备份可以打开。",
   "wallet.backup.saved": "备份已保存",
   "wallet.backup.missingTitle": "此账户没有备份",
   "wallet.backup.missingDesc": "如果这台电脑丢失或磁盘损坏，资金也会随之丢失。请将 keystore 文件保存到安全的地方。",
@@ -531,8 +539,6 @@ const zhSG: Dict = {
   "wallet.add.watch": "观察地址",
   "wallet.add.watchDesc": "只导入地址：密钥保留在离线签名器上，由它签署您从该账户发送的交易。",
   "wallet.find.cta": "查找账户",
-  "wallet.find.desc":
-    "{name} 可能包含比钱包显示更多的账户：在其他钱包中或沿其他路径创建。钱包密码会打开它以查找这些账户。",
   "wallet.find.pathGroup": "路径",
   "wallet.find.pathDesc":
     "钱包会沿不同路径存放助记词的账户。请沿另一个钱包使用的路径查找：MetaMask、Trezor 和大多数钱包使用标准路径。",
@@ -571,7 +577,6 @@ const zhSG: Dict = {
   "wallet.review.toSelf": "这是发送到同一账户：只会花费手续费。",
   "wallet.review.toContract": "收款方是一个合约。它在收到 LAX 时会执行代码；请确认它确实用于接收 LAX。",
   "wallet.review.dear": "此价格超过您节点建议的 {price} 的三倍。",
-  "wallet.review.passwordHint": "仅为这一次签名解密私钥。",
   "wallet.review.cta": "签名并发送",
   "wallet.review.signing": "正在签名…",
   "wallet.sent.title": "已发送",
@@ -645,6 +650,7 @@ const zhSG: Dict = {
 
   // Wallet: errors
   "wallet.err.wrongPassword": "密码错误。",
+  "wallet.err.locked": "钱包已锁定。请解锁后重试。",
   "wallet.err.weakPassword": "密码至少需要 8 个字符。",
   "wallet.err.longPassword": "密码太长。",
   "wallet.err.unknownAccount": "此账户已不在钱包中。",

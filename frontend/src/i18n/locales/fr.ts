@@ -7,6 +7,10 @@ const fr: Dict = {
   "nav.collapseSidebar": "Réduire la barre latérale",
   "nav.expandSidebar": "Développer la barre latérale",
   "splash.loading": "Chargement",
+  "lock.title": "Portefeuille verrouillé",
+  "lock.desc": "Saisissez le mot de passe du portefeuille pour le déverrouiller.",
+  "lock.cta": "Déverrouiller",
+  "lock.now": "Verrouiller le portefeuille",
 
   // Hello: the first launch
   "hello.leadNode": "Configurons votre nœud. Cela ne prend qu'une minute.",
@@ -360,7 +364,6 @@ const fr: Dict = {
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Mot de passe du portefeuille",
-  "wallet.walletPasswordHint": "Le mot de passe qui protège chaque compte de ce portefeuille.",
   "wallet.locked.title": "Bienvenue dans Parallax",
   "wallet.locked.desc":
     "Un nœud Parallax complet et un portefeuille dans une seule application. Détenez, envoyez et recevez des LAX via votre propre nœud, sans intermédiaire.",
@@ -379,7 +382,7 @@ const fr: Dict = {
   "wallet.locked.ctaHint": "D'abord, vous définirez le mot de passe du portefeuille.",
   "wallet.setup.title": "Définissez le mot de passe du portefeuille",
   "wallet.setup.desc":
-    "Un seul mot de passe protège chaque compte et chaque phrase de récupération de ce portefeuille. Vous le saisirez à chaque envoi, sauvegarde ou ajout de compte.",
+    "Un seul mot de passe protège chaque compte et chaque phrase de récupération de ce portefeuille. Vous le saisirez pour déverrouiller le portefeuille, puis à nouveau pour afficher une phrase de récupération ou supprimer un compte.",
   "wallet.setup.existingDesc":
     "Ce portefeuille contient déjà des clés. Saisissez le mot de passe avec lequel elles ont été créées : il devient le mot de passe du portefeuille.",
   "wallet.setup.noRecovery":
@@ -393,6 +396,14 @@ const fr: Dict = {
   "wallet.offer.cta": "Créer la phrase de récupération",
   "wallet.security": "Sécurité",
   "wallet.securityDesc": "Protège chaque compte et chaque phrase de récupération de ce portefeuille.",
+  "wallet.autoLock": "Verrouillage automatique",
+  "wallet.autoLockDesc":
+    "Après ce délai sans utiliser l'application. Le portefeuille se verrouille aussi quand l'ordinateur se met en veille.",
+  "wallet.autoLock.minute": "Après 1 minute",
+  "wallet.autoLock.minutes": "Après {n} minutes",
+  "wallet.autoLock.hour": "Après 1 heure",
+  "wallet.autoLock.hours": "Après {n} heures",
+  "wallet.autoLock.never": "Jamais",
 
   // Wallet: passwords
   "wallet.password.new": "Mot de passe",
@@ -407,7 +418,7 @@ const fr: Dict = {
 
   // Wallet: create
   "wallet.create.title": "Créer un compte",
-  "wallet.create.introNext": "Ensuite, vous choisirez un nom et un mot de passe.",
+  "wallet.create.introNext": "Ensuite, vous choisirez un nom.",
   "wallet.create.kindTitle": "Choisir un type",
   "wallet.create.kindDesc": "Comment ce compte doit-il être sauvegardé ?",
   "wallet.create.kind.derive": "Un autre compte depuis une phrase de récupération",
@@ -423,7 +434,7 @@ const fr: Dict = {
   "wallet.create.keyFact1": "Une nouvelle clé",
   "wallet.create.keyFact1Desc":
     "Générée ici à partir de la source aléatoire sécurisée de votre système. C'est elle qui permet de dépenser.",
-  "wallet.create.keyFact2Desc": "La clé est chiffrée avec le mot de passe choisi à la page suivante.",
+  "wallet.create.keyFact2Desc": "La clé est chiffrée avec le mot de passe du portefeuille.",
   "wallet.create.keyNext": "Ensuite, vous enregistrerez un fichier de sauvegarde de la clé.",
   "wallet.create.keyBackupWhy":
     "Avec le fichier et son mot de passe, tout portefeuille compatible peut restaurer le compte. Sans eux, il est irrécupérable.",
@@ -439,8 +450,7 @@ const fr: Dict = {
   "wallet.create.words24Desc":
     "256 bits, comme le font Ledger et Trezor. Deux fois plus à noter, et 12 mots sont déjà bien au-delà de toute devinette. Les deux fonctionnent dans MetaMask et d'autres portefeuilles.",
   "wallet.create.fact2": "Verrouillée par votre mot de passe",
-  "wallet.create.fact2Desc":
-    "La phrase et la clé de votre compte sont chiffrées avec le mot de passe choisi à la page suivante.",
+  "wallet.create.fact2Desc": "La phrase et la clé de votre compte sont chiffrées avec le mot de passe du portefeuille.",
   "wallet.create.fact3": "Conservée sur cet ordinateur",
   "wallet.create.fact3Desc": "Seule la clé chiffrée est stockée, ici. Rien n'est envoyé nulle part.",
   "wallet.create.optional": "Facultatif",
@@ -497,8 +507,8 @@ const fr: Dict = {
   "wallet.import.inWallet": "Déjà dans le portefeuille",
   "wallet.import.more": "Afficher plus",
   "wallet.import.picked": "{n} sélectionné(s)",
-  "wallet.import.passwordLead":
-    "La phrase de récupération et les {n} comptes choisis seront chiffrés avec ce mot de passe sur cet ordinateur. Le nom s'applique au premier compte.",
+  "wallet.import.detailsLead":
+    "La phrase de récupération et les {n} comptes choisis seront chiffrés avec le mot de passe du portefeuille sur cet ordinateur. Le nom s'applique au premier compte.",
   "wallet.import.keyDesc": "La clé brute du compte : 64 caractères hexadécimaux.",
   "wallet.import.keyfile": "Fichier keystore",
   "wallet.import.key": "Clé privée",
@@ -511,7 +521,6 @@ const fr: Dict = {
   "wallet.import.filePasswordHint": "Le mot de passe avec lequel le fichier a été enregistré.",
   "wallet.import.keyLabel": "Clé privée",
   "wallet.import.keyHint": "64 caractères hexadécimaux, avec ou sans 0x.",
-  "wallet.import.reencrypt": "La clé est de nouveau chiffrée avec le mot de passe du portefeuille.",
   "wallet.import.keyWarn":
     "Toute personne ayant vu cette clé peut dépenser les fonds du compte. N'importez qu'une clé restée privée.",
 
@@ -523,8 +532,6 @@ const fr: Dict = {
   "wallet.backup.restore": "Pour restaurer le compte, il vous faudra le {file} et le {password}.",
   "wallet.backup.restore.file": "fichier de sauvegarde",
   "wallet.backup.restore.password": "mot de passe",
-  "wallet.backup.passwordLabel": "Mot de passe du compte",
-  "wallet.backup.passwordHint": "Vérifié avant l'enregistrement, pour être sûr que la sauvegarde s'ouvrira.",
   "wallet.backup.saved": "Sauvegarde enregistrée",
   "wallet.backup.missingTitle": "Ce compte n'a pas de sauvegarde",
   "wallet.backup.missingDesc":
@@ -565,8 +572,6 @@ const fr: Dict = {
   "wallet.add.watchDesc":
     "Seule son adresse est importée : la clé reste sur le signataire hors ligne, qui signe ce que vous en envoyez.",
   "wallet.find.cta": "Trouver des comptes",
-  "wallet.find.desc":
-    "{name} peut contenir plus de comptes que le portefeuille n'en affiche : créés dans un autre portefeuille, ou sur un autre chemin. Le mot de passe du portefeuille l'ouvre pour les chercher.",
   "wallet.find.pathGroup": "Chemin",
   "wallet.find.pathDesc":
     "Les portefeuilles rangent les comptes d'une phrase sur différents chemins. Cherchez sur celui qu'a utilisé l'autre portefeuille : MetaMask, Trezor et la plupart des portefeuilles utilisent Standard.",
@@ -606,7 +611,6 @@ const fr: Dict = {
   "wallet.review.toContract":
     "Le destinataire est un contrat. Il exécute du code lorsqu'il reçoit des LAX ; assurez-vous qu'il est prévu pour cela.",
   "wallet.review.dear": "Ce prix est plus de trois fois supérieur aux {price} suggérés par votre nœud.",
-  "wallet.review.passwordHint": "Déchiffre la clé pour cette seule signature.",
   "wallet.review.cta": "Signer et envoyer",
   "wallet.review.signing": "Signature…",
   "wallet.sent.title": "Envoyé",
@@ -688,6 +692,7 @@ const fr: Dict = {
 
   // Wallet: errors
   "wallet.err.wrongPassword": "Mot de passe incorrect.",
+  "wallet.err.locked": "Le portefeuille est verrouillé. Déverrouillez-le et réessayez.",
   "wallet.err.weakPassword": "Le mot de passe doit comporter au moins 8 caractères.",
   "wallet.err.longPassword": "Le mot de passe est trop long.",
   "wallet.err.unknownAccount": "Ce compte n'est plus dans le portefeuille.",

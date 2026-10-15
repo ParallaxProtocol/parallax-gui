@@ -7,6 +7,10 @@ const de: Dict = {
   "nav.collapseSidebar": "Seitenleiste einklappen",
   "nav.expandSidebar": "Seitenleiste ausklappen",
   "splash.loading": "Lädt",
+  "lock.title": "Wallet gesperrt",
+  "lock.desc": "Geben Sie Ihr Wallet-Passwort ein, um sie zu entsperren.",
+  "lock.cta": "Entsperren",
+  "lock.now": "Wallet sperren",
 
   // Hello: the first launch
   "hello.leadNode": "Richten wir Ihren Node ein. Das dauert nur eine Minute.",
@@ -363,7 +367,6 @@ const de: Dict = {
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Wallet-Passwort",
-  "wallet.walletPasswordHint": "Das Passwort, das jedes Konto in dieser Wallet schützt.",
   "wallet.locked.title": "Willkommen bei Parallax",
   "wallet.locked.desc":
     "Ein vollständiger Parallax-Node und eine Wallet in einer App. Halten, senden und empfangen Sie LAX über Ihren eigenen Node, ohne Dritte dazwischen.",
@@ -382,7 +385,7 @@ const de: Dict = {
   "wallet.locked.ctaHint": "Zuerst legen Sie Ihr Wallet-Passwort fest.",
   "wallet.setup.title": "Wallet-Passwort festlegen",
   "wallet.setup.desc":
-    "Ein einziges Passwort schützt jedes Konto und jede Wiederherstellungsphrase in dieser Wallet. Sie geben es ein, wann immer Sie senden, eine Sicherung erstellen oder ein Konto hinzufügen.",
+    "Ein einziges Passwort schützt jedes Konto und jede Wiederherstellungsphrase in dieser Wallet. Sie geben es ein, um die Wallet zu entsperren, und erneut, um eine Wiederherstellungsphrase anzuzeigen oder ein Konto zu entfernen.",
   "wallet.setup.existingDesc":
     "Diese Wallet enthält bereits Schlüssel. Geben Sie das Passwort ein, mit dem sie erstellt wurden: Es wird zum Wallet-Passwort.",
   "wallet.setup.noRecovery":
@@ -396,6 +399,14 @@ const de: Dict = {
   "wallet.offer.cta": "Wiederherstellungsphrase erstellen",
   "wallet.security": "Sicherheit",
   "wallet.securityDesc": "Schützt jedes Konto und jede Wiederherstellungsphrase in dieser Wallet.",
+  "wallet.autoLock": "Automatisch sperren",
+  "wallet.autoLockDesc":
+    "Nach dieser Zeit ohne Nutzung der App. Die Wallet sperrt sich auch, wenn der Computer in den Ruhezustand wechselt.",
+  "wallet.autoLock.minute": "Nach 1 Minute",
+  "wallet.autoLock.minutes": "Nach {n} Minuten",
+  "wallet.autoLock.hour": "Nach 1 Stunde",
+  "wallet.autoLock.hours": "Nach {n} Stunden",
+  "wallet.autoLock.never": "Nie",
 
   // Wallet: passwords
   "wallet.password.new": "Passwort",
@@ -410,7 +421,7 @@ const de: Dict = {
 
   // Wallet: create
   "wallet.create.title": "Konto erstellen",
-  "wallet.create.introNext": "Als Nächstes wählen Sie einen Namen und ein Passwort.",
+  "wallet.create.introNext": "Als Nächstes wählen Sie einen Namen.",
   "wallet.create.kindTitle": "Typ wählen",
   "wallet.create.kindDesc": "Wie soll dieses Konto gesichert werden?",
   "wallet.create.kind.derive": "Weiteres Konto aus einer Wiederherstellungsphrase",
@@ -426,8 +437,7 @@ const de: Dict = {
   "wallet.create.keyFact1": "Ein neuer Schlüssel",
   "wallet.create.keyFact1Desc":
     "Hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihm können Sie ausgeben.",
-  "wallet.create.keyFact2Desc":
-    "Der Schlüssel wird mit dem Passwort verschlüsselt, das Sie auf der nächsten Seite wählen.",
+  "wallet.create.keyFact2Desc": "Der Schlüssel wird mit Ihrem Wallet-Passwort verschlüsselt.",
   "wallet.create.keyNext": "Als Nächstes speichern Sie eine Sicherungsdatei des Schlüssels.",
   "wallet.create.keyBackupWhy":
     "Mit der Datei und ihrem Passwort kann jede kompatible Wallet das Konto wiederherstellen. Ohne sie ist es nicht wiederherstellbar.",
@@ -444,7 +454,7 @@ const de: Dict = {
     "256 Bit, wie Ledger und Trezor sie erzeugen. Doppelt so viel zum Aufschreiben, und schon 12 Wörter sind weit jenseits des Erratbaren. Beide funktionieren in MetaMask und anderen Wallets.",
   "wallet.create.fact2": "Mit Ihrem Passwort gesperrt",
   "wallet.create.fact2Desc":
-    "Die Phrase und der Schlüssel Ihres Kontos werden mit dem Passwort verschlüsselt, das Sie auf der nächsten Seite wählen.",
+    "Die Phrase und der Schlüssel Ihres Kontos werden mit Ihrem Wallet-Passwort verschlüsselt.",
   "wallet.create.fact3": "Auf diesem Computer aufbewahrt",
   "wallet.create.fact3Desc":
     "Nur der verschlüsselte Schlüssel wird gespeichert, hier. Nichts wird irgendwohin gesendet.",
@@ -502,8 +512,8 @@ const de: Dict = {
   "wallet.import.inWallet": "Bereits in der Wallet",
   "wallet.import.more": "Mehr anzeigen",
   "wallet.import.picked": "{n} ausgewählt",
-  "wallet.import.passwordLead":
-    "Die Wiederherstellungsphrase und die {n} ausgewählten Konten werden auf diesem Computer mit diesem Passwort verschlüsselt. Ihr Name gilt für das erste Konto.",
+  "wallet.import.detailsLead":
+    "Die Wiederherstellungsphrase und die {n} ausgewählten Konten werden auf diesem Computer mit Ihrem Wallet-Passwort verschlüsselt. Ihr Name gilt für das erste Konto.",
   "wallet.import.keyDesc": "Der Rohschlüssel des Kontos: 64 Hexadezimalzeichen.",
   "wallet.import.keyfile": "Keystore-Datei",
   "wallet.import.key": "Privater Schlüssel",
@@ -516,7 +526,6 @@ const de: Dict = {
   "wallet.import.filePasswordHint": "Das Passwort, mit dem die Datei gespeichert wurde.",
   "wallet.import.keyLabel": "Privater Schlüssel",
   "wallet.import.keyHint": "64 Hexadezimalzeichen, mit oder ohne 0x.",
-  "wallet.import.reencrypt": "Der Schlüssel wird mit Ihrem Wallet-Passwort neu verschlüsselt.",
   "wallet.import.keyWarn":
     "Jeder, der diesen Schlüssel gesehen hat, kann Gelder von dem Konto ausgeben. Importieren Sie nur einen Schlüssel, der stets geheim gehalten wurde.",
 
@@ -528,9 +537,6 @@ const de: Dict = {
   "wallet.backup.restore": "Zum Wiederherstellen des Kontos brauchen Sie die {file} und das {password}.",
   "wallet.backup.restore.file": "Sicherungsdatei",
   "wallet.backup.restore.password": "Passwort",
-  "wallet.backup.passwordLabel": "Passwort des Kontos",
-  "wallet.backup.passwordHint":
-    "Wird vor dem Speichern geprüft, damit Sie wissen, dass sich die Sicherung öffnen lässt.",
   "wallet.backup.saved": "Sicherung gespeichert",
   "wallet.backup.missingTitle": "Dieses Konto hat keine Sicherung",
   "wallet.backup.missingDesc":
@@ -571,8 +577,6 @@ const de: Dict = {
   "wallet.add.watchDesc":
     "Nur die Adresse kommt herein: Der Schlüssel bleibt auf dem Offline-Signierer, der signiert, was Sie davon senden.",
   "wallet.find.cta": "Konten finden",
-  "wallet.find.desc":
-    "{name} kann mehr Konten enthalten, als die Wallet zeigt: in einer anderen Wallet oder entlang eines anderen Pfads erstellt. Das Wallet-Passwort öffnet sie, um danach zu suchen.",
   "wallet.find.pathGroup": "Pfad",
   "wallet.find.pathDesc":
     "Wallets legen die Konten einer Phrase entlang verschiedener Pfade ab. Suchen Sie entlang des Pfads, den die andere Wallet verwendet hat: MetaMask, Trezor und die meisten Wallets nutzen Standard.",
@@ -612,7 +616,6 @@ const de: Dict = {
   "wallet.review.toContract":
     "Der Empfänger ist ein Vertrag. Er führt Code aus, wenn er LAX erhält; stellen Sie sicher, dass er dafür vorgesehen ist.",
   "wallet.review.dear": "Dieser Preis ist mehr als dreimal so hoch wie die {price}, die Ihr Node vorschlägt.",
-  "wallet.review.passwordHint": "Entschlüsselt den Schlüssel nur für diese eine Signatur.",
   "wallet.review.cta": "Signieren und senden",
   "wallet.review.signing": "Wird signiert…",
   "wallet.sent.title": "Gesendet",
@@ -694,6 +697,7 @@ const de: Dict = {
 
   // Wallet: errors
   "wallet.err.wrongPassword": "Falsches Passwort.",
+  "wallet.err.locked": "Die Wallet ist gesperrt. Entsperren Sie sie und versuchen Sie es erneut.",
   "wallet.err.weakPassword": "Das Passwort muss mindestens 8 Zeichen lang sein.",
   "wallet.err.longPassword": "Das Passwort ist zu lang.",
   "wallet.err.unknownAccount": "Dieses Konto ist nicht mehr in der Wallet.",

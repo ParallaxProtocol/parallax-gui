@@ -3,6 +3,8 @@
 
 package backend
 
+import "time"
+
 // GUIVersion is the user-facing version of the desktop app: the release
 // being worked towards. Release builds stamp in their git tag instead
 // (Makefile); development builds (make dev) show this.
@@ -152,6 +154,12 @@ type GUIConfig struct {
 	// ClearLogsOnStartup starts each run with an empty log; otherwise the
 	// latest lines are kept across restarts (backend/logfile.go)
 	ClearLogsOnStartup bool `json:"clearLogsOnStartup"`
+
+	// AutoLockMinutes is how long the wallet stays unlocked with nothing
+	// done in the app (session.go): 0 for the default, 15 minutes, which
+	// configs saved before it existed load; -1 for as long as the app runs.
+	// Sleeping or locking the screen locks it either way
+	AutoLockMinutes int `json:"autoLockMinutes"`
 
 	// MCPEnabled serves the node's chain data to AI assistants (Claude Code
 	// and other MCP clients) on 127.0.0.1:MCPPort (mcp.go). Applied at once,
@@ -368,4 +376,20 @@ type UpdateProgress struct {
 	Step    string `json:"step"`
 	Percent int    `json:"percent"` // 0-100 for downloading
 	Detail  string `json:"detail"`
+}
+
+// maxAutoLockMinutes is the longest auto-lock time the app takes: a day.
+const maxAutoLockMinutes = 24 * 60
+
+// AutoLock is how long the wallet stays unlocked with nothing done, 0 for
+// as long as the app runs.
+func (g GUIConfig) AutoLock() time.Duration {
+	switch {
+	case g.AutoLockMinutes < 0:
+		return 0
+	case g.AutoLockMinutes == 0:
+		return DefaultAutoLock
+	default:
+		return time.Duration(g.AutoLockMinutes) * time.Minute
+	}
 }

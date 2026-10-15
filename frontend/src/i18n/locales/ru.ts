@@ -7,6 +7,10 @@ const ru: Dict = {
   "nav.collapseSidebar": "Свернуть боковую панель",
   "nav.expandSidebar": "Развернуть боковую панель",
   "splash.loading": "Загрузка",
+  "lock.title": "Кошелёк заблокирован",
+  "lock.desc": "Введите пароль кошелька, чтобы разблокировать его.",
+  "lock.cta": "Разблокировать",
+  "lock.now": "Заблокировать кошелёк",
 
   // Hello: the first launch
   "hello.leadNode": "Давайте настроим ваш узел. Это займёт всего минуту.",
@@ -359,7 +363,6 @@ const ru: Dict = {
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Пароль кошелька",
-  "wallet.walletPasswordHint": "Пароль, который защищает все аккаунты в этом кошельке.",
   "wallet.locked.title": "Добро пожаловать в Parallax",
   "wallet.locked.desc":
     "Полноценный узел Parallax и кошелёк в одном приложении. Храните, отправляйте и получайте LAX через собственный узел, без посредников.",
@@ -377,7 +380,7 @@ const ru: Dict = {
   "wallet.locked.ctaHint": "Сначала вы зададите пароль кошелька.",
   "wallet.setup.title": "Задайте пароль кошелька",
   "wallet.setup.desc":
-    "Один пароль защищает все аккаунты и фразы восстановления в этом кошельке. Вы будете вводить его при каждой отправке, создании резервной копии или добавлении аккаунта.",
+    "Один пароль защищает все аккаунты и фразы восстановления в этом кошельке. Вы будете вводить его, чтобы разблокировать кошелёк, а также чтобы показать фразу восстановления или удалить аккаунт.",
   "wallet.setup.existingDesc":
     "В этом кошельке уже есть ключи. Введите пароль, с которым они были созданы: он станет паролем кошелька.",
   "wallet.setup.noRecovery":
@@ -391,6 +394,14 @@ const ru: Dict = {
   "wallet.offer.cta": "Создать фразу восстановления",
   "wallet.security": "Безопасность",
   "wallet.securityDesc": "Защищает все аккаунты и фразы восстановления в этом кошельке.",
+  "wallet.autoLock": "Автоблокировка",
+  "wallet.autoLockDesc":
+    "Через это время без использования приложения. Кошелёк также блокируется, когда компьютер уходит в сон.",
+  "wallet.autoLock.minute": "Через 1 минуту",
+  "wallet.autoLock.minutes": "Через {n} мин",
+  "wallet.autoLock.hour": "Через 1 час",
+  "wallet.autoLock.hours": "Через {n} ч",
+  "wallet.autoLock.never": "Никогда",
 
   // Wallet: passwords
   "wallet.password.new": "Пароль",
@@ -405,7 +416,7 @@ const ru: Dict = {
 
   // Wallet: create
   "wallet.create.title": "Создать аккаунт",
-  "wallet.create.introNext": "Далее вы выберете название и пароль.",
+  "wallet.create.introNext": "Далее вы выберете название.",
   "wallet.create.kindTitle": "Выберите тип",
   "wallet.create.kindDesc": "Как должна храниться резервная копия этого аккаунта?",
   "wallet.create.kind.derive": "Ещё один аккаунт из фразы восстановления",
@@ -421,7 +432,7 @@ const ru: Dict = {
   "wallet.create.keyFact1": "Новый ключ",
   "wallet.create.keyFact1Desc":
     "Создаётся здесь из надёжного источника случайных чисел вашей системы. Именно он позволяет тратить.",
-  "wallet.create.keyFact2Desc": "Ключ шифруется паролем, который вы выберете на следующей странице.",
+  "wallet.create.keyFact2Desc": "Ключ шифруется паролем кошелька.",
   "wallet.create.keyNext": "Далее вы сохраните файл резервной копии ключа.",
   "wallet.create.keyBackupWhy":
     "С файлом и его паролем аккаунт можно восстановить в любом совместимом кошельке. Без них восстановить его невозможно.",
@@ -437,8 +448,7 @@ const ru: Dict = {
   "wallet.create.words24Desc":
     "256 бит, как делают Ledger и Trezor. Вдвое больше записывать, а 12 слов уже далеко за пределами подбора. Оба варианта работают в MetaMask и других кошельках.",
   "wallet.create.fact2": "Защищён вашим паролем",
-  "wallet.create.fact2Desc":
-    "Фраза и ключ вашего аккаунта шифруются паролем, который вы выберете на следующей странице.",
+  "wallet.create.fact2Desc": "Фраза и ключ вашего аккаунта шифруются паролем кошелька.",
   "wallet.create.fact3": "Хранится на этом компьютере",
   "wallet.create.fact3Desc": "Хранится только зашифрованный ключ, здесь. Ничего никуда не отправляется.",
   "wallet.create.optional": "Необязательно",
@@ -494,8 +504,8 @@ const ru: Dict = {
   "wallet.import.inWallet": "Уже в кошельке",
   "wallet.import.more": "Показать ещё",
   "wallet.import.picked": "Выбрано: {n}",
-  "wallet.import.passwordLead":
-    "Фраза восстановления и выбранные аккаунты ({n}) будут зашифрованы этим паролем на этом компьютере. Название получит первый аккаунт.",
+  "wallet.import.detailsLead":
+    "Фраза восстановления и выбранные аккаунты ({n}) будут зашифрованы паролем кошелька на этом компьютере. Название получит первый аккаунт.",
   "wallet.import.keyDesc": "Необработанный ключ аккаунта: 64 шестнадцатеричных символа.",
   "wallet.import.keyfile": "Файл keystore",
   "wallet.import.key": "Закрытый ключ",
@@ -508,7 +518,6 @@ const ru: Dict = {
   "wallet.import.filePasswordHint": "Пароль, с которым был сохранён файл.",
   "wallet.import.keyLabel": "Закрытый ключ",
   "wallet.import.keyHint": "64 шестнадцатеричных символа, с 0x или без.",
-  "wallet.import.reencrypt": "Ключ будет заново зашифрован паролем кошелька.",
   "wallet.import.keyWarn":
     "Любой, кто видел этот ключ, может тратить средства с аккаунта. Импортируйте только ключ, который всегда хранился в тайне.",
 
@@ -520,8 +529,6 @@ const ru: Dict = {
   "wallet.backup.restore": "Чтобы восстановить аккаунт, понадобятся {file} и {password}.",
   "wallet.backup.restore.file": "файл копии",
   "wallet.backup.restore.password": "пароль",
-  "wallet.backup.passwordLabel": "Пароль аккаунта",
-  "wallet.backup.passwordHint": "Проверяется перед сохранением, чтобы вы знали, что копия откроется.",
   "wallet.backup.saved": "Резервная копия сохранена",
   "wallet.backup.missingTitle": "У этого аккаунта нет резервной копии",
   "wallet.backup.missingDesc":
@@ -562,8 +569,6 @@ const ru: Dict = {
   "wallet.add.watchDesc":
     "Добавляется только адрес: ключ остаётся на офлайн-подписанте, который подписывает то, что вы с него отправляете.",
   "wallet.find.cta": "Найти счета",
-  "wallet.find.desc":
-    "В «{name}» может быть больше счетов, чем показывает кошелёк: созданных в другом кошельке или по другому пути. Пароль кошелька открывает фразу, чтобы найти их.",
   "wallet.find.pathGroup": "Путь",
   "wallet.find.pathDesc":
     "Кошельки хранят счета фразы по разным путям. Ищите по тому, что использовал другой кошелёк: MetaMask, Trezor и большинство кошельков используют стандартный.",
@@ -603,7 +608,6 @@ const ru: Dict = {
   "wallet.review.toContract":
     "Получатель — контракт. При получении LAX он выполняет код; убедитесь, что он для этого предназначен.",
   "wallet.review.dear": "Эта цена более чем втрое выше {price}, предлагаемых вашим узлом.",
-  "wallet.review.passwordHint": "Расшифровывает ключ только для этой подписи.",
   "wallet.review.cta": "Подписать и отправить",
   "wallet.review.signing": "Подпись…",
   "wallet.sent.title": "Отправлено",
@@ -684,6 +688,7 @@ const ru: Dict = {
 
   // Wallet: errors
   "wallet.err.wrongPassword": "Неверный пароль.",
+  "wallet.err.locked": "Кошелёк заблокирован. Разблокируйте его и попробуйте снова.",
   "wallet.err.weakPassword": "Пароль должен содержать не менее 8 символов.",
   "wallet.err.longPassword": "Пароль слишком длинный.",
   "wallet.err.unknownAccount": "Этого аккаунта больше нет в кошельке.",

@@ -24,6 +24,7 @@ func TestWalletUnderRuntimeSecret(t *testing.T) {
 		"seedLifecycle":  TestSeedLifecycle,
 		"scanSeed":       TestScanSeed,
 		"send":           TestWalletSendThroughNode,
+		"session":        TestSessionUnlockLock,
 	} {
 		t.Run(name, func(t *testing.T) { secret.Do(func() { test(t) }) })
 	}

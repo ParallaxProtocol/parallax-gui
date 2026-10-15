@@ -46,7 +46,7 @@ export function NameField({ value, onChange }: { value: string; onChange: (v: st
 
 type AccountModalProps = { open: boolean; onClose: () => void; account: WalletAccount | null; label: string };
 
-/** BackupModal saves an account's keystore file, once its password proves it opens. */
+/** BackupModal saves an account's keystore file, encrypted with the wallet password. */
 export function BackupModal({ open, onClose, account, label }: AccountModalProps) {
   const t = useT();
   return (
@@ -65,18 +65,15 @@ export function BackupModal({ open, onClose, account, label }: AccountModalProps
 function Backup({ account, onClose }: { account: WalletAccount; onClose: () => void }) {
   const t = useT();
   const wallet = useWallet();
-  const [password, setPassword] = useState("");
   const [saved, setSaved] = useState(false);
   const { busy, error, run } = useBusy();
-  useEffect(() => () => setPassword(""), []);
 
   return (
     <ModalForm
       onSubmit={async () => {
-        if (busy || !password || saved) return;
-        const ok = await run(() => backUp(account.address, password));
+        if (busy || saved) return;
+        const ok = await run(() => backUp(account.address));
         if (ok) {
-          setPassword("");
           setSaved(true);
           await wallet.refresh();
         }
@@ -91,7 +88,7 @@ function Backup({ account, onClose }: { account: WalletAccount; onClose: () => v
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               {t("common.cancel")}
             </button>
-            <button type="submit" className="btn btn-primary" disabled={busy || !password}>
+            <button type="submit" className="btn btn-primary" disabled={busy} autoFocus>
               {busy ? <Loader2 className="size-3.5 animate-spin" /> : <FileKey2 className="size-3.5" />}
               {t("wallet.backup.cta")}
             </button>
@@ -128,9 +125,6 @@ function Backup({ account, onClose }: { account: WalletAccount; onClose: () => v
                 })}
               </p>
             </div>
-            <Field label={t("wallet.backup.passwordLabel")} hint={t("wallet.backup.passwordHint")}>
-              {(id) => <PasswordInput id={id} value={password} onChange={setPassword} />}
-            </Field>
           </motion.div>
         )}
       </AnimatePresence>
@@ -334,14 +328,12 @@ function Derive({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) {
   const t = useT();
   const defaultName = useDefaultName();
   const wallet = useWallet();
-  const [password, setPassword] = useState("");
   const { busy, error, run } = useBusy();
-  useEffect(() => () => setPassword(""), []);
   return (
     <ModalForm
       onSubmit={async () => {
-        if (busy || !password) return;
-        const acc = await run(() => api.walletDeriveAccount(seed.id, defaultName, password));
+        if (busy) return;
+        const acc = await run(() => api.walletDeriveAccount(seed.id, defaultName));
         if (acc) {
           await wallet.refresh();
           onClose();
@@ -352,7 +344,7 @@ function Derive({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) {
           <button type="button" className="btn btn-secondary" onClick={onClose}>
             {t("common.cancel")}
           </button>
-          <button type="submit" className="btn btn-primary" disabled={busy || !password}>
+          <button type="submit" className="btn btn-primary" disabled={busy} autoFocus>
             {busy && <Loader2 className="size-3.5 animate-spin" />}
             {t("wallet.create.cta")}
           </button>
@@ -360,9 +352,6 @@ function Derive({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) {
       }
     >
       <p className="text-muted-foreground">{t("wallet.derive.desc")}</p>
-      <Field label={t("wallet.walletPassword")}>
-        {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus />}
-      </Field>
       {error && <Notice tone="critical">{error}</Notice>}
     </ModalForm>
   );

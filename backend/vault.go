@@ -176,6 +176,11 @@ func (w *Wallet) SetupPassword(password string) error {
 		return err
 	}
 	logging.Info("Set the wallet password")
+	// The password just chosen opens the wallet; short of protected memory
+	// it stays locked, for the lock screen to open
+	if err := w.keep(password); err != nil {
+		logging.Warn("Failed to unlock the wallet", "err", err)
+	}
 	return nil
 }
 
@@ -300,6 +305,10 @@ func (w *Wallet) ChangePassword(oldPassword, newPassword string) error {
 		return fmt.Errorf("wallet: changing the password failed partway: %w", err)
 	}
 	logging.Info("Changed the wallet password")
+	// The session keeps the new one from here
+	if err := w.keep(newPassword); err != nil {
+		logging.Warn("Failed to unlock the wallet", "err", err)
+	}
 	return nil
 }
 

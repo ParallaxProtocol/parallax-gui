@@ -93,6 +93,11 @@ func (a *App) startup(ctx context.Context) {
 	if cfg != nil {
 		if a.wallet, err = backend.NewWallet(cfg.Dir(), a.node); err != nil {
 			logging.Error("Failed to open the wallet", "err", err)
+		} else {
+			a.wallet.SetAutoLock(conf.AutoLock())
+			a.wallet.SetLockEmitter(func(locked bool) {
+				a.events.emit("wallet-lock", map[string]bool{"locked": locked})
+			})
 		}
 		if a.contacts, err = backend.OpenContacts(cfg.Dir()); err != nil {
 			logging.Error("Failed to open the contacts", "err", err)
@@ -138,6 +143,9 @@ func (a *App) startup(ctx context.Context) {
 }
 
 func (a *App) shutdown(ctx context.Context) {
+	if a.wallet != nil {
+		a.wallet.Lock()
+	}
 	if a.updater != nil {
 		a.updater.Stop()
 	}
@@ -197,6 +205,9 @@ func (a *App) UpdateConfig(c backend.GUIConfig) error {
 	if a.mcp != nil {
 		a.mcp.Apply(c)
 	}
+	if a.wallet != nil {
+		a.wallet.SetAutoLock(c.AutoLock())
+	}
 	if c.LogLevel != cur.LogLevel {
 		level := c.LogLevel
 		if level == 0 {
@@ -243,8 +254,9 @@ func (a *App) AssistantRequests() []backend.AssistantRequest {
 	return a.mcp.Assistant().Pending()
 }
 
-// AssistantApprove carries out a request; password is the wallet's, for a
-// request that makes an account, and empty otherwise.
+// AssistantApprove carries out a request; password is the wallet's, typed
+// for a request that sends or makes an account even while the wallet is
+// unlocked, and empty otherwise.
 func (a *App) AssistantApprove(id, password string) (backend.AssistantRequest, error) {
 	if a.mcp == nil {
 		return backend.AssistantRequest{}, errors.New("no such request")
@@ -376,35 +388,73 @@ func (a *App) WalletRename(address, name string) error {
 	return w.Rename(address, name)
 }
 
-// WalletCreate makes a new account, its key encrypted with password.
-func (a *App) WalletCreate(name, password string) (backend.WalletAccount, error) {
+// WalletUnlock opens the wallet with its password, for the actions that
+// sign or add keys to use without asking again, until it locks
+// (backend/session.go).
+func (a *App) WalletUnlock(password string) error {
 	w, err := a.walletOrErr()
 	if err != nil {
-		return backend.WalletAccount{}, err
+		return err
 	}
-	return w.Create(name, password)
+	return w.Unlock(password)
+}
+
+// WalletLock locks the wallet: the lock button, and the shell as the
+// system sleeps or its screen locks.
+func (a *App) WalletLock() {
+	if a.wallet != nil {
+		a.wallet.Lock()
+	}
+}
+
+// WalletTouch tells the wallet the user is at the app, putting off its
+// auto-lock.
+func (a *App) WalletTouch() {
+	if a.wallet != nil {
+		a.wallet.Touch()
+	}
+}
+
+// withPassword runs f with the wallet password the unlocked session keeps,
+// for an action that signs or adds a key; backend.ErrLocked while locked.
+func withPassword[T any](a *App, f func(w *backend.Wallet, password string) (T, error)) (T, error) {
+	var out T
+	w, err := a.walletOrErr()
+	if err != nil {
+		return out, err
+	}
+	err = w.WithPassword(func(password string) (err error) {
+		out, err = f(w, password)
+		return err
+	})
+	return out, err
+}
+
+// WalletCreate makes a new account, its key encrypted with the wallet
+// password.
+func (a *App) WalletCreate(name string) (backend.WalletAccount, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.WalletAccount, error) {
+		return w.Create(name, password)
+	})
 }
 
 // WalletImportPrivateKey adds an account from a raw private key in hex.
-func (a *App) WalletImportPrivateKey(name, privateKey, password string) (backend.WalletAccount, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.WalletAccount{}, err
-	}
-	return w.ImportPrivateKey(name, privateKey, password)
+func (a *App) WalletImportPrivateKey(name, privateKey string) (backend.WalletAccount, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.WalletAccount, error) {
+		return w.ImportPrivateKey(name, privateKey, password)
+	})
 }
 
-// WalletImportKeyfile adds an account from a keystore file's contents.
-func (a *App) WalletImportKeyfile(name, keyJSON, filePassword, newPassword string) (backend.WalletAccount, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.WalletAccount{}, err
-	}
-	return w.ImportKeyfile(name, keyJSON, filePassword, newPassword)
+// WalletImportKeyfile adds an account from a keystore file's contents,
+// opened with the file's own password.
+func (a *App) WalletImportKeyfile(name, keyJSON, filePassword string) (backend.WalletAccount, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.WalletAccount, error) {
+		return w.ImportKeyfile(name, keyJSON, filePassword, password)
+	})
 }
 
-// WalletSetupPassword sets the wallet password: the first step, before any
-// account is made or imported.
+// WalletSetupPassword sets the wallet password, the first step before any
+// account is made or imported, and unlocks the wallet with it.
 func (a *App) WalletSetupPassword(password string) error {
 	w, err := a.walletOrErr()
 	if err != nil {
@@ -414,7 +464,7 @@ func (a *App) WalletSetupPassword(password string) error {
 }
 
 // WalletChangePassword encrypts every key and phrase of the wallet under a
-// new password.
+// new password, which the unlocked session keeps from then on.
 func (a *App) WalletChangePassword(oldPassword, newPassword string) error {
 	w, err := a.walletOrErr()
 	if err != nil {
@@ -425,12 +475,10 @@ func (a *App) WalletChangePassword(oldPassword, newPassword string) error {
 
 // WalletCreateSeed makes a recovery phrase (with an optional passphrase)
 // and its first account. The words are returned once, to be written down.
-func (a *App) WalletCreateSeed(name, password, passphrase string) (backend.SeedPhrase, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.SeedPhrase{}, err
-	}
-	return w.CreateSeed(name, password, passphrase)
+func (a *App) WalletCreateSeed(name, passphrase string) (backend.SeedPhrase, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.SeedPhrase, error) {
+		return w.CreateSeed(name, password, passphrase)
+	})
 }
 
 // WalletNewSeedWords makes the words of a new recovery phrase, 12 or 24,
@@ -445,12 +493,10 @@ func (a *App) WalletNewSeedWords(count int) ([]string, error) {
 
 // WalletCreateSeedWords stores a recovery phrase WalletNewSeedWords made,
 // with its passphrase if any, and makes its first account.
-func (a *App) WalletCreateSeedWords(name, words, passphrase, password string, confirmed bool) (backend.WalletAccount, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.WalletAccount{}, err
-	}
-	return w.CreateSeedWords(name, words, passphrase, password, confirmed)
+func (a *App) WalletCreateSeedWords(name, words, passphrase string, confirmed bool) (backend.WalletAccount, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.WalletAccount, error) {
+		return w.CreateSeedWords(name, words, passphrase, password, confirmed)
+	})
 }
 
 // WalletScanSeed lists accounts a recovery phrase holds under a derivation
@@ -466,45 +512,38 @@ func (a *App) WalletScanSeed(words, passphrase, scheme string, from, count uint3
 
 // WalletImportSeed brings a recovery phrase into the wallet, with the
 // accounts picked from a scan of it.
-func (a *App) WalletImportSeed(name, words, passphrase, password string, picks []backend.SeedPick) (backend.WalletAccount, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.WalletAccount{}, err
-	}
-	return w.ImportSeed(name, words, passphrase, password, picks)
+func (a *App) WalletImportSeed(name, words, passphrase string, picks []backend.SeedPick) (backend.WalletAccount, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.WalletAccount, error) {
+		return w.ImportSeed(name, words, passphrase, password, picks)
+	})
 }
 
 // WalletScanWalletSeed lists accounts a recovery phrase the wallet holds
 // has under a derivation scheme, with their balances, for the user to
 // choose from. Nothing is stored.
-func (a *App) WalletScanWalletSeed(seedID, password, scheme string, from, count uint32) ([]backend.SeedCandidate, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return nil, err
-	}
-	return w.ScanWalletSeed(seedID, password, scheme, from, count)
+func (a *App) WalletScanWalletSeed(seedID, scheme string, from, count uint32) ([]backend.SeedCandidate, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) ([]backend.SeedCandidate, error) {
+		return w.ScanWalletSeed(seedID, password, scheme, from, count)
+	})
 }
 
 // WalletAddSeedAccounts makes the accounts picked from a scan of a
 // recovery phrase the wallet holds.
-func (a *App) WalletAddSeedAccounts(seedID, password string, picks []backend.SeedPick) (backend.WalletAccount, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.WalletAccount{}, err
-	}
-	return w.AddSeedAccounts(seedID, password, picks)
+func (a *App) WalletAddSeedAccounts(seedID string, picks []backend.SeedPick) (backend.WalletAccount, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.WalletAccount, error) {
+		return w.AddSeedAccounts(seedID, password, picks)
+	})
 }
 
 // WalletDeriveAccount makes the next account from a recovery phrase.
-func (a *App) WalletDeriveAccount(seedID, name, password string) (backend.WalletAccount, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.WalletAccount{}, err
-	}
-	return w.DeriveAccount(seedID, name, password)
+func (a *App) WalletDeriveAccount(seedID, name string) (backend.WalletAccount, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.WalletAccount, error) {
+		return w.DeriveAccount(seedID, name, password)
+	})
 }
 
-// WalletRevealSeed shows a recovery phrase to its owner.
+// WalletRevealSeed shows a recovery phrase to its owner, who types the
+// password for it even while the wallet is unlocked.
 func (a *App) WalletRevealSeed(seedID, password string) (backend.SeedPhrase, error) {
 	w, err := a.walletOrErr()
 	if err != nil {
@@ -531,7 +570,8 @@ func (a *App) WalletRenameSeed(seedID, name string) error {
 	return w.RenameSeed(seedID, name)
 }
 
-// WalletRemoveSeed deletes a recovery phrase and the accounts made from it.
+// WalletRemoveSeed deletes a recovery phrase and the accounts made from it,
+// with the password typed.
 func (a *App) WalletRemoveSeed(seedID, password string) error {
 	w, err := a.walletOrErr()
 	if err != nil {
@@ -540,14 +580,13 @@ func (a *App) WalletRemoveSeed(seedID, password string) error {
 	return w.RemoveSeed(seedID, password)
 }
 
-// WalletBackup returns an account's encrypted keystore file, once the
-// password opens it. The shell saves it where the user chooses.
-func (a *App) WalletBackup(address, password string) (backend.WalletBackup, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.WalletBackup{}, err
-	}
-	return w.Backup(address, password)
+// WalletBackup returns an account's keystore file, encrypted with the
+// wallet password, which the unlocked session vouches for. The shell
+// saves it where the user chooses.
+func (a *App) WalletBackup(address string) (backend.WalletBackup, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.WalletBackup, error) {
+		return w.Backup(address, password)
+	})
 }
 
 // WalletMarkBackedUp records that the shell saved an account's backup.
@@ -559,7 +598,8 @@ func (a *App) WalletMarkBackedUp(address string) error {
 	return w.MarkBackedUp(address)
 }
 
-// WalletRemove deletes an account's key from this computer.
+// WalletRemove deletes an account's key from this computer, with the
+// password typed.
 func (a *App) WalletRemove(address, password string) error {
 	w, err := a.walletOrErr()
 	if err != nil {
@@ -588,14 +628,12 @@ func (a *App) WalletQuote(from, to, valueWei, gasPriceWei string) (backend.SendQ
 	return w.Quote(from, to, valueWei, gasPriceWei)
 }
 
-// WalletSend signs a confirmed send with the account's password and hands
-// it to the node.
+// WalletSend signs a confirmed send and hands it to the node.
 func (a *App) WalletSend(req backend.SendRequest) (backend.SentTx, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.SentTx{}, err
-	}
-	tx, err := w.Send(req)
+	tx, err := withPassword(a, func(w *backend.Wallet, password string) (backend.SentTx, error) {
+		req.Password = password
+		return w.Send(req)
+	})
 	if err == nil && a.contacts != nil {
 		a.contacts.SentTo(req.To)
 	}
@@ -613,14 +651,13 @@ func (a *App) WalletQuoteReplace(from, hash, kind string) (backend.ReplaceQuote,
 	return w.QuoteReplace(from, hash, kind)
 }
 
-// WalletReplace signs a confirmed speed-up or cancel with the account's
-// password and hands it to the node.
+// WalletReplace signs a confirmed speed-up or cancel and hands it to the
+// node.
 func (a *App) WalletReplace(req backend.ReplaceRequest) (backend.SentTx, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.SentTx{}, err
-	}
-	return w.Replace(req)
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.SentTx, error) {
+		req.Password = password
+		return w.Replace(req)
+	})
 }
 
 // DevSetHold holds the development chain's blocks back, or lets it seal
@@ -723,12 +760,10 @@ func (a *App) OfflineReviewRequest(data string) (backend.RequestReview, error) {
 }
 
 // OfflineSignRequest signs a signing request on the signer.
-func (a *App) OfflineSignRequest(data, password string) (backend.SignedOffline, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.SignedOffline{}, err
-	}
-	return w.SignRequest(data, password)
+func (a *App) OfflineSignRequest(data string) (backend.SignedOffline, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.SignedOffline, error) {
+		return w.SignRequest(data, password)
+	})
 }
 
 // ---------------------------------------------------------------------------
@@ -736,12 +771,10 @@ func (a *App) OfflineSignRequest(data, password string) (backend.SignedOffline, 
 // ---------------------------------------------------------------------------
 
 // MessageSign signs a message with one of the wallet's keys.
-func (a *App) MessageSign(address, message, password string) (backend.SignedMessage, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.SignedMessage{}, err
-	}
-	return w.SignMessage(address, message, password)
+func (a *App) MessageSign(address, message string) (backend.SignedMessage, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.SignedMessage, error) {
+		return w.SignMessage(address, message, password)
+	})
 }
 
 // MessageVerify checks a signature; it needs no wallet.
@@ -769,12 +802,10 @@ func (a *App) MessageReviewRequest(data string) (backend.MessageRequest, error) 
 }
 
 // MessageSignRequest signs a message signing request on the signer.
-func (a *App) MessageSignRequest(data, password string) (backend.SignedMessage, error) {
-	w, err := a.walletOrErr()
-	if err != nil {
-		return backend.SignedMessage{}, err
-	}
-	return w.SignMessageRequest(data, password)
+func (a *App) MessageSignRequest(data string) (backend.SignedMessage, error) {
+	return withPassword(a, func(w *backend.Wallet, password string) (backend.SignedMessage, error) {
+		return w.SignMessageRequest(data, password)
+	})
 }
 
 // MessageReviewSigned checks a signed message brought back from a signer.

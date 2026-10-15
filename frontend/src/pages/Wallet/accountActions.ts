@@ -72,11 +72,11 @@ export function useNamePicks(): (picks: SeedPick[], typed: string) => SeedPick[]
 }
 
 /**
- * backUp saves an account's keystore file where the user picks, once the
- * password opens it, and records it as backed up. False if they cancelled.
+ * backUp saves an account's keystore file where the user picks, and
+ * records it as backed up. False if they cancelled.
  */
-export async function backUp(address: string, password: string): Promise<boolean> {
-  const b = await api.walletBackup(address, password);
+export async function backUp(address: string): Promise<boolean> {
+  const b = await api.walletBackup(address);
   const saved = await saveBackup(b.fileName, b.keyfile);
   if (saved) await api.walletMarkBackedUp(address);
   return saved;

@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import { api, WalletInfo } from "./api";
+import { api, onEvent, WalletInfo } from "./api";
 import { WalletContext, type WalletState } from "./wallet";
 
 /**
@@ -16,7 +16,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } catch {
       setInfo(
         (prev) =>
-          prev ?? { accounts: [], selected: "", keystoreDir: "", hasPassword: false, needsSetup: false, seeds: [] },
+          prev ?? {
+            accounts: [],
+            selected: "",
+            keystoreDir: "",
+            hasPassword: false,
+            needsSetup: false,
+            locked: false,
+            seeds: [],
+          },
       );
     }
   }, []);
@@ -26,7 +34,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     // Another tool (parallax-wallet, a file manager) may change the
     // keystore while the app runs: look again now and then
     const id = setInterval(refresh, 15_000);
-    return () => clearInterval(id);
+    // Locking and unlocking (backend/session.go) show at once
+    const off = onEvent("wallet-lock", () => refresh());
+    return () => {
+      clearInterval(id);
+      off();
+    };
   }, [refresh]);
 
   const select = useCallback(

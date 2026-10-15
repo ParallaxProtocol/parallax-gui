@@ -7,6 +7,10 @@ const zhTW: Dict = {
   "nav.collapseSidebar": "收合側邊欄",
   "nav.expandSidebar": "展開側邊欄",
   "splash.loading": "載入中",
+  "lock.title": "錢包已鎖定",
+  "lock.desc": "輸入錢包密碼以解鎖。",
+  "lock.cta": "解鎖",
+  "lock.now": "鎖定錢包",
 
   // Hello: the first launch
   "hello.leadNode": "我們來設定你的節點，只需一分鐘。",
@@ -351,7 +355,6 @@ const zhTW: Dict = {
 
   // Wallet: the wallet password
   "wallet.walletPassword": "錢包密碼",
-  "wallet.walletPasswordHint": "保護此錢包中每個帳戶的密碼。",
   "wallet.locked.title": "歡迎使用 Parallax",
   "wallet.locked.desc":
     "一個應用程式中包含完整的 Parallax 節點和錢包。透過您自己的節點持有、傳送和接收 LAX，無需任何第三方。",
@@ -365,7 +368,8 @@ const zhTW: Dict = {
   "wallet.locked.cta": "開始使用",
   "wallet.locked.ctaHint": "首先，您將設定錢包密碼。",
   "wallet.setup.title": "設定錢包密碼",
-  "wallet.setup.desc": "一個密碼即可保護此錢包中的每個帳戶和助記詞。每次傳送、備份或新增帳戶時，您都需要輸入它。",
+  "wallet.setup.desc":
+    "一個密碼即可保護此錢包中的每個帳戶和助記詞。解鎖錢包時需要輸入它，顯示助記詞或移除帳戶時也需要再次輸入。",
   "wallet.setup.existingDesc": "此錢包中已有私鑰。請輸入建立這些私鑰時使用的密碼：它將成為錢包密碼。",
   "wallet.setup.noRecovery":
     "此密碼用於在這台電腦上加密您的私鑰，無法重設，也無法找回。如果遺失，只有您的助記詞和備份檔案才能找回您的帳戶。",
@@ -377,6 +381,13 @@ const zhTW: Dict = {
   "wallet.offer.cta": "建立復原詞組",
   "wallet.security": "安全性",
   "wallet.securityDesc": "保護此錢包中的每個帳戶和助記詞。",
+  "wallet.autoLock": "自動鎖定",
+  "wallet.autoLockDesc": "在這段時間未使用應用程式後鎖定。電腦進入睡眠時，錢包也會鎖定。",
+  "wallet.autoLock.minute": "1 分鐘後",
+  "wallet.autoLock.minutes": "{n} 分鐘後",
+  "wallet.autoLock.hour": "1 小時後",
+  "wallet.autoLock.hours": "{n} 小時後",
+  "wallet.autoLock.never": "永不",
 
   // Wallet: passwords
   "wallet.password.new": "密碼",
@@ -391,7 +402,7 @@ const zhTW: Dict = {
 
   // Wallet: create
   "wallet.create.title": "建立帳戶",
-  "wallet.create.introNext": "接下來，您將設定名稱和密碼。",
+  "wallet.create.introNext": "接下來，您將設定名稱。",
   "wallet.create.kindTitle": "選擇類型",
   "wallet.create.kindDesc": "這個帳戶要如何備份？",
   "wallet.create.kind.derive": "從助記詞產生另一個帳戶",
@@ -406,7 +417,7 @@ const zhTW: Dict = {
   "wallet.create.recommended": "推薦",
   "wallet.create.keyFact1": "一把新金鑰",
   "wallet.create.keyFact1Desc": "在此由系統的安全隨機來源產生。花費資金靠的就是它。",
-  "wallet.create.keyFact2Desc": "金鑰將以您在下一頁設定的密碼加密。",
+  "wallet.create.keyFact2Desc": "金鑰將以錢包密碼加密。",
   "wallet.create.keyNext": "接下來，您將儲存金鑰的備份檔案。",
   "wallet.create.keyBackupWhy": "有了檔案和它的密碼，任何相容的錢包都能還原此帳戶。沒有它們，帳戶將無法找回。",
   "wallet.create.done": "帳戶已建立",
@@ -421,7 +432,7 @@ const zhTW: Dict = {
   "wallet.create.words24Desc":
     "256 位元，與 Ledger 和 Trezor 產生的相同。需要抄寫的內容加倍，而 12 個單字已遠超可被猜中的範圍。兩者都可在 MetaMask 和其他錢包中使用。",
   "wallet.create.fact2": "以您的密碼鎖定",
-  "wallet.create.fact2Desc": "助記詞和您帳戶的金鑰會以您在下一頁設定的密碼加密。",
+  "wallet.create.fact2Desc": "助記詞和您帳戶的金鑰會以錢包密碼加密。",
   "wallet.create.fact3": "保存在這台電腦上",
   "wallet.create.fact3Desc": "這裡只儲存加密後的金鑰，不會傳送到任何地方。",
   "wallet.create.optional": "選填",
@@ -474,7 +485,7 @@ const zhTW: Dict = {
   "wallet.import.inWallet": "已在錢包中",
   "wallet.import.more": "顯示更多",
   "wallet.import.picked": "已選擇 {n} 個",
-  "wallet.import.passwordLead": "助記詞和您選擇的 {n} 個帳戶將在這台電腦上以此密碼加密。名稱將用於第一個帳戶。",
+  "wallet.import.detailsLead": "助記詞和您選擇的 {n} 個帳戶將在這台電腦上以錢包密碼加密。名稱將用於第一個帳戶。",
   "wallet.import.keyDesc": "帳戶的原始私鑰：64 個十六進位字元。",
   "wallet.import.keyfile": "Keystore 檔案",
   "wallet.import.key": "私鑰",
@@ -487,7 +498,6 @@ const zhTW: Dict = {
   "wallet.import.filePasswordHint": "儲存此檔案時使用的密碼。",
   "wallet.import.keyLabel": "私鑰",
   "wallet.import.keyHint": "64 個十六進位字元，有無 0x 皆可。",
-  "wallet.import.reencrypt": "私鑰會以您的錢包密碼重新加密。",
   "wallet.import.keyWarn": "任何看過此私鑰的人都能動用此帳戶的資金。請只匯入一直妥善保密的私鑰。",
 
   // Wallet: backup
@@ -497,8 +507,6 @@ const zhTW: Dict = {
   "wallet.backup.restore": "要還原此帳戶，您需要{file}和{password}。",
   "wallet.backup.restore.file": "備份檔案",
   "wallet.backup.restore.password": "密碼",
-  "wallet.backup.passwordLabel": "帳戶密碼",
-  "wallet.backup.passwordHint": "儲存前會先驗證，確保備份可以開啟。",
   "wallet.backup.saved": "備份已儲存",
   "wallet.backup.missingTitle": "此帳戶沒有備份",
   "wallet.backup.missingDesc": "如果這台電腦遺失或磁碟故障，資金也會跟著遺失。請將 keystore 檔案儲存到安全的地方。",
@@ -532,8 +540,6 @@ const zhTW: Dict = {
   "wallet.add.watch": "觀察地址",
   "wallet.add.watchDesc": "只匯入地址：金鑰保留在離線簽署器上，由它簽署您從該帳戶傳送的交易。",
   "wallet.find.cta": "尋找帳戶",
-  "wallet.find.desc":
-    "{name} 可能包含比錢包顯示更多的帳戶：在其他錢包中或沿其他路徑建立。錢包密碼會開啟它以尋找這些帳戶。",
   "wallet.find.pathGroup": "路徑",
   "wallet.find.pathDesc":
     "錢包會沿不同路徑存放助記詞的帳戶。請沿另一個錢包使用的路徑尋找：MetaMask、Trezor 和大多數錢包使用標準路徑。",
@@ -572,7 +578,6 @@ const zhTW: Dict = {
   "wallet.review.toSelf": "這是傳送到同一個帳戶：只會花費手續費。",
   "wallet.review.toContract": "收款方是一個合約。它在收到 LAX 時會執行程式碼；請確認它確實用於接收 LAX。",
   "wallet.review.dear": "此價格超過您節點建議的 {price} 的三倍。",
-  "wallet.review.passwordHint": "僅為這一次簽署解密私鑰。",
   "wallet.review.cta": "簽署並傳送",
   "wallet.review.signing": "正在簽署…",
   "wallet.sent.title": "已送出",
@@ -646,6 +651,7 @@ const zhTW: Dict = {
 
   // Wallet: errors
   "wallet.err.wrongPassword": "密碼錯誤。",
+  "wallet.err.locked": "錢包已鎖定。請解鎖後再試一次。",
   "wallet.err.weakPassword": "密碼至少需要 8 個字元。",
   "wallet.err.longPassword": "密碼太長。",
   "wallet.err.unknownAccount": "此帳戶已不在錢包中。",

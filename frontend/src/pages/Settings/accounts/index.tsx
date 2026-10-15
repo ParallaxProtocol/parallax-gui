@@ -32,7 +32,7 @@ export function AccountPage({ page, onLeave }: { page: SettingsPage; onLeave: ()
         parent={parent}
         onLeave={onLeave}
       >
-        <FindAccounts seed={seed} password={page.password} first={page.first} onLeave={onLeave} onDone={onLeave} />
+        <FindAccounts seed={seed} onLeave={onLeave} onDone={onLeave} />
       </DrillIn>
     );
   }

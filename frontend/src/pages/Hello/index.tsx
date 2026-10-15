@@ -247,13 +247,19 @@ export default function Hello({
           ) : stage === "password" ? (
             <ChoosePassword key="password" value={password} onChange={setPassword} onNext={() => setStage("confirm")} />
           ) : stage === "confirm" ? (
-            <ConfirmPassword key="confirm" password={password} onDone={() => setStage("offer")} />
+            <ConfirmPassword
+              key="confirm"
+              password={password}
+              onDone={() => {
+                // Set: the wallet is unlocked with it, and nothing here needs it again
+                setPassword("");
+                setStage("offer");
+              }}
+            />
           ) : stage === "offer" ? (
             <Offer
               key="offer"
-              password={password}
               onMade={(made) => {
-                setPassword("");
                 setPhrase(made);
                 setStage("phrase");
               }}
@@ -278,7 +284,6 @@ export default function Hello({
               key="importAccounts"
               words={words}
               passphrase={passphrase}
-              password={password}
               found={found}
               setFound={setFound}
               picked={picked}
@@ -602,14 +607,12 @@ function ConfirmPassword({ password, onDone }: { password: string; onDone: () =>
 
 /**
  * Offer comes right after the password: a recovery phrase is next, made
- * here with the password just set, or one the user already has, imported.
+ * here under the password just set, or one the user already has, imported.
  */
 function Offer({
-  password,
   onMade,
   onImport,
 }: {
-  password: string;
   onMade: (phrase: { seedId: string; words: string[] }) => void;
   onImport: () => void;
 }) {
@@ -630,7 +633,7 @@ function Offer({
             setBusy(true);
             setError(null);
             try {
-              const made = await api.walletCreateSeed(defaultName, password, "");
+              const made = await api.walletCreateSeed(defaultName, "");
               onMade({ seedId: made.seedId, words: made.words });
             } catch (e) {
               setError(walletError(e, t));
@@ -726,7 +729,6 @@ function ImportPhrase({
 function ImportAccounts({
   words,
   passphrase,
-  password,
   found,
   setFound,
   picked,
@@ -735,7 +737,6 @@ function ImportAccounts({
 }: {
   words: string;
   passphrase: string;
-  password: string;
   found: Found;
   setFound: React.Dispatch<React.SetStateAction<Found>>;
   picked: Set<string>;
@@ -796,7 +797,7 @@ function ImportAccounts({
             setBusy(true);
             setError(null);
             try {
-              await api.walletImportSeed("", words, passphrase, password, namePicks(picks, ""));
+              await api.walletImportSeed("", words, passphrase, namePicks(picks, ""));
               onImported();
             } catch (e) {
               setError(walletError(e, t));

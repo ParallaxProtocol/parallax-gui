@@ -141,6 +141,8 @@ export type GUIConfig = {
   notifications: boolean;
   /** Start each run with an empty log; otherwise the latest lines are kept across restarts. */
   clearLogsOnStartup: boolean;
+  /** Minutes the wallet stays unlocked with nothing done: 0 for the default (15), -1 for as long as the app runs. */
+  autoLockMinutes: number;
 
   /** Serve the node's chain data to AI assistants (MCP) on 127.0.0.1; applied at once. */
   mcpEnabled: boolean;
@@ -396,6 +398,8 @@ export type WalletInfo = {
   /** The wallet password is set; needsSetup when the keystore has keys but no password yet. */
   hasPassword: boolean;
   needsSetup: boolean;
+  /** The wallet has a password and isn't unlocked: the lock screen shows (backend/session.go). */
+  locked: boolean;
   /** The recovery phrases, in the order they were added. */
   seeds: SeedInfo[];
 };
@@ -457,7 +461,6 @@ export type SendRequest = {
   valueWei: string;
   gasPriceWei: string;
   gasLimit: number;
-  password: string;
 };
 
 export type SentTx = { hash: string; nonce: number };
@@ -490,7 +493,6 @@ export type ReplaceRequest = {
   hash: string;
   kind: ReplaceKind;
   gasPriceWei: string;
-  password: string;
 };
 
 /** A transfer as both sides of offline signing show it (backend/offline.go). Amounts are decimal wei. */
@@ -596,6 +598,7 @@ export type ContactsImport = { added: number; skipped: number; invalid: number; 
  */
 const WALLET_ERRORS: Record<string, string> = {
   "wallet: wrong password": "wallet.err.wrongPassword",
+  "wallet: the wallet is locked": "wallet.err.locked",
   "wallet: the password must be at least 8 characters": "wallet.err.weakPassword",
   "wallet: the password must be at most 1024 characters": "wallet.err.longPassword",
   "wallet: no such account in this wallet": "wallet.err.unknownAccount",
@@ -849,38 +852,42 @@ export const api = {
   recentBlocks: (n: number) => call<BlockView[]>("RecentBlocks", n),
   recentTransactions: (n: number) => call<TxView[]>("RecentTransactions", n),
 
-  // Wallet. Passwords travel to the backend only, for the one action they're given for
+  // Wallet. The password travels to the backend only: to unlock the wallet,
+  // which keeps it for the actions that sign or add keys until it locks
+  // (backend/session.go), and for the few that ask for it again
   walletInfo: () => call<WalletInfo>("WalletInfo"),
+  walletUnlock: (password: string) => call<void>("WalletUnlock", password),
+  walletLock: () => call<void>("WalletLock"),
+  /** The user is at the app: puts off the auto-lock. */
+  walletTouch: () => call<void>("WalletTouch"),
   walletSelect: (address: string) => call<void>("WalletSelect", address),
   walletRename: (address: string, name: string) => call<void>("WalletRename", address, name),
-  walletCreate: (name: string, password: string) => call<WalletAccount>("WalletCreate", name, password),
-  walletImportPrivateKey: (name: string, key: string, password: string) =>
-    call<WalletAccount>("WalletImportPrivateKey", name, key, password),
-  walletImportKeyfile: (name: string, keyJSON: string, filePassword: string, password: string) =>
-    call<WalletAccount>("WalletImportKeyfile", name, keyJSON, filePassword, password),
+  walletCreate: (name: string) => call<WalletAccount>("WalletCreate", name),
+  walletImportPrivateKey: (name: string, key: string) => call<WalletAccount>("WalletImportPrivateKey", name, key),
+  /** filePassword is the keystore file's own. */
+  walletImportKeyfile: (name: string, keyJSON: string, filePassword: string) =>
+    call<WalletAccount>("WalletImportKeyfile", name, keyJSON, filePassword),
   walletSetupPassword: (password: string) => call<void>("WalletSetupPassword", password),
   walletChangePassword: (oldPassword: string, newPassword: string) =>
     call<void>("WalletChangePassword", oldPassword, newPassword),
-  walletCreateSeed: (name: string, password: string, passphrase: string) =>
-    call<SeedPhrase>("WalletCreateSeed", name, password, passphrase),
+  walletCreateSeed: (name: string, passphrase: string) => call<SeedPhrase>("WalletCreateSeed", name, passphrase),
   walletNewSeedWords: (count: 12 | 24) => call<string[]>("WalletNewSeedWords", count),
-  walletCreateSeedWords: (name: string, words: string, passphrase: string, password: string, confirmed: boolean) =>
-    call<WalletAccount>("WalletCreateSeedWords", name, words, passphrase, password, confirmed),
+  walletCreateSeedWords: (name: string, words: string, passphrase: string, confirmed: boolean) =>
+    call<WalletAccount>("WalletCreateSeedWords", name, words, passphrase, confirmed),
   walletScanSeed: (words: string, passphrase: string, scheme: SeedScheme, from: number, count: number) =>
     call<SeedCandidate[]>("WalletScanSeed", words, passphrase, scheme, from, count),
-  walletImportSeed: (name: string, words: string, passphrase: string, password: string, picks: SeedPick[]) =>
-    call<WalletAccount>("WalletImportSeed", name, words, passphrase, password, picks),
-  walletScanWalletSeed: (seedId: string, password: string, scheme: SeedScheme, from: number, count: number) =>
-    call<SeedCandidate[]>("WalletScanWalletSeed", seedId, password, scheme, from, count),
-  walletAddSeedAccounts: (seedId: string, password: string, picks: SeedPick[]) =>
-    call<WalletAccount>("WalletAddSeedAccounts", seedId, password, picks),
-  walletDeriveAccount: (seedId: string, name: string, password: string) =>
-    call<WalletAccount>("WalletDeriveAccount", seedId, name, password),
+  walletImportSeed: (name: string, words: string, passphrase: string, picks: SeedPick[]) =>
+    call<WalletAccount>("WalletImportSeed", name, words, passphrase, picks),
+  walletScanWalletSeed: (seedId: string, scheme: SeedScheme, from: number, count: number) =>
+    call<SeedCandidate[]>("WalletScanWalletSeed", seedId, scheme, from, count),
+  walletAddSeedAccounts: (seedId: string, picks: SeedPick[]) =>
+    call<WalletAccount>("WalletAddSeedAccounts", seedId, picks),
+  walletDeriveAccount: (seedId: string, name: string) => call<WalletAccount>("WalletDeriveAccount", seedId, name),
   walletRevealSeed: (seedId: string, password: string) => call<SeedPhrase>("WalletRevealSeed", seedId, password),
   walletConfirmSeed: (seedId: string) => call<void>("WalletConfirmSeed", seedId),
   walletRenameSeed: (seedId: string, name: string) => call<void>("WalletRenameSeed", seedId, name),
   walletRemoveSeed: (seedId: string, password: string) => call<void>("WalletRemoveSeed", seedId, password),
-  walletBackup: (address: string, password: string) => call<WalletBackup>("WalletBackup", address, password),
+  walletBackup: (address: string) => call<WalletBackup>("WalletBackup", address),
   walletMarkBackedUp: (address: string) => call<void>("WalletMarkBackedUp", address),
   walletRemove: (address: string, password: string) => call<void>("WalletRemove", address, password),
   walletSummary: (address: string) => call<AddressView>("WalletSummary", address),
@@ -895,15 +902,14 @@ export const api = {
   offlineReviewSigned: (data: string) => call<SignedReview>("OfflineReviewSigned", data),
   offlineBroadcast: (data: string) => call<SentTx>("OfflineBroadcast", data),
   offlineReviewRequest: (data: string) => call<RequestReview>("OfflineReviewRequest", data),
-  offlineSignRequest: (data: string, password: string) => call<SignedOffline>("OfflineSignRequest", data, password),
-  messageSign: (address: string, message: string, password: string) =>
-    call<SignedMessage>("MessageSign", address, message, password),
+  offlineSignRequest: (data: string) => call<SignedOffline>("OfflineSignRequest", data),
+  messageSign: (address: string, message: string) => call<SignedMessage>("MessageSign", address, message),
   messageVerify: (address: string, message: string, signature: string) =>
     call<MessageCheck>("MessageVerify", address, message, signature),
   messageBuildRequest: (address: string, message: string) =>
     call<MessageRequest>("MessageBuildRequest", address, message),
   messageReviewRequest: (data: string) => call<MessageRequest>("MessageReviewRequest", data),
-  messageSignRequest: (data: string, password: string) => call<SignedMessage>("MessageSignRequest", data, password),
+  messageSignRequest: (data: string) => call<SignedMessage>("MessageSignRequest", data),
   messageReviewSigned: (data: string) => call<SignedMessage & MessageCheck>("MessageReviewSigned", data),
   contacts: () => call<Contact[]>("Contacts"),
   contactAdd: (c: ContactInput) => call<Contact>("ContactAdd", c),

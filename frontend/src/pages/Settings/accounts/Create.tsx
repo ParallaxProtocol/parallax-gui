@@ -13,16 +13,14 @@ import { backUp, useBusy, useDefaultName } from "../../Wallet/accountActions";
 import { PhraseGrid, PhraseQuiz, PhraseWarning } from "../../Wallet/Phrase";
 import { Group } from "../fields";
 import { FieldRow, SettingsFlow, Step, StepFooter, ToggleRow } from "./flow";
-import { UnlockModal } from "./common";
 
 /**
  * Making accounts from Settings' Accounts section, chosen on its Create
  * accounts page: a new recovery phrase, or a single key, each step laid
  * out as a Settings section. The account takes the next Account N (renamed
- * in the list), and the wallet password is asked for in a modal as the
- * account is made. Each ends back in the list with the new account
- * selected. Passwords and words stay in the page's own state and are gone
- * once it is left.
+ * in the list), encrypted with the unlocked wallet's password. Each ends
+ * back in the list with the new account selected. Words and passphrases
+ * stay in the page's own state and are gone once it is left.
  */
 
 type PhraseStage = "intro" | "phrase" | "confirm" | "passphrase";
@@ -32,8 +30,8 @@ type PhraseStage = "intro" | "phrase" | "confirm" | "passphrase";
  * happen, the words to write down, three of them typed back to prove it,
  * then an optional passphrase on top of them, the phrase understood by
  * then. Leaving the words for later skips the typing back, not the
- * passphrase: the phrase is then stored as not yet confirmed. Nothing is stored until the last step, when the wallet password
- * is asked for; leaving before leaves nothing behind.
+ * passphrase: the phrase is then stored as not yet confirmed. Nothing is
+ * stored until the last step; leaving before leaves nothing behind.
  */
 export function CreateWallet({ lead, onBack, onDone }: { lead: string; onBack: () => void; onDone: () => void }) {
   const t = useT();
@@ -47,7 +45,6 @@ export function CreateWallet({ lead, onBack, onDone }: { lead: string; onBack: (
   const [passphrase, setPassphrase] = useState("");
   // Whether the words were typed back, or left for later (the quiz skipped)
   const [confirmed, setConfirmed] = useState(false);
-  const [asking, setAsking] = useState(false);
   const { busy, error, run } = useBusy();
 
   // The words live here only while the page shows
@@ -67,23 +64,15 @@ export function CreateWallet({ lead, onBack, onDone }: { lead: string; onBack: (
     t("wallet.passphrase.label"),
   ];
   const pass = advanced ? passphrase : "";
-
-  const modal = (
-    <UnlockModal
-      open={asking}
-      title={t("wallet.create.cta")}
-      desc={t("wallet.walletPasswordHint")}
-      icon={<ScrollText className="size-4" />}
-      cta={t("wallet.create.cta")}
-      onClose={() => setAsking(false)}
-      onUnlock={async (password) => {
-        await api.walletCreateSeedWords(defaultName, words.join(" "), pass, password, confirmed);
-        setWords([]);
-        await wallet.refresh();
-        onDone();
-      }}
-    />
-  );
+  const create = async () => {
+    if (busy || (advanced && !passphrase)) return;
+    const acc = await run(() => api.walletCreateSeedWords(defaultName, words.join(" "), pass, confirmed));
+    if (acc) {
+      setWords([]);
+      await wallet.refresh();
+      onDone();
+    }
+  };
 
   if (stage === "intro") {
     return (
@@ -176,7 +165,7 @@ export function CreateWallet({ lead, onBack, onDone }: { lead: string; onBack: (
 
   return (
     <SettingsFlow title={t("wallet.passphrase.label")} steps={steps} current={4} skipped={confirmed ? undefined : [3]}>
-      <Step onSubmit={() => (!advanced || passphrase) && setAsking(true)}>
+      <Step onSubmit={create}>
         <Group title={t("wallet.passphrase.label")}>
           <Rows>
             <ToggleRow
@@ -200,62 +189,51 @@ export function CreateWallet({ lead, onBack, onDone }: { lead: string; onBack: (
             </AnimatePresence>
           </Rows>
           {advanced && passphrase && <Notice tone="info">{t("wallet.passphrase.remember")}</Notice>}
+          {error && <Notice tone="critical">{error}</Notice>}
         </Group>
         {/* Back to where it came from: the quiz, or the words it skipped */}
         <StepFooter onBack={() => setStage(confirmed ? "confirm" : "phrase")}>
-          <button type="submit" className="btn btn-primary" disabled={advanced && !passphrase}>
+          <button type="submit" className="btn btn-primary" disabled={busy || (advanced && !passphrase)}>
+            {busy && <Loader2 className="size-3.5 animate-spin" />}
             {t("wallet.create.cta")}
           </button>
         </StepFooter>
       </Step>
-      {modal}
     </SettingsFlow>
   );
 }
 
 /**
  * CreateKey makes a single account with a key of its own: what will happen,
- * then, the wallet password given, the account, and its backup, its
- * keystore file.
+ * then the account, and its backup, its keystore file.
  */
 export function CreateKey({ lead, onBack, onDone }: { lead: string; onBack: () => void; onDone: () => void }) {
   const t = useT();
   const wallet = useWallet();
   const defaultName = useDefaultName();
-  const [asking, setAsking] = useState(false);
-  const [password, setPassword] = useState("");
   const [created, setCreated] = useState<WalletAccount | null>(null);
   const [saved, setSaved] = useState(false);
   const { busy, error, run } = useBusy();
 
-  // Kept only so the backup right after needn't ask again
-  useEffect(() => () => setPassword(""), []);
-
   const steps = [lead, t("wallet.create.step.intro"), t("wallet.create.step.backup")];
-  const done = () => {
-    setPassword("");
-    onDone();
-  };
+  const done = onDone;
 
   if (!created) {
     return (
       <SettingsFlow title={t("wallet.create.step.intro")} steps={steps} current={1}>
-        <CreateIntro kind="key" onBack={onBack} onContinue={() => setAsking(true)} />
-        <UnlockModal
-          open={asking}
-          title={t("wallet.create.cta")}
-          desc={t("wallet.walletPasswordHint")}
-          icon={<KeyRound className="size-4" />}
-          cta={t("wallet.create.cta")}
-          onClose={() => setAsking(false)}
-          onUnlock={async (pass) => {
-            const acc = await api.walletCreate(defaultName, pass);
-            setPassword(pass);
-            setAsking(false);
-            setCreated(acc);
-            await wallet.refresh();
+        <CreateIntro
+          kind="key"
+          busy={busy}
+          onBack={onBack}
+          onContinue={async () => {
+            const acc = await run(() => api.walletCreate(defaultName));
+            if (acc) {
+              setCreated(acc);
+              await wallet.refresh();
+            }
           }}
         />
+        {error && <Notice tone="critical">{error}</Notice>}
       </SettingsFlow>
     );
   }
@@ -290,9 +268,8 @@ export function CreateKey({ lead, onBack, onDone }: { lead: string; onBack: () =
                   className="btn btn-tinted btn-sm"
                   disabled={busy}
                   onClick={async () => {
-                    const ok = await run(() => backUp(created.address, password));
+                    const ok = await run(() => backUp(created.address));
                     if (ok) {
-                      setPassword("");
                       setSaved(true);
                       await wallet.refresh();
                     }

@@ -47,6 +47,7 @@ import SettingsSheet, {
 } from "./components/shell/SettingsSheet";
 import { NotificationsProvider } from "./lib/notifications";
 import AssistantBar from "./components/shell/AssistantBar";
+import { LockGate } from "./components/shell/LockScreen";
 import { AssistantProvider } from "./lib/assistant";
 import { ContactsProvider } from "./lib/ContactsProvider";
 import { OfflineMode, useOfflineMode } from "./lib/offline";
@@ -171,19 +172,22 @@ export default function App() {
                       <SettingsSheetProvider>
                         <AssistantProvider enabled={!offline}>
                           <DesktopBehaviors {...desktop} />
-                          {/* The sidebar and the page run the window's whole height, the
-                            node's bar floating over their foot: the sidebar keeps room for
-                            it, the page scrolls on beneath it */}
-                          <div className="flex h-full">
-                            <Sidebar />
-                            <div className="flex min-w-0 flex-1 flex-col bg-background">
-                              <TopBar />
-                              <RoutedContent animate={!animationsDisabled} />
+                          {/* The whole window, behind the lock screen while the wallet is locked */}
+                          <LockGate>
+                            {/* The sidebar and the page run the window's whole height, the
+                              node's bar floating over their foot: the sidebar keeps room for
+                              it, the page scrolls on beneath it */}
+                            <div className="flex h-full">
+                              <Sidebar />
+                              <div className="flex min-w-0 flex-1 flex-col bg-background">
+                                <TopBar />
+                                <RoutedContent animate={!animationsDisabled} />
+                              </div>
                             </div>
-                          </div>
-                          <SettingsSheet />
-                          {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
-                          {!offline && <AssistantBar />}
+                            <SettingsSheet />
+                            {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
+                            {!offline && <AssistantBar />}
+                          </LockGate>
                         </AssistantProvider>
                       </SettingsSheetProvider>
                     </SidebarProvider>
@@ -227,9 +231,9 @@ function RoutedContent({ animate }: { animate: boolean }) {
           path="/"
           element={
             offline ? (
-              <Unlocked>
+              <WithPassword>
                 <SignerHome />
-              </Unlocked>
+              </WithPassword>
             ) : (
               <WalletPage />
             )
@@ -241,26 +245,26 @@ function RoutedContent({ animate }: { animate: boolean }) {
             offline ? (
               <Navigate to="/sign" replace />
             ) : (
-              <Unlocked>
+              <WithPassword>
                 <SendPage />
-              </Unlocked>
+              </WithPassword>
             )
           }
         />
         <Route
           path="/receive"
           element={
-            <Unlocked>
+            <WithPassword>
               <ReceivePage />
-            </Unlocked>
+            </WithPassword>
           }
         />
         <Route
           path="/contacts"
           element={
-            <Unlocked>
+            <WithPassword>
               <ContactsPage />
-            </Unlocked>
+            </WithPassword>
           }
         />
         <Route path="/accounts" element={<OpenSettings section="accounts" />} />
@@ -269,34 +273,34 @@ function RoutedContent({ animate }: { animate: boolean }) {
         <Route
           path="/accounts/watch"
           element={
-            <Unlocked>
+            <WithPassword>
               <AddWatchOnlyPage />
-            </Unlocked>
+            </WithPassword>
           }
         />
         <Route
           path="/messages/sign"
           element={
-            <Unlocked>
+            <WithPassword>
               <SignMessagePage />
-            </Unlocked>
+            </WithPassword>
           }
         />
         <Route
           path="/messages/verify"
           element={
-            <Unlocked>
+            <WithPassword>
               <VerifyMessagePage />
-            </Unlocked>
+            </WithPassword>
           }
         />
         <Route path="/messages" element={<Navigate to="/messages/sign" replace />} />
         <Route
           path="/sign"
           element={
-            <Unlocked>
+            <WithPassword>
               <SignPage />
-            </Unlocked>
+            </WithPassword>
           }
         />
         <Route
@@ -305,9 +309,9 @@ function RoutedContent({ animate }: { animate: boolean }) {
             offline ? (
               <Navigate to="/" replace />
             ) : (
-              <Unlocked>
+              <WithPassword>
                 <BroadcastPage />
-              </Unlocked>
+              </WithPassword>
             )
           }
         />
@@ -382,8 +386,8 @@ function OpenSettings({ section }: { section?: SettingsSection }) {
   return <Navigate to="/" replace />;
 }
 
-/** Unlocked shows a wallet page once the wallet has its password, and Welcome until then. */
-function Unlocked({ children }: { children: ReactNode }) {
+/** WithPassword shows a wallet page once the wallet has its password, and Welcome until then. */
+function WithPassword({ children }: { children: ReactNode }) {
   const { info } = useWallet();
   if (info && !info.hasPassword) return <Navigate to="/" replace />;
   return <>{children}</>;

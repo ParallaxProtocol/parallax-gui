@@ -58,7 +58,7 @@ export function CreateIntro({
  * account is made or imported: typed twice, its strength shown and its
  * requirements ticking off as they are met. With keys already in the
  * wallet (from an earlier build) it must be the password they are under.
- * It reports the password once the wallet has taken it.
+ * Once the wallet takes it, the wallet is unlocked with it.
  */
 export function SetupPasswordStep({
   existing,
@@ -68,7 +68,7 @@ export function SetupPasswordStep({
   /** Keys are already in the wallet: the password must open them. */
   existing: boolean;
   onBack: () => void;
-  onSet: (password: string) => void;
+  onSet: () => void;
 }) {
   const t = useT();
   const passId = useId();
@@ -91,7 +91,7 @@ export function SetupPasswordStep({
         setError(null);
         try {
           await api.walletSetupPassword(password);
-          onSet(password);
+          onSet();
         } catch (e) {
           setError(walletError(e, t));
         } finally {
@@ -139,8 +139,8 @@ export function SetupPasswordStep({
 
 /**
  * DetailsStep asks for what making an account needs: an optional name,
- * the wallet password, and, for a new recovery phrase, an optional BIP-39
- * passphrase behind Advanced. It reports them.
+ * and, for a new recovery phrase, an optional BIP-39 passphrase behind
+ * Advanced. It reports them; the unlocked wallet's password encrypts it.
  */
 export function DetailsStep({
   busy,
@@ -158,21 +158,19 @@ export function DetailsStep({
   allowPassphrase?: boolean;
   cta?: string;
   onBack: () => void;
-  onSubmit: (name: string, password: string, passphrase: string) => void;
+  onSubmit: (name: string, passphrase: string) => void;
 }) {
   const t = useT();
   const defaultName = useDefaultName();
   const nameId = useId();
-  const passId = useId();
   const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
   const [advanced, setAdvanced] = useState(false);
   const [passphrase, setPassphrase] = useState("");
 
-  const ready = !busy && !!password && (!advanced || !!passphrase);
+  const ready = !busy && (!advanced || !!passphrase);
 
   return (
-    <StepPanel onSubmit={() => ready && onSubmit(name, password, advanced ? passphrase : "")}>
+    <StepPanel onSubmit={() => ready && onSubmit(name, advanced ? passphrase : "")}>
       <Part className="gap-1.5">
         <label htmlFor={nameId} className="flex items-center gap-2 font-medium">
           {t("wallet.name")}
@@ -189,14 +187,6 @@ export function DetailsStep({
           autoFocus
         />
         <span className="text-sm text-muted-foreground">{t("wallet.name.hint")}</span>
-      </Part>
-
-      <Part className="gap-1.5">
-        <label htmlFor={passId} className="font-medium">
-          {t("wallet.walletPassword")}
-        </label>
-        <PasswordInput id={passId} value={password} onChange={setPassword} />
-        <span className="text-sm text-muted-foreground">{t("wallet.walletPasswordHint")}</span>
       </Part>
 
       {allowPassphrase && (

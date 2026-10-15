@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Loader2, PenLine, ScanLine } from "lucide-react";
 import { api, MessageRequest, RequestReview, SignedMessage, SignedOffline, walletError } from "../../lib/api";
@@ -11,19 +11,18 @@ import { PAGE } from "../../lib/motion";
 import { PAGE_WIDE } from "../../lib/layout";
 import { ToolbarAccessory } from "../../lib/toolbar";
 import { useT } from "../../i18n";
-import { Panel, Property, Rows } from "../../components/ui/Panel";
+import { Property, Rows } from "../../components/ui/Panel";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { Notice } from "../../components/ui/bits";
 import { ScanCard } from "../../components/offline/QRScanner";
 import { DocCard, TxSummary } from "../../components/offline/parts";
 import { messageBytes } from "../Messages";
-import { Field, PasswordInput } from "../Wallet/common";
 import { Steps } from "../Wallet/flow";
 
 /**
  * SignPage is the offline signer's one job: scan a signing request from
  * the watch-only wallet's screen (a transfer, or a message), show
- * everything it would sign, sign it with the wallet password, and show the
+ * everything it would sign, sign it once confirmed, and show the
  * result to scan back. The backend checks the request again before it
  * signs.
  */
@@ -134,18 +133,15 @@ function SignReview({
   onSigned: (s: SignedOffline) => void;
 }) {
   const t = useT();
-  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => () => setPassword(""), []);
 
   const sign = async () => {
-    if (busy || !password) return;
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const s = await api.offlineSignRequest(doc, password);
-      setPassword("");
+      const s = await api.offlineSignRequest(doc);
       onSigned(s);
     } catch (e) {
       setError(walletError(e, t));
@@ -171,18 +167,13 @@ function SignReview({
           sign();
         }}
       >
-        <Panel className="p-4">
-          <Field label={t("wallet.walletPassword")} hint={t("offline.sign.passwordHint")}>
-            {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus tall />}
-          </Field>
-        </Panel>
         {error && <Notice tone="critical">{error}</Notice>}
         <div className="flex justify-center gap-3">
           <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onBack} disabled={busy}>
             <ArrowLeft className="size-4" />
             {t("common.back")}
           </button>
-          <button type="submit" className="btn btn-primary btn-lg min-w-56" disabled={busy || !password}>
+          <button type="submit" className="btn btn-primary btn-lg min-w-56" disabled={busy} autoFocus>
             {busy ? <Loader2 className="size-4 animate-spin" /> : <PenLine className="size-4" />}
             {busy ? t("wallet.review.signing") : t("offline.sign.cta")}
           </button>
@@ -194,7 +185,7 @@ function SignReview({
 
 /**
  * MessageReview shows a message signing request in full, every character
- * that would be signed, before asking for the password.
+ * that would be signed, before signing it.
  */
 function MessageReview({
   request,
@@ -209,19 +200,16 @@ function MessageReview({
 }) {
   const t = useT();
   const { info } = useWallet();
-  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => () => setPassword(""), []);
   const acc = info?.accounts.find((a) => a.address === request.from);
 
   const sign = async () => {
-    if (busy || !password) return;
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const s = await api.messageSignRequest(doc, password);
-      setPassword("");
+      const s = await api.messageSignRequest(doc);
       onSigned(s);
     } catch (e) {
       setError(walletError(e, t));
@@ -265,18 +253,13 @@ function MessageReview({
           sign();
         }}
       >
-        <Panel className="p-4">
-          <Field label={t("wallet.walletPassword")} hint={t("message.passwordHint")}>
-            {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus tall />}
-          </Field>
-        </Panel>
         {error && <Notice tone="critical">{error}</Notice>}
         <div className="flex justify-center gap-3">
           <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onBack} disabled={busy}>
             <ArrowLeft className="size-4" />
             {t("common.back")}
           </button>
-          <button type="submit" className="btn btn-primary btn-lg min-w-56" disabled={busy || !password}>
+          <button type="submit" className="btn btn-primary btn-lg min-w-56" disabled={busy} autoFocus>
             {busy ? <Loader2 className="size-4 animate-spin" /> : <PenLine className="size-4" />}
             {busy ? t("wallet.review.signing") : t("message.signCta")}
           </button>

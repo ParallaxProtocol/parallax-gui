@@ -64,7 +64,9 @@ type ReplaceRequest struct {
 	Hash        string `json:"hash"`
 	Kind        string `json:"kind"`
 	GasPriceWei string `json:"gasPriceWei"`
-	Password    string `json:"password"`
+	// Password is the wallet's, from the unlocked session (app.go), never
+	// from the frontend
+	Password string `json:"-"`
 }
 
 // bumpedPrice is the least a replacement of a transaction paying old must

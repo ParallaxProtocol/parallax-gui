@@ -1,7 +1,6 @@
 import { createContext, lazy, ReactNode, Suspense, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Minimize2, Settings2 } from "lucide-react";
-import type { SeedCandidate } from "../../lib/api";
 import { useT } from "../../i18n";
 import { FADE_IN, FADE_OUT } from "../../lib/motion";
 import { useSidebar } from "../../lib/sidebar";
@@ -36,7 +35,7 @@ export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 export type SettingsPage =
   | { kind: "accounts.add" }
   | { kind: "accounts.import" }
-  | { kind: "accounts.find"; seedId: string; password: string; first: SeedCandidate[] };
+  | { kind: "accounts.find"; seedId: string };
 
 /** pageKey tells pages apart, for their transitions: by what they show, not the secrets they hold. */
 export const pageKey = (p: SettingsPage) => (p.kind === "accounts.find" ? `${p.kind}:${p.seedId}` : p.kind);

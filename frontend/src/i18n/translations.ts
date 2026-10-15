@@ -25,6 +25,10 @@ export const en: Dict = {
   "nav.collapseSidebar": "Collapse sidebar",
   "nav.expandSidebar": "Expand sidebar",
   "splash.loading": "Loading",
+  "lock.title": "Wallet locked",
+  "lock.desc": "Enter your wallet password to unlock it.",
+  "lock.cta": "Unlock",
+  "lock.now": "Lock wallet",
 
   // Hello: the first launch
   "hello.leadNode": "Let's set up your node. It only takes a minute.",
@@ -374,7 +378,6 @@ export const en: Dict = {
   "message.placeholder": "The text to sign, for example: I control this address. 2026-10-14",
   "message.bytes": "{n} / {max} bytes",
   "message.signingAs": "Signing as",
-  "message.passwordHint": "The wallet password unlocks the key for this one signature.",
   "message.caution":
     "Only sign text you wrote or fully understand. Anyone you share the signature with can show it as proof that this address signed it. Signing a message never moves funds.",
   "message.signCta": "Sign message",
@@ -461,7 +464,6 @@ export const en: Dict = {
   "offline.sign.conflict":
     "This computer already signed a different transfer from this account with the same nonce. Only one of them can go through. Sign this one only if it replaces the other.",
   "offline.sign.already": "This request was signed here before. Signing it again gives the same transaction.",
-  "offline.sign.passwordHint": "The wallet password unlocks the key for this one signature.",
   "offline.sign.cta": "Sign",
   "offline.sign.done": "Signed",
   "offline.sign.doneDesc":
@@ -665,7 +667,6 @@ export const en: Dict = {
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Wallet password",
-  "wallet.walletPasswordHint": "The password that protects every account in this wallet.",
   "wallet.locked.title": "Welcome to Parallax",
   "wallet.locked.desc":
     "A full Parallax node and a wallet in one app. Hold, send and receive LAX through your own node, with no third party in between.",
@@ -682,7 +683,7 @@ export const en: Dict = {
   "wallet.locked.ctaHint": "First, you'll set your wallet password.",
   "wallet.setup.title": "Set your wallet password",
   "wallet.setup.desc":
-    "One password protects every account and recovery phrase in this wallet. You'll type it whenever you send, back up or add an account.",
+    "One password protects every account and recovery phrase in this wallet. You'll type it to unlock the wallet, and again to show a recovery phrase or remove an account.",
   "wallet.setup.existingDesc":
     "This wallet already has keys. Enter the password they were made with: it becomes the wallet password.",
   "wallet.setup.noRecovery":
@@ -696,6 +697,13 @@ export const en: Dict = {
   "wallet.offer.cta": "Create recovery phrase",
   "wallet.security": "Security",
   "wallet.securityDesc": "Protects every account and recovery phrase in this wallet.",
+  "wallet.autoLock": "Lock automatically",
+  "wallet.autoLockDesc": "After this long without using the app. The wallet also locks when the computer sleeps.",
+  "wallet.autoLock.minute": "After 1 minute",
+  "wallet.autoLock.minutes": "After {n} minutes",
+  "wallet.autoLock.hour": "After 1 hour",
+  "wallet.autoLock.hours": "After {n} hours",
+  "wallet.autoLock.never": "Never",
 
   // Wallet: passwords
   "wallet.password.new": "Password",
@@ -710,7 +718,7 @@ export const en: Dict = {
 
   // Wallet: create
   "wallet.create.title": "Create an account",
-  "wallet.create.introNext": "Next, you'll choose a name and a password.",
+  "wallet.create.introNext": "Next, you'll choose a name.",
   "wallet.create.kindTitle": "Choose a type",
   "wallet.create.kindDesc": "How should this account be backed up?",
   "wallet.create.kind.derive": "Another account from a recovery phrase",
@@ -725,7 +733,7 @@ export const en: Dict = {
   "wallet.create.recommended": "Recommended",
   "wallet.create.keyFact1": "A new key",
   "wallet.create.keyFact1Desc": "Generated here from your system's secure random source. It's what lets you spend.",
-  "wallet.create.keyFact2Desc": "The key is encrypted with the password you choose on the next page.",
+  "wallet.create.keyFact2Desc": "The key is encrypted with your wallet password.",
   "wallet.create.keyNext": "Next, you'll save a backup file of the key.",
   "wallet.create.keyBackupWhy":
     "With the file and its password, any compatible wallet can restore the account. Without them, it can't be recovered.",
@@ -741,8 +749,7 @@ export const en: Dict = {
   "wallet.create.words24Desc":
     "256 bits, as Ledger and Trezor make. Twice as much to write down, and 12 words are already far beyond guessing. Both work in MetaMask and other wallets.",
   "wallet.create.fact2": "Locked with your password",
-  "wallet.create.fact2Desc":
-    "The phrase and your account's key are encrypted with the password you choose on the next page.",
+  "wallet.create.fact2Desc": "The phrase and your account's key are encrypted with your wallet password.",
   "wallet.create.fact3": "Kept on this computer",
   "wallet.create.fact3Desc": "Only the encrypted key is stored, here. Nothing is sent anywhere.",
   "wallet.create.optional": "Optional",
@@ -797,8 +804,8 @@ export const en: Dict = {
   "wallet.import.inWallet": "Already in the wallet",
   "wallet.import.more": "Show more",
   "wallet.import.picked": "{n} selected",
-  "wallet.import.passwordLead":
-    "The recovery phrase and the {n} accounts you picked will be encrypted with this password on this computer. Your name goes to the first account.",
+  "wallet.import.detailsLead":
+    "The recovery phrase and the {n} accounts you picked will be encrypted with your wallet password on this computer. Your name goes to the first account.",
   "wallet.import.keyDesc": "The account's raw key: 64 hexadecimal characters.",
   "wallet.import.keyfile": "Keystore file",
   "wallet.import.key": "Private key",
@@ -811,7 +818,6 @@ export const en: Dict = {
   "wallet.import.filePasswordHint": "The password the file was saved with.",
   "wallet.import.keyLabel": "Private key",
   "wallet.import.keyHint": "64 hexadecimal characters, with or without 0x.",
-  "wallet.import.reencrypt": "The key is encrypted again with your wallet password.",
   "wallet.import.keyWarn":
     "Anyone who has seen this key can spend from the account. Only import a key that has been kept private.",
 
@@ -823,8 +829,6 @@ export const en: Dict = {
   "wallet.backup.restore": "To restore the account, you'll need both the {file} and the {password}.",
   "wallet.backup.restore.file": "backup file",
   "wallet.backup.restore.password": "password",
-  "wallet.backup.passwordLabel": "Account password",
-  "wallet.backup.passwordHint": "Checked before saving, so you know the backup will open.",
   "wallet.backup.saved": "Backup saved",
   "wallet.backup.missingTitle": "This account has no backup",
   "wallet.backup.missingDesc":
@@ -864,8 +868,6 @@ export const en: Dict = {
   "wallet.add.watchDesc":
     "Only its address comes in: the key stays on the offline signer, which signs what you send from it.",
   "wallet.find.cta": "Find accounts",
-  "wallet.find.desc":
-    "{name} may hold more accounts than the wallet shows: made in another wallet, or along another path. The wallet password opens it to look for them.",
   "wallet.find.pathGroup": "Path",
   "wallet.find.pathDesc":
     "Wallets keep a phrase's accounts along different paths. Look along the one the other wallet used: MetaMask, Trezor and most wallets use Standard.",
@@ -905,7 +907,6 @@ export const en: Dict = {
   "wallet.review.toContract":
     "The recipient is a contract. It runs code when it receives LAX; make sure it is meant to.",
   "wallet.review.dear": "This price is more than three times the {price} your node suggests.",
-  "wallet.review.passwordHint": "Decrypts the key for this one signature.",
   "wallet.review.cta": "Sign and send",
   "wallet.review.signing": "Signing…",
   "wallet.sent.title": "Sent",
@@ -985,6 +986,7 @@ export const en: Dict = {
 
   // Wallet: errors
   "wallet.err.wrongPassword": "Wrong password.",
+  "wallet.err.locked": "The wallet is locked. Unlock it and try again.",
   "wallet.err.weakPassword": "The password must be at least 8 characters.",
   "wallet.err.longPassword": "The password is too long.",
   "wallet.err.unknownAccount": "This account is no longer in the wallet.",

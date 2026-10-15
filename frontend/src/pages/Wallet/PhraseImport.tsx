@@ -22,7 +22,7 @@ import { Pill } from "../../components/ui/Pill";
 const BATCH = 5;
 const SCHEMES: SeedScheme[] = ["standard", "ledgerlive", "legacy"];
 
-type Stage = "phrase" | "accounts" | "password";
+type Stage = "phrase" | "accounts" | "details";
 export type Found = Record<SeedScheme, SeedCandidate[]>;
 /** The word counts a recovery phrase can have. */
 export const PHRASE_LENGTHS = [12, 15, 18, 21, 24];
@@ -46,8 +46,8 @@ export function picksOf(found: Found, picked: Set<string>): SeedPick[] {
  * wallet's companion app does: the words, then the accounts the phrase
  * holds, found along the paths wallets use (MetaMask's standard one,
  * Ledger Live's, the legacy one) with what each holds on chain, for the
- * user to pick, then the password that will protect them. Nothing is
- * stored until the last step.
+ * user to pick, then the first account's name; the wallet password
+ * protects them. Nothing is stored until the last step.
  */
 export function PhraseImport({ onBack }: { onBack: () => void }) {
   const t = useT();
@@ -61,7 +61,6 @@ export function PhraseImport({ onBack }: { onBack: () => void }) {
   const [found, setFound] = useState<Found>({ standard: [], ledgerlive: [], legacy: [] });
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
   const { busy, error, setError, run } = useBusy();
 
   // Nothing typed here outlives the page
@@ -69,7 +68,6 @@ export function PhraseImport({ onBack }: { onBack: () => void }) {
     () => () => {
       setWords("");
       setPassphrase("");
-      setPassword("");
     },
     [],
   );
@@ -177,7 +175,7 @@ export function PhraseImport({ onBack }: { onBack: () => void }) {
           }}
           error={error}
           onBack={() => setStage("phrase")}
-          onContinue={() => setStage("password")}
+          onContinue={() => setStage("details")}
         />
       </FlowPage>
     );
@@ -189,8 +187,8 @@ export function PhraseImport({ onBack }: { onBack: () => void }) {
     <FlowPage title={t("wallet.create.detailsTitle")} steps={steps} current={3}>
       <StepPanel
         onSubmit={async () => {
-          if (busy || !password || picks.length === 0) return;
-          const acc = await run(() => api.walletImportSeed("", words, pass, password, namePicks(picks, name)));
+          if (busy || picks.length === 0) return;
+          const acc = await run(() => api.walletImportSeed("", words, pass, namePicks(picks, name)));
           if (acc) {
             setWords("");
             await wallet.refresh();
@@ -199,17 +197,14 @@ export function PhraseImport({ onBack }: { onBack: () => void }) {
         }}
       >
         <Part>
-          <p className="text-muted-foreground">{t("wallet.import.passwordLead", { n: picks.length })}</p>
+          <p className="text-muted-foreground">{t("wallet.import.detailsLead", { n: picks.length })}</p>
         </Part>
         <Part className="gap-4">
           <NameField value={name} onChange={setName} />
-          <Field label={t("wallet.walletPassword")}>
-            {(id) => <PasswordInput id={id} value={password} onChange={setPassword} />}
-          </Field>
           {error && <Notice tone="critical">{error}</Notice>}
         </Part>
         <StepFooter onBack={() => setStage("accounts")}>
-          <button type="submit" className="btn btn-primary" disabled={busy || !password}>
+          <button type="submit" className="btn btn-primary" disabled={busy}>
             {busy && <Loader2 className="size-3.5 animate-spin" />}
             {busy ? t("wallet.import.busy") : t("wallet.import.cta")}
           </button>

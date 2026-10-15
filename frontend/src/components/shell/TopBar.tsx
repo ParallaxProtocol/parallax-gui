@@ -8,6 +8,7 @@ import {
   Download,
   HardDrive,
   Loader2,
+  Lock,
   PanelLeftClose,
   PanelLeftOpen,
   XCircle,
@@ -16,6 +17,8 @@ import { FADE_IN, FADE_OUT, GLIDE, SPRING } from "../../lib/motion";
 import { useNotifications, type NoticeKind } from "../../lib/notifications";
 import { useSidebar } from "../../lib/sidebar";
 import { useUpdate } from "../../lib/update";
+import { api } from "../../lib/api";
+import { useWallet } from "../../lib/wallet";
 import { useAgo, useT } from "../../i18n";
 import { useNow } from "../../lib/useNow";
 import { Tooltip } from "../ui/Tooltip";
@@ -29,8 +32,9 @@ export const TOP_BAR_HEIGHT = 52;
  * TopBar is the window's title bar over the page (the sidebar has its own
  * part, with the app's name): on the left the button that collapses the
  * sidebar to its rail and back, on the right the update on offer (only
- * while there is one) and the notifications. It is the window's drag area, and
- * leaves room for the window controls.
+ * while there is one), the notifications, and the wallet's lock (while it
+ * has a password). It is the window's drag area, and leaves room for the
+ * window controls.
  */
 export default function TopBar() {
   const t = useT();
@@ -38,6 +42,7 @@ export default function TopBar() {
   const { unread, markRead } = useNotifications();
   const sidebar = useSidebar();
   const sidebarLabel = sidebar.collapsed ? t("nav.expandSidebar") : t("nav.collapseSidebar");
+  const { info } = useWallet();
 
   return (
     <header
@@ -98,6 +103,19 @@ export default function TopBar() {
       >
         <Notifications />
       </Popover>
+
+      {info?.hasPassword && (
+        <Tooltip content={t("lock.now")}>
+          <button
+            type="button"
+            onClick={() => api.walletLock().catch(() => {})}
+            aria-label={t("lock.now")}
+            className="btn btn-ghost btn-icon"
+          >
+            <Lock className="size-4" />
+          </button>
+        </Tooltip>
+      )}
 
       <span className="window-controls-gap" />
     </header>
