@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -25,7 +25,7 @@ import { STAGGER, useStagger } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { useAgo, useLang, useT } from "../../i18n";
 import { Counter } from "../../components/ui/Counter";
-import { Panel, Section } from "../../components/ui/Panel";
+import { Facts, Fact, Panel, Section } from "../../components/ui/Panel";
 import { IconBadge } from "../../components/ui/IconBadge";
 import { Pill } from "../../components/ui/Pill";
 import { CopyButton, Notice } from "../../components/ui/bits";
@@ -504,23 +504,6 @@ function ActivityDetails({
           </Facts>
         </div>
       </div>
-    </div>
-  );
-}
-
-/** Facts is a group of an opened row's details: a rounded box, its lines on hairlines. */
-function Facts({ children }: { children: ReactNode }) {
-  return <dl className="flex flex-col divide-y divide-border/70 rounded-lg bg-muted/60 text-sm">{children}</dl>;
-}
-
-/** Fact is one line of Facts: what it is on the left, its value on the right. */
-function Fact({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex min-h-10 items-center justify-between gap-4 px-3 py-2">
-      <dt className="shrink-0">{label}</dt>
-      <dd className="flex min-w-0 items-center justify-end gap-2 text-right text-muted-foreground tabular-nums">
-        {children}
-      </dd>
     </div>
   );
 }

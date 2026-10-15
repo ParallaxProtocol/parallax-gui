@@ -178,3 +178,20 @@ export function Stat({
 export function Tile({ className = "", children }: { className?: string; children: ReactNode }) {
   return <div className={`rounded-2xl bg-muted/50 p-4 ${className}`}>{children}</div>;
 }
+
+/** Facts is a group of an opened row's details (a transaction's, a contact's): a rounded box, its lines on hairlines. */
+export function Facts({ children }: { children: ReactNode }) {
+  return <dl className="flex flex-col divide-y divide-border/70 rounded-lg bg-muted/60 text-sm">{children}</dl>;
+}
+
+/** Fact is one line of Facts: what it is on the left, its value on the right. */
+export function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-h-10 items-center justify-between gap-4 px-3 py-2">
+      <dt className="shrink-0">{label}</dt>
+      <dd className="flex min-w-0 items-center justify-end gap-2 text-right text-muted-foreground tabular-nums">
+        {children}
+      </dd>
+    </div>
+  );
+}
