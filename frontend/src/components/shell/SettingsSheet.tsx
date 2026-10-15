@@ -16,9 +16,9 @@ export const SETTINGS_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35
 export const SETTINGS_SECTIONS = [
   "general",
   "appearance",
+  "storage",
   "accounts",
   "security",
-  "storage",
   "node",
   "network",
   "rpc",

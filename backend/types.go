@@ -65,6 +65,13 @@ type GUIConfig struct {
 	StaticPeers  []string `json:"staticPeers"`
 	TrustedPeers []string `json:"trustedPeers"`
 
+	// WalletDir is the folder the wallet was moved to, empty while it is
+	// in the app's config folder (storage.go); WalletMovedFrom the folder
+	// it left, until the app, restarted onto the copy, deletes the
+	// original. Kept by the backend, as the peer lists are.
+	WalletDir       string `json:"walletDir"`
+	WalletMovedFrom string `json:"walletMovedFrom"`
+
 	// The fields below mirror parallaxd's command-line flags, each named
 	// after its flag. An empty string, nil pointer or false keeps the CLI's
 	// default, so configs saved before a field existed behave exactly like

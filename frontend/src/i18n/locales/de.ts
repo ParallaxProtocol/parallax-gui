@@ -723,6 +723,51 @@ const de: Dict = {
   "wallet.err.setupMismatch":
     "Dieses Passwort öffnet nicht alle Schlüssel, die bereits in der Wallet sind. Verwenden Sie das Passwort, mit dem sie erstellt wurden.",
   "wallet.err.wrongFilePassword": "Falsches Passwort für die Keystore-Datei.",
+  "wallet.err.dirGone": "Der Ordner der Wallet wurde nicht gefunden:",
+  "storage.err.notAbs": "Wähle einen Ordner mit seinem vollständigen Pfad.",
+  "storage.err.inside": "Wähle einen Ordner außerhalb des Ordners, der verschoben wird.",
+  "storage.err.notEmpty": "Dieser Ordner enthält bereits andere Dateien, ebenso der Ordner, der darin angelegt würde.",
+  "storage.err.busy": "Die Daten werden gerade verschoben oder gelöscht. Versuche es danach erneut.",
+  "storage.move.cta": "Verschieben…",
+  "storage.delete.cta": "Löschen…",
+  "storage.moveHint": "Enthält der Ordner bereits andere Dateien, wird darin ein neuer Ordner angelegt.",
+  "storage.progress": "{done} von {total}",
+  "storage.wallet.pick": "Wähle, wo die Wallet aufbewahrt wird",
+  "storage.wallet.folder": "Wallet-Ordner",
+  "storage.wallet.move": "Wallet verschieben",
+  "storage.wallet.moveDesc":
+    "Kopiert die Schlüssel, Wiederherstellungsphrasen und Kontonamen in einen anderen Ordner und verwendet sie von dort.",
+  "storage.wallet.moveTitle": "Wallet verschieben",
+  "storage.wallet.moveConfirm":
+    "Die Wallet wird in diesen Ordner kopiert und geprüft. Danach startet die App mit der Kopie neu und entfernt die Wallet aus ihrem alten Ordner.",
+  "storage.wallet.moving": "Wallet wird kopiert…",
+  "storage.wallet.restarting": "Wird neu gestartet…",
+  "storage.wallet.moveSubmit": "Verschieben und neu starten",
+  "storage.wallet.delete": "Wallet löschen",
+  "storage.wallet.deleteDesc":
+    "Entfernt jeden Schlüssel, jede Wiederherstellungsphrase und jeden Kontonamen von diesem Computer.",
+  "storage.wallet.deleteTitle": "Wallet löschen",
+  "storage.wallet.deleteWarn":
+    "Jedes Konto dieser Wallet geht mit. Ohne Sicherung seiner Schlüssel oder Wiederherstellungsphrasen ist das Guthaben für immer verloren: Niemand kann es zurückholen.",
+  "storage.wallet.deleteType": "Gib {word} zur Bestätigung ein",
+  "storage.wallet.deleteWord": "LÖSCHEN",
+  "storage.wallet.deleteSubmit": "Wallet löschen",
+  "storage.node.pick": "Wähle, wo die Daten des Nodes aufbewahrt werden",
+  "storage.node.move": "Daten verschieben",
+  "storage.node.moveDesc":
+    "Verschiebt die Daten des Nodes samt Blockchain in einen anderen Ordner oder auf ein anderes Laufwerk. Der Node hält währenddessen an.",
+  "storage.node.moveTitle": "Daten des Nodes verschieben",
+  "storage.node.moveConfirm":
+    "Die Daten des Nodes werden in diesen Ordner verschoben. Der Node hält an, bis sie dort sind – auf einem anderen Laufwerk kann das dauern.",
+  "storage.node.moving": "Daten des Nodes werden verschoben…",
+  "storage.node.moveSubmit": "Verschieben",
+  "storage.node.clear": "Chain-Daten löschen",
+  "storage.node.clearDesc":
+    "Löscht die heruntergeladene Blockchain, damit der Node sie von Anfang an neu lädt. Einstellungen, Peers und Identität bleiben.",
+  "storage.node.clearTitle": "Chain-Daten löschen",
+  "storage.node.clearWarn":
+    "Der Node lädt und prüft die ganze Blockchain erneut, was Stunden dauert. Die Wallet und ihre Konten bleiben unberührt.",
+  "storage.node.clearSubmit": "Chain-Daten löschen",
   "settings.navGroup.app": "App",
   "settings.navGroup.support": "Support",
   "settings.section.accounts": "Konten",

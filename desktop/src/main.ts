@@ -212,6 +212,29 @@ async function saveBackup(fileName: string, contents: string): Promise<boolean> 
 }
 
 /**
+ * Asks for a folder to move a store to (backend/storage.go), or for the
+ * node's data folder: opened at start, the folder there now (or the
+ * nearest one above it that exists yet), else Documents. The folder may
+ * be made in the dialog; the backend checks what it's given. Null if
+ * cancelled.
+ */
+async function pickFolder(title: string, start: string): Promise<string | null> {
+  let at = path.isAbsolute(start) ? path.normalize(start) : "";
+  while (at && !fs.existsSync(at)) {
+    const up = path.dirname(at);
+    at = up === at ? "" : up;
+  }
+  const opts: Electron.OpenDialogOptions = {
+    title: title.slice(0, 120),
+    defaultPath: at || app.getPath("documents"),
+    properties: ["openDirectory", "createDirectory", "promptToCreate"],
+  };
+  const res = mainWindow ? await dialog.showOpenDialog(mainWindow, opts) : await dialog.showOpenDialog(opts);
+  if (res.canceled || res.filePaths.length === 0) return null;
+  return res.filePaths[0];
+}
+
+/**
  * Saves exported contacts (backend/contacts.go) where the user
  * picks, as JSON or CSV. Nothing in it is secret, but it says who the user
  * pays, so it is written private to them like a backup.
@@ -459,6 +482,10 @@ function wireIpc() {
   ipcMain.handle("offline:save", async (event, fileName: unknown, contents: unknown) => {
     if (!trusted(event) || typeof fileName !== "string" || typeof contents !== "string") return false;
     return saveSigningDoc(fileName, contents);
+  });
+  ipcMain.handle("storage:pickFolder", async (event, title: unknown, start: unknown) => {
+    if (!trusted(event) || typeof title !== "string") return null;
+    return pickFolder(title, typeof start === "string" ? start : "");
   });
   // macOS asks the user once for the camera; elsewhere access is the OS's
   ipcMain.handle("camera:access", async (event) => {

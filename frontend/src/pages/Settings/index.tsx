@@ -30,7 +30,8 @@ import { Select } from "../../components/ui/Select";
 import { Tooltip } from "../../components/ui/Tooltip";
 import logo from "../../assets/logo.svg";
 import { IconTile, TILE } from "../../components/ui/IconTile";
-import { AccountsSettings, SecuritySettings, StorageSettings } from "../Wallet/Accounts";
+import { AccountsSettings, SecuritySettings } from "../Wallet/Accounts";
+import { NodeStorageActions, WalletStorage } from "./storage";
 import { Indicator } from "../../components/ui/Indicator";
 import { Row, Rows } from "../../components/ui/Panel";
 import { Segmented } from "../../components/ui/Segmented";
@@ -38,7 +39,7 @@ import Toggle from "../../components/ui/Toggle";
 import { Notice } from "../../components/ui/bits";
 import LogsPanel from "./LogsPanel";
 import { AssistantsOverview, AssistantsPermissions } from "./AssistantsSettings";
-import { Advanced, countSet, Group, ListInput, NumberInput, Setting, TextInput } from "./fields";
+import { Advanced, countSet, FolderInput, Group, ListInput, NumberInput, Setting, TextInput } from "./fields";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { useOfflineMode } from "../../lib/offline";
 import { useWallet } from "../../lib/wallet";
@@ -218,6 +219,51 @@ export default function Settings() {
     }
   };
 
+  // The node's storage, on the Node page and again among the app's Storage
+  // beside the wallet's: one set of rows, so the two never differ. In
+  // Storage (manage), its Advanced also moves the data and clears the chain
+  const nodeStorage = (title: string, manage?: boolean) => (
+    <Group title={title}>
+      <Rows>
+        <Setting title={t("settings.dataDir")} desc={t("settings.dataDir.desc")} restart={restart("dataDir")}>
+          <FolderInput title={t("settings.dataDir")} value={cfg.dataDir} onChange={(v) => update({ dataDir: v })} />
+        </Setting>
+        <Advanced id="storage" changed={countSet([cfg.ancientDir, cfg.minFreeDiskMB])}>
+          <Setting
+            title={t("settings.ancientDir")}
+            more={t("settings.ancientDir.more")}
+            flag="--datadir.ancient"
+            desc={t("settings.ancientDir.desc")}
+            restart={restart("ancientDir")}
+          >
+            <TextInput
+              width="w-72"
+              value={cfg.ancientDir}
+              placeholder={t("settings.ancientDir.placeholder")}
+              onChange={(v) => update({ ancientDir: v })}
+            />
+          </Setting>
+          <Setting
+            title={t("settings.minFreeDisk")}
+            more={t("settings.minFreeDisk.more")}
+            flag="--datadir.minfreedisk"
+            desc={t("settings.minFreeDisk.desc")}
+            restart={restart("minFreeDiskMB")}
+          >
+            <NumberInput
+              optional
+              value={cfg.minFreeDiskMB}
+              placeholder={2 * cfg.trieDirtyCacheMB}
+              unit="MB"
+              onChange={(v) => update({ minFreeDiskMB: v })}
+            />
+          </Setting>
+          {manage && <NodeStorageActions dataDir={orig.dataDir} />}
+        </Advanced>
+      </Rows>
+    </Group>
+  );
+
   const inbound = !cfg.blockInbound;
 
   return (
@@ -280,7 +326,15 @@ export default function Settings() {
 
             {section === "accounts" && <AccountsSettings />}
             {section === "security" && <SecuritySettings />}
-            {section === "storage" && <StorageSettings />}
+            {section === "storage" && (
+              <>
+                <Group title={t("nav.wallet")}>
+                  <WalletStorage />
+                </Group>
+                {/* An offline signer has no node, nor its data */}
+                {!offline && nodeStorage(t("nav.node"), true)}
+              </>
+            )}
 
             {section === "general" && (
               <>
@@ -445,48 +499,7 @@ export default function Settings() {
                     </Rows>
                   </Group>
                 )}
-                <Group title={t("settings.group.storage")}>
-                  <Rows>
-                    <Setting
-                      title={t("settings.dataDir")}
-                      desc={t("settings.dataDir.desc")}
-                      restart={restart("dataDir")}
-                    >
-                      <TextInput width="w-72" value={cfg.dataDir} onChange={(v) => update({ dataDir: v })} />
-                    </Setting>
-                  </Rows>
-                  <Advanced id="storage" changed={countSet([cfg.ancientDir, cfg.minFreeDiskMB])}>
-                    <Setting
-                      title={t("settings.ancientDir")}
-                      more={t("settings.ancientDir.more")}
-                      flag="--datadir.ancient"
-                      desc={t("settings.ancientDir.desc")}
-                      restart={restart("ancientDir")}
-                    >
-                      <TextInput
-                        width="w-72"
-                        value={cfg.ancientDir}
-                        placeholder={t("settings.ancientDir.placeholder")}
-                        onChange={(v) => update({ ancientDir: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.minFreeDisk")}
-                      more={t("settings.minFreeDisk.more")}
-                      flag="--datadir.minfreedisk"
-                      desc={t("settings.minFreeDisk.desc")}
-                      restart={restart("minFreeDiskMB")}
-                    >
-                      <NumberInput
-                        optional
-                        value={cfg.minFreeDiskMB}
-                        placeholder={2 * cfg.trieDirtyCacheMB}
-                        unit="MB"
-                        onChange={(v) => update({ minFreeDiskMB: v })}
-                      />
-                    </Setting>
-                  </Advanced>
-                </Group>
+                {nodeStorage(t("settings.group.storage"))}
 
                 <Group title={t("settings.group.sync")}>
                   <Rows>
@@ -506,52 +519,52 @@ export default function Settings() {
                         ]}
                       />
                     </Setting>
+                    <Advanced id="sync" changed={countSet([cfg.archiveMode, cfg.txLookupLimit, cfg.noSnapshot])}>
+                      <Setting
+                        title={t("settings.archive")}
+                        more={t("settings.archive.more")}
+                        flag="--gcmode archive"
+                        desc={t("settings.archive.desc")}
+                        restart={restart("archiveMode")}
+                      >
+                        <Toggle
+                          checked={cfg.archiveMode}
+                          onChange={(v) => update({ archiveMode: v })}
+                          label={t("settings.archive")}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.txLookupLimit")}
+                        more={t("settings.txLookupLimit.more")}
+                        flag="--txlookuplimit"
+                        desc={t("settings.txLookupLimit.desc")}
+                        restart={restart("txLookupLimit")}
+                      >
+                        <NumberInput
+                          optional
+                          disabled={cfg.archiveMode}
+                          value={cfg.archiveMode ? 0 : cfg.txLookupLimit}
+                          placeholder={52560}
+                          unit={t("settings.unit.blocks")}
+                          onChange={(v) => update({ txLookupLimit: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.snapshot")}
+                        more={t("settings.snapshot.more")}
+                        flag="--snapshot"
+                        desc={t("settings.snapshot.desc")}
+                        restart={restart("noSnapshot")}
+                      >
+                        <Toggle
+                          checked={!cfg.noSnapshot || cfg.syncMode === "snap"}
+                          disabled={cfg.syncMode === "snap"}
+                          onChange={(v) => update({ noSnapshot: !v })}
+                          label={t("settings.snapshot")}
+                        />
+                      </Setting>
+                    </Advanced>
                   </Rows>
-                  <Advanced id="sync" changed={countSet([cfg.archiveMode, cfg.txLookupLimit, cfg.noSnapshot])}>
-                    <Setting
-                      title={t("settings.archive")}
-                      more={t("settings.archive.more")}
-                      flag="--gcmode archive"
-                      desc={t("settings.archive.desc")}
-                      restart={restart("archiveMode")}
-                    >
-                      <Toggle
-                        checked={cfg.archiveMode}
-                        onChange={(v) => update({ archiveMode: v })}
-                        label={t("settings.archive")}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.txLookupLimit")}
-                      more={t("settings.txLookupLimit.more")}
-                      flag="--txlookuplimit"
-                      desc={t("settings.txLookupLimit.desc")}
-                      restart={restart("txLookupLimit")}
-                    >
-                      <NumberInput
-                        optional
-                        disabled={cfg.archiveMode}
-                        value={cfg.archiveMode ? 0 : cfg.txLookupLimit}
-                        placeholder={52560}
-                        unit={t("settings.unit.blocks")}
-                        onChange={(v) => update({ txLookupLimit: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.snapshot")}
-                      more={t("settings.snapshot.more")}
-                      flag="--snapshot"
-                      desc={t("settings.snapshot.desc")}
-                      restart={restart("noSnapshot")}
-                    >
-                      <Toggle
-                        checked={!cfg.noSnapshot || cfg.syncMode === "snap"}
-                        disabled={cfg.syncMode === "snap"}
-                        onChange={(v) => update({ noSnapshot: !v })}
-                        label={t("settings.snapshot")}
-                      />
-                    </Setting>
-                  </Advanced>
                 </Group>
 
                 <Group
@@ -577,48 +590,48 @@ export default function Settings() {
                         />
                       </Setting>
                     ))}
+                    <Advanced id="performance" changed={countSet([cfg.noPrefetch, cfg.preimages, cfg.fdLimit])}>
+                      <Setting
+                        title={t("settings.prefetch")}
+                        more={t("settings.prefetch.more")}
+                        flag="--cache.noprefetch"
+                        desc={t("settings.prefetch.desc")}
+                        restart={restart("noPrefetch")}
+                      >
+                        <Toggle
+                          checked={!cfg.noPrefetch}
+                          onChange={(v) => update({ noPrefetch: !v })}
+                          label={t("settings.prefetch")}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.preimages")}
+                        more={t("settings.preimages.more")}
+                        flag="--cache.preimages"
+                        desc={t("settings.preimages.desc")}
+                        restart={restart("preimages")}
+                      >
+                        <Toggle
+                          checked={cfg.preimages || cfg.archiveMode}
+                          disabled={cfg.archiveMode}
+                          onChange={(v) => update({ preimages: v })}
+                          label={t("settings.preimages")}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.fdLimit")}
+                        desc={t("settings.fdLimit.desc")}
+                        restart={restart("fdLimit")}
+                      >
+                        <NumberInput
+                          optional
+                          value={cfg.fdLimit || null}
+                          placeholder={t("settings.default.system")}
+                          onChange={(v) => update({ fdLimit: v ?? 0 })}
+                        />
+                      </Setting>
+                    </Advanced>
                   </Rows>
-                  <Advanced id="performance" changed={countSet([cfg.noPrefetch, cfg.preimages, cfg.fdLimit])}>
-                    <Setting
-                      title={t("settings.prefetch")}
-                      more={t("settings.prefetch.more")}
-                      flag="--cache.noprefetch"
-                      desc={t("settings.prefetch.desc")}
-                      restart={restart("noPrefetch")}
-                    >
-                      <Toggle
-                        checked={!cfg.noPrefetch}
-                        onChange={(v) => update({ noPrefetch: !v })}
-                        label={t("settings.prefetch")}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.preimages")}
-                      more={t("settings.preimages.more")}
-                      flag="--cache.preimages"
-                      desc={t("settings.preimages.desc")}
-                      restart={restart("preimages")}
-                    >
-                      <Toggle
-                        checked={cfg.preimages || cfg.archiveMode}
-                        disabled={cfg.archiveMode}
-                        onChange={(v) => update({ preimages: v })}
-                        label={t("settings.preimages")}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.fdLimit")}
-                      desc={t("settings.fdLimit.desc")}
-                      restart={restart("fdLimit")}
-                    >
-                      <NumberInput
-                        optional
-                        value={cfg.fdLimit || null}
-                        placeholder={t("settings.default.system")}
-                        onChange={(v) => update({ fdLimit: v ?? 0 })}
-                      />
-                    </Setting>
-                  </Advanced>
                 </Group>
 
                 <Group title={t("settings.group.fees")}>
@@ -636,160 +649,162 @@ export default function Settings() {
                         label={t("settings.smartFee")}
                       />
                     </Setting>
+                    <Advanced
+                      id="fees"
+                      changed={countSet([cfg.gpoBlocks, cfg.gpoPercentile, cfg.gpoMaxPrice, cfg.gpoIgnorePrice])}
+                    >
+                      <Setting
+                        title={t("settings.gpo.blocks")}
+                        desc={t("settings.gpo.blocks.desc")}
+                        restart={restart("gpoBlocks")}
+                      >
+                        <NumberInput
+                          optional
+                          min={1}
+                          value={cfg.gpoBlocks}
+                          placeholder={20}
+                          unit={t("settings.unit.blocks")}
+                          onChange={(v) => update({ gpoBlocks: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.gpo.percentile")}
+                        desc={t("settings.gpo.percentile.desc")}
+                        restart={restart("gpoPercentile")}
+                      >
+                        <NumberInput
+                          optional
+                          value={cfg.gpoPercentile}
+                          placeholder={60}
+                          unit="%"
+                          onChange={(v) => update({ gpoPercentile: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.gpo.maxPrice")}
+                        desc={t("settings.gpo.maxPrice.desc")}
+                        restart={restart("gpoMaxPrice")}
+                      >
+                        <WeiInput
+                          value={cfg.gpoMaxPrice}
+                          placeholder="1000000000000"
+                          onChange={(v) => update({ gpoMaxPrice: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.gpo.ignorePrice")}
+                        desc={t("settings.gpo.ignorePrice.desc")}
+                        restart={restart("gpoIgnorePrice")}
+                      >
+                        <WeiInput
+                          value={cfg.gpoIgnorePrice}
+                          placeholder="2"
+                          onChange={(v) => update({ gpoIgnorePrice: v })}
+                        />
+                      </Setting>
+                    </Advanced>
                   </Rows>
-                  <Advanced
-                    id="fees"
-                    changed={countSet([cfg.gpoBlocks, cfg.gpoPercentile, cfg.gpoMaxPrice, cfg.gpoIgnorePrice])}
-                  >
-                    <Setting
-                      title={t("settings.gpo.blocks")}
-                      desc={t("settings.gpo.blocks.desc")}
-                      restart={restart("gpoBlocks")}
-                    >
-                      <NumberInput
-                        optional
-                        min={1}
-                        value={cfg.gpoBlocks}
-                        placeholder={20}
-                        unit={t("settings.unit.blocks")}
-                        onChange={(v) => update({ gpoBlocks: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.gpo.percentile")}
-                      desc={t("settings.gpo.percentile.desc")}
-                      restart={restart("gpoPercentile")}
-                    >
-                      <NumberInput
-                        optional
-                        value={cfg.gpoPercentile}
-                        placeholder={60}
-                        unit="%"
-                        onChange={(v) => update({ gpoPercentile: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.gpo.maxPrice")}
-                      desc={t("settings.gpo.maxPrice.desc")}
-                      restart={restart("gpoMaxPrice")}
-                    >
-                      <WeiInput
-                        value={cfg.gpoMaxPrice}
-                        placeholder="1000000000000"
-                        onChange={(v) => update({ gpoMaxPrice: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.gpo.ignorePrice")}
-                      desc={t("settings.gpo.ignorePrice.desc")}
-                      restart={restart("gpoIgnorePrice")}
-                    >
-                      <WeiInput
-                        value={cfg.gpoIgnorePrice}
-                        placeholder="2"
-                        onChange={(v) => update({ gpoIgnorePrice: v })}
-                      />
-                    </Setting>
-                  </Advanced>
                 </Group>
 
                 <Group title={t("settings.group.txpool")} desc={t("settings.txpool.desc")}>
-                  <Advanced
-                    id="txpool"
-                    changed={countSet([
-                      cfg.txPoolLocals,
-                      cfg.txPoolNoLocals,
-                      cfg.txPoolPriceLimit,
-                      cfg.txPoolPriceBump,
-                      cfg.txPoolAccountSlots,
-                      cfg.txPoolGlobalSlots,
-                      cfg.txPoolAccountQueue,
-                      cfg.txPoolGlobalQueue,
-                      cfg.txPoolLifetimeMin,
-                    ])}
-                  >
-                    <Setting
-                      title={t("settings.txpool.locals")}
-                      desc={t("settings.txpool.locals.desc")}
-                      restart={restart("txPoolLocals")}
+                  <Rows>
+                    <Advanced
+                      id="txpool"
+                      changed={countSet([
+                        cfg.txPoolLocals,
+                        cfg.txPoolNoLocals,
+                        cfg.txPoolPriceLimit,
+                        cfg.txPoolPriceBump,
+                        cfg.txPoolAccountSlots,
+                        cfg.txPoolGlobalSlots,
+                        cfg.txPoolAccountQueue,
+                        cfg.txPoolGlobalQueue,
+                        cfg.txPoolLifetimeMin,
+                      ])}
                     >
-                      <ListInput
-                        multiline
-                        width="w-72"
-                        value={cfg.txPoolLocals}
-                        placeholder="0x…"
-                        onChange={(v) => update({ txPoolLocals: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.txpool.noLocals")}
-                      desc={t("settings.txpool.noLocals.desc")}
-                      restart={restart("txPoolNoLocals")}
-                    >
-                      <Toggle
-                        checked={cfg.txPoolNoLocals}
-                        onChange={(v) => update({ txPoolNoLocals: v })}
-                        label={t("settings.txpool.noLocals")}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.txpool.priceLimit")}
-                      desc={t("settings.txpool.priceLimit.desc")}
-                      restart={restart("txPoolPriceLimit")}
-                    >
-                      <NumberInput
-                        optional
-                        value={cfg.txPoolPriceLimit}
-                        placeholder={1}
-                        unit="wei"
-                        onChange={(v) => update({ txPoolPriceLimit: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.txpool.priceBump")}
-                      desc={t("settings.txpool.priceBump.desc")}
-                      restart={restart("txPoolPriceBump")}
-                    >
-                      <NumberInput
-                        optional
-                        value={cfg.txPoolPriceBump}
-                        placeholder={10}
-                        unit="%"
-                        onChange={(v) => update({ txPoolPriceBump: v })}
-                      />
-                    </Setting>
-                    {(
-                      [
-                        ["txPoolAccountSlots", "settings.txpool.accountSlots", 32],
-                        ["txPoolGlobalSlots", "settings.txpool.globalSlots", 10240],
-                        ["txPoolAccountQueue", "settings.txpool.accountQueue", 128],
-                        ["txPoolGlobalQueue", "settings.txpool.globalQueue", 2048],
-                      ] as const
-                    ).map(([key, label, def]) => (
-                      <Setting key={key} title={t(label)} desc={t(`${label}.desc`)} restart={restart(key)}>
-                        <NumberInput
-                          optional
-                          value={cfg[key]}
-                          placeholder={def}
-                          onChange={(v) => update({ [key]: v })}
+                      <Setting
+                        title={t("settings.txpool.locals")}
+                        desc={t("settings.txpool.locals.desc")}
+                        restart={restart("txPoolLocals")}
+                      >
+                        <ListInput
+                          multiline
+                          width="w-72"
+                          value={cfg.txPoolLocals}
+                          placeholder="0x…"
+                          onChange={(v) => update({ txPoolLocals: v })}
                         />
                       </Setting>
-                    ))}
-                    <Setting
-                      title={t("settings.txpool.lifetime")}
-                      desc={t("settings.txpool.lifetime.desc")}
-                      restart={restart("txPoolLifetimeMin")}
-                    >
-                      <NumberInput
-                        optional
-                        min={1}
-                        value={cfg.txPoolLifetimeMin}
-                        placeholder={180}
-                        unit="min"
-                        onChange={(v) => update({ txPoolLifetimeMin: v })}
-                      />
-                    </Setting>
-                  </Advanced>
+                      <Setting
+                        title={t("settings.txpool.noLocals")}
+                        desc={t("settings.txpool.noLocals.desc")}
+                        restart={restart("txPoolNoLocals")}
+                      >
+                        <Toggle
+                          checked={cfg.txPoolNoLocals}
+                          onChange={(v) => update({ txPoolNoLocals: v })}
+                          label={t("settings.txpool.noLocals")}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.txpool.priceLimit")}
+                        desc={t("settings.txpool.priceLimit.desc")}
+                        restart={restart("txPoolPriceLimit")}
+                      >
+                        <NumberInput
+                          optional
+                          value={cfg.txPoolPriceLimit}
+                          placeholder={1}
+                          unit="wei"
+                          onChange={(v) => update({ txPoolPriceLimit: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.txpool.priceBump")}
+                        desc={t("settings.txpool.priceBump.desc")}
+                        restart={restart("txPoolPriceBump")}
+                      >
+                        <NumberInput
+                          optional
+                          value={cfg.txPoolPriceBump}
+                          placeholder={10}
+                          unit="%"
+                          onChange={(v) => update({ txPoolPriceBump: v })}
+                        />
+                      </Setting>
+                      {(
+                        [
+                          ["txPoolAccountSlots", "settings.txpool.accountSlots", 32],
+                          ["txPoolGlobalSlots", "settings.txpool.globalSlots", 10240],
+                          ["txPoolAccountQueue", "settings.txpool.accountQueue", 128],
+                          ["txPoolGlobalQueue", "settings.txpool.globalQueue", 2048],
+                        ] as const
+                      ).map(([key, label, def]) => (
+                        <Setting key={key} title={t(label)} desc={t(`${label}.desc`)} restart={restart(key)}>
+                          <NumberInput
+                            optional
+                            value={cfg[key]}
+                            placeholder={def}
+                            onChange={(v) => update({ [key]: v })}
+                          />
+                        </Setting>
+                      ))}
+                      <Setting
+                        title={t("settings.txpool.lifetime")}
+                        desc={t("settings.txpool.lifetime.desc")}
+                        restart={restart("txPoolLifetimeMin")}
+                      >
+                        <NumberInput
+                          optional
+                          min={1}
+                          value={cfg.txPoolLifetimeMin}
+                          placeholder={180}
+                          unit="min"
+                          onChange={(v) => update({ txPoolLifetimeMin: v })}
+                        />
+                      </Setting>
+                    </Advanced>
+                  </Rows>
                 </Group>
               </>
             )}
@@ -849,57 +864,57 @@ export default function Settings() {
                         onChange={(v) => update({ nodeName: v })}
                       />
                     </Setting>
-                  </Rows>
-                  <Advanced id="connections" changed={countSet([cfg.natMode, cfg.maxPendingPeers])}>
-                    <Setting
-                      title={t("settings.nat")}
-                      more={t("settings.nat.more")}
-                      flag="--nat"
-                      desc={t("settings.nat.desc")}
-                      restart={restart("natMode", "externalIp")}
-                    >
-                      <Select<GUIConfig["natMode"]>
-                        className="w-48"
-                        aria-label={t("settings.nat")}
-                        disabled={!inbound}
-                        value={cfg.natMode}
-                        onChange={(natMode) => update({ natMode })}
-                        options={[
-                          { value: "", label: t("settings.nat.any") },
-                          { value: "upnp", label: "UPnP" },
-                          { value: "pmp", label: "NAT-PMP" },
-                          { value: "extip", label: t("settings.nat.extip") },
-                        ]}
-                      />
-                    </Setting>
-                    {inbound && cfg.natMode === "extip" && (
+                    <Advanced id="connections" changed={countSet([cfg.natMode, cfg.maxPendingPeers])}>
                       <Setting
-                        title={t("settings.externalIp")}
-                        desc={t("settings.externalIp.desc")}
-                        restart={restart("externalIp")}
+                        title={t("settings.nat")}
+                        more={t("settings.nat.more")}
+                        flag="--nat"
+                        desc={t("settings.nat.desc")}
+                        restart={restart("natMode", "externalIp")}
                       >
-                        <TextInput
-                          width="w-48"
-                          value={cfg.externalIp}
-                          placeholder="203.0.113.7"
-                          onChange={(v) => update({ externalIp: v })}
+                        <Select<GUIConfig["natMode"]>
+                          className="w-48"
+                          aria-label={t("settings.nat")}
+                          disabled={!inbound}
+                          value={cfg.natMode}
+                          onChange={(natMode) => update({ natMode })}
+                          options={[
+                            { value: "", label: t("settings.nat.any") },
+                            { value: "upnp", label: "UPnP" },
+                            { value: "pmp", label: "NAT-PMP" },
+                            { value: "extip", label: t("settings.nat.extip") },
+                          ]}
                         />
                       </Setting>
-                    )}
-                    <Setting
-                      title={t("settings.maxPendingPeers")}
-                      desc={t("settings.maxPendingPeers.desc")}
-                      restart={restart("maxPendingPeers")}
-                    >
-                      <NumberInput
-                        optional
-                        width="w-24"
-                        value={cfg.maxPendingPeers || null}
-                        placeholder={50}
-                        onChange={(v) => update({ maxPendingPeers: v ?? 0 })}
-                      />
-                    </Setting>
-                  </Advanced>
+                      {inbound && cfg.natMode === "extip" && (
+                        <Setting
+                          title={t("settings.externalIp")}
+                          desc={t("settings.externalIp.desc")}
+                          restart={restart("externalIp")}
+                        >
+                          <TextInput
+                            width="w-48"
+                            value={cfg.externalIp}
+                            placeholder="203.0.113.7"
+                            onChange={(v) => update({ externalIp: v })}
+                          />
+                        </Setting>
+                      )}
+                      <Setting
+                        title={t("settings.maxPendingPeers")}
+                        desc={t("settings.maxPendingPeers.desc")}
+                        restart={restart("maxPendingPeers")}
+                      >
+                        <NumberInput
+                          optional
+                          width="w-24"
+                          value={cfg.maxPendingPeers || null}
+                          placeholder={50}
+                          onChange={(v) => update({ maxPendingPeers: v ?? 0 })}
+                        />
+                      </Setting>
+                    </Advanced>
+                  </Rows>
                 </Group>
 
                 <Group title={t("settings.group.discovery")}>
@@ -917,52 +932,52 @@ export default function Settings() {
                         label={t("settings.discovery")}
                       />
                     </Setting>
+                    <Advanced id="discovery" changed={countSet([cfg.legacyDiscovery, cfg.netRestrict, cfg.bootnodes])}>
+                      <Setting
+                        title={t("settings.legacyDiscovery")}
+                        more={t("settings.legacyDiscovery.more")}
+                        flag="--legacy-discovery"
+                        desc={t("settings.legacyDiscovery.desc")}
+                        restart={restart("legacyDiscovery")}
+                      >
+                        <Segmented
+                          value={cfg.legacyDiscovery || ""}
+                          onChange={(v) => update({ legacyDiscovery: v })}
+                          options={[
+                            { value: "", label: t("settings.legacyDiscovery.auto") },
+                            { value: "on", label: t("settings.on") },
+                            { value: "off", label: t("settings.off") },
+                          ]}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.netRestrict")}
+                        desc={t("settings.netRestrict.desc")}
+                        restart={restart("netRestrict")}
+                      >
+                        <TextInput
+                          value={cfg.netRestrict}
+                          placeholder="10.0.0.0/8, 192.168.0.0/16"
+                          onChange={(v) => update({ netRestrict: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.bootnodes")}
+                        more={t("settings.bootnodes.more")}
+                        flag="--bootnodes"
+                        desc={t("settings.bootnodes.desc")}
+                        restart={restart("bootnodes")}
+                      >
+                        <ListInput
+                          multiline
+                          width="w-72"
+                          value={cfg.bootnodes}
+                          placeholder={t("settings.bootnodes.placeholder")}
+                          onChange={(v) => update({ bootnodes: v })}
+                        />
+                      </Setting>
+                    </Advanced>
                   </Rows>
-                  <Advanced id="discovery" changed={countSet([cfg.legacyDiscovery, cfg.netRestrict, cfg.bootnodes])}>
-                    <Setting
-                      title={t("settings.legacyDiscovery")}
-                      more={t("settings.legacyDiscovery.more")}
-                      flag="--legacy-discovery"
-                      desc={t("settings.legacyDiscovery.desc")}
-                      restart={restart("legacyDiscovery")}
-                    >
-                      <Segmented
-                        value={cfg.legacyDiscovery || ""}
-                        onChange={(v) => update({ legacyDiscovery: v })}
-                        options={[
-                          { value: "", label: t("settings.legacyDiscovery.auto") },
-                          { value: "on", label: t("settings.on") },
-                          { value: "off", label: t("settings.off") },
-                        ]}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.netRestrict")}
-                      desc={t("settings.netRestrict.desc")}
-                      restart={restart("netRestrict")}
-                    >
-                      <TextInput
-                        value={cfg.netRestrict}
-                        placeholder="10.0.0.0/8, 192.168.0.0/16"
-                        onChange={(v) => update({ netRestrict: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.bootnodes")}
-                      more={t("settings.bootnodes.more")}
-                      flag="--bootnodes"
-                      desc={t("settings.bootnodes.desc")}
-                      restart={restart("bootnodes")}
-                    >
-                      <ListInput
-                        multiline
-                        width="w-72"
-                        value={cfg.bootnodes}
-                        placeholder={t("settings.bootnodes.placeholder")}
-                        onChange={(v) => update({ bootnodes: v })}
-                      />
-                    </Setting>
-                  </Advanced>
                 </Group>
 
                 <Group title={t("settings.group.privacy")} desc={t("settings.privacy.desc")}>
@@ -994,82 +1009,82 @@ export default function Settings() {
                         label={t("settings.listenOnion")}
                       />
                     </Setting>
+                    <Advanced
+                      id="privacy"
+                      changed={countSet([
+                        cfg.onionProxy,
+                        cfg.onlyNet,
+                        cfg.proxyNoRandomize,
+                        cfg.torControl,
+                        cfg.torPassword,
+                      ])}
+                    >
+                      <Setting
+                        title={t("settings.onlyNet")}
+                        more={t("settings.onlyNet.more")}
+                        flag="--onlynet"
+                        desc={t("settings.onlyNet.desc")}
+                        restart={restart("onlyNet")}
+                      >
+                        <NetworkPicker
+                          value={cfg.onlyNet ?? []}
+                          onChange={(v) => update({ onlyNet: v.length ? v : null })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.onionProxy")}
+                        more={t("settings.onionProxy.more")}
+                        flag="--onion"
+                        desc={t("settings.onionProxy.desc")}
+                        restart={restart("onionProxy")}
+                      >
+                        <TextInput
+                          width="w-44"
+                          value={cfg.onionProxy}
+                          placeholder={t("settings.onionProxy.placeholder")}
+                          onChange={(v) => update({ onionProxy: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.proxyRandomize")}
+                        more={t("settings.proxyRandomize.more")}
+                        flag="--proxyrandomize"
+                        desc={t("settings.proxyRandomize.desc")}
+                        restart={restart("proxyNoRandomize")}
+                      >
+                        <Toggle
+                          checked={!cfg.proxyNoRandomize}
+                          onChange={(v) => update({ proxyNoRandomize: !v })}
+                          label={t("settings.proxyRandomize")}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.torControl")}
+                        desc={t("settings.torControl.desc")}
+                        restart={restart("torControl")}
+                      >
+                        <TextInput
+                          width="w-44"
+                          value={cfg.torControl}
+                          placeholder="127.0.0.1:9051"
+                          onChange={(v) => update({ torControl: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.torPassword")}
+                        desc={t("settings.torPassword.desc")}
+                        restart={restart("torPassword")}
+                      >
+                        <TextInput
+                          type="password"
+                          width="w-44"
+                          value={cfg.torPassword}
+                          placeholder={t("settings.torPassword.placeholder")}
+                          onChange={(v) => update({ torPassword: v })}
+                        />
+                      </Setting>
+                    </Advanced>
                   </Rows>
-                  <Advanced
-                    id="privacy"
-                    changed={countSet([
-                      cfg.onionProxy,
-                      cfg.onlyNet,
-                      cfg.proxyNoRandomize,
-                      cfg.torControl,
-                      cfg.torPassword,
-                    ])}
-                  >
-                    <Setting
-                      title={t("settings.onlyNet")}
-                      more={t("settings.onlyNet.more")}
-                      flag="--onlynet"
-                      desc={t("settings.onlyNet.desc")}
-                      restart={restart("onlyNet")}
-                    >
-                      <NetworkPicker
-                        value={cfg.onlyNet ?? []}
-                        onChange={(v) => update({ onlyNet: v.length ? v : null })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.onionProxy")}
-                      more={t("settings.onionProxy.more")}
-                      flag="--onion"
-                      desc={t("settings.onionProxy.desc")}
-                      restart={restart("onionProxy")}
-                    >
-                      <TextInput
-                        width="w-44"
-                        value={cfg.onionProxy}
-                        placeholder={t("settings.onionProxy.placeholder")}
-                        onChange={(v) => update({ onionProxy: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.proxyRandomize")}
-                      more={t("settings.proxyRandomize.more")}
-                      flag="--proxyrandomize"
-                      desc={t("settings.proxyRandomize.desc")}
-                      restart={restart("proxyNoRandomize")}
-                    >
-                      <Toggle
-                        checked={!cfg.proxyNoRandomize}
-                        onChange={(v) => update({ proxyNoRandomize: !v })}
-                        label={t("settings.proxyRandomize")}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.torControl")}
-                      desc={t("settings.torControl.desc")}
-                      restart={restart("torControl")}
-                    >
-                      <TextInput
-                        width="w-44"
-                        value={cfg.torControl}
-                        placeholder="127.0.0.1:9051"
-                        onChange={(v) => update({ torControl: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.torPassword")}
-                      desc={t("settings.torPassword.desc")}
-                      restart={restart("torPassword")}
-                    >
-                      <TextInput
-                        type="password"
-                        width="w-44"
-                        value={cfg.torPassword}
-                        placeholder={t("settings.torPassword.placeholder")}
-                        onChange={(v) => update({ torPassword: v })}
-                      />
-                    </Setting>
-                  </Advanced>
                 </Group>
 
                 <Group title={t("settings.group.reporting")}>
@@ -1126,57 +1141,57 @@ export default function Settings() {
                         />
                       </Setting>
                     )}
+                    <Advanced id="http" changed={countSet([cfg.httpHost, cfg.httpApis, cfg.httpCors, cfg.httpVhosts])}>
+                      <Setting
+                        title={t("settings.rpc.host")}
+                        more={t("settings.rpc.host.more")}
+                        flag="--http.addr"
+                        desc={t("settings.rpc.host.desc")}
+                        restart={restart("httpHost")}
+                      >
+                        <TextInput
+                          width="w-40"
+                          value={cfg.httpHost}
+                          placeholder="127.0.0.1"
+                          onChange={(v) => update({ httpHost: v.trim() })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.rpc.apis")}
+                        desc={t("settings.rpc.apis.desc")}
+                        restart={restart("httpApis")}
+                      >
+                        <ListInput
+                          value={cfg.httpApis}
+                          placeholder="net, web3, eth, debug"
+                          onChange={(v) => update({ httpApis: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.rpc.cors")}
+                        desc={t("settings.rpc.cors.desc")}
+                        restart={restart("httpCors")}
+                      >
+                        <ListInput value={cfg.httpCors} placeholder="*" onChange={(v) => update({ httpCors: v })} />
+                      </Setting>
+                      <Setting
+                        title={t("settings.rpc.vhosts")}
+                        more={t("settings.rpc.vhosts.more")}
+                        flag="--http.vhosts"
+                        desc={t("settings.rpc.vhosts.desc")}
+                        restart={restart("httpVhosts")}
+                      >
+                        <ListInput
+                          value={cfg.httpVhosts}
+                          placeholder="localhost, 127.0.0.1"
+                          onChange={(v) => update({ httpVhosts: v })}
+                        />
+                      </Setting>
+                    </Advanced>
                   </Rows>
                   {!LOOPBACK.has(cfg.httpHost) && cfg.httpRpcEnabled && (
                     <Notice tone="warn">{t("settings.rpc.exposed")}</Notice>
                   )}
-                  <Advanced id="http" changed={countSet([cfg.httpHost, cfg.httpApis, cfg.httpCors, cfg.httpVhosts])}>
-                    <Setting
-                      title={t("settings.rpc.host")}
-                      more={t("settings.rpc.host.more")}
-                      flag="--http.addr"
-                      desc={t("settings.rpc.host.desc")}
-                      restart={restart("httpHost")}
-                    >
-                      <TextInput
-                        width="w-40"
-                        value={cfg.httpHost}
-                        placeholder="127.0.0.1"
-                        onChange={(v) => update({ httpHost: v.trim() })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.rpc.apis")}
-                      desc={t("settings.rpc.apis.desc")}
-                      restart={restart("httpApis")}
-                    >
-                      <ListInput
-                        value={cfg.httpApis}
-                        placeholder="net, web3, eth, debug"
-                        onChange={(v) => update({ httpApis: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.rpc.cors")}
-                      desc={t("settings.rpc.cors.desc")}
-                      restart={restart("httpCors")}
-                    >
-                      <ListInput value={cfg.httpCors} placeholder="*" onChange={(v) => update({ httpCors: v })} />
-                    </Setting>
-                    <Setting
-                      title={t("settings.rpc.vhosts")}
-                      more={t("settings.rpc.vhosts.more")}
-                      flag="--http.vhosts"
-                      desc={t("settings.rpc.vhosts.desc")}
-                      restart={restart("httpVhosts")}
-                    >
-                      <ListInput
-                        value={cfg.httpVhosts}
-                        placeholder="localhost, 127.0.0.1"
-                        onChange={(v) => update({ httpVhosts: v })}
-                      />
-                    </Setting>
-                  </Advanced>
                 </Group>
 
                 <Group title={t("settings.group.ws")}>
@@ -1188,42 +1203,42 @@ export default function Settings() {
                         label={t("settings.ws")}
                       />
                     </Setting>
+                    {cfg.wsEnabled && (
+                      <Advanced id="ws" changed={countSet([cfg.wsHost, cfg.wsPort, cfg.wsApis, cfg.wsOrigins])}>
+                        <Setting title={t("settings.ws.host")} restart={restart("wsHost", "wsPort")}>
+                          <TextInput
+                            width="w-40"
+                            value={cfg.wsHost}
+                            placeholder="127.0.0.1"
+                            onChange={(v) => update({ wsHost: v.trim() })}
+                          />
+                          <span className="text-muted-foreground">:</span>
+                          <NumberInput
+                            optional
+                            min={1}
+                            width="w-24"
+                            value={cfg.wsPort || null}
+                            placeholder={8546}
+                            onChange={(v) => update({ wsPort: v ?? 0 })}
+                          />
+                        </Setting>
+                        <Setting title={t("settings.ws.apis")} restart={restart("wsApis")}>
+                          <ListInput
+                            value={cfg.wsApis}
+                            placeholder="net, web3, eth, debug"
+                            onChange={(v) => update({ wsApis: v })}
+                          />
+                        </Setting>
+                        <Setting
+                          title={t("settings.ws.origins")}
+                          desc={t("settings.ws.origins.desc")}
+                          restart={restart("wsOrigins")}
+                        >
+                          <ListInput value={cfg.wsOrigins} placeholder="*" onChange={(v) => update({ wsOrigins: v })} />
+                        </Setting>
+                      </Advanced>
+                    )}
                   </Rows>
-                  {cfg.wsEnabled && (
-                    <Advanced id="ws" changed={countSet([cfg.wsHost, cfg.wsPort, cfg.wsApis, cfg.wsOrigins])}>
-                      <Setting title={t("settings.ws.host")} restart={restart("wsHost", "wsPort")}>
-                        <TextInput
-                          width="w-40"
-                          value={cfg.wsHost}
-                          placeholder="127.0.0.1"
-                          onChange={(v) => update({ wsHost: v.trim() })}
-                        />
-                        <span className="text-muted-foreground">:</span>
-                        <NumberInput
-                          optional
-                          min={1}
-                          width="w-24"
-                          value={cfg.wsPort || null}
-                          placeholder={8546}
-                          onChange={(v) => update({ wsPort: v ?? 0 })}
-                        />
-                      </Setting>
-                      <Setting title={t("settings.ws.apis")} restart={restart("wsApis")}>
-                        <ListInput
-                          value={cfg.wsApis}
-                          placeholder="net, web3, eth, debug"
-                          onChange={(v) => update({ wsApis: v })}
-                        />
-                      </Setting>
-                      <Setting
-                        title={t("settings.ws.origins")}
-                        desc={t("settings.ws.origins.desc")}
-                        restart={restart("wsOrigins")}
-                      >
-                        <ListInput value={cfg.wsOrigins} placeholder="*" onChange={(v) => update({ wsOrigins: v })} />
-                      </Setting>
-                    </Advanced>
-                  )}
                 </Group>
 
                 <Group title={t("settings.group.otherApis")}>
@@ -1251,95 +1266,97 @@ export default function Settings() {
                 </Group>
 
                 <Group title={t("settings.group.limits")} desc={t("settings.limits.desc")}>
-                  <Advanced
-                    id="limits"
-                    changed={countSet([
-                      cfg.rpcGasCap,
-                      cfg.rpcTxFeeCap,
-                      cfg.rpcPvmTimeoutSec,
-                      cfg.rpcLogQueryLimit,
-                      cfg.rpcBatchLimit,
-                      cfg.allowUnprotectedTxs,
-                    ])}
-                  >
-                    <Setting
-                      title={t("settings.rpc.gasCap")}
-                      desc={t("settings.rpc.gasCap.desc")}
-                      restart={restart("rpcGasCap")}
+                  <Rows>
+                    <Advanced
+                      id="limits"
+                      changed={countSet([
+                        cfg.rpcGasCap,
+                        cfg.rpcTxFeeCap,
+                        cfg.rpcPvmTimeoutSec,
+                        cfg.rpcLogQueryLimit,
+                        cfg.rpcBatchLimit,
+                        cfg.allowUnprotectedTxs,
+                      ])}
                     >
-                      <NumberInput
-                        optional
-                        value={cfg.rpcGasCap}
-                        placeholder={600000000}
-                        width="w-32"
-                        onChange={(v) => update({ rpcGasCap: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.rpc.txFeeCap")}
-                      desc={t("settings.rpc.txFeeCap.desc")}
-                      restart={restart("rpcTxFeeCap")}
-                    >
-                      <NumberInput
-                        optional
-                        step="any"
-                        value={cfg.rpcTxFeeCap}
-                        placeholder={1}
-                        unit="LAX"
-                        onChange={(v) => update({ rpcTxFeeCap: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.rpc.pvmTimeout")}
-                      desc={t("settings.rpc.pvmTimeout.desc")}
-                      restart={restart("rpcPvmTimeoutSec")}
-                    >
-                      <NumberInput
-                        optional
-                        value={cfg.rpcPvmTimeoutSec}
-                        placeholder={5}
-                        unit="s"
-                        onChange={(v) => update({ rpcPvmTimeoutSec: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.rpc.logQueryLimit")}
-                      desc={t("settings.rpc.logQueryLimit.desc")}
-                      restart={restart("rpcLogQueryLimit")}
-                    >
-                      <NumberInput
-                        optional
-                        value={cfg.rpcLogQueryLimit}
-                        placeholder={1000}
-                        onChange={(v) => update({ rpcLogQueryLimit: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.rpc.batchLimit")}
-                      desc={t("settings.rpc.batchLimit.desc")}
-                      restart={restart("rpcBatchLimit")}
-                    >
-                      <NumberInput
-                        optional
-                        value={cfg.rpcBatchLimit}
-                        placeholder={1000}
-                        onChange={(v) => update({ rpcBatchLimit: v })}
-                      />
-                    </Setting>
-                    <Setting
-                      title={t("settings.rpc.unprotected")}
-                      more={t("settings.rpc.unprotected.more")}
-                      flag="--rpc.allow-unprotected-txs"
-                      desc={t("settings.rpc.unprotected.desc")}
-                      restart={restart("allowUnprotectedTxs")}
-                    >
-                      <Toggle
-                        checked={cfg.allowUnprotectedTxs}
-                        onChange={(v) => update({ allowUnprotectedTxs: v })}
-                        label={t("settings.rpc.unprotected")}
-                      />
-                    </Setting>
-                  </Advanced>
+                      <Setting
+                        title={t("settings.rpc.gasCap")}
+                        desc={t("settings.rpc.gasCap.desc")}
+                        restart={restart("rpcGasCap")}
+                      >
+                        <NumberInput
+                          optional
+                          value={cfg.rpcGasCap}
+                          placeholder={600000000}
+                          width="w-32"
+                          onChange={(v) => update({ rpcGasCap: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.rpc.txFeeCap")}
+                        desc={t("settings.rpc.txFeeCap.desc")}
+                        restart={restart("rpcTxFeeCap")}
+                      >
+                        <NumberInput
+                          optional
+                          step="any"
+                          value={cfg.rpcTxFeeCap}
+                          placeholder={1}
+                          unit="LAX"
+                          onChange={(v) => update({ rpcTxFeeCap: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.rpc.pvmTimeout")}
+                        desc={t("settings.rpc.pvmTimeout.desc")}
+                        restart={restart("rpcPvmTimeoutSec")}
+                      >
+                        <NumberInput
+                          optional
+                          value={cfg.rpcPvmTimeoutSec}
+                          placeholder={5}
+                          unit="s"
+                          onChange={(v) => update({ rpcPvmTimeoutSec: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.rpc.logQueryLimit")}
+                        desc={t("settings.rpc.logQueryLimit.desc")}
+                        restart={restart("rpcLogQueryLimit")}
+                      >
+                        <NumberInput
+                          optional
+                          value={cfg.rpcLogQueryLimit}
+                          placeholder={1000}
+                          onChange={(v) => update({ rpcLogQueryLimit: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.rpc.batchLimit")}
+                        desc={t("settings.rpc.batchLimit.desc")}
+                        restart={restart("rpcBatchLimit")}
+                      >
+                        <NumberInput
+                          optional
+                          value={cfg.rpcBatchLimit}
+                          placeholder={1000}
+                          onChange={(v) => update({ rpcBatchLimit: v })}
+                        />
+                      </Setting>
+                      <Setting
+                        title={t("settings.rpc.unprotected")}
+                        more={t("settings.rpc.unprotected.more")}
+                        flag="--rpc.allow-unprotected-txs"
+                        desc={t("settings.rpc.unprotected.desc")}
+                        restart={restart("allowUnprotectedTxs")}
+                      >
+                        <Toggle
+                          checked={cfg.allowUnprotectedTxs}
+                          onChange={(v) => update({ allowUnprotectedTxs: v })}
+                          label={t("settings.rpc.unprotected")}
+                        />
+                      </Setting>
+                    </Advanced>
+                  </Rows>
                 </Group>
               </>
             )}
@@ -1382,47 +1399,47 @@ export default function Settings() {
                           label={t("settings.metrics")}
                         />
                       </Setting>
+                      {cfg.metrics && (
+                        <Advanced
+                          id="metrics"
+                          changed={countSet([cfg.metricsExpensive, cfg.metricsAddr, cfg.metricsPort])}
+                        >
+                          <Setting
+                            title={t("settings.metrics.expensive")}
+                            desc={t("settings.metrics.expensive.desc")}
+                            restart={restart("metricsExpensive")}
+                          >
+                            <Toggle
+                              checked={cfg.metricsExpensive}
+                              onChange={(v) => update({ metricsExpensive: v })}
+                              label={t("settings.metrics.expensive")}
+                            />
+                          </Setting>
+                          <Setting
+                            title={t("settings.metrics.http")}
+                            flag="--metrics.addr"
+                            desc={t("settings.metrics.http.desc")}
+                            restart={restart("metricsAddr", "metricsPort")}
+                          >
+                            <TextInput
+                              width="w-40"
+                              value={cfg.metricsAddr}
+                              placeholder={t("settings.off")}
+                              onChange={(v) => update({ metricsAddr: v.trim() })}
+                            />
+                            <span className="text-muted-foreground">:</span>
+                            <NumberInput
+                              optional
+                              min={1}
+                              width="w-24"
+                              value={cfg.metricsPort || null}
+                              placeholder={6060}
+                              onChange={(v) => update({ metricsPort: v ?? 0 })}
+                            />
+                          </Setting>
+                        </Advanced>
+                      )}
                     </Rows>
-                    {cfg.metrics && (
-                      <Advanced
-                        id="metrics"
-                        changed={countSet([cfg.metricsExpensive, cfg.metricsAddr, cfg.metricsPort])}
-                      >
-                        <Setting
-                          title={t("settings.metrics.expensive")}
-                          desc={t("settings.metrics.expensive.desc")}
-                          restart={restart("metricsExpensive")}
-                        >
-                          <Toggle
-                            checked={cfg.metricsExpensive}
-                            onChange={(v) => update({ metricsExpensive: v })}
-                            label={t("settings.metrics.expensive")}
-                          />
-                        </Setting>
-                        <Setting
-                          title={t("settings.metrics.http")}
-                          flag="--metrics.addr"
-                          desc={t("settings.metrics.http.desc")}
-                          restart={restart("metricsAddr", "metricsPort")}
-                        >
-                          <TextInput
-                            width="w-40"
-                            value={cfg.metricsAddr}
-                            placeholder={t("settings.off")}
-                            onChange={(v) => update({ metricsAddr: v.trim() })}
-                          />
-                          <span className="text-muted-foreground">:</span>
-                          <NumberInput
-                            optional
-                            min={1}
-                            width="w-24"
-                            value={cfg.metricsPort || null}
-                            placeholder={6060}
-                            onChange={(v) => update({ metricsPort: v ?? 0 })}
-                          />
-                        </Setting>
-                      </Advanced>
-                    )}
                   </Group>
                 )}
                 <Group title={t("settings.group.logs")} desc={t("settings.diagnostics.desc")}>
@@ -1742,8 +1759,8 @@ function SaveBar({
 const NODE_SECTIONS = new Set<SettingsSection>(["node", "network", "rpc", "assistants", "permissions"]);
 
 const NAV_GROUPS: { title: string; sections: SettingsSection[] }[] = [
-  { title: "settings.navGroup.app", sections: ["general", "appearance"] },
-  { title: "nav.wallet", sections: ["accounts", "security", "storage"] },
+  { title: "settings.navGroup.app", sections: ["general", "appearance", "storage"] },
+  { title: "nav.wallet", sections: ["accounts", "security"] },
   { title: "nav.node", sections: ["node", "network", "rpc"] },
   { title: "settings.navGroup.assistants", sections: ["assistants", "permissions"] },
   { title: "settings.navGroup.support", sections: ["diagnostics", "about"] },

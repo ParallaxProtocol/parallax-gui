@@ -54,6 +54,10 @@ contextBridge.exposeInMainWorld("parallax", {
   saveSigningDoc(fileName: string, contents: string): Promise<boolean> {
     return ipcRenderer.invoke("offline:save", fileName, contents);
   },
+  /** Asks for a folder (the node's data, or where to move a store), opened at start; null if cancelled. */
+  pickFolder(title: string, start: string): Promise<string | null> {
+    return ipcRenderer.invoke("storage:pickFolder", title, start);
+  },
   /** Asks for the camera where the OS needs asking (macOS); whether it may be used. */
   cameraAccess(): Promise<boolean> {
     return ipcRenderer.invoke("camera:access");

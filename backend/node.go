@@ -49,6 +49,9 @@ type NodeController struct {
 	startedAt time.Time
 	stopCh    chan struct{} // closed by Stop() so background goroutines exit
 	dev       bool          // running the development chain (devchain.go)
+	// busy is set while its data is moved or cleared (storage.go): the
+	// node stays stopped until that's done
+	busy bool
 	// The free space below which monitorFreeDiskSpace stops the node; 0 when off
 	diskCritical uint64
 
@@ -140,6 +143,10 @@ func (n *NodeController) Start(ctx context.Context) error {
 	if n.stack != nil {
 		n.mu.Unlock()
 		return nil
+	}
+	if n.busy {
+		n.mu.Unlock()
+		return ErrStorageBusy
 	}
 	guiCfg := n.cfg.Get()
 	n.mu.Unlock()

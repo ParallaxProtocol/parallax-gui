@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -136,7 +137,8 @@ type walletMeta struct {
 
 // Wallet is the app's own wallet. It is safe for concurrent use.
 type Wallet struct {
-	ks       *keystore.KeyStore
+	// ks is the keystore, opened afresh when the wallet is wiped (storage.go)
+	ks       atomic.Pointer[keystore.KeyStore]
 	dir      string
 	metaPath string
 	node     *NodeController
@@ -172,12 +174,12 @@ func NewWallet(configDir string, node *NodeController) (*Wallet, error) {
 		return nil, err
 	}
 	w := &Wallet{
-		ks:       keystore.NewKeyStore(dir, walletScryptN, walletScryptP),
 		dir:      dir,
 		metaPath: filepath.Join(configDir, "wallet.json"),
 		node:     node,
 		meta:     walletMeta{Names: map[string]string{}, BackedUp: map[string]bool{}, Seeds: map[string]seedMeta{}, SeedOf: map[string]seedRef{}},
 	}
+	w.ks.Store(keystore.NewKeyStore(dir, walletScryptN, walletScryptP))
 	w.ready = w.nodeReady
 	if data, err := os.ReadFile(w.metaPath); err == nil {
 		if err := json.Unmarshal(data, &w.meta); err != nil {
@@ -203,6 +205,9 @@ func NewWallet(configDir string, node *NodeController) (*Wallet, error) {
 	return w, nil
 }
 
+// keys is the wallet's keystore.
+func (w *Wallet) keys() *keystore.KeyStore { return w.ks.Load() }
+
 // saveMeta writes the labels atomically. The caller holds w.mu.
 func (w *Wallet) saveMeta() error {
 	data, err := json.MarshalIndent(w.meta, "", "  ")
@@ -219,7 +224,7 @@ func (w *Wallet) saveMeta() error {
 // Info lists the wallet's accounts. The keystore orders them by file name,
 // which starts with the time each key was made or imported.
 func (w *Wallet) Info() WalletInfo {
-	accs := w.ks.Accounts()
+	accs := w.keys().Accounts()
 	v, err := w.loadVault()
 	if err != nil {
 		logging.Warn("Failed to read the wallet's vault", "err", err)
@@ -265,7 +270,7 @@ func (w *Wallet) find(address string) (wallet.Account, error) {
 	if !util.IsHexAddress(address) {
 		return wallet.Account{}, ErrUnknownAccount
 	}
-	acc, err := w.ks.Find(wallet.Account{Address: util.HexToAddress(address)})
+	acc, err := w.keys().Find(wallet.Account{Address: util.HexToAddress(address)})
 	if err != nil {
 		return wallet.Account{}, ErrUnknownAccount
 	}
@@ -300,7 +305,7 @@ func (w *Wallet) isWatched(addr util.Address) bool {
 // addresses lists every wallet account: the keys, then the watch-only ones.
 func (w *Wallet) addresses() []util.Address {
 	var out []util.Address
-	for _, acc := range w.ks.Accounts() {
+	for _, acc := range w.keys().Accounts() {
 		out = append(out, acc.Address)
 	}
 	w.mu.Lock()
@@ -460,7 +465,7 @@ func (w *Wallet) newAccount(password string) (wallet.Account, error) {
 	if _, err := w.unlockVault(password); err != nil {
 		return wallet.Account{}, err
 	}
-	return w.ks.NewAccount(password)
+	return w.keys().NewAccount(password)
 }
 
 // ImportPrivateKey stores a raw secp256k1 private key, given as 64 hex
@@ -492,7 +497,7 @@ func (w *Wallet) ImportPrivateKey(name, privateKeyHex, password string) (WalletA
 		if _, err := w.unlockVault(password); err != nil {
 			return wallet.Account{}, err
 		}
-		return w.ks.ImportECDSA(priv, password)
+		return w.keys().ImportECDSA(priv, password)
 	}()
 	w.keyMu.Unlock()
 	if errors.Is(err, keystore.ErrAccountAlreadyExists) {
@@ -524,7 +529,7 @@ func (w *Wallet) ImportKeyfile(name, keyJSON, filePassword, password string) (Wa
 		if _, err := w.unlockVault(password); err != nil {
 			return wallet.Account{}, err
 		}
-		return w.ks.Import([]byte(keyJSON), filePassword, password)
+		return w.keys().Import([]byte(keyJSON), filePassword, password)
 	}()
 	w.keyMu.Unlock()
 	switch {
@@ -597,7 +602,7 @@ func (w *Wallet) Remove(address, password string) error {
 		return ErrWrongPassword
 	}
 	w.keyMu.Lock()
-	err = w.ks.Delete(acc, password)
+	err = w.keys().Delete(acc, password)
 	if errors.Is(err, keystore.ErrDecrypt) {
 		err = w.keyError(password)
 	}
@@ -929,7 +934,7 @@ func (w *Wallet) Send(req SendRequest) (SentTx, error) {
 // sign signs tx for chainID with the account's key, decrypted for this one
 // signature, and checks the result. The caller holds w.keyMu.
 func (w *Wallet) sign(acc wallet.Account, password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
-	signed, err := w.ks.SignTxWithPassphrase(acc, password, tx, chainID)
+	signed, err := w.keys().SignTxWithPassphrase(acc, password, tx, chainID)
 	if errors.Is(err, keystore.ErrDecrypt) {
 		return nil, w.keyError(password)
 	}

@@ -49,7 +49,7 @@ func newTestWallet(t *testing.T) (*Wallet, string) {
 func waitForAccounts(t *testing.T, w *Wallet, n int) {
 	t.Helper()
 	deadline := time.Now().Add(10 * time.Second)
-	for len(w.ks.Accounts()) != n {
+	for len(w.keys().Accounts()) != n {
 		if time.Now().After(deadline) {
 			t.Fatalf("the keystore never saw %d keys", n)
 		}

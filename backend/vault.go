@@ -137,7 +137,7 @@ func (w *Wallet) unlockVault(password string) (*vaultFile, error) {
 		return nil, err
 	}
 	if v == nil {
-		if len(w.ks.Accounts()) > 0 {
+		if len(w.keys().Accounts()) > 0 {
 			return nil, ErrNeedsSetup
 		}
 		return nil, ErrNoPassword
@@ -163,7 +163,7 @@ func (w *Wallet) SetupPassword(password string) error {
 	if err := checkPassword(password); err != nil {
 		return err
 	}
-	for _, acc := range w.ks.Accounts() {
+	for _, acc := range w.keys().Accounts() {
 		if err := openKeyFile(acc, password); err != nil {
 			return ErrSetupMismatch
 		}
@@ -245,7 +245,7 @@ func (w *Wallet) ChangePassword(oldPassword, newPassword string) error {
 			os.Remove(f.tmp)
 		}
 	}()
-	for _, acc := range w.ks.Accounts() {
+	for _, acc := range w.keys().Accounts() {
 		data, err := os.ReadFile(acc.URL.Path)
 		if err != nil {
 			return err

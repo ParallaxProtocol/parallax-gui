@@ -210,7 +210,7 @@ func (w *Wallet) signMessage(acc wallet.Account, message, password string) (Sign
 		return SignedMessage{}, ErrWrongPassword
 	}
 	w.keyMu.Lock()
-	sig, err := w.ks.SignHashWithPassphrase(acc, password, wallet.TextHash([]byte(message)))
+	sig, err := w.keys().SignHashWithPassphrase(acc, password, wallet.TextHash([]byte(message)))
 	if errors.Is(err, keystore.ErrDecrypt) {
 		err = w.keyError(password)
 	}

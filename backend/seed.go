@@ -268,7 +268,7 @@ func (w *Wallet) scan(entropy []byte, passphrase, scheme string, from, count uin
 			return nil, err
 		}
 		addr := util.HexToAddress(hexAddr)
-		c := SeedCandidate{Scheme: scheme, Index: i, Path: path.String(), Address: hexAddr, InWallet: w.ks.HasAddress(addr)}
+		c := SeedCandidate{Scheme: scheme, Index: i, Path: path.String(), Address: hexAddr, InWallet: w.keys().HasAddress(addr)}
 		if state != nil {
 			bal := state.GetBalance(addr)
 			c.BalanceWei = bal.String()
@@ -552,7 +552,7 @@ func (w *Wallet) DeriveAccount(seedID, name, password string) (WalletAccount, er
 		if err != nil {
 			return WalletAccount{}, err
 		}
-		if w.ks.HasAddress(util.HexToAddress(addr)) {
+		if w.keys().HasAddress(util.HexToAddress(addr)) {
 			continue
 		}
 		if _, err := w.deriveAccount(entropy, string(pass), seedID, path, name, password); err != nil {
@@ -619,7 +619,7 @@ func (w *Wallet) AddSeedAccounts(seedID, password string, picks []SeedPick) (Wal
 		if err != nil {
 			return WalletAccount{}, err
 		}
-		if w.ks.HasAddress(util.HexToAddress(addr)) {
+		if w.keys().HasAddress(util.HexToAddress(addr)) {
 			continue
 		}
 		if _, err := w.deriveAccount(entropy, string(pass), seedID, path, names[i], password); err != nil {
@@ -737,7 +737,7 @@ func (w *Wallet) RemoveSeed(seedID, password string) error {
 		if err != nil {
 			return err
 		}
-		if err := w.ks.Delete(acc, password); err != nil {
+		if err := w.keys().Delete(acc, password); err != nil {
 			if errors.Is(err, keystore.ErrDecrypt) {
 				return fmt.Errorf("%w: %s", ErrKeyMismatch, addr)
 			}
@@ -772,7 +772,7 @@ func (w *Wallet) seedInfosLocked(v *vaultFile) []SeedInfo {
 	}
 	counts := map[string]int{}
 	for addr, ref := range w.meta.SeedOf {
-		if w.ks.HasAddress(util.HexToAddress(addr)) {
+		if w.keys().HasAddress(util.HexToAddress(addr)) {
 			counts[ref.Seed]++
 		}
 	}
@@ -800,7 +800,7 @@ func (w *Wallet) deriveAccount(entropy []byte, passphrase, seedID string, path w
 	}
 	defer zeroPrivateKey(priv)
 	addr := crypto.PubkeyToAddress(priv.PublicKey).Hex()
-	if _, err := w.ks.ImportECDSA(priv, password); err != nil && !errors.Is(err, keystore.ErrAccountAlreadyExists) {
+	if _, err := w.keys().ImportECDSA(priv, password); err != nil && !errors.Is(err, keystore.ErrAccountAlreadyExists) {
 		return "", err
 	}
 	w.mu.Lock()

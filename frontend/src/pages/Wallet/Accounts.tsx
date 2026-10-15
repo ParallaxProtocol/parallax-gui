@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Download,
   FileKey2,
-  HardDrive,
   Lock,
   Pencil,
   Plus,
@@ -204,25 +203,6 @@ export function SecuritySettings() {
       </Panel>
       <PasswordModal open={changing} onClose={() => setChanging(false)} />
     </>
-  );
-}
-
-/** StorageSettings is Settings' Storage section: where the encrypted keys are kept on this computer. */
-export function StorageSettings() {
-  const t = useT();
-  const { info } = useWallet();
-  if (!info) return null;
-  return (
-    <Panel className="flex h-full flex-col gap-3 p-5">
-      <div className="flex items-start gap-3.5">
-        <IconBadge icon={HardDrive} />
-        <p className="text-sm text-muted-foreground">{t("wallet.accounts.storageDesc")}</p>
-      </div>
-      <div className="flex items-center gap-1 rounded-xl bg-muted py-1 pr-1 pl-3">
-        <code className="selectable min-w-0 flex-1 truncate font-mono text-sm">{info.keystoreDir}</code>
-        <CopyButton value={info.keystoreDir} />
-      </div>
-    </Panel>
   );
 }
 

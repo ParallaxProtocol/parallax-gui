@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -31,6 +32,9 @@ type App struct {
 	contacts *backend.Contacts
 	mcp      *backend.MCPServer
 	updater  *backend.Updater
+
+	// walletErr is why the wallet didn't open, when it didn't
+	walletErr error
 }
 
 // NewApp constructs the App, emitting its events through events. The heavy
@@ -91,9 +95,18 @@ func (a *App) startup(ctx context.Context) {
 	// The wallet works with the node stopped: only its balances and sends
 	// need the chain
 	if cfg != nil {
-		if a.wallet, err = backend.NewWallet(cfg.Dir(), a.node); err != nil {
+		// A wallet moved to a folder that isn't there now (a drive not
+		// plugged in) isn't made afresh there: it shows as unavailable
+		walletDir := backend.WalletDir(cfg.Dir(), conf)
+		if _, serr := os.Stat(walletDir); serr != nil {
+			a.walletErr = fmt.Errorf("%w: %s", backend.ErrWalletDirGone, walletDir)
+			logging.Error("Failed to open the wallet", "err", a.walletErr)
+		} else if a.wallet, err = backend.NewWallet(walletDir, a.node); err != nil {
+			a.walletErr = err
 			logging.Error("Failed to open the wallet", "err", err)
 		} else {
+			// Moved, the app now runs on the copy: the original goes
+			backend.FinishWalletMove(cfg)
 			a.wallet.SetAutoLock(conf.AutoLock())
 			a.wallet.SetLockEmitter(func(locked bool) {
 				a.events.emit("wallet-lock", map[string]bool{"locked": locked})
@@ -192,6 +205,8 @@ func (a *App) UpdateConfig(c backend.GUIConfig) error {
 	c.Bootstrapped = cur.Bootstrapped
 	c.StaticPeers = cur.StaticPeers
 	c.TrustedPeers = cur.TrustedPeers
+	c.WalletDir = cur.WalletDir
+	c.WalletMovedFrom = cur.WalletMovedFrom
 	if err := a.cfg.Save(c); err != nil {
 		return err
 	}
@@ -358,6 +373,9 @@ var errNoWallet = errors.New("wallet: unavailable, see the log")
 
 func (a *App) walletOrErr() (*backend.Wallet, error) {
 	if a.wallet == nil {
+		if a.walletErr != nil {
+			return nil, a.walletErr
+		}
 		return nil, errNoWallet
 	}
 	return a.wallet, nil
@@ -663,6 +681,72 @@ func (a *App) WalletReplace(req backend.ReplaceRequest) (backend.SentTx, error) 
 // DevSetHold holds the development chain's blocks back, or lets it seal
 // again (make dev only).
 func (a *App) DevSetHold(hold bool) error { return a.node.SetDevHold(hold) }
+
+// ---------------------------------------------------------------------------
+// Storage (backend/storage.go)
+// ---------------------------------------------------------------------------
+
+// storageProgress emits a move's progress as "storage-progress", at most
+// ten times a second, and always its end.
+func (a *App) storageProgress(store string) func(done, total int64) {
+	var last time.Time
+	return func(done, total int64) {
+		if done < total && time.Since(last) < 100*time.Millisecond {
+			return
+		}
+		last = time.Now()
+		a.events.emit("storage-progress", backend.StorageProgress{Store: store, Done: done, Total: total})
+	}
+}
+
+// NodeMoveData moves the node's data into the folder chosen, stopping the
+// node while it moves and starting it again after. It returns where the
+// data went.
+func (a *App) NodeMoveData(chosen string) (string, error) {
+	return a.node.MoveDataDir(a.ctx, chosen, a.storageProgress("node"))
+}
+
+// NodeClearChainData deletes the downloaded chain, for the node to sync
+// again from scratch.
+func (a *App) NodeClearChainData() error { return a.node.ClearChainData(a.ctx) }
+
+// WalletMove copies the wallet's files into the folder chosen, points the
+// config at the copy, and restarts the app onto it; the restarted app
+// deletes the original. It returns where the wallet went.
+func (a *App) WalletMove(chosen string) (string, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return "", err
+	}
+	dest, err := w.CopyTo(chosen)
+	if err != nil {
+		return "", err
+	}
+	g := a.cfg.Get()
+	g.WalletMovedFrom = backend.WalletDir(a.cfg.Dir(), g)
+	g.WalletDir = dest
+	if err := a.cfg.Save(g); err != nil {
+		return "", err
+	}
+	w.Lock()
+	// Nothing may change the original now: the app restarts onto the
+	// copy as soon as the frontend has heard where it went
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		a.RestartApp()
+	}()
+	return dest, nil
+}
+
+// WalletWipe deletes the whole wallet from this computer, once password
+// proves to be the wallet's.
+func (a *App) WalletWipe(password string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.Wipe(password)
+}
 
 // ---------------------------------------------------------------------------
 // Watch-only accounts and offline signing (backend/offline.go)

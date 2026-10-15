@@ -17,6 +17,7 @@ declare global {
       exportContacts: (format: "json" | "csv", contents: string) => Promise<boolean>;
       saveSigningDoc: (fileName: string, contents: string) => Promise<boolean>;
       cameraAccess: () => Promise<boolean>;
+      pickFolder: (title: string, start: string) => Promise<string | null>;
       platform: string;
     };
   }
@@ -65,6 +66,9 @@ export type GUIConfig = {
   /** Kept by the backend, which carries them over on save. */
   staticPeers?: string[] | null;
   trustedPeers?: string[] | null;
+  /** Where the wallet was moved to, empty in the app's folder; where it left, until the move finishes. Kept by the backend too. */
+  walletDir?: string;
+  walletMovedFrom?: string;
 
   // The daemon's command-line flags (backend/types.go). An empty string,
   // null or false keeps the CLI default.
@@ -660,6 +664,11 @@ const WALLET_ERRORS: Record<string, string> = {
   "wallet: this account's key is under a different password": "wallet.err.keyMismatch",
   "wallet: the password doesn't open every key in the wallet": "wallet.err.setupMismatch",
   "wallet: wrong password for the keystore file": "wallet.err.wrongFilePassword",
+  "wallet: the wallet's folder is missing": "wallet.err.dirGone",
+  "storage: choose a folder by its full path": "storage.err.notAbs",
+  "storage: choose a folder outside the one being moved": "storage.err.inside",
+  "storage: the folder chosen already holds other files": "storage.err.notEmpty",
+  "storage: the data is being moved or cleared": "storage.err.busy",
 };
 
 /** walletError says a wallet call's failure in the user's language when it is a known one. */
@@ -667,7 +676,10 @@ export function walletError(e: unknown, t: (key: string) => string): string {
   const msg = e instanceof Error ? e.message : String(e);
   // Some carry what they are about after a colon: the address of a key
   const key = WALLET_ERRORS[msg] ?? WALLET_ERRORS[msg.replace(/: 0x[0-9a-fA-F]{40}$/, "")];
-  return key ? t(key) : msg;
+  if (key) return t(key);
+  // Or a folder, kept in the message
+  const at = msg.match(/^(.*?): (\/.*|[A-Za-z]:\\.*)$/);
+  return at && WALLET_ERRORS[at[1]] ? `${t(WALLET_ERRORS[at[1]])} ${at[2]}` : msg;
 }
 
 /** Saves a signing request or signed transaction where the user picks; false if cancelled. */
@@ -816,6 +828,14 @@ export type UpdateProgress = {
   detail: string;
 };
 
+/** A move's progress (backend/storage.go), as the "storage-progress" event: the bytes copied of the total. */
+export type StorageProgress = { store: "node" | "wallet"; done: number; total: number };
+
+/** Asks for a folder, the picker opened at start (a folder there now); null if cancelled or outside the app. */
+export function pickFolder(title: string, start = ""): Promise<string | null> {
+  return window.parallax?.pickFolder ? window.parallax.pickFolder(title, start) : Promise.resolve(null);
+}
+
 export const api = {
   bootstrapNeeded: () => call<boolean>("BootstrapNeeded"),
   saveBootstrap: (cfg: GUIConfig) => call<void>("SaveBootstrap", cfg),
@@ -890,6 +910,9 @@ export const api = {
   walletBackup: (address: string) => call<WalletBackup>("WalletBackup", address),
   walletMarkBackedUp: (address: string) => call<void>("WalletMarkBackedUp", address),
   walletRemove: (address: string, password: string) => call<void>("WalletRemove", address, password),
+  /** Copies the wallet into the folder chosen and restarts the app onto it; where it went. */
+  walletMove: (chosen: string) => call<string>("WalletMove", chosen),
+  walletWipe: (password: string) => call<void>("WalletWipe", password),
   walletSummary: (address: string) => call<AddressView>("WalletSummary", address),
   /** Every wallet account's balance at the head, in wei by checksummed address. */
   walletBalances: () => call<Record<string, string>>("WalletBalances"),
@@ -931,6 +954,9 @@ export const api = {
   walletReplace: (req: ReplaceRequest) => call<SentTx>("WalletReplace", req),
   /** Holds the development chain's blocks back, or lets it seal again (make dev only). */
   devSetHold: (hold: boolean) => call<void>("DevSetHold", hold),
+  /** Moves the node's data into the folder chosen, the node stopped meanwhile; where it went. */
+  nodeMoveData: (chosen: string) => call<string>("NodeMoveData", chosen),
+  nodeClearChainData: () => call<void>("NodeClearChainData"),
 
   getLogTail: (n: number) => call<LogLine[]>("GetLogTail", n),
   clearLogs: () => call<void>("ClearLogs"),

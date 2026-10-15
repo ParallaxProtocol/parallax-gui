@@ -1,10 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronRight, RotateCcw } from "lucide-react";
+import { ChevronRight, FolderOpen, RotateCcw } from "lucide-react";
 import { useT } from "../../i18n";
 import { GLIDE, SPRING, STAGGER, useStagger } from "../../lib/motion";
-import { Panel, Row, Rows } from "../../components/ui/Panel";
+import { Panel, Row } from "../../components/ui/Panel";
 import { CopyButton } from "../../components/ui/bits";
+import { Tooltip } from "../../components/ui/Tooltip";
+import { pickFolder } from "../../lib/api";
 import { Drawer } from "../../components/ui/Drawer";
 
 /** Splits an explanation into paragraphs and bullet lists: blocks are separated by blank lines, bullets start with "• ". */
@@ -160,7 +162,7 @@ export function Setting({
 
 /**
  * Group is a subsection of a settings page: a heading, a line of context,
- * its rows, and below them the subsection's own Advanced group.
+ * its rows, the last of them folding away its Advanced options.
  */
 export function Group({
   title,
@@ -210,9 +212,13 @@ function openAdvanced(): Set<string> {
 }
 
 /**
- * Advanced is a section's collapsed group of the daemon's finer options,
- * with a count of those changed from their defaults so a customised node
- * shows it even while closed. Whether it is open is remembered per section.
+ * Advanced is a group's finer options of the daemon, folded under a last
+ * row of the group's own panel (placed as the last child of its Rows), as
+ * System Settings folds a list's details: the row names it, with a count
+ * of those changed from their defaults at its end so a customised node
+ * shows it even while closed, and its chevron turns as the options open
+ * beneath it in the same panel. Whether it is open is remembered per
+ * section.
  */
 export function Advanced({ id, changed, children }: { id: string; changed: number; children: ReactNode }) {
   const t = useT();
@@ -231,13 +237,24 @@ export function Advanced({ id, changed, children }: { id: string; changed: numbe
     });
   };
   return (
-    <div className="flex flex-col gap-2">
-      <button type="button" onClick={toggle} aria-expanded={open} className="btn btn-secondary btn-sm self-start">
-        <motion.span animate={{ rotate: open ? 90 : 0 }} transition={SPRING} className="flex">
-          <ChevronRight className="size-3.5" />
-        </motion.span>
+    // The panel's last child, clipped to its corners (and its top ones, where a
+    // group has only its finer options), so the row's tint keeps to them however
+    // far the options have folded
+    <div className="overflow-hidden rounded-b-[15px] first:rounded-t-[15px]">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        // Set apart from the settings as a recovery phrase's header is from its accounts in Settings' Accounts
+        className="flex min-h-14 w-full items-center justify-between gap-8 bg-background/30 px-4 py-3 text-left transition-colors hover:bg-hover focus-visible:-outline-offset-2"
+      >
         {t("settings.advanced")}
-        {changed > 0 && <span className="badge font-normal">{t("settings.advanced.changed", { n: changed })}</span>}
+        <span className="flex shrink-0 items-center gap-2 text-muted-foreground">
+          {changed > 0 && <span className="text-sm">{t("settings.advanced.changed", { n: changed })}</span>}
+          <motion.span animate={{ rotate: open ? 90 : 0 }} transition={SPRING} className="flex">
+            <ChevronRight className="size-4" />
+          </motion.span>
+        </span>
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -247,10 +264,10 @@ export function Advanced({ id, changed, children }: { id: string; changed: numbe
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={SPRING}
-            // Padded so the clip spares the panel's shadow
-            className="-m-1 overflow-hidden p-1"
+            className="overflow-hidden"
           >
-            <Rows>{children}</Rows>
+            {/* Its hairline folds with it, so nothing is left to snap away as it closes */}
+            <div className="flex flex-col divide-y divide-border border-t border-border">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -342,6 +359,50 @@ export function TextInput({
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
     />
+  );
+}
+
+/**
+ * FolderInput is a folder setting: drawn as a text field, its path at the
+ * end of it, and choosing it (a click, Enter or Space) opens the folder
+ * picker, whose choice becomes its value.
+ */
+export function FolderInput({
+  value,
+  onChange,
+  title,
+  placeholder,
+  width = "w-72",
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  /** The picker's title: what the folder is for. */
+  title: string;
+  placeholder?: string;
+  width?: string;
+  disabled?: boolean;
+}) {
+  const choose = async () => {
+    const dir = await pickFolder(title, value);
+    if (dir) onChange(dir);
+  };
+  return (
+    <Tooltip content={value || null} mono>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={choose}
+        aria-label={value ? `${title}: ${value}` : title}
+        className={`input flex items-center gap-2 text-left disabled:opacity-50 ${width}`}
+      >
+        {/* A long path keeps its end, the folder's own name, in view */}
+        <span className={`min-w-0 flex-1 truncate font-mono text-sm [direction:rtl] ${value ? "" : "text-faint"}`}>
+          <bdi>{value || placeholder}</bdi>
+        </span>
+        <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+      </button>
+    </Tooltip>
   );
 }
 
