@@ -1,17 +1,11 @@
-import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { api, BlockView, NodeStatus } from "./api";
+import { BlocksContext, NodeContext, RefreshContext } from "./live";
 
 const POLL_MS = 2000;
 const BLOCKS_SHOWN = 12;
 /** While syncing the head moves every poll: refetch the latest blocks at most this often. */
 const SYNC_BLOCKS_MS = 15_000;
-
-// One context per stream, so a component re-renders only when the data it
-// reads changes: a new block must not re-render a page that only shows
-// the node's state.
-const NodeContext = createContext<NodeStatus | null>(null);
-const BlocksContext = createContext<BlockView[]>([]);
-const RefreshContext = createContext<() => void>(() => {});
 
 // The fields a render depends on: uptime and memory are compared coarsely,
 // since they change on every poll while only their rounded format shows.
@@ -87,22 +81,4 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       </NodeContext.Provider>
     </RefreshContext.Provider>
   );
-}
-
-export const useNode = () => useContext(NodeContext);
-export const useBlocks = () => useContext(BlocksContext);
-/** Polls again right away, after an action changed the backend's state. */
-export const useRefresh = () => useContext(RefreshContext);
-
-export type NodeState = "stopped" | "syncing" | "synced";
-
-export function nodeState(node: NodeStatus | null): NodeState {
-  if (!node?.running) return "stopped";
-  return node.syncing ? "syncing" : "synced";
-}
-
-/** syncProgress is how much of the network's chain is local, 0..1. */
-export function syncProgress(node: NodeStatus | null): number {
-  if (!node || node.highestBlock <= 0) return 0;
-  return Math.max(0, Math.min(1, node.currentBlock / node.highestBlock));
 }

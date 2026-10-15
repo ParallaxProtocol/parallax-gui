@@ -4,8 +4,9 @@ import { AnimatePresence, motion, MotionConfig, MotionGlobalConfig } from "motio
 import { Loader2 } from "lucide-react";
 import { api } from "./lib/api";
 import { applyTheme } from "./lib/theme";
-import { LiveProvider } from "./lib/live";
-import { useWallet, WalletProvider } from "./lib/wallet";
+import { LiveProvider } from "./lib/LiveProvider";
+import { useWallet } from "./lib/wallet";
+import { WalletProvider } from "./lib/WalletProvider";
 import { ToolbarSlotProvider } from "./lib/toolbar";
 import { DesktopBehaviors } from "./lib/desktop";
 import { AnimationsOff, AvatarStyleContext, type AvatarStyle } from "./lib/prefs";
@@ -45,7 +46,7 @@ import SettingsSheet, {
 import { NotificationsProvider } from "./lib/notifications";
 import AssistantBar from "./components/shell/AssistantBar";
 import { AssistantProvider } from "./lib/assistant";
-import { ContactsProvider } from "./lib/contacts";
+import { ContactsProvider } from "./lib/ContactsProvider";
 import { OfflineMode, useOfflineMode } from "./lib/offline";
 import { UpdateProvider } from "./lib/update";
 import { useT } from "./i18n";

@@ -1,29 +1,6 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { api, Contact, ContactInput, ContactsImport } from "./api";
-
-type ContactsState = {
-  /** Null until the backend first answers; favourites first, then by name. */
-  contacts: Contact[] | null;
-  /** The contact at an address, in any letter case. */
-  byAddress: (address: string | undefined) => Contact | undefined;
-  refresh: () => Promise<void>;
-  add: (c: ContactInput) => Promise<Contact>;
-  update: (id: string, c: ContactInput) => Promise<Contact>;
-  setFavorite: (id: string, on: boolean) => Promise<void>;
-  remove: (id: string) => Promise<void>;
-  importBook: (data: string) => Promise<ContactsImport>;
-};
-
-const ContactsContext = createContext<ContactsState>({
-  contacts: null,
-  byAddress: () => undefined,
-  refresh: async () => {},
-  add: () => Promise.reject(new Error("unavailable")),
-  update: () => Promise.reject(new Error("unavailable")),
-  setFavorite: async () => {},
-  remove: async () => {},
-  importBook: () => Promise.reject(new Error("unavailable")),
-});
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { api, Contact } from "./api";
+import { ContactsContext, type ContactsState } from "./contacts";
 
 /**
  * ContactsProvider holds the address book (backend/contacts.go) for every
@@ -70,5 +47,3 @@ export function ContactsProvider({ children }: { children: ReactNode }) {
 
   return <ContactsContext.Provider value={value}>{children}</ContactsContext.Provider>;
 }
-
-export const useContacts = () => useContext(ContactsContext);
