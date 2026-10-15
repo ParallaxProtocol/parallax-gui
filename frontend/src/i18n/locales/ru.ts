@@ -392,7 +392,6 @@ const ru: Dict = {
     "Пароль кошелька задан. Теперь создайте фразу восстановления: 12 слов, которые служат резервной копией всех созданных из них аккаунтов.",
   "wallet.offer.later": "Это можно сделать и позже, в разделе «Аккаунты».",
   "wallet.offer.cta": "Создать фразу восстановления",
-  "wallet.security": "Безопасность",
   "wallet.securityDesc": "Защищает все аккаунты и фразы восстановления в этом кошельке.",
   "wallet.autoLock": "Автоблокировка",
   "wallet.autoLockDesc":
@@ -579,7 +578,6 @@ const ru: Dict = {
   "wallet.accounts.show": "Показать {name}",
   "wallet.accounts.rename": "Переименовать",
   "wallet.accounts.noBackup": "Нет резервной копии",
-  "wallet.accounts.storage": "Хранилище",
   "wallet.accounts.storageDesc":
     "Ключи хранятся в этой папке, все зашифрованы паролем кошелька. Узел их никогда не видит, и ничто, подключённое к его RPC, не может ими воспользоваться.",
 
@@ -719,6 +717,8 @@ const ru: Dict = {
   "settings.navGroup.app": "Приложение",
   "settings.navGroup.support": "Поддержка",
   "settings.section.accounts": "Аккаунты",
+  "settings.section.security": "Безопасность",
+  "settings.section.storage": "Хранилище",
   "settings.section.general": "Общие",
   "settings.section.appearance": "Внешний вид",
   "settings.section.node": "Узел",

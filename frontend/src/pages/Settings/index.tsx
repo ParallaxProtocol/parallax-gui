@@ -5,8 +5,10 @@ import {
   Bot,
   Check,
   Globe,
+  HardDrive,
   Info,
   KeyRound,
+  Lock,
   Loader2,
   Palette,
   Plug,
@@ -28,7 +30,7 @@ import { Select } from "../../components/ui/Select";
 import { Tooltip } from "../../components/ui/Tooltip";
 import logo from "../../assets/logo.svg";
 import { IconTile, TILE } from "../../components/ui/IconTile";
-import { AccountsSettings } from "../Wallet/Accounts";
+import { AccountsSettings, SecuritySettings, StorageSettings } from "../Wallet/Accounts";
 import { Indicator } from "../../components/ui/Indicator";
 import { Row, Rows } from "../../components/ui/Panel";
 import { Segmented } from "../../components/ui/Segmented";
@@ -92,7 +94,12 @@ export default function Settings() {
   // An offline signer never runs its node: its sections aren't shown, and
   // one left open shows General instead
   const offline = useOfflineMode();
-  const section = offline && NODE_SECTIONS.has(chosen) ? "general" : chosen;
+  // Security is the wallet's password: until there is one (Welcome sets
+  // it), it isn't shown, and one left open shows Accounts instead
+  const { info: walletInfo } = useWallet();
+  const hidden = (id: SettingsSection) =>
+    (offline && NODE_SECTIONS.has(id)) || (id === "security" && !walletInfo?.hasPassword);
+  const section = !hidden(chosen) ? chosen : chosen === "security" ? "accounts" : "general";
   const [login, setLogin] = useState<{ supported: boolean; enabled: boolean }>({ supported: false, enabled: false });
   const swap = usePageSwap();
 
@@ -224,30 +231,32 @@ export default function Settings() {
             <h3 className={`px-2.5 pb-1.5 text-sm font-semibold text-muted-foreground ${gi === 0 ? "" : "pt-5"}`}>
               {t(group.title)}
             </h3>
-            {group.sections.map((id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setSection(id)}
-                aria-current={section === id ? "page" : undefined}
-                className={`relative flex h-10 shrink-0 items-center rounded-lg px-2 text-left text-[15px] transition-colors ${
-                  section === id ? "font-medium" : "text-foreground/80"
-                }`}
-              >
-                {section === id && (
-                  <motion.span
-                    layoutId="settings-selection"
-                    layoutDependency={section}
-                    transition={GLIDE}
-                    className="absolute inset-0 rounded-lg bg-selected"
-                  />
-                )}
-                <span className="relative flex items-center gap-3">
-                  <SectionTile id={id} />
-                  {t(`settings.section.${id}`)}
-                </span>
-              </button>
-            ))}
+            {group.sections
+              .filter((id) => !hidden(id))
+              .map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setSection(id)}
+                  aria-current={section === id ? "page" : undefined}
+                  className={`relative flex h-10 shrink-0 items-center rounded-lg px-2 text-left text-[15px] transition-colors ${
+                    section === id ? "font-medium" : "text-foreground/80"
+                  }`}
+                >
+                  {section === id && (
+                    <motion.span
+                      layoutId="settings-selection"
+                      layoutDependency={section}
+                      transition={GLIDE}
+                      className="absolute inset-0 rounded-lg bg-selected"
+                    />
+                  )}
+                  <span className="relative flex items-center gap-3">
+                    <SectionTile id={id} />
+                    {t(`settings.section.${id}`)}
+                  </span>
+                </button>
+              ))}
           </div>
         ))}
       </nav>
@@ -270,6 +279,8 @@ export default function Settings() {
             {err && <Notice tone="critical">{err}</Notice>}
 
             {section === "accounts" && <AccountsSettings />}
+            {section === "security" && <SecuritySettings />}
+            {section === "storage" && <StorageSettings />}
 
             {section === "general" && (
               <>
@@ -1732,7 +1743,7 @@ const NODE_SECTIONS = new Set<SettingsSection>(["node", "network", "rpc", "assis
 
 const NAV_GROUPS: { title: string; sections: SettingsSection[] }[] = [
   { title: "settings.navGroup.app", sections: ["general", "appearance"] },
-  { title: "nav.wallet", sections: ["accounts"] },
+  { title: "nav.wallet", sections: ["accounts", "security", "storage"] },
   { title: "nav.node", sections: ["node", "network", "rpc"] },
   { title: "settings.navGroup.assistants", sections: ["assistants", "permissions"] },
   { title: "settings.navGroup.support", sections: ["diagnostics", "about"] },
@@ -1741,6 +1752,8 @@ const NAV_GROUPS: { title: string; sections: SettingsSection[] }[] = [
 /** Each section's icon and colour, as System Settings gives its panes. */
 const SECTION_LOOK: Record<SettingsSection, { icon: LucideIcon; color: string }> = {
   accounts: { icon: KeyRound, color: TILE.indigo },
+  security: { icon: Lock, color: TILE.blue },
+  storage: { icon: HardDrive, color: TILE.gray },
   general: { icon: Settings2, color: TILE.gray },
   appearance: { icon: Palette, color: TILE.blue },
   node: { icon: Server, color: TILE.purple },

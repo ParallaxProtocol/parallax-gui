@@ -397,7 +397,6 @@ const de: Dict = {
     "Ihr Wallet-Passwort ist festgelegt. Erstellen Sie jetzt eine Wiederherstellungsphrase: 12 Wörter, die jedes daraus erstellte Konto sichern.",
   "wallet.offer.later": "Sie können das auch später unter Konten erledigen.",
   "wallet.offer.cta": "Wiederherstellungsphrase erstellen",
-  "wallet.security": "Sicherheit",
   "wallet.securityDesc": "Schützt jedes Konto und jede Wiederherstellungsphrase in dieser Wallet.",
   "wallet.autoLock": "Automatisch sperren",
   "wallet.autoLockDesc":
@@ -587,7 +586,6 @@ const de: Dict = {
   "wallet.accounts.show": "{name} anzeigen",
   "wallet.accounts.rename": "Umbenennen",
   "wallet.accounts.noBackup": "Keine Sicherung",
-  "wallet.accounts.storage": "Speicherort",
   "wallet.accounts.storageDesc":
     "Die Schlüssel liegen in diesem Ordner, alle mit Ihrem Wallet-Passwort verschlüsselt. Der Node sieht sie nie, und nichts, was sich mit seinem RPC verbindet, kann sie verwenden.",
 
@@ -728,6 +726,8 @@ const de: Dict = {
   "settings.navGroup.app": "App",
   "settings.navGroup.support": "Support",
   "settings.section.accounts": "Konten",
+  "settings.section.security": "Sicherheit",
+  "settings.section.storage": "Speicherort",
   "settings.section.general": "Allgemein",
   "settings.section.appearance": "Darstellung",
   "settings.section.node": "Node",

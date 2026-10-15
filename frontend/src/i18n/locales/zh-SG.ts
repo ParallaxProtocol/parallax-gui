@@ -379,7 +379,6 @@ const zhSG: Dict = {
   "wallet.offer.desc": "钱包密码已设置。现在创建一个恢复短语：12 个单词，可备份由它创建的每个账户。",
   "wallet.offer.later": "你也可以稍后在“账户”中完成。",
   "wallet.offer.cta": "创建恢复短语",
-  "wallet.security": "安全",
   "wallet.securityDesc": "保护此钱包中的每个账户和助记词。",
   "wallet.autoLock": "自动锁定",
   "wallet.autoLockDesc": "在这段时间未使用应用后锁定。电脑进入睡眠时，钱包也会锁定。",
@@ -549,7 +548,6 @@ const zhSG: Dict = {
   "wallet.accounts.show": "显示 {name}",
   "wallet.accounts.rename": "重命名",
   "wallet.accounts.noBackup": "无备份",
-  "wallet.accounts.storage": "存储位置",
   "wallet.accounts.storageDesc":
     "私钥保存在此文件夹中，全部用你的钱包密码加密。节点永远看不到它们，任何连接到节点 RPC 的程序也无法使用它们。",
 
@@ -678,6 +676,8 @@ const zhSG: Dict = {
   "settings.navGroup.app": "应用",
   "settings.navGroup.support": "支持",
   "settings.section.accounts": "账户",
+  "settings.section.security": "安全",
+  "settings.section.storage": "存储位置",
   "settings.section.general": "通用",
   "settings.section.appearance": "外观",
   "settings.section.node": "节点",

@@ -44,10 +44,9 @@ type SeedAction = "reveal" | "derive" | "remove";
  * AccountsSettings is Settings' Accounts section, managing the wallet: its
  * accounts grouped by what keeps their keys (each recovery phrase, with
  * its own accounts and the way to add another; single keys; watch-only
- * accounts), which one the app shows, their names and backups, the
- * wallet's password, and where the encrypted keys are kept on this
- * computer. Adding accounts, or finding more of a phrase's, drills into a
- * page within the section, and comes back to the list.
+ * accounts), which one the app shows, and their names and backups.
+ * Adding accounts, or finding more of a phrase's, drills into a page
+ * within the section, and comes back to the list.
  */
 export function AccountsSettings() {
   const t = useT();
@@ -55,7 +54,6 @@ export function AccountsSettings() {
   const { setOpen, page, setPage } = useSettingsSheet();
   const navigate = useNavigate();
   const [seedAction, setSeedAction] = useState<{ kind: SeedAction; seed: SeedInfo } | null>(null);
-  const [changing, setChanging] = useState(false);
   const [action, setAction] = useState<{ kind: Action; account: WalletAccount } | null>(null);
 
   const info = wallet.info;
@@ -145,44 +143,12 @@ export function AccountsSettings() {
         </Section>
       )}
 
-      {info.hasPassword && (
-        <Section title={t("wallet.security")}>
-          <Panel className="flex h-full flex-col divide-y divide-border">
-            <div className="flex items-center gap-3.5 p-5">
-              <IconBadge icon={Lock} />
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span>{t("wallet.walletPassword")}</span>
-                <span className="text-sm text-muted-foreground">{t("wallet.securityDesc")}</span>
-              </div>
-              <button type="button" className="btn btn-tinted btn-sm shrink-0" onClick={() => setChanging(true)}>
-                {t("wallet.changePassword.title")}
-              </button>
-            </div>
-            <AutoLockRow />
-          </Panel>
-        </Section>
-      )}
-
-      <Section title={t("wallet.accounts.storage")}>
-        <Panel className="flex h-full flex-col gap-3 p-5">
-          <div className="flex items-start gap-3.5">
-            <IconBadge icon={HardDrive} />
-            <p className="text-sm text-muted-foreground">{t("wallet.accounts.storageDesc")}</p>
-          </div>
-          <div className="flex items-center gap-1 rounded-xl bg-muted py-1 pr-1 pl-3">
-            <code className="selectable min-w-0 flex-1 truncate font-mono text-sm">{info.keystoreDir}</code>
-            <CopyButton value={info.keystoreDir} />
-          </div>
-        </Panel>
-      </Section>
-
       <BackupModal
         open={action?.kind === "backup"}
         onClose={close}
         account={target}
         label={target ? label(target) : ""}
       />
-      <PasswordModal open={changing} onClose={() => setChanging(false)} />
       <RevealPhraseModal
         open={seedAction?.kind === "reveal"}
         onClose={() => setSeedAction(null)}
@@ -210,6 +176,53 @@ export function AccountsSettings() {
         onClose={close}
       />
     </div>
+  );
+}
+
+/**
+ * SecuritySettings is Settings' Security section: the wallet's password,
+ * and how long the wallet stays unlocked. Shown once the wallet has a
+ * password.
+ */
+export function SecuritySettings() {
+  const t = useT();
+  const [changing, setChanging] = useState(false);
+  return (
+    <>
+      <Panel className="flex h-full flex-col divide-y divide-border">
+        <div className="flex items-center gap-3.5 p-5">
+          <IconBadge icon={Lock} />
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span>{t("wallet.walletPassword")}</span>
+            <span className="text-sm text-muted-foreground">{t("wallet.securityDesc")}</span>
+          </div>
+          <button type="button" className="btn btn-tinted btn-sm shrink-0" onClick={() => setChanging(true)}>
+            {t("wallet.changePassword.title")}
+          </button>
+        </div>
+        <AutoLockRow />
+      </Panel>
+      <PasswordModal open={changing} onClose={() => setChanging(false)} />
+    </>
+  );
+}
+
+/** StorageSettings is Settings' Storage section: where the encrypted keys are kept on this computer. */
+export function StorageSettings() {
+  const t = useT();
+  const { info } = useWallet();
+  if (!info) return null;
+  return (
+    <Panel className="flex h-full flex-col gap-3 p-5">
+      <div className="flex items-start gap-3.5">
+        <IconBadge icon={HardDrive} />
+        <p className="text-sm text-muted-foreground">{t("wallet.accounts.storageDesc")}</p>
+      </div>
+      <div className="flex items-center gap-1 rounded-xl bg-muted py-1 pr-1 pl-3">
+        <code className="selectable min-w-0 flex-1 truncate font-mono text-sm">{info.keystoreDir}</code>
+        <CopyButton value={info.keystoreDir} />
+      </div>
+    </Panel>
   );
 }
 

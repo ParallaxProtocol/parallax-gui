@@ -393,7 +393,6 @@ const ptBR: Dict = {
     "A senha da sua carteira está definida. Agora crie uma frase de recuperação: 12 palavras que fazem o backup de cada conta criada a partir delas.",
   "wallet.offer.later": "Você também pode fazer isso depois, em Contas.",
   "wallet.offer.cta": "Criar frase de recuperação",
-  "wallet.security": "Segurança",
   "wallet.securityDesc": "Protege todas as contas e frases de recuperação desta carteira.",
   "wallet.autoLock": "Bloquear automaticamente",
   "wallet.autoLockDesc":
@@ -581,7 +580,6 @@ const ptBR: Dict = {
   "wallet.accounts.show": "Mostrar {name}",
   "wallet.accounts.rename": "Renomear",
   "wallet.accounts.noBackup": "Sem backup",
-  "wallet.accounts.storage": "Armazenamento",
   "wallet.accounts.storageDesc":
     "As chaves ficam nesta pasta, todas criptografadas com a senha da sua carteira. O nó nunca as vê, e nada que se conecte ao RPC dele pode usá-las.",
 
@@ -720,6 +718,8 @@ const ptBR: Dict = {
   "settings.navGroup.app": "Aplicativo",
   "settings.navGroup.support": "Suporte",
   "settings.section.accounts": "Contas",
+  "settings.section.security": "Segurança",
+  "settings.section.storage": "Armazenamento",
   "settings.section.general": "Geral",
   "settings.section.appearance": "Aparência",
   "settings.section.node": "Nó",

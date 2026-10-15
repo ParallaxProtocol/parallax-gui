@@ -17,6 +17,8 @@ export const SETTINGS_SECTIONS = [
   "general",
   "appearance",
   "accounts",
+  "security",
+  "storage",
   "node",
   "network",
   "rpc",

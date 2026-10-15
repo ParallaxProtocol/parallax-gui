@@ -695,7 +695,6 @@ export const en: Dict = {
     "Your wallet password is set. Now make a recovery phrase: 12 words that back up every account made from them.",
   "wallet.offer.later": "You can also do this later, from Accounts.",
   "wallet.offer.cta": "Create recovery phrase",
-  "wallet.security": "Security",
   "wallet.securityDesc": "Protects every account and recovery phrase in this wallet.",
   "wallet.autoLock": "Lock automatically",
   "wallet.autoLockDesc": "After this long without using the app. The wallet also locks when the computer sleeps.",
@@ -878,7 +877,6 @@ export const en: Dict = {
   "wallet.accounts.show": "Show {name}",
   "wallet.accounts.rename": "Rename",
   "wallet.accounts.noBackup": "No backup",
-  "wallet.accounts.storage": "Storage",
   "wallet.accounts.storageDesc":
     "The keys are kept in this folder, all encrypted with your wallet password. The node never sees them, and nothing that connects to its RPC can use them.",
 
@@ -1017,6 +1015,8 @@ export const en: Dict = {
   "settings.navGroup.support": "Support",
   "settings.navGroup.assistants": "AI assistants",
   "settings.section.accounts": "Accounts",
+  "settings.section.security": "Security",
+  "settings.section.storage": "Storage",
   "settings.section.general": "General",
   "settings.section.appearance": "Appearance",
   "settings.section.node": "Node",

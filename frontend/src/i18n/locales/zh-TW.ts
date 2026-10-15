@@ -379,7 +379,6 @@ const zhTW: Dict = {
   "wallet.offer.desc": "錢包密碼已設定。現在建立一組復原詞組：12 個單字，可備份由它建立的每個帳戶。",
   "wallet.offer.later": "你也可以稍後在「帳戶」中完成。",
   "wallet.offer.cta": "建立復原詞組",
-  "wallet.security": "安全性",
   "wallet.securityDesc": "保護此錢包中的每個帳戶和助記詞。",
   "wallet.autoLock": "自動鎖定",
   "wallet.autoLockDesc": "在這段時間未使用應用程式後鎖定。電腦進入睡眠時，錢包也會鎖定。",
@@ -550,7 +549,6 @@ const zhTW: Dict = {
   "wallet.accounts.show": "顯示 {name}",
   "wallet.accounts.rename": "重新命名",
   "wallet.accounts.noBackup": "無備份",
-  "wallet.accounts.storage": "儲存位置",
   "wallet.accounts.storageDesc":
     "私鑰保存在此資料夾中，全部以你的錢包密碼加密。節點永遠看不到它們，任何連線到節點 RPC 的程式也無法使用它們。",
 
@@ -679,6 +677,8 @@ const zhTW: Dict = {
   "settings.navGroup.app": "應用程式",
   "settings.navGroup.support": "支援",
   "settings.section.accounts": "帳戶",
+  "settings.section.security": "安全性",
+  "settings.section.storage": "儲存位置",
   "settings.section.general": "一般",
   "settings.section.appearance": "外觀",
   "settings.section.node": "節點",

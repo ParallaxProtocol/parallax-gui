@@ -394,7 +394,6 @@ const fr: Dict = {
     "Le mot de passe de votre portefeuille est défini. Créez maintenant une phrase de récupération : 12 mots qui sauvegardent chaque compte créé à partir d'eux.",
   "wallet.offer.later": "Vous pouvez aussi le faire plus tard, depuis Comptes.",
   "wallet.offer.cta": "Créer la phrase de récupération",
-  "wallet.security": "Sécurité",
   "wallet.securityDesc": "Protège chaque compte et chaque phrase de récupération de ce portefeuille.",
   "wallet.autoLock": "Verrouillage automatique",
   "wallet.autoLockDesc":
@@ -582,7 +581,6 @@ const fr: Dict = {
   "wallet.accounts.show": "Afficher {name}",
   "wallet.accounts.rename": "Renommer",
   "wallet.accounts.noBackup": "Pas de sauvegarde",
-  "wallet.accounts.storage": "Stockage",
   "wallet.accounts.storageDesc":
     "Les clés sont conservées dans ce dossier, toutes chiffrées avec le mot de passe de votre portefeuille. Le nœud ne les voit jamais, et rien de ce qui se connecte à son RPC ne peut les utiliser.",
 
@@ -724,6 +722,8 @@ const fr: Dict = {
   "settings.navGroup.app": "Application",
   "settings.navGroup.support": "Assistance",
   "settings.section.accounts": "Comptes",
+  "settings.section.security": "Sécurité",
+  "settings.section.storage": "Stockage",
   "settings.section.general": "Général",
   "settings.section.appearance": "Apparence",
   "settings.section.node": "Nœud",
