@@ -61,6 +61,7 @@ export function PasswordInput({
   disabled,
   inputRef,
   tall,
+  action,
 }: {
   id?: string;
   value: string;
@@ -73,6 +74,8 @@ export function PasswordInput({
   inputRef?: React.Ref<HTMLInputElement>;
   /** As tall as an account picker beside it (AccountSelect), rather than a button. */
   tall?: boolean;
+  /** A button at the field's end, past the show toggle: what the password is for (LockScreen's unlock). */
+  action?: ReactNode;
 }) {
   const t = useT();
   const [shown, setShown] = useState(false);
@@ -84,7 +87,7 @@ export function PasswordInput({
         ref={inputRef}
         disabled={disabled}
         type={shown ? "text" : "password"}
-        className={`input ${tall ? "h-11 pr-10" : "pr-8"}`}
+        className={`input ${action ? "pr-18" : tall ? "h-11 pr-10" : "pr-8"}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoFocus={autoFocus}
@@ -100,13 +103,14 @@ export function PasswordInput({
           type="button"
           tabIndex={-1}
           disabled={disabled}
-          className={`btn btn-ghost btn-sm btn-icon absolute inset-y-0 my-auto ${tall ? "right-2" : "right-0.5"}`}
+          className={`btn btn-ghost btn-sm btn-icon absolute inset-y-0 my-auto ${action ? "right-10" : tall ? "right-2" : "right-0.5"}`}
           onClick={() => setShown((s) => !s)}
           aria-label={shown ? t("wallet.password.hide") : t("wallet.password.show")}
         >
           {shown ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
         </button>
       </Tooltip>
+      {action && <div className="absolute inset-y-0 right-1.5 flex items-center">{action}</div>}
     </div>
   );
 }
