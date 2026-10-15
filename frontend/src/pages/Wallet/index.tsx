@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -38,7 +38,7 @@ import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { GroupedAddress } from "../../components/ui/AccountParts";
 import { RevealPhraseModal } from "./Phrase";
-import { Detail, DetailCard, Unfold } from "../Overview/parts";
+import { Unfold } from "../Overview/parts";
 import { useContacts } from "../../lib/contacts";
 import { PendingRequests } from "../Offline/Requests";
 import { ReplaceModal } from "./Replace";
@@ -398,7 +398,7 @@ function ActivityRow({
       <AnimatePresence initial={false}>
         {opened && (
           <Unfold>
-            <ActivityDetails d={details} head={head} />
+            <ActivityDetails d={details} head={head} cancel={a.cancel} />
           </Unfold>
         )}
       </AnimatePresence>
@@ -408,19 +408,30 @@ function ActivityRow({
 
 /**
  * ActivityDetails is an opened activity row: everything the node knows of
- * the transaction.
+ * the transaction, in the app's grouped boxes, two columns of them where
+ * the window has room. Hashes and addresses are shortened, whole in a
+ * tooltip and to copy.
  */
-function ActivityDetails({ d, head }: { d: TxDetails | string | undefined; head: number }) {
+function ActivityDetails({
+  d,
+  head,
+  cancel,
+}: {
+  d: TxDetails | string | undefined;
+  head: number;
+  /** A cancellation: its pill is neutral, nothing having gone through. */
+  cancel: boolean;
+}) {
   const t = useT();
   const { lang } = useLang();
 
   // Indented to the row's text: its padding, the badge and the gap after it
-  const inset = "pr-4 pl-[70px]";
+  const inset = "bg-hover pr-4 pb-4 pl-[70px]";
   if (!d || typeof d === "string") {
     return (
-      <DetailCard inset={inset}>
-        <p className="text-sm text-critical-ink">{d}</p>
-      </DetailCard>
+      <div className={inset}>
+        <p className="rounded-lg bg-muted/60 px-3 py-2.5 text-sm text-critical-ink">{d}</p>
+      </div>
     );
   }
 
@@ -428,58 +439,121 @@ function ActivityDetails({ d, head }: { d: TxDetails | string | undefined; head:
   const confirmations = pending || head < d.block ? 0 : head - d.block + 1;
   const used = d.gasLimit > 0 ? Math.round((d.gasUsed / d.gasLimit) * 100) : 0;
   return (
-    <DetailCard inset={inset}>
-      <div className="mb-3.5 flex flex-wrap items-center gap-2">
-        <Pill tone={pending ? "info" : d.status === "failed" ? "critical" : "good"}>
-          {t(`wallet.tx.status.${d.status}`)}
+    <div className={`flex flex-col gap-3 ${inset}`}>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        {/* Confirmed, the pill counts its confirmations */}
+        <Pill
+          tone={pending ? "info" : d.status === "failed" ? "critical" : cancel ? "neutral" : "good"}
+          className="tabular-nums"
+        >
+          {d.status === "success"
+            ? t(confirmations === 1 ? "wallet.tx.confirmation" : "wallet.tx.confirmations", {
+                n: formatInt(confirmations),
+              })
+            : t(`wallet.tx.status.${d.status}`)}
         </Pill>
         {!pending && (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {t(confirmations === 1 ? "wallet.tx.confirmation" : "wallet.tx.confirmations", {
-              n: formatInt(confirmations),
-            })}
+          <span className="ml-auto text-muted-foreground tabular-nums">
+            {new Date(d.timestamp * 1000).toLocaleString(lang, { dateStyle: "medium", timeStyle: "medium" })}
           </span>
         )}
       </div>
-      <dl className="space-y-2.5">
-        <Detail label={t("mempool.hash")} value={d.hash} copy />
-        {!pending && (
-          <>
-            <Detail
-              label={t("wallet.tx.block")}
-              value={`${formatInt(d.block)} · ${t("wallet.tx.position", { n: formatInt(d.index) })}`}
-            />
-            <Detail
-              label={t("wallet.tx.time")}
-              value={new Date(d.timestamp * 1000).toLocaleString(lang, { dateStyle: "medium", timeStyle: "medium" })}
-            />
-          </>
-        )}
-        <Detail label={t("mempool.from")} value={d.from} copy />
-        <Detail label={t("mempool.to")} value={d.to || t("mempool.creation")} copy={!!d.to} />
-        {d.contractAddress && <Detail label={t("wallet.tx.contract")} value={d.contractAddress} copy />}
-        <Detail label={t("mempool.value")} value={`${formatLax(d.valueWei, 18)} LAX`} />
-        <Detail label={pending ? t("mempool.maxFee") : t("wallet.tx.fee")} value={`${formatLax(d.feeWei, 18)} LAX`} />
-        <Detail label={t("mempool.gasPrice")} value={formatGwei(d.gasPriceWei)} />
-        <Detail
-          label={t("wallet.tx.gas")}
-          value={pending ? formatInt(d.gasLimit) : `${formatInt(d.gasUsed)} / ${formatInt(d.gasLimit)} (${used}%)`}
-        />
-        <Detail label={t("mempool.nonce")} value={String(d.nonce)} />
-        {!pending && <Detail label={t("wallet.tx.events")} value={formatInt(d.logs)} />}
-        <Detail label={t("mempool.size")} value={t("mempool.bytes", { n: formatInt(d.sizeBytes) })} />
-        {!pending && <Detail label={t("wallet.tx.blockHash")} value={d.blockHash} copy />}
-        <div className="grid grid-cols-[120px_1fr_auto] items-start gap-3">
-          <dt className="text-sm text-muted-foreground">{t("mempool.data")}</dt>
-          {d.input === "0x" ? (
-            <dd className="text-sm">{t("peers.none")}</dd>
-          ) : (
-            <dd className="selectable max-h-28 overflow-y-auto font-mono text-sm break-all">{d.input}</dd>
-          )}
-          {d.input !== "0x" ? <CopyButton value={d.input} className="-my-1" /> : <span />}
+      {/* Two columns where there's room, each its boxes stacked, about as
+          tall as the other: who and the chain's record of it on the left,
+          what it cost and what it carried on the right */}
+      <div className="grid items-start gap-3 lg:grid-cols-2">
+        <div className="flex flex-col gap-3">
+          <Facts>
+            <Fact label={t("mempool.from")}>
+              <Party address={d.from} />
+            </Fact>
+            <Fact label={t("mempool.to")}>{d.to ? <Party address={d.to} /> : t("mempool.creation")}</Fact>
+            {d.contractAddress && (
+              <Fact label={t("wallet.tx.contract")}>
+                <Party address={d.contractAddress} />
+              </Fact>
+            )}
+          </Facts>
+          <Facts>
+            <Fact label={t("mempool.hash")}>
+              <Hex value={d.hash} />
+            </Fact>
+            {/* Shown waiting too (as are its events), a dash until it's in a block */}
+            <Fact label={t("wallet.tx.block")}>
+              {pending ? "—" : `${formatInt(d.block)} · ${t("wallet.tx.position", { n: formatInt(d.index) })}`}
+            </Fact>
+            <Fact label={t("wallet.tx.blockHash")}>{pending ? "—" : <Hex value={d.blockHash} />}</Fact>
+            <Fact label={t("mempool.nonce")}>{formatInt(d.nonce)}</Fact>
+            {/* A blank line, so this column ends level with the other */}
+            <div aria-hidden className="min-h-10" />
+          </Facts>
         </div>
-      </dl>
-    </DetailCard>
+        <div className="flex flex-col gap-3">
+          <Facts>
+            <Fact label={t("mempool.value")}>{formatLax(d.valueWei, 18)} LAX</Fact>
+            <Fact label={pending ? t("mempool.maxFee") : t("wallet.tx.fee")}>{formatLax(d.feeWei, 18)} LAX</Fact>
+            <Fact label={t("mempool.gasPrice")}>{formatGwei(d.gasPriceWei)}</Fact>
+            <Fact label={t("wallet.tx.gas")}>
+              {pending ? formatInt(d.gasLimit) : `${formatInt(d.gasUsed)} / ${formatInt(d.gasLimit)} (${used}%)`}
+            </Fact>
+          </Facts>
+          <Facts>
+            <Fact label={t("mempool.size")}>{t("mempool.bytes", { n: formatInt(d.sizeBytes) })}</Fact>
+            <Fact label={t("wallet.tx.events")}>{pending ? "—" : formatInt(d.logs)}</Fact>
+            <Fact label={t("mempool.data")}>{d.input === "0x" ? t("peers.none") : <Hex value={d.input} />}</Fact>
+          </Facts>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Facts is a group of an opened row's details: a rounded box, its lines on hairlines. */
+function Facts({ children }: { children: ReactNode }) {
+  return <dl className="flex flex-col divide-y divide-border/70 rounded-lg bg-muted/60 text-sm">{children}</dl>;
+}
+
+/** Fact is one line of Facts: what it is on the left, its value on the right. */
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-h-10 items-center justify-between gap-4 px-3 py-2">
+      <dt className="shrink-0">{label}</dt>
+      <dd className="flex min-w-0 items-center justify-end gap-2 text-right text-muted-foreground tabular-nums">
+        {children}
+      </dd>
+    </div>
+  );
+}
+
+/** Hex is a hash or data, shortened: whole in its tooltip (unless too long to read there), and to copy. */
+function Hex({ value }: { value: string }) {
+  return (
+    <span className="flex min-w-0 items-center gap-1">
+      <Tooltip content={value.length <= 258 ? value : null} mono>
+        <span className="selectable truncate font-mono">{shortHex(value, 10, 8)}</span>
+      </Tooltip>
+      <CopyButton value={value} className="-my-1 -mr-2" />
+    </span>
+  );
+}
+
+/** Party is an address of a transaction: its name when the wallet knows one, the address shortened, to copy. */
+function Party({ address }: { address: string }) {
+  const t = useT();
+  const { info } = useWallet();
+  const { byAddress } = useContacts();
+  const own = info?.accounts.find((x) => sameAddress(x.address, address));
+  const name = own && info ? accountLabel(own, info.accounts, t) : byAddress(address)?.name;
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      {name && <span className="truncate text-foreground/80">{name}</span>}
+      <span className="flex shrink-0 items-center gap-1">
+        <Tooltip content={address} mono>
+          <span className="selectable font-mono">{shortHex(address, 6, 4)}</span>
+        </Tooltip>
+        <CopyButton value={address} className="-my-1 -mr-2" />
+      </span>
+    </span>
   );
 }
 
