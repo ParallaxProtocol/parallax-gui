@@ -37,9 +37,11 @@ const SWAP_OUT = {
 
 /**
  * How long, in ms, the window can be out of focus before the lock screen
- * puts its form away again and shows only the app's name.
+ * puts its form away again and shows only the app's name: longer when a
+ * password has been begun in it.
  */
 const AWAY_MS = 10_000;
+const AWAY_TYPED_MS = 30_000;
 
 /** The app's name, which isn't translated. */
 const APP_NAME = "Parallax Wallet";
@@ -106,7 +108,7 @@ function LockScreen() {
   }, [intro, named]);
   // Whether the form is out: typing brings it, being away puts it back
   const [open, setOpen] = useState(false);
-  const away = useAway(AWAY_MS);
+  const away = useAway(password ? AWAY_TYPED_MS : AWAY_MS);
   // Only the title's first entrance waits for the lock to rise
   const settled = useRef(false);
   useEffect(() => {
