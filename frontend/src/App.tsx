@@ -171,13 +171,11 @@ export default function App() {
                         <AssistantProvider enabled={!offline}>
                           <DesktopBehaviors {...desktop} />
                           {/* The sidebar and the page run the window's whole height, the
-                            node's bar floating over their foot: each keeps room for it */}
+                            node's bar floating over their foot: the sidebar keeps room for
+                            it, the page scrolls on beneath it */}
                           <div className="flex h-full">
                             <Sidebar />
-                            <div
-                              className="flex min-w-0 flex-1 flex-col bg-background"
-                              style={{ paddingBottom: NODE_BAR_ROOM }}
-                            >
+                            <div className="flex min-w-0 flex-1 flex-col bg-background">
                               <TopBar />
                               <Toolbar />
                               <RoutedContent animate={!animationsDisabled} />
@@ -315,14 +313,21 @@ function RoutedContent({ animate }: { animate: boolean }) {
 
   return (
     // The scrollbar's gutter is always reserved, so a page growing past the
-    // window (or one arriving mid-transition) never shifts the layout sideways
-    <main className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable]">
+    // window (or one arriving mid-transition) never shifts the layout sideways.
+    // Its foot keeps room for the node's bar, inside the scroller, so a page
+    // scrolls on beneath the bar while its end can still scroll clear of it
+    <main
+      className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable]"
+      style={{ paddingBottom: NODE_BAR_ROOM, scrollPaddingBottom: NODE_BAR_ROOM }}
+    >
       {/* A quick crossfade between pages. The wrapper stays when animations
           are off, only losing its motion props (Motion would commit `initial`
           for a frame even at duration 0): swapping it out would remount the
-          page, losing its state, such as the Settings tab being toggled from */}
+          page, losing its state, such as the Settings tab being toggled from.
+          It grows with its page, so the room kept for the node's bar follows the
+          page's end; a grid, so a page can still fill (or center in) the window */}
       <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={location.pathname} className="h-full" {...(animate ? PAGE : {})}>
+        <motion.div key={location.pathname} className="grid min-h-full" {...(animate ? PAGE : {})}>
           {routes}
         </motion.div>
       </AnimatePresence>

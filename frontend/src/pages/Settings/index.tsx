@@ -40,6 +40,7 @@ import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { useOfflineMode } from "../../lib/offline";
 import { useWallet } from "../../lib/wallet";
 import type { AvatarStyle } from "../../lib/prefs";
+import { PAGE_NARROW } from "../../lib/layout";
 
 // Fields the app applies itself, at once or on its next action: changing
 // them needs no node restart. Every other field configures the node.
@@ -255,7 +256,7 @@ export default function Settings() {
             {...PAGE}
             className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]"
           >
-            <div className="flex flex-col gap-7 px-6 py-6">
+            <div className={`flex flex-col gap-7 px-6 py-6 ${PAGE_NARROW}`}>
               {/* The section's own header, as in System Settings */}
               <div className="flex items-center gap-4">
                 <SectionTile id={section} large />
