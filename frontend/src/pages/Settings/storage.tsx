@@ -1,12 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 import { FolderInput as FolderInputIcon, Loader2, Trash2, TriangleAlert } from "lucide-react";
 import { api, onEvent, pickFolder, type StorageProgress } from "../../lib/api";
 import { formatBytes } from "../../lib/format";
 import { useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { CONFIG_UPDATED_EVENT } from "../../App";
-import { useSettingsSheet } from "../../components/shell/SettingsSheet";
 import { Modal, ModalForm } from "../../components/ui/Modal";
 import { CopyButton, Meter, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
@@ -287,47 +285,44 @@ function ClearChainModal({ open, onClose }: { open: boolean; onClose: () => void
 }
 
 /**
- * WipeModal confirms deleting the whole wallet: the word typed, then the
- * wallet password. The wallet is then as on a first launch, and the app
- * goes back to setting it up.
+ * WipeModal confirms wiping the whole wallet: the word typed, then the
+ * wallet password. The app then restarts (app.go), as on a first launch,
+ * to set a new password; the dialog stays until it does.
  */
 function WipeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT();
+  const [restarting, setRestarting] = useState(false);
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={restarting ? () => {} : onClose}
       title={t("storage.wallet.deleteTitle")}
       icon={<Trash2 className="size-4" />}
       tone="danger"
     >
-      {open && <Wipe onClose={onClose} />}
+      {open && <Wipe onClose={onClose} restarting={restarting} onWiped={() => setRestarting(true)} />}
     </Modal>
   );
 }
-function Wipe({ onClose }: { onClose: () => void }) {
+function Wipe({ onClose, restarting, onWiped }: { onClose: () => void; restarting: boolean; onWiped: () => void }) {
   const t = useT();
-  const wallet = useWallet();
-  const navigate = useNavigate();
-  const { setOpen } = useSettingsSheet();
   const [word, setWord] = useState("");
   const [password, setPassword] = useState("");
   const { busy, error, run } = useBusy();
   useEffect(() => () => setPassword(""), []);
   const confirmWord = t("storage.wallet.deleteWord");
   const typed = word.trim().toLocaleUpperCase() === confirmWord.toLocaleUpperCase();
+  const held = busy || restarting;
 
   const wipe = async () => {
-    if (busy || !typed || !password) return;
+    if (held || !typed || !password) return;
     const ok = await run(async () => {
       await api.walletWipe(password);
       return true;
     });
     if (ok) {
-      await wallet.refresh();
-      // With no password now, the wallet is set up again from Welcome
-      setOpen(false);
-      navigate("/");
+      setPassword("");
+      onWiped();
     }
   };
 
@@ -336,9 +331,9 @@ function Wipe({ onClose }: { onClose: () => void }) {
       onSubmit={wipe}
       footer={
         <DangerFooter
-          busy={busy}
+          busy={held}
           onClose={onClose}
-          label={t("storage.wallet.deleteSubmit")}
+          label={restarting ? t("storage.wallet.restarting") : t("storage.wallet.deleteSubmit")}
           disabled={!typed || !password}
         />
       }
@@ -356,13 +351,14 @@ function Wipe({ onClose }: { onClose: () => void }) {
             autoComplete="off"
             spellCheck={false}
             placeholder={confirmWord}
+            disabled={held}
           />
         )}
       </Field>
       {/* The password opens once the word is typed, as removing an account's does once it's acknowledged */}
       <div className={`transition-opacity duration-200 ${typed ? "" : "opacity-50"}`}>
         <Field label={t("wallet.walletPassword")}>
-          {(id) => <PasswordInput id={id} value={password} onChange={setPassword} disabled={!typed} />}
+          {(id) => <PasswordInput id={id} value={password} onChange={setPassword} disabled={!typed || held} />}
         </Field>
       </div>
       {error && <Notice tone="critical">{error}</Notice>}

@@ -798,7 +798,7 @@ func (a *App) WalletDismissDamaged() {
 }
 
 // WalletWipe deletes the whole wallet from this computer, once password
-// proves to be the wallet's.
+// proves to be the wallet's, and restarts the app.
 func (a *App) WalletWipe(password string) error {
 	w, err := a.walletOrErr()
 	if err != nil {
@@ -814,6 +814,13 @@ func (a *App) WalletWipe(password string) error {
 		}
 	}
 	a.logs.Unpersist()
+	// The app starts over, as on a first launch: nothing of the wallet is
+	// left in memory, and the setup asks for a new password. The frontend
+	// hears the wipe went through first
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		a.RestartApp()
+	}()
 	return nil
 }
 
