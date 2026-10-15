@@ -38,8 +38,12 @@ const RAIL_ITEM = 40;
 const CARD_WIDTH = SIDEBAR_WIDTH - 24;
 /** The switcher's list: wider than the card, for names and balances side by side. */
 const LIST_WIDTH = 320;
-/** The card's growing into the list, on the node bar's spring. */
-const SHEET_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35 } as const;
+/**
+ * The card's growing into the list, on the node bar's spring. It settles
+ * all the way: by default a spring stops within half a pixel, and the sheet
+ * folding back would give way to the card that far off it.
+ */
+const SHEET_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35, restDelta: 0.01, restSpeed: 0.1 } as const;
 /** The switcher's tabs: the kinds of account, as Settings groups them. */
 type Tab = "phrase" | "keys" | "watch";
 const TABS: Tab[] = ["phrase", "keys", "watch"];
@@ -170,6 +174,12 @@ function AccountSwitcher() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab | null>(null);
   const [cardHeight, setCardHeight] = useState(0);
+  // From opening until the sheet has folded all the way back, the card under
+  // it is hidden, so the sheet's glass isn't laid over the card's own
+  const [sheetShown, setSheetShown] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  // Left for Settings, the sheet folds back under its panel, not over it
+  const [toSettings, setToSettings] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
@@ -317,6 +327,7 @@ function AccountSwitcher() {
       <button
         type="button"
         onClick={() => {
+          setToSettings(true);
           setOpen(false);
           openAt("accounts");
         }}
@@ -343,15 +354,21 @@ function AccountSwitcher() {
           above it. Pointed at, the card grows a little; pressed, it sinks */}
       <motion.div
         ref={card}
-        className="glass relative overflow-hidden transition-[border-color] duration-200 hover:border-border-strong"
+        className="glass relative overflow-hidden transition-[border-color,background-color] duration-200 hover:border-border-strong"
+        // Collapsing the sidebar with the list open folds the card into the rail at once, under the sheet
+        style={{ visibility: sheetShown && !collapsed ? "hidden" : undefined }}
         initial={false}
         animate={{
           // Its height follows what's in it: the avatar's row, and the balance's as it folds
           width: collapsed ? RAIL_ITEM : CARD_WIDTH,
           borderRadius: collapsed ? 12 : 14,
+          scale: hovered && !open ? 1.025 : 1,
         }}
-        // Pointed at, it rises a little to be pressed, and sinks as it is
-        whileHover={open ? undefined : { scale: 1.025 }}
+        // Pointed at, it rises a little to be pressed, and sinks as it is.
+        // The hover is kept here rather than in whileHover: under the sheet
+        // the card never hears the pointer leave, and would come back risen
+        onPointerEnter={(e) => e.pointerType === "mouse" && setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
         whileTap={open ? undefined : { scale: 0.98 }}
         transition={SPRING}
       >
@@ -361,6 +378,10 @@ function AccountSwitcher() {
             onClick={() => {
               // The list grows out of the card from the card's own height
               setCardHeight(card.current?.offsetHeight ?? 0);
+              if (!collapsed) {
+                setSheetShown(true);
+                setHovered(false);
+              }
               setOpen((o) => !o);
             }}
             aria-haspopup="listbox"
@@ -398,8 +419,10 @@ function AccountSwitcher() {
               avatar, so the tile stays square with the text hidden in it */}
           <div className="relative min-w-0 flex-1 self-stretch overflow-x-clip">
             <motion.div
-              className="absolute inset-y-0 left-0 flex items-center gap-3"
-              style={{ width: CARD_WIDTH - 24 - 36 - 12 }}
+              className="absolute inset-0 flex items-center gap-3"
+              // The room the card leaves it, never less than open: the border
+              // is drawn to whole device pixels, so the room isn't known here
+              style={{ minWidth: CARD_WIDTH - 2 - 24 - 36 - 12 }}
               initial={false}
               animate={fade(!collapsed)}
             >
@@ -447,7 +470,10 @@ function AccountSwitcher() {
           >
             <div
               className="mx-3 flex items-center justify-between gap-3 border-t border-border py-2.5 whitespace-nowrap"
-              style={{ width: CARD_WIDTH - 24 }}
+              // As wide as the card leaves it, as the sheet's is, and never less
+              // than open: the border is drawn to whole device pixels (0.6px at
+              // some scales), so a width set here would miss the sheet's
+              style={{ minWidth: CARD_WIDTH - 24 - 2 }}
             >
               <span className="text-muted-foreground">{t("wallet.balance")}</span>
               {/* Another account's balance slides in quickly in place of the last, rather
@@ -472,81 +498,109 @@ function AccountSwitcher() {
       {/* Open from the card, the card itself grows into the list, as the
           node bar grows into the node's page: the account shown stays at
           its top, and the others arrive under it */}
-      <AnimatePresence>
-        {open && !collapsed && (
-          <motion.div
-            key="sheet"
-            className="glass absolute top-0 left-0 z-50 overflow-hidden"
-            // Floating over the page as a popover does, not resting as the card
-            style={{ boxShadow: "var(--glass-shine), var(--shadow-popover)" }}
-            initial={{ width: CARD_WIDTH, height: cardHeight }}
-            animate={{ width: LIST_WIDTH, height: "auto" }}
-            exit={{ width: CARD_WIDTH, height: cardHeight }}
-            transition={SHEET_SPRING}
-          >
-            {/* The card's glass deepens into a menu's, readable over the page */}
+      {/* Its layer is held outside the presence: a sheet on its way out is
+          drawn as it last was, so its own class couldn't change as it goes */}
+      <div className={`absolute top-0 left-0 ${toSettings ? "z-20" : "z-50"}`}>
+        <AnimatePresence
+          onExitComplete={() => {
+            setSheetShown(false);
+            setToSettings(false);
+          }}
+        >
+          {open && !collapsed && (
             <motion.div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 bg-popover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.92 }}
-              exit={{ opacity: 0 }}
+              key="sheet"
+              className="absolute top-0 left-0"
+              initial={{ width: CARD_WIDTH, height: cardHeight }}
+              animate={{ width: LIST_WIDTH, height: "auto" }}
+              exit={{ width: CARD_WIDTH, height: cardHeight }}
               transition={SHEET_SPRING}
-            />
-            <div className="relative">
-              {/* The card's face, its header now: a press anywhere on it (the
+            >
+              <div className="glass relative h-full overflow-hidden">
+                {/* The card's glass deepens into a menu's, readable over the page */}
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-popover"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.92 }}
+                  exit={{ opacity: 0 }}
+                  transition={SHEET_SPRING}
+                />
+                <div className="relative">
+                  {/* The card's face, its header now: a press anywhere on it (the
                   balance too) folds the list back, as one on the card opens it;
                   the copy button sits above the press */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  aria-expanded
-                  aria-label={name}
-                  className="absolute inset-0"
-                />
-                <div className="pointer-events-none relative flex items-center gap-3 p-3">
-                  <AddressAvatar address={account.address} size={36} />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="flex min-w-0 items-center gap-1.5">
-                      <span className="truncate text-[15px] font-semibold">{name}</span>
-                      {account.watchOnly && (
-                        <span className="pointer-events-auto">
-                          <WatchOnlyBadge />
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      aria-expanded
+                      aria-label={name}
+                      className="absolute inset-0"
+                    />
+                    <div className="pointer-events-none relative flex items-center gap-3 p-3">
+                      <AddressAvatar address={account.address} size={36} />
+                      {/* As tall as the avatar and centred on it, overflowing it evenly, as
+                      the card's is: let it set the row's height and the face would sit
+                      lower than the card's, rising as the card takes its place */}
+                      <span className="flex h-9 min-w-0 flex-1 flex-col justify-center">
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="truncate text-[15px] font-semibold">{name}</span>
+                          {account.watchOnly && (
+                            <span className="pointer-events-auto">
+                              <WatchOnlyBadge />
+                            </span>
+                          )}
                         </span>
-                      )}
-                    </span>
-                    <span className="flex min-w-0 items-center gap-0.5">
-                      <GrowingAddress address={account.address} />
-                      <span className="pointer-events-auto">
-                        <CopyButton value={account.address} className="-my-1 size-6 shrink-0" />
+                        <span className="flex min-w-0 items-center gap-0.5">
+                          <GrowingAddress address={account.address} />
+                          <span className="pointer-events-auto">
+                            <CopyButton value={account.address} className="-my-1 size-6 shrink-0" />
+                          </span>
+                        </span>
                       </span>
-                    </span>
-                  </span>
-                </div>
-                {!offline && (
-                  <div className="pointer-events-none relative mx-3 flex items-center justify-between gap-3 border-t border-border py-2.5 whitespace-nowrap">
-                    <span className="text-muted-foreground">{t("wallet.balance")}</span>
-                    <span className="truncate tabular-nums">
-                      <Balance wei={balances[account.address]} counted />
-                    </span>
+                    </div>
+                    {!offline && (
+                      <div className="pointer-events-none relative mx-3 flex items-center justify-between gap-3 border-t border-border py-2.5 whitespace-nowrap">
+                        <span className="text-muted-foreground">{t("wallet.balance")}</span>
+                        {/* Wrapped as the card's is, so it lays out to the same fraction of a
+                            pixel and doesn't shift as the card takes its place */}
+                        <span className="relative truncate tabular-nums">
+                          <span className="inline-block">
+                            <Balance wei={balances[account.address]} counted />
+                          </span>
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <motion.div
+                    role="listbox"
+                    aria-label={t("nav.accounts")}
+                    className="flex flex-col gap-px px-1.5 pb-1.5"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: 0.12, duration: 0.3, ease: [0.16, 1, 0.3, 1] } }}
+                    exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                  >
+                    {list}
+                  </motion.div>
+                </div>
               </div>
+              {/* Floating over the page as a popover does, not resting as the card:
+                its shadow rises as it grows and settles as it folds back, outside
+                the glass's clip */}
               <motion.div
-                role="listbox"
-                aria-label={t("nav.accounts")}
-                className="flex flex-col gap-px px-1.5 pb-1.5"
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0, transition: { delay: 0.12, duration: 0.3, ease: [0.16, 1, 0.3, 1] } }}
-                exit={{ opacity: 0, transition: { duration: 0.1 } }}
-              >
-                {list}
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-[14px]"
+                style={{ boxShadow: "var(--shadow-popover)" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={SHEET_SPRING}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
       {/* From the rail's avatar, beside it: there is no card there to grow */}
       <AnimatePresence>
         {open && collapsed && (
@@ -587,8 +641,10 @@ function GrowingAddress({ address }: { address: string }) {
   const long = useRef<HTMLSpanElement>(null);
   const width = useMotionValue(0);
   useLayoutEffect(() => {
-    const from = short.current?.offsetWidth ?? 0;
-    const to = long.current?.offsetWidth ?? 0;
+    // To the fraction of a pixel (offsetWidth rounds): the short one is the
+    // card's own, which the copy button has to land beside exactly
+    const from = short.current?.getBoundingClientRect().width ?? 0;
+    const to = long.current?.getBoundingClientRect().width ?? 0;
     if (present) {
       width.set(from);
       const growing = animate(width, to, SHEET_SPRING);
@@ -601,7 +657,10 @@ function GrowingAddress({ address }: { address: string }) {
   return (
     <motion.span
       style={{ width }}
-      className="relative block min-w-0 overflow-hidden whitespace-nowrap text-muted-foreground"
+      // A flex box, as the card's row is, not a block: a block's line, in the
+      // body's font, would sit the mono address lower and stand a little
+      // taller than the card's, so the sheet's face would rise as it gives way
+      className="relative flex min-w-0 overflow-hidden whitespace-nowrap text-muted-foreground"
     >
       <motion.span
         ref={short}
