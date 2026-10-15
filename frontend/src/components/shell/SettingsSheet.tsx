@@ -1,4 +1,4 @@
-import { createContext, lazy, ReactNode, Suspense, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, lazy, ReactNode, Suspense, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Minimize2, Settings2 } from "lucide-react";
 import { useT } from "../../i18n";
@@ -48,19 +48,13 @@ const SheetContext = createContext<Sheet>({
 export function SettingsSheetProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<SettingsSection>("general");
-  const value = useMemo(
-    () => ({
-      open,
-      setOpen,
-      section,
-      setSection,
-      openAt: (s: SettingsSection) => {
-        setSection(s);
-        setOpen(true);
-      },
-    }),
-    [open, section],
-  );
+  // Stable, so a caller's effect that opens Settings (OpenSettings, for
+  // /accounts) runs once, not again on every section chosen after it
+  const openAt = useCallback((s: SettingsSection) => {
+    setSection(s);
+    setOpen(true);
+  }, []);
+  const value = useMemo(() => ({ open, setOpen, section, setSection, openAt }), [open, section, openAt]);
   return <SheetContext.Provider value={value}>{children}</SheetContext.Provider>;
 }
 

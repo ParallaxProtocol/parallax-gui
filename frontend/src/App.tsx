@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion, MotionConfig, MotionGlobalConfig } from "motion/react";
+import { motion, MotionConfig, MotionGlobalConfig } from "motion/react";
 import { Loader2 } from "lucide-react";
 import { api } from "./lib/api";
 import { applyTheme } from "./lib/theme";
@@ -10,7 +10,7 @@ import { WalletProvider } from "./lib/WalletProvider";
 import { ToolbarSlotProvider } from "./lib/toolbar";
 import { DesktopBehaviors } from "./lib/desktop";
 import { AnimationsOff, AvatarStyleContext, type AvatarStyle } from "./lib/prefs";
-import { PAGE } from "./lib/motion";
+import { usePageSwap } from "./lib/motion";
 import WalletPage from "./pages/Wallet";
 
 // The landing page loads with the app; the rest load on first visit, so
@@ -217,6 +217,7 @@ function RoutedContent({ animate }: { animate: boolean }) {
   const location = useLocation();
   // An offline signer signs; it has no node to send through or broadcast with
   const offline = useOfflineMode();
+  const swap = usePageSwap();
   // Suspense inside the transition, so a page still loading keeps its slot
   // blank for a moment rather than suspending the shell
   const routes = (
@@ -333,18 +334,16 @@ function RoutedContent({ animate }: { animate: boolean }) {
     >
       {/* The page's title bar, held at the top as the page scrolls on beneath it */}
       <Toolbar />
-      {/* A quick crossfade between pages. The wrapper stays when animations
+      {/* The page arriving as it changes. The wrapper stays when animations
           are off, only losing its motion props (Motion would commit `initial`
           for a frame even at duration 0): swapping it out would remount the
           page, losing its state, such as the Settings tab being toggled from.
           It grows with its page, so the room kept for the node's bar follows the
           page's end; a grid, so a page can still fill (or center in) the room
           under the title bar */}
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={location.pathname} className="grid min-h-[calc(100%-3.5rem)]" {...(animate ? PAGE : {})}>
-          {routes}
-        </motion.div>
-      </AnimatePresence>
+      <motion.div key={location.pathname} className="grid min-h-[calc(100%-3.5rem)]" {...(animate ? swap : {})}>
+        {routes}
+      </motion.div>
     </main>
   );
 }

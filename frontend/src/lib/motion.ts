@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { Transition } from "motion/react";
 import { useAnimationsOff } from "./prefs";
 
@@ -19,6 +20,22 @@ export const PAGE = {
   animate: { opacity: 1, scale: 1, transition: FADE_IN },
   exit: { opacity: 0, transition: FADE_OUT },
 };
+
+/**
+ * usePageSwap is PAGE for a page or pane keyed by what it shows, without
+ * AnimatePresence: the new one arrives as PAGE has it, and the old one goes
+ * at once rather than fading first. Waiting on that fade (mode="wait")
+ * could stall, keeping the old one mounted, its effects still running, and
+ * the new one out. The first one shown doesn't arrive, as with
+ * `initial={false}`.
+ */
+export function usePageSwap() {
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+  }, []);
+  return { initial: mounted.current ? PAGE.initial : false, animate: PAGE.animate };
+}
 
 /** Items of a list shown for the first time arrive one after another. */
 export const STAGGER = {
