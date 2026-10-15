@@ -88,20 +88,28 @@ const listening = () =>
   });
 while (!(await listening())) await new Promise((r) => setTimeout(r, 200));
 
-const electron = spawn("npx", ["electron", "."], {
-  cwd: desktop,
-  stdio: "inherit",
-  shell: win,
-  // PARALLAX_DEV unlocks the development-only settings (backend/devchain.go)
-  env: {
-    ...process.env,
-    PARALLAX_DEV_URL: `http://${HOST}:${PORT}`,
-    PARALLAX_BACKEND_BIN: bin,
-    PARALLAX_DEV: "1",
-    PARALLAX_PROFILE: PROFILE,
-  },
-});
-electron.on("exit", (code) => {
-  vite.kill();
-  process.exit(code ?? 0);
-});
+// What Electron exits with to be started again: the app restarting itself
+// (DEV_RESTART_CODE, desktop/src/main.ts), the dev server kept up meanwhile
+const RESTART = 75;
+
+const launch = () => {
+  const electron = spawn("npx", ["electron", "."], {
+    cwd: desktop,
+    stdio: "inherit",
+    shell: win,
+    // PARALLAX_DEV unlocks the development-only settings (backend/devchain.go)
+    env: {
+      ...process.env,
+      PARALLAX_DEV_URL: `http://${HOST}:${PORT}`,
+      PARALLAX_BACKEND_BIN: bin,
+      PARALLAX_DEV: "1",
+      PARALLAX_PROFILE: PROFILE,
+    },
+  });
+  electron.on("exit", (code) => {
+    if (code === RESTART) return launch();
+    vite.kill();
+    process.exit(code ?? 0);
+  });
+};
+launch();

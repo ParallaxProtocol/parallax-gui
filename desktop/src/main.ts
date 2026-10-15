@@ -99,6 +99,14 @@ let mainWindow: BrowserWindow | null = null;
 let quitting = false;
 /** Runs once the backend has stopped, just before the process exits (restart after an update). */
 let afterStop: (() => void) | null = null;
+/** The code the app exits with once the backend has stopped. */
+let exitCode = 0;
+/**
+ * What a development run exits with to be started again: desktop/scripts/dev.mjs
+ * runs Electron itself, and on its exit stops the dev server too, so a
+ * relaunch from here would come up with no page to load.
+ */
+const DEV_RESTART_CODE = 75;
 
 /**
  * Starting the app at login. macOS and Windows keep login items
@@ -429,7 +437,10 @@ function restart(installer: string) {
   const relaunchArgs = ["--relaunch"];
   afterStop = () => {
     const detached = { detached: true, stdio: "ignore" as const };
-    if (installer && isWindows) {
+    if (DEV_URL) {
+      // The dev script starts Electron again, with its dev server still up
+      exitCode = DEV_RESTART_CODE;
+    } else if (installer && isWindows) {
       spawn(installer, ["/S", "--updated", "--force-run"], detached).unref();
     } else if (process.env.APPIMAGE) {
       spawn(process.env.APPIMAGE, relaunchArgs, detached).unref();
@@ -606,7 +617,7 @@ singleInstance().then((ok) => {
     for (const w of BrowserWindow.getAllWindows()) w.hide();
     backend.stop().finally(() => {
       afterStop?.();
-      app.exit(0);
+      app.exit(exitCode);
     });
   });
 
