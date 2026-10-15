@@ -185,6 +185,8 @@ function AccountSwitcher() {
   const { pathname } = useLocation();
   const stagger = useStagger();
   const { collapsed } = useSidebar();
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
+  const more = useMoreBelow(scroller);
 
   // Another page closes it, however it was reached
   useEffect(() => setOpen(false), [pathname]);
@@ -257,71 +259,86 @@ function AccountSwitcher() {
           />
         </div>
       )}
-      {/* As tall as the window leaves room for under the card, scrolling past that */}
-      <motion.div
-        key={kind}
-        className="flex max-h-[calc(100dvh-22rem)] min-h-0 flex-col gap-px overflow-y-auto overscroll-contain"
-        {...stagger}
-      >
-        {shown.map((g) => (
-          <Fragment key={g.kind === "phrase" ? g.seed.id : g.kind}>
-            {/* What keeps the accounts under it, a hairline above it parting it
+      {/* As tall as the window leaves room for under the card, scrolling past
+          that: its rows keep their height (a column would squeeze them first;
+          the accounts' are menu items, which don't shrink) */}
+      <div className="relative flex min-h-0 flex-col">
+        <motion.div
+          key={kind}
+          ref={setScroller}
+          // Positioned, so its rows' offsetTop is measured from it
+          className="relative flex max-h-[calc(100dvh-22rem)] min-h-0 flex-col gap-px overflow-y-auto overscroll-contain"
+          {...stagger}
+        >
+          {shown.map((g) => (
+            <Fragment key={g.kind === "phrase" ? g.seed.id : g.kind}>
+              {/* What keeps the accounts under it, a hairline above it parting it
                 from the group before, on the list's own glass */}
-            {/* A tab of single keys or watch-only accounts is named by its tab */}
-            {(g.kind === "phrase" || kinds.length < 2) && (
-              <motion.div
-                variants={ROW_IN}
-                className="mt-1.5 truncate border-t border-border px-2.5 pt-3 pb-1.5 font-semibold text-foreground/75 first:mt-0 first:border-t-0 first:pt-1.5"
-              >
-                {g.kind === "phrase"
-                  ? g.seed.name
-                  : g.kind === "keys"
-                    ? t("wallet.accounts.keys")
-                    : t("offline.watchOnly")}
-              </motion.div>
-            )}
-            {g.accounts.map((a) => {
-              const here = a.address === account.address;
-              return (
-                <motion.button
-                  key={a.address}
-                  type="button"
-                  role="option"
-                  aria-selected={here}
+              {/* A tab of single keys or watch-only accounts is named by its tab */}
+              {(g.kind === "phrase" || kinds.length < 2) && (
+                <motion.div
                   variants={ROW_IN}
-                  onClick={() => choose(a.address)}
-                  className="menu-item relative gap-2.5 py-1.5"
+                  className="mt-1.5 shrink-0 truncate border-t border-border px-2.5 pt-3 pb-1.5 font-semibold text-foreground/75 first:mt-0 first:border-t-0 first:pt-1.5"
                 >
-                  {/* The chosen account is lit as the sidebar's page is, and the light glides to a new choice */}
-                  {here && (
-                    <motion.span
-                      layoutId="switcher-selection"
-                      transition={GLIDE}
-                      className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
-                    />
-                  )}
-                  <span className="relative flex">
-                    <AddressAvatar address={a.address} size={24} />
-                  </span>
-                  <span className="relative flex min-w-0 flex-1 flex-col">
-                    <span className="flex min-w-0 items-baseline gap-2">
-                      <span className={`min-w-0 flex-1 truncate text-[15px] ${here ? "font-medium" : ""}`}>
-                        {accountLabel(a, accounts, t)}
-                      </span>
-                      {!offline && (
-                        <span className="shrink-0 text-muted-foreground tabular-nums">
-                          <Balance wei={balances[a.address]} />
-                        </span>
-                      )}
+                  {g.kind === "phrase"
+                    ? g.seed.name
+                    : g.kind === "keys"
+                      ? t("wallet.accounts.keys")
+                      : t("offline.watchOnly")}
+                </motion.div>
+              )}
+              {g.accounts.map((a) => {
+                const here = a.address === account.address;
+                return (
+                  <motion.button
+                    key={a.address}
+                    type="button"
+                    role="option"
+                    aria-selected={here}
+                    variants={ROW_IN}
+                    onClick={() => choose(a.address)}
+                    className="menu-item relative gap-2.5 py-1.5"
+                  >
+                    {/* The chosen account is lit as the sidebar's page is, and the light glides to a new choice */}
+                    {here && (
+                      <motion.span
+                        layoutId="switcher-selection"
+                        transition={GLIDE}
+                        className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
+                      />
+                    )}
+                    <span className="relative flex">
+                      <AddressAvatar address={a.address} size={24} />
                     </span>
-                    <CardAddress address={a.address} />
-                  </span>
-                </motion.button>
-              );
-            })}
-          </Fragment>
-        ))}
-      </motion.div>
+                    <span className="relative flex min-w-0 flex-1 flex-col">
+                      <span className="flex min-w-0 items-baseline gap-2">
+                        <span className={`min-w-0 flex-1 truncate text-[15px] ${here ? "font-medium" : ""}`}>
+                          {accountLabel(a, accounts, t)}
+                        </span>
+                        {!offline && (
+                          <span className="shrink-0 text-muted-foreground tabular-nums">
+                            <Balance wei={balances[a.address]} />
+                          </span>
+                        )}
+                      </span>
+                      <CardAddress address={a.address} />
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </Fragment>
+          ))}
+        </motion.div>
+        {/* With accounts still below, the list's foot frosts over, thinning
+            upward to nothing, as the page does under its toolbar; edge to
+            edge, out past the list's padding (6px, in the sheet and the menu) */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute -inset-x-1.5 bottom-0 h-8 bg-popover/80 [mask-image:linear-gradient(to_top,black_25%,transparent)] backdrop-blur-md transition-opacity duration-300 ${
+            more ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </div>
       {/* The command after the accounts, parted from them as a menu parts its groups */}
       <div className="mx-2.5 my-1 border-t border-border" />
       <button
@@ -529,11 +546,13 @@ function AccountSwitcher() {
                 <div className="relative">
                   {/* The card's face, its header now: a press anywhere on it (the
                   balance too) folds the list back, as one on the card opens it;
-                  the copy button sits above the press */}
+                  the copy button sits above the press. Folding, the sheet still
+                  covers the card, so a press then opens it again from where it is
+                  (the sheet on its way out keeps this handler, so it toggles) */}
                   <div className="relative">
                     <button
                       type="button"
-                      onClick={() => setOpen(false)}
+                      onClick={() => setOpen((o) => !o)}
                       aria-expanded
                       aria-label={name}
                       className="absolute inset-0"
@@ -622,6 +641,41 @@ function AccountSwitcher() {
   );
 }
 
+/** Whether a scroller has more below what it shows: as it scrolls, and as it or its rows resize. */
+function useMoreBelow(el: HTMLElement | null) {
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    if (!el) return setMore(false);
+    // By the last row's place in the layout, not scrollHeight: rows sliding
+    // in from below would count, and nothing would check again once they land
+    const check = () => {
+      const last = el.lastElementChild as HTMLElement | null;
+      const end = last ? last.offsetTop + last.offsetHeight : 0;
+      setMore(end - el.scrollTop - el.clientHeight > 1);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    const observe = () => {
+      ro.observe(el);
+      for (const row of el.children) ro.observe(row);
+    };
+    observe();
+    // Rows that come or go while it's open (an account added) are watched too
+    const mo = new MutationObserver(() => {
+      observe();
+      check();
+    });
+    mo.observe(el, { childList: true });
+    el.addEventListener("scroll", check, { passive: true });
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      el.removeEventListener("scroll", check);
+    };
+  }, [el]);
+  return more;
+}
+
 /** CardAddress is an address short, as the switcher shows them: a group at each end, grouped as a card number is. */
 function CardAddress({ address }: { address: string }) {
   return <GroupedAddress address={address} ends={1} className="truncate text-muted-foreground" />;
@@ -646,13 +700,18 @@ function GrowingAddress({ address }: { address: string }) {
     const from = short.current?.getBoundingClientRect().width ?? 0;
     const to = long.current?.getBoundingClientRect().width ?? 0;
     if (present) {
-      width.set(from);
+      // From the short one when it opens; reopened while folding, from where it is
+      if (width.get() === 0) width.set(from);
       const growing = animate(width, to, SHEET_SPRING);
       return () => growing.stop();
     }
+    let reopened = false;
     const folding = animate(width, from, SHEET_SPRING);
-    folding.then(() => safeToRemove?.());
-    return () => folding.stop();
+    folding.then(() => !reopened && safeToRemove?.());
+    return () => {
+      reopened = true;
+      folding.stop();
+    };
   }, [present, width, safeToRemove]);
   return (
     <motion.span

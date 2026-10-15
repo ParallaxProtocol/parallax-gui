@@ -468,6 +468,9 @@ button.glass:hover,
   }
   .menu-item {
     display: flex;
+    /* A menu too long for its room scrolls, rather than squeezing its rows:
+       min-height would otherwise let a column shrink one to 32px */
+    flex-shrink: 0;
     align-items: center;
     gap: 8px;
     min-height: 32px;
