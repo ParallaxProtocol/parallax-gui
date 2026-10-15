@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
-import { Dict, en, Lang, LANG_NAMES, loadDict } from "./translations";
+import { Dict, en, Lang, loadDict } from "./translations";
 
 const STORAGE_KEY = "parallax-lang";
 
@@ -126,5 +126,6 @@ export function useAgo() {
   }, [lang]);
 }
 
-export { LANG_NAMES };
+// LANG_NAMES is imported from ./translations directly: a module that
+// exports anything but components and hooks can't be Fast Refreshed
 export type { Lang };
