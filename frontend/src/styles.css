@@ -570,6 +570,21 @@ button.glass:hover {
   background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 35%), transparent);
 }
 
+/* An activity indicator's spokes, as macOS draws it: each in turn lit,
+   then fading as the light moves on round the ring */
+@keyframes spoke {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.15;
+  }
+}
+
+.spoke {
+  animation: spoke 1s linear infinite;
+}
+
 /* Work of unknown length: a band that sweeps the track */
 @keyframes indeterminate {
   from {

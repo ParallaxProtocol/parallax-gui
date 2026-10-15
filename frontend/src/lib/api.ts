@@ -141,6 +141,13 @@ export type GUIConfig = {
   /** Start each run with an empty log; otherwise the latest lines are kept across restarts. */
   clearLogsOnStartup: boolean;
 
+  /** Serve the node's chain data to AI assistants (MCP) on 127.0.0.1; applied at once. */
+  mcpEnabled: boolean;
+  /** The assistant server's port; 0 is 8549. */
+  mcpPort: number;
+  /** What assistants may see and do in the app, beyond the chain. */
+  mcpAllow: MCPAllow;
+
   /** The whole app is an offline signer: no node, no update checks (takes effect on restart). */
   offlineSigner: boolean;
   /** The most fee a signed request may pay, decimal wei; empty is 1 LAX. */
@@ -659,6 +666,105 @@ export type UpdateInfo = {
   publishedAt: string;
 };
 
+/**
+ * How the app answers an assistant's use of a feature: without asking, by
+ * asking the user (allow once, always, or not), or not at all.
+ */
+export type MCPMode = "allow" | "ask" | "block";
+
+/** What AI assistants may see, do, and ask for (each request approved in the app), feature by feature. */
+export type MCPAllow = {
+  nodeStatus: MCPMode;
+  nodeLogs: MCPMode;
+  wallet: MCPMode;
+  contacts: MCPMode;
+  /** Ask the public block explorer; restarts the assistant server. */
+  explorer: boolean;
+  /** Ask the public status page; restarts the assistant server. */
+  statusPage: boolean;
+  startNode: MCPMode;
+  // Requests: ask lets assistants ask (each request approved), block stops them
+  stopNode: MCPMode;
+  settings: MCPMode;
+  newAccounts: MCPMode;
+  watchOnly: MCPMode;
+  editContacts: MCPMode;
+  sendTransactions: MCPMode;
+};
+
+/** A send an assistant asks for, as quoted when it asked. Amounts are decimal wei. */
+export type TxProposal = {
+  from: string;
+  fromName: string;
+  /** From a watch-only account: approving makes a signing request for the offline signer. */
+  watchOnly: boolean;
+  to: string;
+  /** Who the address is to the wallet: one of its accounts, a contact, or never seen. */
+  recipient: "own" | "contact" | "new";
+  toName?: string;
+  toContract: boolean;
+  valueWei: string;
+  gasPriceWei: string;
+  gasLimit: number;
+  feeWei: string;
+  totalWei: string;
+  balanceWei: string;
+};
+
+/** One setting an assistant asks to change, values as JSON. */
+export type SettingChange = {
+  key: string;
+  label: string;
+  from: unknown;
+  to: unknown;
+  /** When it takes effect: now, on the node's restart, or on the app's. */
+  applies: "now" | "node" | "app";
+  /** Opens the node to other programs, or shares something about it. */
+  sensitive: boolean;
+};
+
+/** Something an AI assistant asked the app to do, waiting on the user. */
+export type AssistantRequest = {
+  id: string;
+  kind: "stopNode" | "settings" | "newAccount" | "watchOnly" | "contact" | "transaction" | "permission";
+  /** The assistant's own words: shown as theirs, never the app's. */
+  reason: string;
+  created: number;
+  expires: number;
+  status: "pending" | "approved" | "rejected" | "expired" | "failed";
+  result: string;
+  changes?: SettingChange[];
+  account?: { name: string; seedId?: string; seedName?: string };
+  watch?: { name: string; address: string };
+  contact?: { id?: string; name: string; address: string; note: string; previous?: Contact };
+  transaction?: TxProposal;
+  /** A permission prompt: the feature a tool needs, and the tool. */
+  permission?: { feature: keyof MCPAllow; tool: string; /** Asked to start the node a tool needs. */ nodeStopped?: boolean };
+};
+
+/** The AI assistant (MCP) server, and how to connect to it. */
+export type MCPStatus = {
+  enabled: boolean;
+  running: boolean;
+  /** Where assistants connect, while enabled. */
+  url: string;
+  /** The bearer token assistants send, while enabled. */
+  token: string;
+  /** Why it isn't running, such as its port being taken. */
+  error: string;
+  tools: string[] | null;
+  /** The assistants connected now, as they name themselves ("Claude Code"), one per connection. */
+  clients: string[] | null;
+};
+
+/** A tool call an assistant is making now, as the assistant bar shows it at work. */
+export type MCPActivity = {
+  tool: string;
+  client: string;
+  /** The block a wait_for_new_block call waits for, when it names one. */
+  block?: number;
+};
+
 export type UpdateProgress = {
   step: "downloading" | "verifying" | "extracting" | "ready" | "ready-manual" | "error";
   percent: number;
@@ -670,6 +776,17 @@ export const api = {
   saveBootstrap: (cfg: GUIConfig) => call<void>("SaveBootstrap", cfg),
   getConfig: () => call<GUIConfig>("GetConfig"),
   updateConfig: (cfg: GUIConfig) => call<void>("UpdateConfig", cfg),
+
+  mcpStatus: () => call<MCPStatus>("MCPStatus"),
+  mcpResetToken: () => call<MCPStatus>("MCPResetToken"),
+  /** Stops the tool call the assistant bar shows; the assistant is told the user cancelled it. */
+  mcpCancel: () => call<boolean>("MCPCancel"),
+  assistantRequests: () => call<AssistantRequest[]>("AssistantRequests"),
+  /** password is the wallet's, for a request that makes an account. */
+  assistantApprove: (id: string, password: string) => call<AssistantRequest>("AssistantApprove", id, password),
+  assistantReject: (id: string) => call<void>("AssistantReject", id),
+  /** Answers a permission prompt: once (this assistant's connection) or always. */
+  assistantAllow: (id: string, always: boolean) => call<AssistantRequest>("AssistantAllow", id, always),
 
   startNode: () => call<void>("StartNode"),
   stopNode: () => call<void>("StopNode"),

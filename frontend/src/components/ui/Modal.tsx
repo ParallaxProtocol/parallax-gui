@@ -135,10 +135,13 @@ export function Modal({
 export function ModalForm({
   onSubmit,
   footer,
+  footerClassName = "border-border bg-surface/60",
   children,
 }: {
   onSubmit: () => void;
   footer: ReactNode;
+  /** The footer's separator and ground, for a form on another surface than a dialog's. */
+  footerClassName?: string;
   children: ReactNode;
 }) {
   return (
@@ -149,7 +152,7 @@ export function ModalForm({
       }}
     >
       <div className="flex flex-col gap-4 px-5 pt-4 pb-5">{children}</div>
-      <div className="flex justify-end gap-2 border-t border-border bg-surface/60 px-5 py-3">{footer}</div>
+      <div className={`flex justify-end gap-2 border-t px-5 py-3 ${footerClassName}`}>{footer}</div>
     </form>
   );
 }

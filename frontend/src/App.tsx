@@ -43,6 +43,8 @@ import SettingsSheet, {
   type SettingsSection,
 } from "./components/shell/SettingsSheet";
 import { NotificationsProvider } from "./lib/notifications";
+import AssistantBar from "./components/shell/AssistantBar";
+import { AssistantProvider } from "./lib/assistant";
 import { ContactsProvider } from "./lib/contacts";
 import { OfflineMode, useOfflineMode } from "./lib/offline";
 import { UpdateProvider } from "./lib/update";
@@ -163,22 +165,25 @@ export default function App() {
                 <UpdateProvider>
                   <NodeSheetProvider>
                     <SettingsSheetProvider>
-                      <DesktopBehaviors {...desktop} />
-                      {/* The sidebar and the page run the window's whole height, the
-                        node's bar floating over their foot: each keeps room for it */}
-                      <div className="flex h-full">
-                        <Sidebar />
-                        <div
-                          className="flex min-w-0 flex-1 flex-col bg-background"
-                          style={{ paddingBottom: NODE_BAR_ROOM }}
-                        >
-                          <TopBar />
-                          <Toolbar />
-                          <RoutedContent animate={!animationsDisabled} />
+                      <AssistantProvider enabled={!offline}>
+                        <DesktopBehaviors {...desktop} />
+                        {/* The sidebar and the page run the window's whole height, the
+                          node's bar floating over their foot: each keeps room for it */}
+                        <div className="flex h-full">
+                          <Sidebar />
+                          <div
+                            className="flex min-w-0 flex-1 flex-col bg-background"
+                            style={{ paddingBottom: NODE_BAR_ROOM }}
+                          >
+                            <TopBar />
+                            <Toolbar />
+                            <RoutedContent animate={!animationsDisabled} />
+                          </div>
                         </div>
-                      </div>
-                      <SettingsSheet />
-                      {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
+                        <SettingsSheet />
+                        {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
+                        {!offline && <AssistantBar />}
+                      </AssistantProvider>
                     </SettingsSheetProvider>
                   </NodeSheetProvider>
                 </UpdateProvider>

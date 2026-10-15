@@ -10,7 +10,7 @@ import { useT } from "../i18n";
 /** A sync shorter than this (a new block arriving at the tip) isn't worth a notification. */
 const LONG_SYNC_MS = 2 * 60 * 1000;
 
-function notify(title: string, body: string) {
+export function notify(title: string, body: string) {
   if (typeof Notification === "undefined" || Notification.permission === "denied") return;
   const n = new Notification(title, { body, silent: false });
   n.onclick = () => window.focus();

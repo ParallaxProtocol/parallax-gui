@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Activity,
+  Bot,
   Check,
   Globe,
   Info,
@@ -12,6 +13,7 @@ import {
   RefreshCw,
   Server,
   Settings2,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import { api, GUIConfig, UpdateInfo } from "../../lib/api";
@@ -32,6 +34,7 @@ import { Segmented } from "../../components/ui/Segmented";
 import Toggle from "../../components/ui/Toggle";
 import { Notice } from "../../components/ui/bits";
 import LogsPanel from "./LogsPanel";
+import { AssistantsOverview, AssistantsPermissions } from "./AssistantsSettings";
 import { Advanced, countSet, Group, ListInput, NumberInput, Setting, TextInput } from "./fields";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { useOfflineMode } from "../../lib/offline";
@@ -56,6 +59,11 @@ const LIVE_FIELDS = new Set<keyof GUIConfig>([
   // and reads the fee cap on each signature
   "offlineSigner",
   "offlineFeeCapWei",
+  // The backend starts, stops or moves the assistant server on save
+  "mcpEnabled",
+  "mcpPort",
+  // Read by the assistant tools on each call
+  "mcpAllow",
 ]);
 
 // Fields the daemon reads only as its process starts, from its argv:
@@ -93,6 +101,30 @@ export default function Settings() {
       ?.loginItem?.()
       .then(setLogin)
       .catch(() => {});
+  }, []);
+
+  // Changes made elsewhere (an assistant's request approved, a permission
+  // allowed always) show here: fields not being edited take the saved
+  // value, so saving the page later doesn't undo them
+  const latest = useRef({ cfg, orig });
+  latest.current = { cfg, orig };
+  useEffect(() => {
+    const refresh = () =>
+      api
+        .getConfig()
+        .then((fresh) => {
+          const { cfg: c, orig: o } = latest.current;
+          if (!c || !o) return;
+          const merged = { ...fresh } as GUIConfig;
+          for (const k of Object.keys(c) as (keyof GUIConfig)[]) {
+            if (!same(c[k], o[k])) (merged as any)[k] = c[k];
+          }
+          setOrig(fresh);
+          setCfg(merged);
+        })
+        .catch(() => {});
+    window.addEventListener(CONFIG_UPDATED_EVENT, refresh);
+    return () => window.removeEventListener(CONFIG_UPDATED_EVENT, refresh);
   }, []);
 
   if (!cfg || !orig) return null;
@@ -1042,6 +1074,9 @@ export default function Settings() {
                 </>
               )}
 
+              {section === "assistants" && <AssistantsOverview cfg={cfg} update={update} />}
+              {section === "permissions" && <AssistantsPermissions cfg={cfg} update={update} />}
+
               {section === "rpc" && (
                 <>
                   <Group title={t("settings.group.http")}>
@@ -1684,12 +1719,13 @@ function SaveBar({
 
 /** The sections, grouped under headings in the list, in SETTINGS_SECTIONS' order. */
 /** The sections about the node, which an offline signer never runs. */
-const NODE_SECTIONS = new Set<SettingsSection>(["node", "network", "rpc"]);
+const NODE_SECTIONS = new Set<SettingsSection>(["node", "network", "rpc", "assistants", "permissions"]);
 
 const NAV_GROUPS: { title: string; sections: SettingsSection[] }[] = [
   { title: "settings.navGroup.app", sections: ["general", "appearance"] },
   { title: "nav.wallet", sections: ["accounts"] },
   { title: "nav.node", sections: ["node", "network", "rpc"] },
+  { title: "settings.navGroup.assistants", sections: ["assistants", "permissions"] },
   { title: "settings.navGroup.support", sections: ["diagnostics", "about"] },
 ];
 
@@ -1701,6 +1737,8 @@ const SECTION_LOOK: Record<SettingsSection, { icon: LucideIcon; color: string }>
   node: { icon: Server, color: TILE.purple },
   network: { icon: Globe, color: TILE.green },
   rpc: { icon: Plug, color: TILE.orange },
+  assistants: { icon: Bot, color: TILE.indigo },
+  permissions: { icon: ShieldCheck, color: TILE.green },
   diagnostics: { icon: Activity, color: TILE.pink },
   about: { icon: Info, color: TILE.graphite },
 };

@@ -11,6 +11,8 @@ import { Counter } from "../ui/Counter";
 import { Tooltip } from "../ui/Tooltip";
 import { IconBadge } from "../ui/IconBadge";
 import { TOP_BAR_HEIGHT } from "./TopBar";
+import { useAssistant } from "../../lib/assistantContext";
+import { BAR_SURFACE } from "./barSurface";
 
 const NodePage = lazy(() => import("../../pages/Overview"));
 
@@ -64,6 +66,10 @@ export default function NodeBar({ version }: { version: string }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
   const [err, setErr] = useState<string | null>(null);
+  // The assistant bar sits at the right end of the foot: this bar keeps
+  // clear of it, moving aside as it opens on a request
+  const { width: assistantWidth } = useAssistant();
+  const right = NODE_BAR_GAP + (assistantWidth > 0 ? assistantWidth + NODE_BAR_GAP : 0);
 
   useEffect(() => {
     if (!open) return;
@@ -93,10 +99,10 @@ export default function NodeBar({ version }: { version: string }) {
   return (
     <motion.section
       aria-label={t("nav.node")}
-      className="no-drag fixed z-40 flex flex-col overflow-hidden border border-glass-edge bg-popover/80 shadow-[var(--glass-shine),var(--shadow-popover)] backdrop-blur-2xl"
-      style={{ left: NODE_BAR_GAP, right: NODE_BAR_GAP, bottom: NODE_BAR_GAP, borderRadius: 16 }}
+      className={`no-drag fixed z-40 flex flex-col overflow-hidden ${BAR_SURFACE}`}
+      style={{ left: NODE_BAR_GAP, bottom: NODE_BAR_GAP, borderRadius: 16 }}
       initial={false}
-      animate={{ height: open ? Math.max(NODE_BAR_HEIGHT, vh - TOP_BAR_HEIGHT - NODE_BAR_GAP) : NODE_BAR_HEIGHT }}
+      animate={{ right, height: open ? Math.max(NODE_BAR_HEIGHT, vh - TOP_BAR_HEIGHT - NODE_BAR_GAP) : NODE_BAR_HEIGHT }}
       transition={{ type: "spring", bounce: 0, visualDuration: 0.35 }}
     >
       {/* The bar: a click anywhere on it opens the page, whose header it then is */}
@@ -217,7 +223,7 @@ export function OfflineBar({ version }: { version: string }) {
   return (
     <section
       aria-label={t("offline.mode")}
-      className="no-drag fixed z-40 flex items-center gap-3 border border-glass-edge bg-popover/80 px-3 text-sm text-muted-foreground shadow-[var(--glass-shine),var(--shadow-popover)] backdrop-blur-2xl"
+      className={`no-drag fixed z-40 flex items-center gap-3 px-3 text-sm text-muted-foreground ${BAR_SURFACE}`}
       style={{ left: NODE_BAR_GAP, right: NODE_BAR_GAP, bottom: NODE_BAR_GAP, height: NODE_BAR_HEIGHT, borderRadius: 16 }}
     >
       <IconBadge icon={ShieldCheck} tone="good" />
