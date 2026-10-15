@@ -28,7 +28,7 @@ const (
 	checkCooldown  = 5 * time.Minute // minimum interval between checks
 )
 
-// Updater checks GitHub Releases for new versions of Parallax Desktop and
+// Updater checks GitHub Releases for new versions of Parallax Wallet and
 // handles downloading, verifying, and replacing the running binary.
 type Updater struct {
 	mu          sync.Mutex
@@ -316,7 +316,7 @@ func (u *Updater) DownloadAndInstall(ctx context.Context) error {
 	if manual {
 		// macOS DMG: leave the file on disk so the user can finish in Finder.
 		keepDownload = true
-		u.emit(UpdateProgress{Step: "ready-manual", Detail: "Drag Parallax Client to Applications."})
+		u.emit(UpdateProgress{Step: "ready-manual", Detail: "Drag Parallax Wallet to Applications."})
 	} else {
 		u.emit(UpdateProgress{Step: "ready", Detail: "Update installed. Restart to apply."})
 	}
@@ -339,9 +339,9 @@ func desiredAssetName(version string) string {
 	}
 	switch runtime.GOOS {
 	case "linux":
-		return fmt.Sprintf("Parallax-Client-%s-linux-%s.AppImage", version, dispArch)
+		return fmt.Sprintf("Parallax-Wallet-%s-linux-%s.AppImage", version, dispArch)
 	case "darwin":
-		return fmt.Sprintf("Parallax-Client-%s-macos-%s.dmg", version, dispArch)
+		return fmt.Sprintf("Parallax-Wallet-%s-macos-%s.dmg", version, dispArch)
 	case "windows":
 		if runtime.GOARCH != "amd64" {
 			return ""
@@ -349,9 +349,9 @@ func desiredAssetName(version string) string {
 		// A portable copy updates by replacing its executable; an installed
 		// one runs the next version's installer
 		if portableExe() != "" {
-			return fmt.Sprintf("Parallax-Client-%s-windows-x86_64.exe", version)
+			return fmt.Sprintf("Parallax-Wallet-%s-windows-x86_64.exe", version)
 		}
-		return fmt.Sprintf("Parallax-Client-%s-windows-x86_64-setup.exe", version)
+		return fmt.Sprintf("Parallax-Wallet-%s-windows-x86_64-setup.exe", version)
 	}
 	return ""
 }
@@ -513,7 +513,7 @@ func installArtifact(downloadPath, assetName string) (manual bool, installer str
 	case "darwin":
 		// We can't safely modify the running .app bundle in place
 		// (codesigning + Gatekeeper). Open the DMG in Finder; the user
-		// drags Parallax Client.app to /Applications.
+		// drags Parallax Wallet.app to /Applications.
 		stableDir := filepath.Dir(downloadPath)
 		stable := filepath.Join(stableDir, assetName)
 		if stable != downloadPath {

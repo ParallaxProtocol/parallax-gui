@@ -1,13 +1,13 @@
 {
-  "name": "parallax-client",
-  "productName": "Parallax Client",
+  "name": "parallax-wallet-app",
+  "productName": "Parallax Wallet",
   "version": "0.0.0",
   "description": "Desktop node and wallet for the Parallax network",
   "author": "Parallax Protocol",
   "license": "GPL-3.0",
   "private": true,
   "main": "dist/main.js",
-  "desktopName": "parallax-client.desktop",
+  "desktopName": "parallax-wallet-app.desktop",
   "scripts": {
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit",

@@ -58,7 +58,7 @@ func writeCrashReport(name string, r interface{}, stack []byte) string {
 		return ""
 	}
 	defer f.Close()
-	fmt.Fprintf(f, "Parallax Desktop %s\n", GUIVersion)
+	fmt.Fprintf(f, "Parallax Wallet %s\n", GUIVersion)
 	fmt.Fprintf(f, "Time: %s\n", time.Now().Format(time.RFC3339))
 	fmt.Fprintf(f, "Goroutine: %s\n", name)
 	fmt.Fprintf(f, "Panic: %v\n\n", r)

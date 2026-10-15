@@ -42,11 +42,11 @@ desktop-deps:
 	cd desktop && npm ci
 
 # prlx-gui builds an unpacked app for this machine under build/package
-# (e.g. build/package/linux-unpacked/parallax-client), quick to try out.
+# (e.g. build/package/linux-unpacked/parallax-wallet-app), quick to try out.
 prlx-gui: backend frontend desktop-deps
 	cd desktop && npm run build && DISPLAY_ARCH=$(DISPLAY_ARCH) npx electron-builder \
 	  $(EB_PLATFORM) --$(EB_ARCH) --dir -c.extraMetadata.version=$(VERSION)
-	@echo "Done building Parallax Desktop in build/package/"
+	@echo "Done building Parallax Wallet in build/package/"
 
 # prlx-gui-package builds the release artifacts for GOOS/GOARCH: the
 # AppImage on Linux, the DMG on macOS, the installer and the portable
@@ -54,7 +54,7 @@ prlx-gui: backend frontend desktop-deps
 prlx-gui-package: backend frontend desktop-deps
 	cd desktop && npm run build && DISPLAY_ARCH=$(DISPLAY_ARCH) npx electron-builder \
 	  $(EB_PLATFORM) --$(EB_ARCH) --publish never -c.extraMetadata.version=$(VERSION)
-	@ls -lh build/package/Parallax-Client-* 2>/dev/null || true
+	@ls -lh build/package/Parallax-Wallet-* 2>/dev/null || true
 
 # dev runs the app against the Vite dev server: frontend edits hot-reload.
 # PROFILE=<name> runs a separate copy beside it, with its own config,

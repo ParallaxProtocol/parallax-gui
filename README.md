@@ -1,4 +1,4 @@
-# Parallax Desktop
+# Parallax Wallet
 
 A desktop node manager for the Parallax network. A Go backend embeds a
 full `prl.Parallax` node in-process; an [Electron](https://www.electronjs.org)
@@ -44,7 +44,7 @@ make prlx-gui-package   # release artifacts for this machine, in build/package/
 ```
 
 `make prlx-gui` leaves a runnable app in `build/package/<os>-unpacked/`
-(e.g. `build/package/linux-unpacked/parallax-client`).
+(e.g. `build/package/linux-unpacked/parallax-wallet-app`).
 `make prlx-gui-package` builds what a release ships: the AppImage on
 Linux, the DMG on macOS, and on Windows both the installer and the
 portable executable. Pick another platform with `GOOS`/`GOARCH`
@@ -85,9 +85,9 @@ per OS with `make prlx-gui-package`:
 - `windows/amd64` on `windows-latest`: an installer and a portable
   executable.
 
-Artifact names stay as the in-app updater expects them
-(`Parallax-Client-<version>-<os>-<arch>.<ext>`), so earlier installs,
-Wails builds included, find these releases as their next update.
+Artifact names are what the in-app updater looks for
+(`Parallax-Wallet-<version>-<os>-<arch>.<ext>`, see `desiredAssetName` in
+`backend/updater.go`): keep the two in step.
 
 All artifacts are combined into a single `release/` directory with a
 unified `SHA256SUMS.txt` and published as a **draft** GitHub Release.
@@ -101,7 +101,7 @@ repository.
 
 ## Contributing a localization
 
-Parallax Desktop ships with English, Deutsch, Français, Português
+Parallax Wallet ships with English, Deutsch, Français, Português
 (Brasil), Русский, 中文（新加坡）, and 中文（繁體）. English lives in
 [`frontend/src/i18n/translations.ts`](frontend/src/i18n/translations.ts)
 and is bundled with the app as the fallback; every other language is its

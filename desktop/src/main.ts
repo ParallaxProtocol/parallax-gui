@@ -21,7 +21,7 @@ import {
 import { Backend } from "./backend";
 
 /**
- * The Electron shell of Parallax Desktop. It starts the Go backend
+ * The Electron shell of Parallax Wallet. It starts the Go backend
  * (parallax-backend, see main.go and bridge.go), shows the React frontend
  * in a sandboxed window, and relays the frontend's calls and the backend's
  * events between the two (preload.ts exposes them as window.parallax).
@@ -41,7 +41,7 @@ const PROFILE = (() => {
   const p = process.env.PARALLAX_PROFILE ?? "";
   return !app.isPackaged && /^[a-z0-9][a-z0-9-]{0,31}$/.test(p) ? p : "";
 })();
-if (PROFILE) app.setPath("userData", path.join(app.getPath("appData"), `Parallax Client (${PROFILE})`));
+if (PROFILE) app.setPath("userData", path.join(app.getPath("appData"), `Parallax Wallet (${PROFILE})`));
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
 
@@ -104,7 +104,7 @@ let afterStop: (() => void) | null = null;
  * themselves; on Linux it is an XDG autostart entry. It needs a packaged
  * app: in development the executable is Electron itself.
  */
-const AUTOSTART_FILE = path.join(app.getPath("appData"), "autostart", "parallax-client.desktop");
+const AUTOSTART_FILE = path.join(app.getPath("appData"), "autostart", "parallax-wallet-app.desktop");
 
 /** The file to launch: the AppImage or portable executable the app runs from, else the app itself. */
 function launchTarget() {
@@ -129,7 +129,7 @@ function setOpenAtLogin(on: boolean) {
   fs.mkdirSync(path.dirname(AUTOSTART_FILE), { recursive: true });
   fs.writeFileSync(
     AUTOSTART_FILE,
-    ["[Desktop Entry]", "Type=Application", "Name=Parallax Client", `Exec=${exec}`, "X-GNOME-Autostart-enabled=true", ""].join("\n"),
+    ["[Desktop Entry]", "Type=Application", "Name=Parallax Wallet", `Exec=${exec}`, "X-GNOME-Autostart-enabled=true", ""].join("\n"),
   );
 }
 
@@ -338,7 +338,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: PROFILE ? `Parallax Desktop (${PROFILE})` : "Parallax Desktop",
+    title: PROFILE ? `Parallax Wallet (${PROFILE})` : "Parallax Wallet",
     backgroundColor: look.background,
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
     ...(isMac ? { trafficLightPosition: { x: 16, y: 19 } } : { titleBarOverlay: look.overlay }),
@@ -466,7 +466,7 @@ function wireIpc() {
   backend.on("exit", (code: number | null) => {
     if (quitting) return;
     dialog.showErrorBox(
-      "Parallax Desktop stopped",
+      "Parallax Wallet stopped",
       `The Parallax backend exited unexpectedly (code ${code}).\n\n${backend.lastOutput()}`,
     );
     app.exit(1);
@@ -498,7 +498,7 @@ async function boot() {
     if (theme === "light" || theme === "dark" || theme === "system") nativeTheme.themeSource = theme;
   } catch (e) {
     dialog.showErrorBox(
-      "Parallax Desktop could not start",
+      "Parallax Wallet could not start",
       `${e instanceof Error ? e.message : String(e)}\n\n${backend.lastOutput()}`,
     );
     app.exit(1);
@@ -523,7 +523,7 @@ async function singleInstance(): Promise<boolean> {
 }
 
 // Windows shows notifications only for an app with an AppUserModelID: the appId in electron-builder.yml
-if (isWindows) app.setAppUserModelId("org.parallaxprotocol.desktop");
+if (isWindows) app.setAppUserModelId("org.parallaxprotocol.wallet");
 
 singleInstance().then((ok) => {
   if (!ok) {

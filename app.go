@@ -806,7 +806,7 @@ func (a *App) ClearLogs() { a.logs.Clear() }
 // ---------------------------------------------------------------------------
 
 func (a *App) Version() string {
-	return fmt.Sprintf("Parallax Desktop %s", backend.GUIVersion)
+	return fmt.Sprintf("Parallax Wallet %s", backend.GUIVersion)
 }
 
 // Profile is the development profile this copy of the app runs as, "" for

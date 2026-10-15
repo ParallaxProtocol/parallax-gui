@@ -1,7 +1,7 @@
 // Copyright 2026 The Parallax Authors
 // This file is part of the Parallax library.
 //
-// parallax-backend is the engine of Parallax Desktop: it embeds a Parallax
+// parallax-backend is the engine of Parallax Wallet: it embeds a Parallax
 // full node and the updater, and serves them to the Electron shell
 // (desktop/) over a token-guarded loopback bridge (bridge.go). The shell starts it, reads the handshake line it prints, and
 // stops it on quit.

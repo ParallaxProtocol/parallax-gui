@@ -88,11 +88,11 @@ export default function App() {
         });
     };
     check();
-    // The backend answers "Parallax Desktop 0.2.3": the status bar shows just "v0.2.3"
+    // The backend answers "Parallax Wallet 0.2.3": the status bar shows just "v0.2.3"
     api
       .version()
       .then((v) => {
-        const n = v.replace(/^Parallax Desktop\s*/, "");
+        const n = v.replace(/^Parallax Wallet\s*/, "");
         if (!cancelled) setVersion(/^\d/.test(n) ? `v${n}` : n);
       })
       .catch(() => {});

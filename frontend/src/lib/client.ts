@@ -4,7 +4,7 @@
  * "Prlx/v2.1.0-stable-1a2b3c4d/linux-amd64/go1.24.4".
  */
 export type ClientInfo = {
-  /** The client's name, as people know it ("Parallax", "Parallax Desktop"). */
+  /** The client's name, as people know it ("Parallax", "Parallax Wallet"). */
   name: string;
   /** The operator's own label, when the node sets one. */
   identity?: string;
@@ -22,7 +22,7 @@ const NAMES: Record<string, string> = {
   prlx: "Parallax",
   parallax: "Parallax",
   parallaxd: "Parallax",
-  parallaxgui: "Parallax Desktop",
+  parallaxgui: "Parallax Wallet",
 };
 
 const OS: Record<string, string> = {

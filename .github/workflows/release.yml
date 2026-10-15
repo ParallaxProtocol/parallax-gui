@@ -91,7 +91,7 @@ jobs:
         with:
           name: parallax-gui-${{ matrix.display_os }}-${{ matrix.display_arch }}
           path: |
-            build/package/Parallax-Client-*
+            build/package/Parallax-Wallet-*
             !build/package/*.blockmap
           if-no-files-found: error
           retention-days: 14
@@ -115,7 +115,7 @@ jobs:
       - name: Stage release directory
         run: |
           mkdir -p release
-          find artifacts -type f -name 'Parallax-Client-*' ! -name '*.blockmap' -exec cp {} release/ \;
+          find artifacts -type f -name 'Parallax-Wallet-*' ! -name '*.blockmap' -exec cp {} release/ \;
           cd release
           ls -lh
           sha256sum * > SHA256SUMS.txt
@@ -125,7 +125,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release/Parallax-Client-*
+            release/Parallax-Wallet-*
             release/SHA256SUMS.txt
           generate_release_notes: true
           draft: true

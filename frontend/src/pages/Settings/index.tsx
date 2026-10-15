@@ -1556,9 +1556,9 @@ function About() {
     setChecking(false);
   };
 
-  // The backend answers "Parallax Desktop 0.2.3": the name, then the version
+  // The backend answers "Parallax Wallet 0.2.3": the name, then the version
   const m = appVersion.match(/^(.*?)\s+v?(\d[\w.+-]*)$/);
-  const appName = m ? m[1] : appVersion || "Parallax Desktop";
+  const appName = m ? m[1] : appVersion || "Parallax Wallet";
   const appNumber = m ? m[2] : "";
 
   return (

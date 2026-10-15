@@ -1,10 +1,10 @@
-# Packaging for Parallax Desktop. Run from desktop/ after building the
+# Packaging for Parallax Wallet. Run from desktop/ after building the
 # frontend (../frontend/dist) and the backend for the target
 # (../build/backend/<os>-<arch>/, see the Makefile). DISPLAY_ARCH names
 # the architecture in artifact names the way releases always have
 # (x86_64, arm64), which the in-app updater looks for.
-appId: org.parallaxprotocol.desktop
-productName: Parallax Client
+appId: org.parallaxprotocol.wallet
+productName: Parallax Wallet
 copyright: Copyright © 2026 Parallax Protocol
 directories:
   output: ../build/package
@@ -25,15 +25,15 @@ electronLanguages: [en-US, de, fr, pt-BR, ru, zh-CN, zh-TW]
 
 linux:
   target: [AppImage]
-  executableName: parallax-client
+  executableName: parallax-wallet-app
   icon: resources/icon.png
   category: Utility
   synopsis: Parallax node and wallet connector
-  artifactName: Parallax-Client-${version}-linux-${env.DISPLAY_ARCH}.${ext}
+  artifactName: Parallax-Wallet-${version}-linux-${env.DISPLAY_ARCH}.${ext}
   desktop:
     entry:
-      Name: Parallax Client
-      StartupWMClass: parallax-client
+      Name: Parallax Wallet
+      StartupWMClass: parallax-wallet-app
 
 mac:
   target: [dmg]
@@ -46,25 +46,23 @@ mac:
   hardenedRuntime: false
   # The offline signer scans signing QR codes with the camera
   extendInfo:
-    NSCameraUsageDescription: Parallax Client uses the camera to scan offline signing QR codes.
-  artifactName: Parallax-Client-${version}-macos-${env.DISPLAY_ARCH}.${ext}
+    NSCameraUsageDescription: Parallax Wallet uses the camera to scan offline signing QR codes.
+  artifactName: Parallax-Wallet-${version}-macos-${env.DISPLAY_ARCH}.${ext}
 dmg:
-  title: Parallax Client
+  title: Parallax Wallet
 
 win:
   target: [nsis, portable]
   icon: resources/icon.ico
-  executableName: Parallax Client
+  executableName: Parallax Wallet
 nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
-  shortcutName: Parallax Client
-  artifactName: Parallax-Client-${version}-windows-x86_64-setup.${ext}
+  shortcutName: Parallax Wallet
+  artifactName: Parallax-Wallet-${version}-windows-x86_64-setup.${ext}
 portable:
-  # The name Wails releases used for the Windows executable, so existing
-  # installs find this as their next update
-  artifactName: Parallax-Client-${version}-windows-x86_64.${ext}
+  artifactName: Parallax-Wallet-${version}-windows-x86_64.${ext}
 
 publish: null
