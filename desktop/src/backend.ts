@@ -35,7 +35,14 @@ export class Backend extends EventEmitter {
     });
   }
 
-  start(bin: string, args: string[], env: NodeJS.ProcessEnv) {
+  /**
+   * Starts the backend. echo passes its log through to this process's
+   * stderr, for development: a packaged app's stderr can end up in the
+   * system's journal, in the clear, where the app's own log file is sealed
+   * (backend/logfile.go). The last lines are kept in memory either way,
+   * for an error report.
+   */
+  start(bin: string, args: string[], env: NodeJS.ProcessEnv, echo: boolean) {
     const proc = spawn(bin, args, { env, stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
     this.proc = proc;
 
@@ -52,9 +59,9 @@ export class Backend extends EventEmitter {
       }
     });
 
-    // Logs: passed through, and the tail kept for an error report
+    // Logs: passed through in development, and the tail kept for an error report
     proc.stderr.on("data", (chunk: Buffer) => {
-      process.stderr.write(chunk);
+      if (echo) process.stderr.write(chunk);
       this.stderrTail.push(chunk.toString());
       if (this.stderrTail.length > 40) this.stderrTail.shift();
     });

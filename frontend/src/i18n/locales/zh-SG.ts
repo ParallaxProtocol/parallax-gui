@@ -649,6 +649,16 @@ const zhSG: Dict = {
   // Wallet: errors
   "wallet.err.wrongPassword": "密码错误。",
   "wallet.err.locked": "钱包已锁定。请解锁后重试。",
+  "wallet.err.sealed": "钱包的某个文件已损坏或不属于此钱包，无法打开。",
+  "wallet.damaged.title": "钱包的部分文件已损坏",
+  "wallet.damaged.desc":
+    "它们已被移到一旁，钱包使用最后一份可读取的副本打开，或在缺少它们的情况下打开：{what}。你的密钥和恢复短语不在这些文件中。",
+  "wallet.damaged.vault": "保险库（来自最后一份副本）",
+  "wallet.damaged.labels": "账户名称和分组",
+  "wallet.damaged.contacts": "联系人",
+  "wallet.damaged.requests": "离线签名请求",
+  "wallet.damaged.signed": "已签名请求的记录",
+  "wallet.damaged.pending": "等待区块的交易",
   "wallet.err.weakPassword": "密码至少需要 8 个字符。",
   "wallet.err.longPassword": "密码太长。",
   "wallet.err.unknownAccount": "此账户已不在钱包中。",
@@ -692,7 +702,7 @@ const zhSG: Dict = {
   "storage.wallet.restarting": "正在重新启动…",
   "storage.wallet.moveSubmit": "移动并重新启动",
   "storage.wallet.delete": "删除钱包",
-  "storage.wallet.deleteDesc": "从这台电脑上移除所有密钥、恢复短语和账户名称。",
+  "storage.wallet.deleteDesc": "从这台电脑上移除所有密钥、恢复短语、账户名称和联系人。",
   "storage.wallet.deleteTitle": "删除钱包",
   "storage.wallet.deleteWarn":
     "此钱包中的所有账户都会一并删除。如果没有备份其密钥或恢复短语，资金将永久丢失，任何人都无法找回。",

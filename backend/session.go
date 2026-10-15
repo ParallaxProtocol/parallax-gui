@@ -28,6 +28,11 @@ import (
 // destroys the key, which leaves nothing that could open the sealed copy,
 // and wipes that too. A key only ever decrypts for the one action asking,
 // as before.
+//
+// The wallet key (sealed.go), which opens everything the wallet keeps
+// beside its keys, is held the same way while unlocked, and destroyed as
+// the wallet locks; what it opened (the account names, the contacts) is
+// forgotten with it.
 
 var ErrLocked = errors.New("wallet: the wallet is locked")
 
@@ -42,6 +47,10 @@ type session struct {
 	// key seals the password while unlocked; nil while locked
 	key    *memguard.LockedBuffer
 	sealed []byte // nonce, then the sealed password
+	// wkey is the wallet key while unlocked; nil while locked
+	wkey *memguard.LockedBuffer
+	// forget drops what the wallet key opened, as the wallet locks
+	forget func()
 	// idle is how long the wallet stays unlocked with nothing done, 0 for
 	// as long as the app runs; gen tells the timer of the latest activity
 	// from those it replaced
@@ -55,15 +64,45 @@ type session struct {
 // Unlock opens the wallet with its password, for WithPassword to draw on.
 func (w *Wallet) Unlock(password string) error {
 	w.keyMu.Lock()
-	_, err := w.unlockVault(password)
-	w.keyMu.Unlock()
+	defer w.keyMu.Unlock()
+	if len(password) > maxPasswordLen {
+		return ErrWrongPassword
+	}
+	v, err := w.loadVault()
 	if err != nil {
 		return err
 	}
-	return w.keep(password)
+	if v == nil {
+		return w.noVaultError()
+	}
+	// An earlier version's vault gets its wallet key now (sealed.go)
+	if v.Key == nil {
+		if err := verifyPassword(v, password); err != nil {
+			return err
+		}
+		if v, err = w.upgradeVault(v, password); err != nil {
+			return err
+		}
+	}
+	// Decrypting the wallet key is what proves the password
+	wkey, err := decrypt(*v.Key, password)
+	if err != nil {
+		return err
+	}
+	defer clear(wkey)
+	if err := w.keep(password, wkey); err != nil {
+		return err
+	}
+	if err := w.open(password); err != nil {
+		w.Lock()
+		return err
+	}
+	w.announce()
+	return nil
 }
 
-// Lock forgets the wallet password, until the next Unlock.
+// Lock forgets the wallet password and the wallet key, and what the key
+// opened, until the next Unlock.
 func (w *Wallet) Lock() {
 	w.sess.mu.Lock()
 	notify := w.sess.lockLocked()
@@ -76,6 +115,19 @@ func (w *Wallet) Unlocked() bool {
 	w.sess.mu.Lock()
 	defer w.sess.mu.Unlock()
 	return w.sess.key != nil
+}
+
+// withWalletKey runs f with the wallet key, while the wallet is unlocked;
+// ErrLocked otherwise. The key is memguard's: f mustn't keep it, and
+// mustn't call into the session, which is held while it runs.
+func (w *Wallet) withWalletKey(f func(key []byte) error) error {
+	s := &w.sess
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.wkey == nil {
+		return ErrLocked
+	}
+	return f(s.wkey.Bytes())
 }
 
 // WithPassword runs f with the wallet password, while the wallet is
@@ -135,17 +187,27 @@ func (w *Wallet) SetLockEmitter(emit func(locked bool)) {
 	w.sess.emit = emit
 }
 
-// keep seals password as the one the session keeps, unlocking the wallet
-// if it wasn't, under a new key if it was.
-func (w *Wallet) keep(password string) error {
+// keep seals password as the one the session keeps, and holds the wallet
+// key wkey (copied: the caller wipes its own), unlocking the wallet if it
+// wasn't, under a new key if it was.
+func (w *Wallet) keep(password string, wkey []byte) error {
 	key := memguard.NewBufferRandom(sessionKeyLen)
 	if key.Size() != sessionKeyLen {
 		return errors.New("wallet: no protected memory to unlock the wallet in")
 	}
 	key.Freeze()
+	held := memguard.NewBuffer(walletKeyLen)
+	if held.Size() != walletKeyLen || len(wkey) != walletKeyLen {
+		key.Destroy()
+		held.Destroy()
+		return errors.New("wallet: no protected memory to unlock the wallet in")
+	}
+	copy(held.Bytes(), wkey)
+	held.Freeze()
 	var nonce [24]byte
 	if _, err := rand.Read(nonce[:]); err != nil {
 		key.Destroy()
+		held.Destroy()
 		return err
 	}
 	plain := []byte(password)
@@ -154,16 +216,22 @@ func (w *Wallet) keep(password string) error {
 
 	s := &w.sess
 	s.mu.Lock()
-	was := s.key != nil
 	s.dropLocked()
-	s.key, s.sealed = key, sealed
+	s.key, s.sealed, s.wkey = key, sealed, held
 	s.resetLocked()
-	emit := s.emit
 	s.mu.Unlock()
-	if !was && emit != nil {
+	return nil
+}
+
+// announce tells the app the wallet is unlocked, once what the wallet key
+// opens is open.
+func (w *Wallet) announce() {
+	w.sess.mu.Lock()
+	emit := w.sess.emit
+	w.sess.mu.Unlock()
+	if emit != nil {
 		emit(false)
 	}
-	return nil
 }
 
 // lockLocked locks the wallet. The caller holds s.mu, and calls what it
@@ -171,10 +239,18 @@ func (w *Wallet) keep(password string) error {
 func (s *session) lockLocked() (notify func()) {
 	was := s.key != nil
 	s.dropLocked()
-	if emit := s.emit; was && emit != nil {
-		return func() { emit(true) }
+	if !was {
+		return func() {}
 	}
-	return func() {}
+	forget, emit := s.forget, s.emit
+	return func() {
+		if forget != nil {
+			forget()
+		}
+		if emit != nil {
+			emit(true)
+		}
+	}
 }
 
 // dropLocked destroys the session's key and wipes the sealed password.
@@ -183,6 +259,10 @@ func (s *session) dropLocked() {
 	if s.key != nil {
 		s.key.Destroy()
 		s.key = nil
+	}
+	if s.wkey != nil {
+		s.wkey.Destroy()
+		s.wkey = nil
 	}
 	clear(s.sealed)
 	s.sealed = nil

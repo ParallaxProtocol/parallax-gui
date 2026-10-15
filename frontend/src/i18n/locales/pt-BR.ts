@@ -689,6 +689,16 @@ const ptBR: Dict = {
   // Wallet: errors
   "wallet.err.wrongPassword": "Senha incorreta.",
   "wallet.err.locked": "A carteira está bloqueada. Desbloqueie-a e tente novamente.",
+  "wallet.err.sealed": "Um arquivo da carteira está danificado ou não é desta carteira, e não pode ser aberto.",
+  "wallet.damaged.title": "Alguns arquivos da carteira estavam danificados",
+  "wallet.damaged.desc":
+    "Eles foram deixados de lado, e a carteira abriu com a última cópia legível, ou sem eles: {what}. Suas chaves e frases de recuperação não estão nesses arquivos.",
+  "wallet.damaged.vault": "o cofre (da última cópia)",
+  "wallet.damaged.labels": "nomes e agrupamentos das contas",
+  "wallet.damaged.contacts": "contatos",
+  "wallet.damaged.requests": "pedidos de assinatura offline",
+  "wallet.damaged.signed": "o registro de pedidos assinados",
+  "wallet.damaged.pending": "envios aguardando um bloco",
   "wallet.err.weakPassword": "A senha precisa ter pelo menos 8 caracteres.",
   "wallet.err.longPassword": "A senha é longa demais.",
   "wallet.err.unknownAccount": "Esta conta não está mais na carteira.",
@@ -736,7 +746,8 @@ const ptBR: Dict = {
   "storage.wallet.restarting": "Reiniciando…",
   "storage.wallet.moveSubmit": "Mover e reiniciar",
   "storage.wallet.delete": "Apagar carteira",
-  "storage.wallet.deleteDesc": "Remove deste computador todas as chaves, frases de recuperação e nomes de contas.",
+  "storage.wallet.deleteDesc":
+    "Remove deste computador todas as chaves, frases de recuperação, nomes de contas e contatos.",
   "storage.wallet.deleteTitle": "Apagar a carteira",
   "storage.wallet.deleteWarn":
     "Todas as contas desta carteira vão junto. Sem um backup das chaves ou frases de recuperação, os fundos se perdem para sempre: ninguém pode recuperá-los.",

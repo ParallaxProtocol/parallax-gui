@@ -117,6 +117,10 @@ type seedMeta struct {
 	Name      string `json:"name"`
 	Confirmed bool   `json:"confirmed"`
 	Next      uint32 `json:"next"` // the standard index the next account takes
+	// Fingerprint is the public address of the phrase's first standard
+	// account: it tells phrases apart without decrypting them, so the
+	// same phrase isn't added twice
+	Fingerprint string `json:"fingerprint"`
 }
 
 // seedRef ties an account to the phrase it comes from, and where.
@@ -203,6 +207,9 @@ func fingerprint(entropy []byte, passphrase string) (string, error) {
 // from index from, with what each holds, read from the node's state at its
 // head, so the user can choose which to bring in. Nothing is stored.
 func (w *Wallet) ScanSeed(words, passphrase, scheme string, from, count uint32) ([]SeedCandidate, error) {
+	if err := w.requireOpen(); err != nil {
+		return nil, err
+	}
 	if count == 0 || count > maxScan || from > maxSeedIndex {
 		return nil, errors.New("wallet: scan out of range")
 	}
@@ -221,6 +228,9 @@ func (w *Wallet) ScanSeed(words, passphrase, scheme string, from, count uint32) 
 // wallet password opens it, so the accounts it has beyond those in the
 // wallet can be found without typing its words again.
 func (w *Wallet) ScanWalletSeed(seedID, password, scheme string, from, count uint32) ([]SeedCandidate, error) {
+	if err := w.requireOpen(); err != nil {
+		return nil, err
+	}
 	if count == 0 || count > maxScan || from > maxSeedIndex {
 		return nil, errors.New("wallet: scan out of range")
 	}
@@ -268,7 +278,7 @@ func (w *Wallet) scan(entropy []byte, passphrase, scheme string, from, count uin
 			return nil, err
 		}
 		addr := util.HexToAddress(hexAddr)
-		c := SeedCandidate{Scheme: scheme, Index: i, Path: path.String(), Address: hexAddr, InWallet: w.keys().HasAddress(addr)}
+		c := SeedCandidate{Scheme: scheme, Index: i, Path: path.String(), Address: hexAddr, InWallet: w.hasAccount(addr)}
 		if state != nil {
 			bal := state.GetBalance(addr)
 			c.BalanceWei = bal.String()
@@ -285,6 +295,9 @@ func (w *Wallet) scan(entropy []byte, passphrase, scheme string, from, count uin
 // is encrypted with the wallet password (set by this call if the wallet
 // has none yet). The words are returned once, for the user to write down.
 func (w *Wallet) CreateSeed(name, password, passphrase string) (SeedPhrase, error) {
+	if err := w.requireOpen(); err != nil {
+		return SeedPhrase{}, err
+	}
 	name, err := cleanName(name)
 	if err != nil {
 		return SeedPhrase{}, err
@@ -345,6 +358,9 @@ func (w *Wallet) NewSeedWords(count int) ([]string, error) {
 // its first account, named name and selected. confirmed records whether
 // the user proved they wrote the words down.
 func (w *Wallet) CreateSeedWords(name, mnemonic, passphrase, password string, confirmed bool) (WalletAccount, error) {
+	if err := w.requireOpen(); err != nil {
+		return WalletAccount{}, err
+	}
 	name, err := cleanName(name)
 	if err != nil {
 		return WalletAccount{}, err
@@ -374,6 +390,9 @@ func (w *Wallet) CreateSeedWords(name, mnemonic, passphrase, password string, co
 // picked from a scan of it (the first standard account when none are),
 // each with its pick's name. A name given goes to the first instead.
 func (w *Wallet) ImportSeed(name, mnemonic, passphrase, password string, picks []SeedPick) (WalletAccount, error) {
+	if err := w.requireOpen(); err != nil {
+		return WalletAccount{}, err
+	}
 	name, err := cleanName(name)
 	if err != nil {
 		return WalletAccount{}, err
@@ -441,16 +460,19 @@ func (w *Wallet) storeSeed(entropy []byte, passphrase string, names []string, pa
 	if err != nil {
 		return "", WalletAccount{}, err
 	}
-	for _, s := range v.Seeds {
+	w.mu.Lock()
+	for _, s := range w.meta.Seeds {
 		if s.Fingerprint == fp {
+			w.mu.Unlock()
 			return "", WalletAccount{}, ErrSeedExists
 		}
 	}
+	w.mu.Unlock()
 	id, err := newSeedID()
 	if err != nil {
 		return "", WalletAccount{}, err
 	}
-	s := vaultSeed{ID: id, Fingerprint: fp}
+	s := vaultSeed{ID: id}
 	if s.Entropy, err = encrypt(entropy, password); err != nil {
 		return "", WalletAccount{}, err
 	}
@@ -487,7 +509,7 @@ func (w *Wallet) storeSeed(entropy []byte, passphrase string, names []string, pa
 	}
 
 	w.mu.Lock()
-	w.meta.Seeds[id] = seedMeta{Name: fmt.Sprintf("Recovery phrase %d", len(v.Seeds)), Confirmed: confirmed, Next: next}
+	w.meta.Seeds[id] = seedMeta{Name: fmt.Sprintf("Recovery phrase %d", len(v.Seeds)), Confirmed: confirmed, Next: next, Fingerprint: fp}
 	w.meta.Selected = first
 	err = w.saveMeta()
 	w.mu.Unlock()
@@ -520,6 +542,9 @@ func (w *Wallet) seedFor(id, password string) (*vaultFile, vaultSeed, int, error
 
 // DeriveAccount makes the next standard account from a recovery phrase.
 func (w *Wallet) DeriveAccount(seedID, name, password string) (WalletAccount, error) {
+	if err := w.requireOpen(); err != nil {
+		return WalletAccount{}, err
+	}
 	name, err := cleanName(name)
 	if err != nil {
 		return WalletAccount{}, err
@@ -552,7 +577,7 @@ func (w *Wallet) DeriveAccount(seedID, name, password string) (WalletAccount, er
 		if err != nil {
 			return WalletAccount{}, err
 		}
-		if w.keys().HasAddress(util.HexToAddress(addr)) {
+		if w.hasAccount(util.HexToAddress(addr)) {
 			continue
 		}
 		if _, err := w.deriveAccount(entropy, string(pass), seedID, path, name, password); err != nil {
@@ -580,6 +605,9 @@ func (w *Wallet) DeriveAccount(seedID, name, password string) (WalletAccount, er
 // to a phrase the user has rather than bring in a new one. The standard
 // index carries on after the picks.
 func (w *Wallet) AddSeedAccounts(seedID, password string, picks []SeedPick) (WalletAccount, error) {
+	if err := w.requireOpen(); err != nil {
+		return WalletAccount{}, err
+	}
 	if len(picks) == 0 {
 		return WalletAccount{}, errors.New("wallet: no accounts picked")
 	}
@@ -619,7 +647,7 @@ func (w *Wallet) AddSeedAccounts(seedID, password string, picks []SeedPick) (Wal
 		if err != nil {
 			return WalletAccount{}, err
 		}
-		if w.keys().HasAddress(util.HexToAddress(addr)) {
+		if w.hasAccount(util.HexToAddress(addr)) {
 			continue
 		}
 		if _, err := w.deriveAccount(entropy, string(pass), seedID, path, names[i], password); err != nil {
@@ -655,6 +683,9 @@ func (w *Wallet) AddSeedAccounts(seedID, password string, picks []SeedPick) (Wal
 // RevealSeed returns a recovery phrase's words, and its passphrase if it has
 // one, to its owner, once the wallet password opens it.
 func (w *Wallet) RevealSeed(seedID, password string) (SeedPhrase, error) {
+	if err := w.requireOpen(); err != nil {
+		return SeedPhrase{}, err
+	}
 	w.keyMu.Lock()
 	defer w.keyMu.Unlock()
 	_, s, _, err := w.seedFor(seedID, password)
@@ -678,6 +709,9 @@ func (w *Wallet) RevealSeed(seedID, password string) (SeedPhrase, error) {
 // it by retyping some of its words: the accounts made from it are backed
 // up from then on.
 func (w *Wallet) ConfirmSeed(seedID string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	m, ok := w.meta.Seeds[seedID]
@@ -691,6 +725,9 @@ func (w *Wallet) ConfirmSeed(seedID string) error {
 
 // RenameSeed labels a recovery phrase; an empty name keeps the old one.
 func (w *Wallet) RenameSeed(seedID, name string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	name, err := cleanName(name)
 	if err != nil {
 		return err
@@ -712,6 +749,9 @@ func (w *Wallet) RenameSeed(seedID, name string) error {
 // once the wallet password proves the user holds it. Without the words
 // written down, their funds are lost for good.
 func (w *Wallet) RemoveSeed(seedID, password string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	w.keyMu.Lock()
 	defer w.keyMu.Unlock()
 	v, _, i, err := w.seedFor(seedID, password)
@@ -730,12 +770,10 @@ func (w *Wallet) RemoveSeed(seedID, password string) error {
 	w.mu.Unlock()
 	sort.Strings(addrs)
 	for _, addr := range addrs {
-		acc, err := w.find(addr)
-		if errors.Is(err, ErrUnknownAccount) {
-			continue
-		}
+		// Only one the wallet also holds as a key file has one to delete
+		acc, err := w.keys().Find(wallet.Account{Address: util.HexToAddress(addr)})
 		if err != nil {
-			return err
+			continue
 		}
 		if err := w.keys().Delete(acc, password); err != nil {
 			if errors.Is(err, keystore.ErrDecrypt) {
@@ -745,7 +783,8 @@ func (w *Wallet) RemoveSeed(seedID, password string) error {
 		}
 	}
 	v.Seeds = append(v.Seeds[:i], v.Seeds[i+1:]...)
-	if err := w.saveVault(v); err != nil {
+	// Nothing of the phrase left behind, not even a previous version
+	if err := w.saveVaultOnly(v); err != nil {
 		return err
 	}
 	w.mu.Lock()
@@ -771,10 +810,8 @@ func (w *Wallet) seedInfosLocked(v *vaultFile) []SeedInfo {
 		return out
 	}
 	counts := map[string]int{}
-	for addr, ref := range w.meta.SeedOf {
-		if w.keys().HasAddress(util.HexToAddress(addr)) {
-			counts[ref.Seed]++
-		}
+	for _, ref := range w.meta.SeedOf {
+		counts[ref.Seed]++
 	}
 	for _, s := range v.Seeds {
 		m := w.meta.Seeds[s.ID]
@@ -789,18 +826,13 @@ func (w *Wallet) seedInfosLocked(v *vaultFile) []SeedInfo {
 	return out
 }
 
-// deriveAccount makes the account at path from a phrase and stores its key
-// in the keystore, encrypted with the wallet password, recording where it
-// came from. An account already in the wallet is recorded as the phrase's
+// deriveAccount makes the account at path from a phrase, recording where
+// it came from: its key is derived again as it signs (keys.go), and kept
+// nowhere. An account already in the wallet is recorded as the phrase's
 // all the same. It returns the address. The caller holds w.keyMu.
 func (w *Wallet) deriveAccount(entropy []byte, passphrase, seedID string, path wallet.DerivationPath, name, password string) (string, error) {
-	priv, err := deriveKey(entropy, passphrase, path)
+	addr, err := deriveAddress(entropy, passphrase, path)
 	if err != nil {
-		return "", err
-	}
-	defer zeroPrivateKey(priv)
-	addr := crypto.PubkeyToAddress(priv.PublicKey).Hex()
-	if _, err := w.keys().ImportECDSA(priv, password); err != nil && !errors.Is(err, keystore.ErrAccountAlreadyExists) {
 		return "", err
 	}
 	w.mu.Lock()
@@ -910,5 +942,22 @@ func writePrivateFile(path string, data []byte) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	return os.Rename(tmp.Name(), path)
+	if err := os.Rename(tmp.Name(), path); err != nil {
+		return err
+	}
+	// The rename is in the folder: synced too, a power cut can't undo it
+	// (Windows can't open a folder to sync it, and needs no telling)
+	syncDir(filepath.Dir(path))
+	return nil
+}
+
+// syncDir writes a folder's entries out to the disk, as far as the
+// system lets it.
+func syncDir(dir string) {
+	d, err := os.Open(dir)
+	if err != nil {
+		return
+	}
+	_ = d.Sync()
+	d.Close()
 }

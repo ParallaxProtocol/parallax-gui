@@ -78,8 +78,16 @@ func TestWalletCreateKeepsKeyEncryptedAndPrivate(t *testing.T) {
 	keyPath := filepath.Join(dir, "keystore", entries[0].Name())
 	assertPrivate(t, keyPath, 0o600)
 	assertPrivate(t, filepath.Join(dir, "keystore"), 0o700)
-	assertPrivate(t, filepath.Join(dir, "wallet.json"), 0o600)
+	assertPrivate(t, filepath.Join(dir, sealedMeta), 0o600)
 	assertPrivate(t, filepath.Join(dir, "vault.json"), 0o600)
+	// The labels are sealed: neither the name nor the address in the clear
+	labels, _ := os.ReadFile(filepath.Join(dir, sealedMeta))
+	if strings.Contains(string(labels), "Savings") || strings.Contains(strings.ToLower(string(labels)), strings.ToLower(acc.Address[2:])) {
+		t.Fatal("the labels are kept in the clear")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "wallet.json")); !os.IsNotExist(err) {
+		t.Fatalf("a clear wallet.json is there: %v", err)
+	}
 
 	// The file is a standard encrypted keystore file that opens with the
 	// wallet password and no other
@@ -297,13 +305,18 @@ func TestWalletChangePasswordReencryptsEverything(t *testing.T) {
 		t.Fatalf("ChangePassword: %v", err)
 	}
 	// Every key and the phrase open with the new password only
-	for _, addr := range []string{single.Address, phrase.Account.Address} {
-		if _, err := w.Backup(addr, testPassword); !errors.Is(err, ErrWrongPassword) {
-			t.Errorf("%s still opens with the old password: %v", addr, err)
-		}
-		if _, err := w.Backup(addr, next); err != nil {
-			t.Errorf("%s doesn't open with the new password: %v", addr, err)
-		}
+	if _, err := w.Backup(single.Address, testPassword); !errors.Is(err, ErrWrongPassword) {
+		t.Errorf("the key still opens with the old password: %v", err)
+	}
+	if _, err := w.Backup(single.Address, next); err != nil {
+		t.Errorf("the key doesn't open with the new password: %v", err)
+	}
+	// The phrase's account signs with what opens the phrase
+	if _, err := w.SignMessage(phrase.Account.Address, "hello", testPassword); !errors.Is(err, ErrWrongPassword) {
+		t.Errorf("the phrase's account still signs with the old password: %v", err)
+	}
+	if _, err := w.SignMessage(phrase.Account.Address, "hello", next); err != nil {
+		t.Errorf("the phrase's account doesn't sign with the new password: %v", err)
 	}
 	got, err := w.RevealSeed(phrase.SeedID, next)
 	if err != nil || strings.Join(got.Words, " ") != strings.Join(phrase.Words, " ") || got.Passphrase != "a passphrase" {

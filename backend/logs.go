@@ -31,7 +31,9 @@ type LogTail struct {
 	pending []LogLine
 	flush   *time.Timer
 
-	// Where the lines are kept across restarts, once Persist is called
+	// Where the lines are kept across restarts: the folder, once Persist
+	// is called, and the sealed file, once SealTo is (logfile.go)
+	dir  string
 	file *logFile
 }
 
@@ -93,7 +95,7 @@ func (l *LogTail) SetVerbosity(level int) {
 func (l *LogTail) Close() {
 	l.mu.Lock()
 	if l.file != nil {
-		l.file.w.Flush()
+		l.file.close()
 	}
 	l.emitter = nil
 	if l.flush != nil {

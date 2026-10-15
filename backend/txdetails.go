@@ -137,6 +137,9 @@ type WalletActivity struct {
 // accounts in the blocks after `after`, oldest first, and the head it read
 // up to, for the next call.
 func (w *Wallet) WalletActivity(after uint64) ([]WalletTx, uint64, error) {
+	if err := w.requireOpen(); err != nil {
+		return nil, 0, err
+	}
 	prl := w.node.Parallax()
 	if prl == nil {
 		return nil, 0, ErrNodeStopped
@@ -207,6 +210,9 @@ func (w *Wallet) WalletActivity(after uint64) ([]WalletTx, uint64, error) {
 // checksummed address, for the sidebar's account switcher. It is empty
 // while the head state is unavailable (a snap sync still downloading it).
 func (w *Wallet) Balances() (map[string]string, error) {
+	if err := w.requireOpen(); err != nil {
+		return nil, err
+	}
 	prl := w.node.Parallax()
 	if prl == nil {
 		return nil, ErrNodeStopped

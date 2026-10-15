@@ -118,6 +118,11 @@ type WalletInfo struct {
 	Locked bool `json:"locked"`
 	// Seeds are the recovery phrases, in the order they were added.
 	Seeds []SeedInfo `json:"seeds"`
+	// Damaged names what was found damaged as the wallet opened, and set
+	// aside or taken from its previous version (sealed.go), until the app
+	// has told the user (DismissDamaged): "vault", "labels", "contacts",
+	// "requests", "signed", "pending".
+	Damaged []string `json:"damaged"`
 }
 
 // walletMeta is what the wallet keeps beside the keystore: nothing secret,
@@ -146,8 +151,11 @@ type Wallet struct {
 	// replace it: a private test chain has no peers.
 	ready func() error
 
-	mu   sync.Mutex // guards meta
+	mu   sync.Mutex // guards meta, metaOpen and the hooks
 	meta walletMeta
+	// metaOpen is set while the labels are open: the wallet is unlocked
+	metaOpen        bool
+	onOpen, onClose func()
 
 	// keyMu admits one key decryption at a time: each takes scrypt's
 	// 256 MB, and a send must assign its nonce, sign and submit before
@@ -159,13 +167,21 @@ type Wallet struct {
 	reqOnce  sync.Once
 	requests *requestStore
 	signedMu sync.Mutex
+	// pendMu guards the sends kept until their block (resubmit.go)
+	pendMu sync.Mutex
+
+	// damaged names the stores found damaged as the wallet opened, for
+	// the app to tell, until it has (sealed.go)
+	damagedMu sync.Mutex
+	damaged   []string
 
 	// The wallet password, kept while the wallet is unlocked (session.go)
 	sess session
 }
 
 // NewWallet opens the wallet kept in configDir: the keystore in
-// configDir/keystore and its labels in configDir/wallet.json.
+// configDir/keystore, and beside it the vault and the sealed labels,
+// which are read only as the wallet is unlocked (open).
 func NewWallet(configDir string, node *NodeController) (*Wallet, error) {
 	dir := filepath.Join(configDir, "keystore")
 	// The keystore creates it on the first key with the same mode; made
@@ -175,54 +191,166 @@ func NewWallet(configDir string, node *NodeController) (*Wallet, error) {
 	}
 	w := &Wallet{
 		dir:      dir,
-		metaPath: filepath.Join(configDir, "wallet.json"),
+		metaPath: filepath.Join(configDir, sealedMeta),
 		node:     node,
-		meta:     walletMeta{Names: map[string]string{}, BackedUp: map[string]bool{}, Seeds: map[string]seedMeta{}, SeedOf: map[string]seedRef{}},
+		meta:     emptyMeta(),
 	}
 	w.ks.Store(keystore.NewKeyStore(dir, walletScryptN, walletScryptP))
 	w.ready = w.nodeReady
-	if data, err := os.ReadFile(w.metaPath); err == nil {
-		if err := json.Unmarshal(data, &w.meta); err != nil {
-			logging.Warn("Ignoring an unreadable wallet.json", "err", err)
-			w.meta = walletMeta{}
-			// An account then shows as not backed up: the safe side
-		}
-		if w.meta.Names == nil {
-			w.meta.Names = map[string]string{}
-		}
-		if w.meta.BackedUp == nil {
-			w.meta.BackedUp = map[string]bool{}
-		}
-		if w.meta.Seeds == nil {
-			w.meta.Seeds = map[string]seedMeta{}
-		}
-		if w.meta.SeedOf == nil {
-			w.meta.SeedOf = map[string]seedRef{}
-		}
-	} else if !os.IsNotExist(err) {
-		return nil, err
-	}
+	w.sess.forget = w.forget
 	return w, nil
 }
 
 // keys is the wallet's keystore.
 func (w *Wallet) keys() *keystore.KeyStore { return w.ks.Load() }
 
-// saveMeta writes the labels atomically. The caller holds w.mu.
-func (w *Wallet) saveMeta() error {
-	data, err := json.MarshalIndent(w.meta, "", "  ")
-	if err != nil {
-		return err
-	}
-	tmp := w.metaPath + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, w.metaPath)
+func emptyMeta() walletMeta {
+	return walletMeta{Names: map[string]string{}, BackedUp: map[string]bool{}, Seeds: map[string]seedMeta{}, SeedOf: map[string]seedRef{}}
 }
 
-// Info lists the wallet's accounts. The keystore orders them by file name,
-// which starts with the time each key was made or imported.
+// SetOpenHooks registers what runs once the wallet's sealed files are
+// open (onOpen, as it unlocks) and once they're forgotten (onClose, as it
+// locks): the contacts read and drop their book there.
+func (w *Wallet) SetOpenHooks(onOpen, onClose func()) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.onOpen, w.onClose = onOpen, onClose
+}
+
+// opened reports whether the labels are open: the wallet is unlocked.
+func (w *Wallet) opened() bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.metaOpen
+}
+
+// Locked reports whether the wallet has a password and isn't unlocked:
+// what names its accounts (the logs among it) isn't to be read then.
+func (w *Wallet) Locked() bool {
+	if w.opened() {
+		return false
+	}
+	v, err := w.loadVault()
+	return err != nil || v != nil
+}
+
+// requireOpen is ErrLocked while the wallet is locked: everything but
+// unlocking it, and deleting it, waits for that. A wallet with no
+// password yet says so instead.
+func (w *Wallet) requireOpen() error {
+	if w.opened() {
+		return nil
+	}
+	if v, err := w.loadVault(); err == nil && v == nil {
+		return w.noVaultError()
+	}
+	return ErrLocked
+}
+
+// open reads the labels with the wallet key the session now holds,
+// sealing first any file an earlier version kept in the clear, moving the
+// phrases' fingerprints out of a vault that still has them, and removing
+// the key files an earlier version kept for the phrases' accounts (keys.go)
+// with password. The caller holds w.keyMu.
+func (w *Wallet) open(password string) error {
+	dir := filepath.Dir(w.metaPath)
+	m := emptyMeta()
+	if err := w.migratePlain(filepath.Join(dir, "wallet.json"), w.metaPath, sealedMeta, &m); err != nil {
+		return err
+	}
+	for _, f := range []struct {
+		legacy, path, name string
+		v                  any
+	}{
+		{"requests.json", sealedRequests, sealedRequests, &[]PendingRequest{}},
+		{"signed.json", sealedSigned, sealedSigned, &[]signedRecord{}},
+	} {
+		if err := w.migratePlain(filepath.Join(dir, f.legacy), filepath.Join(dir, f.path), f.name, f.v); err != nil {
+			return err
+		}
+	}
+	m = emptyMeta()
+	if damaged, err := w.readSealedOrRecover(w.metaPath, sealedMeta, &m); err != nil {
+		return err
+	} else if damaged {
+		w.noteDamaged("labels")
+	}
+	if m.Names == nil {
+		m.Names = map[string]string{}
+	}
+	if m.BackedUp == nil {
+		m.BackedUp = map[string]bool{}
+	}
+	if m.Seeds == nil {
+		m.Seeds = map[string]seedMeta{}
+	}
+	if m.SeedOf == nil {
+		m.SeedOf = map[string]seedRef{}
+	}
+
+	w.mu.Lock()
+	w.meta, w.metaOpen = m, true
+	onOpen := w.onOpen
+	// A vault of format 1 kept the fingerprints beside the phrases
+	if v, err := w.loadVault(); err == nil && v != nil {
+		moved := false
+		for i, seed := range v.Seeds {
+			if seed.Fingerprint == "" {
+				continue
+			}
+			sm := w.meta.Seeds[seed.ID]
+			sm.Fingerprint = seed.Fingerprint
+			w.meta.Seeds[seed.ID] = sm
+			v.Seeds[i].Fingerprint = ""
+			moved = true
+		}
+		if moved {
+			if err := w.saveMeta(); err != nil {
+				w.mu.Unlock()
+				return err
+			}
+			// A previous version would still name them
+			if err := w.saveVaultOnly(v); err != nil {
+				w.mu.Unlock()
+				return err
+			}
+		}
+	}
+	w.mu.Unlock()
+	if err := w.dropPhraseKeyFiles(password); err != nil {
+		logging.Warn("Failed to remove the phrases' accounts' key files", "err", err)
+	}
+	if onOpen != nil {
+		onOpen()
+	}
+	return nil
+}
+
+// forget drops the labels from memory as the wallet locks.
+func (w *Wallet) forget() {
+	w.mu.Lock()
+	w.meta, w.metaOpen = emptyMeta(), false
+	onClose := w.onClose
+	w.mu.Unlock()
+	if onClose != nil {
+		onClose()
+	}
+}
+
+// saveMeta seals the labels and writes them atomically; ErrLocked while
+// they aren't open, so a locked wallet never writes over them. The caller
+// holds w.mu.
+func (w *Wallet) saveMeta() error {
+	if !w.metaOpen {
+		return ErrLocked
+	}
+	return w.WriteSealed(w.metaPath, sealedMeta, w.meta)
+}
+
+// Info lists the wallet's accounts: the key files, which the keystore
+// orders by file name (it starts with the time each key was made or
+// imported), the phrases' accounts, phrase by phrase, and the watch-only
+// ones.
 func (w *Wallet) Info() WalletInfo {
 	accs := w.keys().Accounts()
 	v, err := w.loadVault()
@@ -231,6 +359,10 @@ func (w *Wallet) Info() WalletInfo {
 	}
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	// Locked, nothing about the accounts is told: not even how many
+	if v != nil && !w.metaOpen {
+		return WalletInfo{Accounts: []WalletAccount{}, KeystoreDir: w.dir, HasPassword: true, Locked: true, Seeds: []SeedInfo{}, Damaged: []string{}}
+	}
 	info := WalletInfo{
 		Accounts:    make([]WalletAccount, 0, len(accs)),
 		KeystoreDir: w.dir,
@@ -238,10 +370,17 @@ func (w *Wallet) Info() WalletInfo {
 		NeedsSetup:  v == nil && err == nil && len(accs) > 0,
 		Locked:      v != nil && !w.Unlocked(),
 		Seeds:       w.seedInfosLocked(v),
+		Damaged:     w.damagedStores(),
 	}
 	selected := false
 	for _, a := range accs {
 		addr := a.Address.Hex()
+		info.Accounts = append(info.Accounts, w.viewLocked(addr))
+		if addr == w.meta.Selected {
+			selected = true
+		}
+	}
+	for _, addr := range w.phraseAccountsLocked(v) {
 		info.Accounts = append(info.Accounts, w.viewLocked(addr))
 		if addr == w.meta.Selected {
 			selected = true
@@ -264,21 +403,9 @@ func (w *Wallet) Info() WalletInfo {
 	return info
 }
 
-// find returns the keystore account for a checksummed or plain address.
-func (w *Wallet) find(address string) (wallet.Account, error) {
-	address = strings.TrimSpace(address)
-	if !util.IsHexAddress(address) {
-		return wallet.Account{}, ErrUnknownAccount
-	}
-	acc, err := w.keys().Find(wallet.Account{Address: util.HexToAddress(address)})
-	if err != nil {
-		return wallet.Account{}, ErrUnknownAccount
-	}
-	return acc, nil
-}
-
-// known returns a wallet account's address, a key in the keystore or a
-// watch-only one, and whether it is watch-only.
+// known returns a wallet account's address, one that signs (a key file's
+// or a phrase's, keys.go) or a watch-only one, and whether it is
+// watch-only.
 func (w *Wallet) known(address string) (util.Address, bool, error) {
 	if acc, err := w.find(address); err == nil {
 		return acc.Address, false, nil
@@ -302,14 +429,22 @@ func (w *Wallet) isWatched(addr util.Address) bool {
 	return false
 }
 
-// addresses lists every wallet account: the keys, then the watch-only ones.
+// addresses lists every wallet account: the keys, then the watch-only
+// ones; none while the wallet is locked.
 func (w *Wallet) addresses() []util.Address {
+	if !w.opened() {
+		return nil
+	}
 	var out []util.Address
 	for _, acc := range w.keys().Accounts() {
 		out = append(out, acc.Address)
 	}
+	v, _ := w.loadVault()
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	for _, a := range w.phraseAccountsLocked(v) {
+		out = append(out, util.HexToAddress(a))
+	}
 	for _, a := range w.meta.Watch {
 		out = append(out, util.HexToAddress(a))
 	}
@@ -318,6 +453,9 @@ func (w *Wallet) addresses() []util.Address {
 
 // Select makes address the account the app shows.
 func (w *Wallet) Select(address string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	addr, _, err := w.known(address)
 	if err != nil {
 		return err
@@ -330,6 +468,9 @@ func (w *Wallet) Select(address string) error {
 
 // Rename labels an account; an empty name clears the label.
 func (w *Wallet) Rename(address, name string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	addr, _, err := w.known(address)
 	if err != nil {
 		return err
@@ -352,6 +493,9 @@ func (w *Wallet) Rename(address, name string) error {
 // address: one typed (checksummed if mixed case) or scanned from the
 // signer's screen.
 func (w *Wallet) AddWatchOnly(name, address string) (WalletAccount, error) {
+	if err := w.requireOpen(); err != nil {
+		return WalletAccount{}, err
+	}
 	name, err := cleanName(name)
 	if err != nil {
 		return WalletAccount{}, err
@@ -384,6 +528,9 @@ func (w *Wallet) AddWatchOnly(name, address string) (WalletAccount, error) {
 // RemoveWatchOnly stops following a watch-only account. It needs no
 // password: the wallet holds nothing of it but its address.
 func (w *Wallet) RemoveWatchOnly(address string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	addr, watch, err := w.known(address)
 	if err != nil {
 		return err
@@ -411,6 +558,9 @@ func (w *Wallet) RemoveWatchOnly(address string) error {
 
 // MarkBackedUp records that the user saved the account's backup.
 func (w *Wallet) MarkBackedUp(address string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	acc, err := w.find(address)
 	if err != nil {
 		return err
@@ -445,6 +595,9 @@ func (w *Wallet) added(acc wallet.Account, name string, backedUp bool) (WalletAc
 // Create makes a new key from the operating system's random source and
 // stores it encrypted with the wallet password.
 func (w *Wallet) Create(name, password string) (WalletAccount, error) {
+	if err := w.requireOpen(); err != nil {
+		return WalletAccount{}, err
+	}
 	name, err := cleanName(name)
 	if err != nil {
 		return WalletAccount{}, err
@@ -471,6 +624,9 @@ func (w *Wallet) newAccount(password string) (wallet.Account, error) {
 // ImportPrivateKey stores a raw secp256k1 private key, given as 64 hex
 // digits, encrypted with the wallet password.
 func (w *Wallet) ImportPrivateKey(name, privateKeyHex, password string) (WalletAccount, error) {
+	if err := w.requireOpen(); err != nil {
+		return WalletAccount{}, err
+	}
 	name, err := cleanName(name)
 	if err != nil {
 		return WalletAccount{}, err
@@ -514,6 +670,9 @@ func (w *Wallet) ImportPrivateKey(name, privateKeyHex, password string) (WalletA
 // parallax-wallet and most EVM wallets export them), decrypted with
 // filePassword and encrypted again under the wallet password.
 func (w *Wallet) ImportKeyfile(name, keyJSON, filePassword, password string) (WalletAccount, error) {
+	if err := w.requireOpen(); err != nil {
+		return WalletAccount{}, err
+	}
 	name, err := cleanName(name)
 	if err != nil {
 		return WalletAccount{}, err
@@ -554,9 +713,16 @@ func (w *Wallet) ImportKeyfile(name, keyJSON, filePassword, password string) (Wa
 // worth keeping if its owner can decrypt it. The file name is the
 // keystore's own.
 func (w *Wallet) Backup(address, password string) (WalletBackup, error) {
+	if err := w.requireOpen(); err != nil {
+		return WalletBackup{}, err
+	}
 	acc, err := w.find(address)
 	if err != nil {
 		return WalletBackup{}, err
+	}
+	if !hasKeyFile(acc) {
+		// A phrase's account is backed up by the phrase
+		return WalletBackup{}, ErrUnknownAccount
 	}
 	data, err := os.ReadFile(acc.URL.Path)
 	if err != nil {
@@ -592,8 +758,13 @@ func (w *Wallet) verify(data []byte, password string) error {
 }
 
 // Remove deletes the account's key file once the password proves the user
-// holds it. Without a backup the account's funds are lost for good.
+// holds it. Without a backup the account's funds are lost for good. A
+// phrase's account has no file: it goes from the wallet once the password
+// opens the phrase, which can make it again.
 func (w *Wallet) Remove(address, password string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	acc, err := w.find(address)
 	if err != nil {
 		return err
@@ -602,9 +773,16 @@ func (w *Wallet) Remove(address, password string) error {
 		return ErrWrongPassword
 	}
 	w.keyMu.Lock()
-	err = w.keys().Delete(acc, password)
-	if errors.Is(err, keystore.ErrDecrypt) {
-		err = w.keyError(password)
+	if hasKeyFile(acc) {
+		err = w.keys().Delete(acc, password)
+		if errors.Is(err, keystore.ErrDecrypt) {
+			err = w.keyError(password)
+		}
+	} else {
+		var key *ecdsa.PrivateKey
+		if key, err = w.signingKey(acc, password); err == nil {
+			zeroPrivateKey(key)
+		}
 	}
 	w.keyMu.Unlock()
 	if err != nil {
@@ -632,6 +810,9 @@ func (w *Wallet) Remove(address, password string) error {
 // Summary reports one wallet account's balance and activity: the
 // transactions of the last week of blocks, and those waiting in the pool.
 func (w *Wallet) Summary(address string) (AddressView, error) {
+	if err := w.requireOpen(); err != nil {
+		return AddressView{}, err
+	}
 	addr, _, err := w.known(address)
 	if err != nil {
 		return AddressView{}, err
@@ -769,6 +950,9 @@ func parseWei(s string, bad error) (*big.Int, error) {
 // one of the wallet's accounts to to, at gasPriceWei, or at the node's
 // suggested price when it is empty.
 func (w *Wallet) Quote(from, to, valueWei, gasPriceWei string) (SendQuote, error) {
+	if err := w.requireOpen(); err != nil {
+		return SendQuote{}, err
+	}
 	fromAddr, _, err := w.known(from)
 	if err != nil {
 		return SendQuote{}, err
@@ -857,6 +1041,9 @@ func (w *Wallet) Quote(from, to, valueWei, gasPriceWei string) (SendQuote, error
 // its peers. Every field is checked again here: the frontend's word is
 // not taken for any of them. The key is decrypted for this one signature.
 func (w *Wallet) Send(req SendRequest) (SentTx, error) {
+	if err := w.requireOpen(); err != nil {
+		return SentTx{}, err
+	}
 	acc, err := w.find(req.From)
 	if err != nil {
 		if _, watch, _ := w.known(req.From); watch {
@@ -927,6 +1114,7 @@ func (w *Wallet) Send(req SendRequest) (SentTx, error) {
 	if err := ec.SendTransaction(ctx, signed); err != nil {
 		return SentTx{}, fmt.Errorf("wallet: the node refused the transaction: %w", err)
 	}
+	w.recordPending(signed, acc.Address)
 	logging.Info("Sent a wallet transaction", "hash", signed.Hash(), "from", acc.Address, "to", recipient, "nonce", nonce)
 	return SentTx{Hash: signed.Hash().Hex(), Nonce: nonce}, nil
 }
@@ -934,10 +1122,12 @@ func (w *Wallet) Send(req SendRequest) (SentTx, error) {
 // sign signs tx for chainID with the account's key, decrypted for this one
 // signature, and checks the result. The caller holds w.keyMu.
 func (w *Wallet) sign(acc wallet.Account, password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
-	signed, err := w.keys().SignTxWithPassphrase(acc, password, tx, chainID)
-	if errors.Is(err, keystore.ErrDecrypt) {
-		return nil, w.keyError(password)
+	key, err := w.signingKey(acc, password)
+	if err != nil {
+		return nil, err
 	}
+	signed, err := types.SignTx(tx, types.LatestSignerForChainID(chainID), key)
+	zeroPrivateKey(key)
 	if err != nil {
 		return nil, err
 	}

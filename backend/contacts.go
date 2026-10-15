@@ -25,7 +25,9 @@ import (
 )
 
 // The contacts: the people and services the user sends to, by name.
-// It lives in contacts.json beside the wallet, holds nothing secret, and
+// Who someone pays says much about them, so the book is sealed under the
+// wallet key (sealed.go) in contacts.sealed, read as the wallet unlocks
+// and forgotten as it locks; until then it can't be read or changed. It
 // is written atomically. Names and addresses are each unique, so a name
 // always means one address and an address one name: a look-alike entry
 // can't hide behind a familiar one.
@@ -89,39 +91,67 @@ type contactsFile struct {
 
 // Contacts is the user's contacts. It is safe for concurrent use.
 type Contacts struct {
-	mu   sync.Mutex
-	path string
-	list []Contact
-	now  func() time.Time // tests set the clock
+	mu     sync.Mutex
+	path   string // the sealed book
+	legacy string // the book an earlier version kept in the clear
+	list   []Contact
+	// sealer is the wallet, while the book is open; nil while it's locked
+	sealer Sealer
+	now    func() time.Time // tests set the clock
 }
 
-// OpenContacts reads the contacts in configDir. An unreadable file is
-// set aside, never overwritten, so a damaged book can still be recovered
-// by hand, and the app starts with an empty one.
+// OpenContacts makes the contacts kept in configDir, closed until the
+// wallet opens them (Open).
 func OpenContacts(configDir string) (*Contacts, error) {
-	c := &Contacts{path: filepath.Join(configDir, "contacts.json"), list: []Contact{}, now: time.Now}
-	data, err := os.ReadFile(c.path)
-	switch {
-	case os.IsNotExist(err):
-		return c, nil
-	case err != nil:
-		return nil, err
-	}
+	return &Contacts{
+		path:   filepath.Join(configDir, sealedContacts),
+		legacy: filepath.Join(configDir, "contacts.json"),
+		list:   []Contact{},
+		now:    time.Now,
+	}, nil
+}
+
+// Open reads the book through sealer, the wallet just unlocked, sealing
+// first a book an earlier version kept in the clear. An unreadable book
+// is set aside, never overwritten, and the book starts empty.
+func (c *Contacts) Open(sealer Sealer) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	var f contactsFile
-	if err := json.Unmarshal(data, &f); err != nil || f.Version > contactsVersion {
+	w, _ := sealer.(*Wallet)
+	if w != nil {
+		if err := w.migratePlain(c.legacy, c.path, sealedContacts, &contactsFile{}); err != nil {
+			logging.Warn("Failed to seal the contacts", "err", err)
+		}
+	}
+	var err error
+	if w != nil {
+		var damaged bool
+		damaged, err = w.readSealedOrRecover(c.path, sealedContacts, &f)
+		if damaged {
+			w.noteDamaged("contacts")
+		}
+	} else {
+		_, err = sealer.ReadSealed(c.path, sealedContacts, &f)
+	}
+	if errors.Is(err, ErrLocked) {
+		return err
+	}
+	if err != nil || f.Version > contactsVersion {
 		aside := fmt.Sprintf("%s.unreadable-%d", c.path, time.Now().Unix())
 		logging.Warn("Setting aside an unreadable contacts file", "file", c.path, "to", aside, "err", err, "version", f.Version)
 		if err := os.Rename(c.path, aside); err != nil {
-			return nil, err
+			return err
 		}
-		return c, nil
+		f = contactsFile{}
 	}
+	c.list = []Contact{}
 	// Each entry checked as if typed: a hand-edited file can't bring in a
 	// duplicate or a malformed address
 	for _, k := range f.Contacts {
 		in, err := c.clean(ContactInput{Name: k.Name, Address: k.Address, Note: k.Note}, "")
 		if err != nil {
-			logging.Warn("Dropping an invalid contact", "name", k.Name, "address", k.Address, "err", err)
+			logging.Warn("Dropping an invalid contact", "err", err)
 			continue
 		}
 		k.Name, k.Address, k.Note = in.Name, in.Address, in.Note
@@ -130,7 +160,29 @@ func OpenContacts(configDir string) (*Contacts, error) {
 		}
 		c.list = append(c.list, k)
 	}
-	return c, nil
+	c.sealer = sealer
+	return nil
+}
+
+// Wipe forgets the book and removes its files: sealed under a wallet
+// key that's gone (the wallet deleted), nothing could open them.
+func (c *Contacts) Wipe() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.list, c.sealer = []Contact{}, nil
+	for _, p := range []string{c.path, previousCopy(c.path), c.legacy} {
+		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	return nil
+}
+
+// Close forgets the book, as the wallet locks.
+func (c *Contacts) Close() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.list, c.sealer = []Contact{}, nil
 }
 
 // List returns the book: favourites first, then by name.
@@ -153,6 +205,9 @@ func (c *Contacts) List() []Contact {
 func (c *Contacts) Add(in ContactInput) (Contact, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.sealer == nil {
+		return Contact{}, ErrLocked
+	}
 	if len(c.list) >= maxContacts {
 		return Contact{}, ErrContactsFull
 	}
@@ -174,6 +229,9 @@ func (c *Contacts) Add(in ContactInput) (Contact, error) {
 func (c *Contacts) Update(id string, in ContactInput) (Contact, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.sealer == nil {
+		return Contact{}, ErrLocked
+	}
 	i := c.index(id)
 	if i < 0 {
 		return Contact{}, ErrContactUnknown
@@ -198,6 +256,9 @@ func (c *Contacts) Update(id string, in ContactInput) (Contact, error) {
 func (c *Contacts) SetFavorite(id string, on bool) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.sealer == nil {
+		return ErrLocked
+	}
 	i := c.index(id)
 	if i < 0 {
 		return ErrContactUnknown
@@ -217,6 +278,9 @@ func (c *Contacts) SetFavorite(id string, on bool) error {
 func (c *Contacts) Remove(id string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.sealer == nil {
+		return ErrLocked
+	}
 	i := c.index(id)
 	if i < 0 {
 		return ErrContactUnknown
@@ -250,6 +314,12 @@ func (c *Contacts) SentTo(address string) {
 // Export writes the book as JSON or CSV ("json" | "csv"), for a backup or
 // another wallet.
 func (c *Contacts) Export(format string) (string, error) {
+	c.mu.Lock()
+	locked := c.sealer == nil
+	c.mu.Unlock()
+	if locked {
+		return "", ErrLocked
+	}
 	list := c.List()
 	switch format {
 	case "json":
@@ -287,6 +357,9 @@ func (c *Contacts) Import(data string) (ContactsImport, error) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.sealer == nil {
+		return ContactsImport{}, ErrLocked
+	}
 	res := ContactsImport{Errors: []string{}}
 	before := len(c.list)
 	now := c.now().Unix()
@@ -443,17 +516,12 @@ func (c *Contacts) index(id string) int {
 	return -1
 }
 
-// save writes the book atomically. The caller holds c.mu.
+// save seals the book and writes it atomically. The caller holds c.mu.
 func (c *Contacts) save() error {
-	data, err := json.MarshalIndent(contactsFile{Version: contactsVersion, Contacts: c.list}, "", "  ")
-	if err != nil {
-		return err
+	if c.sealer == nil {
+		return ErrLocked
 	}
-	tmp := c.path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, c.path)
+	return c.sealer.WriteSealed(c.path, sealedContacts, contactsFile{Version: contactsVersion, Contacts: c.list})
 }
 
 // csvUnsafe undoes csvSafe on an imported field.

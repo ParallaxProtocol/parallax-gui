@@ -133,6 +133,9 @@ func replacement(kind string, from util.Address, tx *types.Transaction, price *b
 // QuoteReplace works out what speeding up or cancelling a waiting
 // transaction from one of the wallet's accounts costs.
 func (w *Wallet) QuoteReplace(from, hash, kind string) (ReplaceQuote, error) {
+	if err := w.requireOpen(); err != nil {
+		return ReplaceQuote{}, err
+	}
 	addr, tx, err := w.waitingTx(from, hash)
 	if err != nil {
 		return ReplaceQuote{}, err
@@ -182,6 +185,9 @@ func (w *Wallet) QuoteReplace(from, hash, kind string) (ReplaceQuote, error) {
 // Replace signs the speed-up or cancel the user confirmed and hands it to
 // the node, at the waiting transaction's nonce.
 func (w *Wallet) Replace(req ReplaceRequest) (SentTx, error) {
+	if err := w.requireOpen(); err != nil {
+		return SentTx{}, err
+	}
 	if len(req.Password) > maxPasswordLen {
 		return SentTx{}, ErrWrongPassword
 	}
@@ -237,6 +243,7 @@ func (w *Wallet) Replace(req ReplaceRequest) (SentTx, error) {
 		}
 		return SentTx{}, fmt.Errorf("wallet: the node refused the transaction: %w", err)
 	}
+	w.recordPending(signed, acc.Address)
 	logging.Info("Replaced a wallet transaction", "kind", req.Kind, "old", tx.Hash(), "hash", signed.Hash(), "from", acc.Address, "nonce", tx.Nonce())
 	return SentTx{Hash: signed.Hash().Hex(), Nonce: tx.Nonce()}, nil
 }

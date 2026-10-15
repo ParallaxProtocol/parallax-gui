@@ -165,6 +165,11 @@ func (n *NodeController) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("create node: %w", err)
 	}
+	// A journal an earlier version left names the accounts it sent from
+	// (flags.go keeps none now)
+	if err := os.Remove(stack.ResolvePath("transactions.rlp")); err != nil && !os.IsNotExist(err) {
+		logging.Warn("Failed to remove the old transaction journal", "err", err)
+	}
 	ks := setAccountManagerBackends(stack)
 	dev := devChain(guiCfg)
 	if dev {

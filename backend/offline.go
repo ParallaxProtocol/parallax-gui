@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -411,6 +410,9 @@ func (w *Wallet) feeCap() *big.Int {
 // ReviewRequest checks a scanned or opened signing request, for the signer
 // to show before asking for the password.
 func (w *Wallet) ReviewRequest(data string) (RequestReview, error) {
+	if err := w.requireOpen(); err != nil {
+		return RequestReview{}, err
+	}
 	req, err := parseSignRequest(data, w.feeCap())
 	if err != nil {
 		return RequestReview{}, err
@@ -437,6 +439,9 @@ func (w *Wallet) ReviewRequest(data string) (RequestReview, error) {
 // back. Signing is deterministic: the same request always signs to the
 // same transaction.
 func (w *Wallet) SignRequest(data, password string) (SignedOffline, error) {
+	if err := w.requireOpen(); err != nil {
+		return SignedOffline{}, err
+	}
 	req, err := parseSignRequest(data, w.feeCap())
 	if err != nil {
 		return SignedOffline{}, err
@@ -479,7 +484,7 @@ func (w *Wallet) SignRequest(data, password string) (SignedOffline, error) {
 	return SignedOffline{Doc: string(doc), Hash: signed.Hash().Hex(), Tx: req.view}, nil
 }
 
-func (w *Wallet) signedLogPath() string { return filepath.Join(filepath.Dir(w.dir), "signed.json") }
+func (w *Wallet) signedLogPath() string { return filepath.Join(filepath.Dir(w.dir), sealedSigned) }
 
 func (w *Wallet) signedLog() []signedRecord {
 	w.signedMu.Lock()
@@ -489,11 +494,13 @@ func (w *Wallet) signedLog() []signedRecord {
 
 func (w *Wallet) signedLogLocked() []signedRecord {
 	var out []signedRecord
-	if data, err := os.ReadFile(w.signedLogPath()); err == nil {
-		if err := json.Unmarshal(data, &out); err != nil {
-			logging.Warn("Ignoring an unreadable record of signed requests", "err", err)
-			return nil
-		}
+	damaged, err := w.readSealedOrRecover(w.signedLogPath(), sealedSigned, &out)
+	if damaged {
+		w.noteDamaged("signed")
+	}
+	if err != nil {
+		logging.Warn("Ignoring an unreadable record of signed requests", "err", err)
+		return nil
 	}
 	return out
 }
@@ -507,8 +514,7 @@ func (w *Wallet) recordSigned(r signedRecord) {
 	if len(log) > maxSignedLog {
 		log = log[len(log)-maxSignedLog:]
 	}
-	data, _ := json.MarshalIndent(log, "", "  ")
-	if err := writePrivateFile(w.signedLogPath(), data); err != nil {
+	if err := w.WriteSealed(w.signedLogPath(), sealedSigned, log); err != nil {
 		logging.Warn("Failed to record a signed request", "err", err)
 	}
 }
@@ -517,41 +523,45 @@ func (w *Wallet) recordSigned(r signedRecord) {
 // The online wallet
 // ---------------------------------------------------------------------------
 
-// requestStore is the requests the wallet built and follows, in
-// requests.json beside the keystore.
+// requestStore is the requests the wallet built and follows, sealed in
+// requests.sealed beside the keystore.
 type requestStore struct {
 	mu   sync.Mutex
 	path string
+	w    *Wallet
 }
 
 func (w *Wallet) requestStore() *requestStore {
 	w.reqOnce.Do(func() {
-		w.requests = &requestStore{path: filepath.Join(filepath.Dir(w.dir), "requests.json")}
+		w.requests = &requestStore{path: filepath.Join(filepath.Dir(w.dir), sealedRequests), w: w}
 	})
 	return w.requests
 }
 
-// load reads the requests; the caller holds s.mu.
+// load reads the requests; none while the wallet is locked. The caller
+// holds s.mu.
 func (s *requestStore) load() []PendingRequest {
 	var out []PendingRequest
-	data, err := os.ReadFile(s.path)
+	damaged, err := s.w.readSealedOrRecover(s.path, sealedRequests, &out)
+	if damaged {
+		s.w.noteDamaged("requests")
+	}
 	if err != nil {
+		if !errors.Is(err, ErrLocked) {
+			logging.Warn("Ignoring an unreadable list of signing requests", "err", err)
+		}
 		return []PendingRequest{}
 	}
-	if err := json.Unmarshal(data, &out); err != nil {
-		logging.Warn("Ignoring an unreadable list of signing requests", "err", err)
+	if out == nil {
 		return []PendingRequest{}
 	}
 	return out
 }
 
-// save writes the requests; the caller holds s.mu.
+// save seals and writes the requests; ErrLocked while the wallet is
+// locked. The caller holds s.mu.
 func (s *requestStore) save(list []PendingRequest) error {
-	data, err := json.MarshalIndent(list, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writePrivateFile(s.path, data)
+	return s.w.WriteSealed(s.path, sealedRequests, list)
 }
 
 // BuildRequest makes a signing request for a send from a watch-only
@@ -559,6 +569,9 @@ func (s *requestStore) save(list []PendingRequest) error {
 // after every request still outstanding) and checks the fee and the
 // balance as a send would.
 func (w *Wallet) BuildRequest(in OfflineRequestInput) (SigningRequest, error) {
+	if err := w.requireOpen(); err != nil {
+		return SigningRequest{}, err
+	}
 	from, watch, err := w.known(in.From)
 	if err != nil {
 		return SigningRequest{}, err
@@ -660,6 +673,9 @@ func (w *Wallet) buildRequest(from, to util.Address, value, price *big.Int, gas 
 // transaction is in a block is dropped, one whose nonce went to another
 // transaction is "stale".
 func (w *Wallet) PendingRequests() ([]PendingRequest, error) {
+	if err := w.requireOpen(); err != nil {
+		return nil, err
+	}
 	store := w.requestStore()
 	store.mu.Lock()
 	defer store.mu.Unlock()
@@ -710,6 +726,9 @@ func (w *Wallet) PendingRequests() ([]PendingRequest, error) {
 // if no later request took the next one; the app offers a replacement for
 // that case.
 func (w *Wallet) DiscardRequest(id string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	store := w.requestStore()
 	store.mu.Lock()
 	defer store.mu.Unlock()
@@ -731,6 +750,9 @@ func (w *Wallet) DiscardRequest(id string) error {
 // pool to take it in its place: the way to cancel a transfer that was
 // sent but is stuck, or to fill the nonce of one that will never be signed.
 func (w *Wallet) ReplaceRequest(id string) (SigningRequest, error) {
+	if err := w.requireOpen(); err != nil {
+		return SigningRequest{}, err
+	}
 	store := w.requestStore()
 	store.mu.Lock()
 	var old *PendingRequest
@@ -767,6 +789,9 @@ func (w *Wallet) ReplaceRequest(id string) (SigningRequest, error) {
 // signed by one of the wallet's accounts, matching its request when it
 // names one, with a nonce not yet used.
 func (w *Wallet) ReviewSigned(data string) (SignedReview, error) {
+	if err := w.requireOpen(); err != nil {
+		return SignedReview{}, err
+	}
 	rev, _, err := w.checkSigned(data)
 	return rev, err
 }
@@ -839,6 +864,9 @@ func (w *Wallet) checkSigned(data string) (SignedReview, *types.Transaction, err
 // Broadcast sends a signed transaction, checked again as ReviewSigned does,
 // through the node, and marks its request sent.
 func (w *Wallet) Broadcast(data string) (SentTx, error) {
+	if err := w.requireOpen(); err != nil {
+		return SentTx{}, err
+	}
 	rev, tx, err := w.checkSigned(data)
 	if err != nil {
 		return SentTx{}, err
@@ -853,6 +881,7 @@ func (w *Wallet) Broadcast(data string) (SentTx, error) {
 	if err := ec.SendTransaction(ctx, tx); err != nil {
 		return SentTx{}, fmt.Errorf("wallet: the node refused the transaction: %w", err)
 	}
+	w.recordPending(tx, util.HexToAddress(rev.Tx.From))
 	if rev.Matched {
 		store := w.requestStore()
 		store.mu.Lock()

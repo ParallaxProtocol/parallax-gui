@@ -122,7 +122,7 @@ func TestWalletCopyAndFinishMove(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CopyTo: %v", err)
 	}
-	for _, name := range []string{"keystore", "wallet.json", vaultFileName} {
+	for _, name := range []string{"keystore", sealedMeta, vaultFileName} {
 		if _, err := os.Stat(filepath.Join(dest, name)); err != nil {
 			t.Errorf("the copy lacks %s: %v", name, err)
 		}

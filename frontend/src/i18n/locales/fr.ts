@@ -691,6 +691,17 @@ const fr: Dict = {
   // Wallet: errors
   "wallet.err.wrongPassword": "Mot de passe incorrect.",
   "wallet.err.locked": "Le portefeuille est verrouillé. Déverrouillez-le et réessayez.",
+  "wallet.err.sealed":
+    "Un fichier du portefeuille est endommagé, ou n'est pas celui de ce portefeuille : il ne peut pas être ouvert.",
+  "wallet.damaged.title": "Certains fichiers du portefeuille étaient endommagés",
+  "wallet.damaged.desc":
+    "Ils ont été mis de côté, et le portefeuille s'est ouvert avec la dernière copie lisible, ou sans eux : {what}. Vos clés et phrases de récupération ne sont pas dans ces fichiers.",
+  "wallet.damaged.vault": "le coffre (depuis sa dernière copie)",
+  "wallet.damaged.labels": "noms et regroupements des comptes",
+  "wallet.damaged.contacts": "contacts",
+  "wallet.damaged.requests": "demandes de signature hors ligne",
+  "wallet.damaged.signed": "l'historique des demandes signées",
+  "wallet.damaged.pending": "envois en attente d'un bloc",
   "wallet.err.weakPassword": "Le mot de passe doit comporter au moins 8 caractères.",
   "wallet.err.longPassword": "Le mot de passe est trop long.",
   "wallet.err.unknownAccount": "Ce compte n'est plus dans le portefeuille.",
@@ -740,7 +751,7 @@ const fr: Dict = {
   "storage.wallet.restarting": "Redémarrage…",
   "storage.wallet.moveSubmit": "Déplacer et redémarrer",
   "storage.wallet.delete": "Supprimer le portefeuille",
-  "storage.wallet.deleteDesc": "Retire de cet ordinateur chaque clé, phrase de récupération et nom de compte.",
+  "storage.wallet.deleteDesc": "Retire de cet ordinateur chaque clé, phrase de récupération, nom de compte et contact.",
   "storage.wallet.deleteTitle": "Supprimer le portefeuille",
   "storage.wallet.deleteWarn":
     "Chaque compte de ce portefeuille disparaît avec lui. Sans sauvegarde de ses clés ou phrases de récupération, leurs fonds sont perdus pour de bon : personne ne peut les récupérer.",

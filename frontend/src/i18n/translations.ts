@@ -985,6 +985,16 @@ export const en: Dict = {
   // Wallet: errors
   "wallet.err.wrongPassword": "Wrong password.",
   "wallet.err.locked": "The wallet is locked. Unlock it and try again.",
+  "wallet.err.sealed": "A file of the wallet is damaged, or isn't this wallet's, so it can't be opened.",
+  "wallet.damaged.title": "Some of the wallet's files were damaged",
+  "wallet.damaged.desc":
+    "They were set aside, and the wallet opened with the last copy it could read, or without them: {what}. Your keys and recovery phrases aren't in these files.",
+  "wallet.damaged.vault": "the vault (from its last copy)",
+  "wallet.damaged.labels": "account names and groupings",
+  "wallet.damaged.contacts": "contacts",
+  "wallet.damaged.requests": "offline signing requests",
+  "wallet.damaged.signed": "the record of signed requests",
+  "wallet.damaged.pending": "sends waiting for a block",
   "wallet.err.weakPassword": "The password must be at least 8 characters.",
   "wallet.err.longPassword": "The password is too long.",
   "wallet.err.unknownAccount": "This account is no longer in the wallet.",
@@ -1032,7 +1042,7 @@ export const en: Dict = {
   "storage.wallet.restarting": "Restarting…",
   "storage.wallet.moveSubmit": "Move and restart",
   "storage.wallet.delete": "Delete wallet",
-  "storage.wallet.deleteDesc": "Removes every key, recovery phrase and account name from this computer.",
+  "storage.wallet.deleteDesc": "Removes every key, recovery phrase, account name and contact from this computer.",
   "storage.wallet.deleteTitle": "Delete the wallet",
   "storage.wallet.deleteWarn":
     "Every account in this wallet goes with it. Without a backup of its keys or recovery phrases, their funds are lost for good: nobody can bring them back.",

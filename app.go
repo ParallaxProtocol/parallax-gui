@@ -90,6 +90,10 @@ func (a *App) startup(ctx context.Context) {
 	a.node = backend.NewNodeController(cfg)
 	a.node.SetEmitter(func(evt backend.NodeEvent) {
 		a.events.emit("node", evt)
+		// The node keeps no journal: the wallet sends again what's waiting
+		if evt.Kind == "started" && a.wallet != nil {
+			go a.wallet.Resubmit()
+		}
 	})
 
 	// The wallet works with the node stopped: only its balances and sends
@@ -107,6 +111,8 @@ func (a *App) startup(ctx context.Context) {
 		} else {
 			// Moved, the app now runs on the copy: the original goes
 			backend.FinishWalletMove(cfg)
+			// What's sealed under the wallet key opens with it (sealed.go)
+			a.wallet.SetOpenHooks(a.walletOpened, a.walletClosed)
 			a.wallet.SetAutoLock(conf.AutoLock())
 			a.wallet.SetLockEmitter(func(locked bool) {
 				a.events.emit("wallet-lock", map[string]bool{"locked": locked})
@@ -134,6 +140,15 @@ func (a *App) startup(ctx context.Context) {
 		})
 		a.mcp.Apply(conf)
 	}
+	// The logs are sealed to the wallet's key from here; with no password
+	// yet there's none, and they stay in memory
+	if pub := a.walletLogKey(); pub != nil {
+		if err := a.logs.SealTo(pub); err != nil {
+			logging.Warn("Failed to keep the logs", "err", err)
+		}
+	} else {
+		a.logs.DropPlain()
+	}
 
 	// Auto-updater: check for new releases on startup and periodically.
 	backend.CleanupOldBinary()
@@ -152,6 +167,42 @@ func (a *App) startup(ctx context.Context) {
 				logging.Error("Failed to auto-start the node", "err", err)
 			}
 		}()
+	}
+}
+
+// walletLogKey is the key the logs are sealed to, nil without one.
+func (a *App) walletLogKey() []byte {
+	if a.wallet == nil {
+		return nil
+	}
+	return a.wallet.LogPublicKey()
+}
+
+// walletOpened runs as the wallet unlocks: the contacts are read, the logs
+// sealed (to a key the wallet may have only just made: its password set,
+// or a vault from an earlier version unlocked) and earlier runs' read
+// back, and the sends still waiting for a block sent again.
+func (a *App) walletOpened() {
+	if a.contacts != nil {
+		if err := a.contacts.Open(a.wallet); err != nil {
+			logging.Warn("Failed to open the contacts", "err", err)
+		}
+	}
+	if pub := a.wallet.LogPublicKey(); pub != nil {
+		if err := a.logs.SealTo(pub); err != nil {
+			logging.Warn("Failed to keep the logs", "err", err)
+		}
+	}
+	if err := a.wallet.OpenLogs(a.logs); err != nil {
+		logging.Warn("Failed to read back the earlier logs", "err", err)
+	}
+	go a.wallet.Resubmit()
+}
+
+// walletClosed runs as the wallet locks: the contacts are forgotten.
+func (a *App) walletClosed() {
+	if a.contacts != nil {
+		a.contacts.Close()
 	}
 }
 
@@ -738,6 +789,14 @@ func (a *App) WalletMove(chosen string) (string, error) {
 	return dest, nil
 }
 
+// WalletDismissDamaged forgets what was found damaged as the wallet
+// opened, once the user has been told.
+func (a *App) WalletDismissDamaged() {
+	if a.wallet != nil {
+		a.wallet.DismissDamaged()
+	}
+}
+
 // WalletWipe deletes the whole wallet from this computer, once password
 // proves to be the wallet's.
 func (a *App) WalletWipe(password string) error {
@@ -745,7 +804,17 @@ func (a *App) WalletWipe(password string) error {
 	if err != nil {
 		return err
 	}
-	return w.Wipe(password)
+	if err := w.Wipe(password); err != nil {
+		return err
+	}
+	// Sealed under the wallet key now gone, nothing could open these
+	if a.contacts != nil {
+		if err := a.contacts.Wipe(); err != nil {
+			logging.Warn("Failed to remove the contacts", "err", err)
+		}
+	}
+	a.logs.Unpersist()
+	return nil
 }
 
 // ---------------------------------------------------------------------------
@@ -973,7 +1042,14 @@ func (a *App) ContactsImport(data string) (backend.ContactsImport, error) {
 // Logs
 // ---------------------------------------------------------------------------
 
-func (a *App) GetLogTail(n int) []backend.LogLine { return a.logs.Tail(n) }
+// GetLogTail is the latest n log lines; none while the wallet is locked,
+// as they name its accounts and what they sent.
+func (a *App) GetLogTail(n int) []backend.LogLine {
+	if a.wallet != nil && a.wallet.Locked() {
+		return []backend.LogLine{}
+	}
+	return a.logs.Tail(n)
+}
 
 // SetLogVerbosity changes the active log level (0 = silent, 3 = info,
 // 5 = trace).

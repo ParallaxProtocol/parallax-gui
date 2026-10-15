@@ -68,6 +68,40 @@ export default function WalletPage() {
   return wallet.account ? <Overview /> : <Welcome />;
 }
 
+/**
+ * DamagedNotice tells what of the wallet's was found damaged as it opened
+ * (backend/sealed.go): set aside, or taken from its last good copy. The
+ * keys and the recovery phrases aren't among it.
+ */
+function DamagedNotice() {
+  const t = useT();
+  const { info, refresh } = useWallet();
+  const damaged = info?.damaged ?? [];
+  if (damaged.length === 0) return null;
+  return (
+    <Notice
+      tone="warn"
+      title={t("wallet.damaged.title")}
+      action={
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() =>
+            api
+              .walletDismissDamaged()
+              .then(refresh)
+              .catch(() => {})
+          }
+        >
+          {t("common.done")}
+        </button>
+      }
+    >
+      {t("wallet.damaged.desc", { what: damaged.map((d) => t(`wallet.damaged.${d}`)).join(", ") })}
+    </Notice>
+  );
+}
+
 function Overview() {
   const t = useT();
   const stagger = useStagger();
@@ -130,6 +164,7 @@ function Overview() {
 
   return (
     <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
+      <DamagedNotice />
       {!account.backedUp &&
         (account.fromSeed ? (
           <Notice

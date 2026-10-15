@@ -539,11 +539,16 @@ async function boot() {
 
   wireIpc();
   lockOnAway();
-  backend.start(paths.backend, backendArgs(), {
-    ...process.env,
-    // Lets the updater replace the portable executable rather than run an installer
-    PARALLAX_PORTABLE_EXE: process.env.PORTABLE_EXECUTABLE_FILE ?? "",
-  });
+  backend.start(
+    paths.backend,
+    backendArgs(),
+    {
+      ...process.env,
+      // Lets the updater replace the portable executable rather than run an installer
+      PARALLAX_PORTABLE_EXE: process.env.PORTABLE_EXECUTABLE_FILE ?? "",
+    },
+    !app.isPackaged,
+  );
 
   try {
     await backend.ready;

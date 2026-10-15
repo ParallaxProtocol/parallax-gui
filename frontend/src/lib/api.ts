@@ -406,7 +406,12 @@ export type WalletInfo = {
   locked: boolean;
   /** The recovery phrases, in the order they were added. */
   seeds: SeedInfo[];
+  /** What was found damaged as the wallet opened, and set aside or taken from its last good copy (backend/sealed.go). */
+  damaged?: DamagedStore[];
 };
+
+/** A file of the wallet's that can be found damaged. */
+export type DamagedStore = "vault" | "labels" | "contacts" | "requests" | "signed" | "pending";
 
 /** A recovery phrase as the app shows it: nothing secret. */
 export type SeedInfo = {
@@ -665,6 +670,7 @@ const WALLET_ERRORS: Record<string, string> = {
   "wallet: the password doesn't open every key in the wallet": "wallet.err.setupMismatch",
   "wallet: wrong password for the keystore file": "wallet.err.wrongFilePassword",
   "wallet: the wallet's folder is missing": "wallet.err.dirGone",
+  "wallet: a sealed file is damaged or isn't this wallet's": "wallet.err.sealed",
   "storage: choose a folder by its full path": "storage.err.notAbs",
   "storage: choose a folder outside the one being moved": "storage.err.inside",
   "storage: the folder chosen already holds other files": "storage.err.notEmpty",
@@ -913,6 +919,7 @@ export const api = {
   /** Copies the wallet into the folder chosen and restarts the app onto it; where it went. */
   walletMove: (chosen: string) => call<string>("WalletMove", chosen),
   walletWipe: (password: string) => call<void>("WalletWipe", password),
+  walletDismissDamaged: () => call<void>("WalletDismissDamaged"),
   walletSummary: (address: string) => call<AddressView>("WalletSummary", address),
   /** Every wallet account's balance at the head, in wei by checksummed address. */
   walletBalances: () => call<Record<string, string>>("WalletBalances"),

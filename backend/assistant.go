@@ -609,6 +609,11 @@ func (a *Assistant) logs(in logsIn) (any, error) {
 	if a.deps.Logs == nil {
 		return nil, errors.New("the log is unavailable")
 	}
+	// The lines name the wallet's accounts and what they sent: kept for an
+	// unlocked wallet, as everything else that does
+	if a.deps.Wallet != nil && a.deps.Wallet.Locked() {
+		return nil, ErrLocked
+	}
 	type lineOut struct {
 		Time    int64          `json:"time"`
 		Level   string         `json:"level"`

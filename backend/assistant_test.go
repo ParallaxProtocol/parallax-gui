@@ -72,10 +72,7 @@ func TestAssistantTools(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	book, err := OpenContacts(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
+	book := bookFor(t, w, dir)
 
 	cfg := defaultGUIConfig()
 	cfg.DataDir = filepath.Join(dir, "parallax")
@@ -231,10 +228,7 @@ func TestAssistantPermissionPrompts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	book, err := OpenContacts(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
+	book := bookFor(t, w, dir)
 	cfg := defaultGUIConfig()
 	cfg.MCPEnabled = true
 	cfg.MCPPort = freePort(t)
@@ -376,10 +370,7 @@ func TestAssistantTransactions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	book, err := OpenContacts(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
+	book := bookFor(t, w, dir)
 	cfg := defaultGUIConfig()
 	cfg.DataDir = filepath.Join(dir, "parallax")
 	cfg.HTTPRPCEnabled = false

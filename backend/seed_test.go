@@ -3,6 +3,7 @@ package backend
 import (
 	"encoding/hex"
 	"errors"
+	"github.com/ParallaxProtocol/parallax/v2/util"
 	"os"
 	"path/filepath"
 	"strings"
@@ -150,8 +151,18 @@ func TestSeedLifecycle(t *testing.T) {
 	if _, err := w.DeriveAccount(phrase.SeedID, "", "wrong password"); !errors.Is(err, ErrWrongPassword) {
 		t.Fatalf("DeriveAccount(wrong) = %v", err)
 	}
-	if _, err := w.Backup(next.Address, testPassword); err != nil {
-		t.Fatalf("derived account's key doesn't open with the wallet password: %v", err)
+	// No key file: the phrase makes the key as it signs
+	if w.keys().HasAddress(util.HexToAddress(next.Address)) {
+		t.Fatal("a phrase account has a key file")
+	}
+	if _, err := w.Backup(next.Address, testPassword); !errors.Is(err, ErrUnknownAccount) {
+		t.Fatalf("Backup of a phrase account = %v, want ErrUnknownAccount: the phrase is its backup", err)
+	}
+	if _, err := w.SignMessage(next.Address, "hello", testPassword); err != nil {
+		t.Fatalf("the derived account doesn't sign with the wallet password: %v", err)
+	}
+	if _, err := w.SignMessage(next.Address, "hello", "wrong password"); !errors.Is(err, ErrWrongPassword) {
+		t.Fatalf("SignMessage(wrong) = %v", err)
 	}
 
 	if err := w.ConfirmSeed(phrase.SeedID); err != nil {

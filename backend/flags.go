@@ -265,6 +265,10 @@ func applyPrlFlags(g GUIConfig, cfg *nodeconfig.Config) error {
 		pool.Locals = append(pool.Locals, util.HexToAddress(account))
 	}
 	pool.NoLocals = g.TxPoolNoLocals
+	// No journal of local transactions: it would sit in the data folder in
+	// the clear, naming the accounts this computer sends from. The wallet
+	// keeps its own sends, sealed, and sends them again (resubmit.go)
+	pool.Journal = ""
 	setUint64(&pool.PriceLimit, g.TxPoolPriceLimit)
 	setUint64(&pool.PriceBump, g.TxPoolPriceBump)
 	setUint64(&pool.AccountSlots, g.TxPoolAccountSlots)

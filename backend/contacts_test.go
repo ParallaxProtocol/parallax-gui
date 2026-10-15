@@ -18,15 +18,37 @@ const (
 	carolAddr = "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359"
 )
 
-func openTestContacts(t *testing.T) (*Contacts, string) {
+// bookFor opens the contacts in dir as the app does: with w, as it
+// unlocks, and forgotten as it locks.
+func bookFor(t *testing.T, w *Wallet, dir string) *Contacts {
 	t.Helper()
-	dir := t.TempDir()
 	c, err := OpenContacts(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return c, dir
+	w.SetOpenHooks(func() {
+		if err := c.Open(w); err != nil {
+			t.Errorf("Open: %v", err)
+		}
+	}, c.Close)
+	if w.opened() {
+		if err := c.Open(w); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return c
 }
+
+func openTestContacts(t *testing.T) (*Contacts, string) {
+	t.Helper()
+	w, dir := newTestWallet(t)
+	testWallets[dir] = w
+	return bookFor(t, w, dir), dir
+}
+
+// testWallets are the wallets openTestContacts opened, by folder, for a
+// test to open the same book again.
+var testWallets = map[string]*Wallet{}
 
 func TestContactsAddValidatesAndPersists(t *testing.T) {
 	c, dir := openTestContacts(t)
@@ -63,15 +85,23 @@ func TestContactsAddValidatesAndPersists(t *testing.T) {
 		}
 	}
 
-	again, err := OpenContacts(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
+	again := bookFor(t, testWallets[dir], dir)
 	if got := again.List(); len(got) != 1 || got[0] != k {
 		t.Fatalf("reopened = %+v, want just %+v", got, k)
 	}
-	if fi, err := os.Stat(filepath.Join(dir, "contacts.json")); err != nil || fi.Mode().Perm() != 0o600 {
-		t.Fatalf("contacts.json = %v, %v; want it private to the user", fi, err)
+	if fi, err := os.Stat(filepath.Join(dir, sealedContacts)); err != nil || fi.Mode().Perm() != 0o600 {
+		t.Fatalf("%s = %v, %v; want it private to the user", sealedContacts, fi, err)
+	}
+	if data, _ := os.ReadFile(filepath.Join(dir, sealedContacts)); strings.Contains(string(data), "Alice") || strings.Contains(string(data), aliceAddr[2:]) {
+		t.Fatal("the contacts are kept in the clear")
+	}
+	// Locked, the book can't be read or changed
+	testWallets[dir].Lock()
+	if got := again.List(); len(got) != 0 {
+		t.Fatalf("locked, the book lists %+v", got)
+	}
+	if _, err := again.Add(ContactInput{Name: "Mallory", Address: bobAddr}); !errors.Is(err, ErrLocked) {
+		t.Fatalf("Add while locked = %v, want ErrLocked", err)
 	}
 }
 
@@ -187,19 +217,16 @@ func TestContactsImportReportsBadEntries(t *testing.T) {
 }
 
 func TestContactsSetsAsideAnUnreadableFile(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "contacts.json")
+	w, dir := newTestWallet(t)
+	path := filepath.Join(dir, sealedContacts)
 	if err := os.WriteFile(path, []byte("{not json"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	c, err := OpenContacts(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
+	c := bookFor(t, w, dir)
 	if len(c.List()) != 0 {
 		t.Fatal("an unreadable book loaded entries")
 	}
-	aside, _ := filepath.Glob(path + ".unreadable-*")
+	aside, _ := filepath.Glob(path + ".damaged-*")
 	if len(aside) != 1 {
 		t.Fatalf("set aside = %v, want the damaged file kept", aside)
 	}
@@ -213,12 +240,14 @@ func TestContactsSetsAsideAnUnreadableFile(t *testing.T) {
 		{"id":"b","name":"Alice","address":"` + bobAddr + `"},
 		{"id":"c","name":"Bad","address":"0x12"},
 		{"name":"Carol","address":"` + strings.ToLower(carolAddr) + `"}]}`
-	if err := os.WriteFile(path, []byte(book), 0o600); err != nil {
+	// An earlier version's book, in the clear, is sealed as it's opened
+	legacy := filepath.Join(dir, "contacts.json")
+	if err := os.WriteFile(legacy, []byte(book), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	c, err = OpenContacts(dir)
-	if err != nil {
-		t.Fatal(err)
+	c = bookFor(t, w, dir)
+	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
+		t.Fatalf("the clear book is still there: %v", err)
 	}
 	got := c.List()
 	if len(got) != 2 || got[0].Name != "Alice" || got[1].Address != carolAddr || got[1].ID == "" {

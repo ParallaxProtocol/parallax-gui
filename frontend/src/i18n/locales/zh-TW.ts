@@ -650,6 +650,16 @@ const zhTW: Dict = {
   // Wallet: errors
   "wallet.err.wrongPassword": "密碼錯誤。",
   "wallet.err.locked": "錢包已鎖定。請解鎖後再試一次。",
+  "wallet.err.sealed": "錢包的某個檔案已損毀或不屬於此錢包，無法開啟。",
+  "wallet.damaged.title": "錢包的部分檔案已損毀",
+  "wallet.damaged.desc":
+    "它們已被移到一旁，錢包以最後一份可讀取的副本開啟，或在缺少它們的情況下開啟：{what}。你的金鑰和復原詞組不在這些檔案中。",
+  "wallet.damaged.vault": "保管庫（來自最後一份副本）",
+  "wallet.damaged.labels": "帳戶名稱和分組",
+  "wallet.damaged.contacts": "聯絡人",
+  "wallet.damaged.requests": "離線簽署請求",
+  "wallet.damaged.signed": "已簽署請求的紀錄",
+  "wallet.damaged.pending": "等待區塊的交易",
   "wallet.err.weakPassword": "密碼至少需要 8 個字元。",
   "wallet.err.longPassword": "密碼太長。",
   "wallet.err.unknownAccount": "此帳戶已不在錢包中。",
@@ -693,7 +703,7 @@ const zhTW: Dict = {
   "storage.wallet.restarting": "正在重新啟動…",
   "storage.wallet.moveSubmit": "移動並重新啟動",
   "storage.wallet.delete": "刪除錢包",
-  "storage.wallet.deleteDesc": "從這台電腦移除所有金鑰、復原詞組和帳戶名稱。",
+  "storage.wallet.deleteDesc": "從這台電腦移除所有金鑰、復原詞組、帳戶名稱和聯絡人。",
   "storage.wallet.deleteTitle": "刪除錢包",
   "storage.wallet.deleteWarn":
     "此錢包中的所有帳戶都會一併刪除。若沒有備份其金鑰或復原詞組，資金將永久遺失，任何人都無法找回。",

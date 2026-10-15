@@ -15,12 +15,14 @@ import (
 	"github.com/ParallaxProtocol/parallax/v2/logging"
 	"github.com/ParallaxProtocol/parallax/v2/wallet"
 	"github.com/ParallaxProtocol/parallax/v2/wallet/keystore"
+	"golang.org/x/crypto/nacl/box"
 )
 
 // The vault is what the wallet keeps secret beside its keystore, in
-// vault.json: a check value that proves the wallet password, and the
-// recovery phrases, each encrypted with that password by the daemon's
-// keystore encryption (scrypt and AES-128-CTR). Every key in the keystore
+// vault.json: the wallet key (sealed.go), whose decrypting proves the
+// wallet password, the key pair the logs are sealed to, and the recovery
+// phrases, each encrypted with that password by the daemon's keystore
+// encryption (scrypt and AES-128-CTR). Every key in the keystore
 // is encrypted with the same password: one password opens the whole
 // wallet, as in MetaMask, though nothing is ever left unlocked.
 //
@@ -37,34 +39,72 @@ var (
 	ErrUnknownSeed   = errors.New("wallet: no such recovery phrase in this wallet")
 )
 
+// The vault's format: 1 kept a check value and the phrases' fingerprints
+// in it, and everything else in the clear; 2 keeps the wallet key, and
+// the fingerprints sealed with the labels. A vault of 1 becomes one of 2
+// as it's first unlocked (upgradeVault).
 const (
 	vaultFileName = "vault.json"
-	vaultFormat   = 1
-	checkBytes    = 32
+	vaultFormat   = 2
 )
 
 type vaultFile struct {
-	Version int                 `json:"version"`
-	Check   keystore.CryptoJSON `json:"check"`
-	Seeds   []vaultSeed         `json:"seeds"`
+	Version int `json:"version"`
+	// Key is the wallet key, encrypted with the wallet password
+	Key *keystore.CryptoJSON `json:"key,omitempty"`
+	// Check proves the password in a vault of format 1
+	Check *keystore.CryptoJSON `json:"check,omitempty"`
+	// LogPublic is the key the logs are sealed to (logfile.go), and
+	// LogPrivate its private half, sealed under the wallet key
+	LogPublic  []byte      `json:"logPublic,omitempty"`
+	LogPrivate []byte      `json:"logPrivate,omitempty"`
+	Seeds      []vaultSeed `json:"seeds"`
 }
 
 // vaultSeed is one recovery phrase: its entropy and, if it has one, its
-// BIP-39 passphrase, both encrypted. Fingerprint is the public address of
-// its first standard account: it tells phrases apart without decrypting
-// them, so the same phrase isn't added twice.
+// BIP-39 passphrase, both encrypted. Fingerprint, in a vault of format 1,
+// is the public address of its first standard account: format 2 keeps it
+// sealed, with the phrase's name (seedMeta).
 type vaultSeed struct {
 	ID          string               `json:"id"`
 	Entropy     keystore.CryptoJSON  `json:"entropy"`
 	Passphrase  *keystore.CryptoJSON `json:"passphrase,omitempty"`
-	Fingerprint string               `json:"fingerprint"`
+	Fingerprint string               `json:"fingerprint,omitempty"`
 }
 
 func (w *Wallet) vaultPath() string { return filepath.Join(filepath.Dir(w.metaPath), vaultFileName) }
 
-// loadVault reads the vault; nil when the wallet has none yet.
+// loadVault reads the vault; nil when the wallet has none yet. It keeps
+// its previous version beside it too (sealed.go), but only across adding
+// a phrase (saveVault): a previous version is never one under an old
+// password, nor one with a phrase since removed, nor one of format 1,
+// whose fingerprints are in the clear (saveVaultOnly).
 func (w *Wallet) loadVault() (*vaultFile, error) {
-	data, err := os.ReadFile(w.vaultPath())
+	v, err := parseVault(w.vaultPath())
+	if err == nil || !errors.Is(err, errVaultDamaged) {
+		if v == nil && err == nil {
+			// Missing: a write cut short between its two renames leaves
+			// only the previous version
+			if prev, perr := parseVault(previousCopy(w.vaultPath())); perr == nil && prev != nil {
+				return prev, nil
+			}
+		}
+		return v, err
+	}
+	prev, perr := parseVault(previousCopy(w.vaultPath()))
+	if perr != nil || prev == nil {
+		return nil, err
+	}
+	setAside(w.vaultPath())
+	w.noteDamaged("vault")
+	return prev, nil
+}
+
+var errVaultDamaged = errors.New("wallet: the wallet's vault is damaged")
+
+// parseVault reads the vault at path; nil when there is none.
+func parseVault(path string) (*vaultFile, error) {
+	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -73,10 +113,14 @@ func (w *Wallet) loadVault() (*vaultFile, error) {
 	}
 	var v vaultFile
 	if err := json.Unmarshal(data, &v); err != nil {
-		return nil, fmt.Errorf("wallet: unreadable vault: %w", err)
+		return nil, fmt.Errorf("%w: %v", errVaultDamaged, err)
 	}
-	if v.Version != vaultFormat {
+	if v.Version != 1 && v.Version != vaultFormat {
+		// From a later version of the app, not damaged: left as it is
 		return nil, fmt.Errorf("wallet: unsupported vault version %d", v.Version)
+	}
+	if v.Key == nil && v.Check == nil {
+		return nil, errVaultDamaged
 	}
 	return &v, nil
 }
@@ -86,7 +130,30 @@ func (w *Wallet) saveVault(v *vaultFile) error {
 	if err != nil {
 		return err
 	}
+	if err := keepPrevious(w.vaultPath(), func(old []byte) bool {
+		var prev vaultFile
+		return json.Unmarshal(old, &prev) == nil && prev.Version == vaultFormat && prev.Key != nil
+	}); err != nil {
+		return err
+	}
 	return writePrivateFile(w.vaultPath(), data)
+}
+
+// saveVaultOnly writes the vault and drops its previous version: for every
+// change that mustn't leave the vault as it was behind (a new password, a
+// phrase removed, the format changed).
+func (w *Wallet) saveVaultOnly(v *vaultFile) error {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := writePrivateFile(w.vaultPath(), data); err != nil {
+		return err
+	}
+	if err := os.Remove(previousCopy(w.vaultPath())); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }
 
 func encrypt(data []byte, password string) (keystore.CryptoJSON, error) {
@@ -101,18 +168,57 @@ func decrypt(c keystore.CryptoJSON, password string) ([]byte, error) {
 	return data, err
 }
 
-// newVault makes a vault whose check opens with password.
-func newVault(password string) (*vaultFile, error) {
-	check := make([]byte, checkBytes)
-	if _, err := rand.Read(check); err != nil {
-		return nil, err
-	}
-	enc, err := encrypt(check, password)
-	clear(check)
+// newVault makes a vault whose wallet key, wkey, opens with password,
+// with the logs' key pair as given (the private half sealed under wkey).
+func newVault(password string, wkey, logPublic, logPrivate []byte) (*vaultFile, error) {
+	enc, err := encrypt(wkey, password)
 	if err != nil {
 		return nil, err
 	}
-	return &vaultFile{Version: vaultFormat, Check: enc, Seeds: []vaultSeed{}}, nil
+	return &vaultFile{Version: vaultFormat, Key: &enc, LogPublic: logPublic, LogPrivate: logPrivate, Seeds: []vaultSeed{}}, nil
+}
+
+// newWalletKeys makes a wallet key, and a key pair for the logs whose
+// private half is sealed under it. The caller wipes wkey.
+func newWalletKeys() (wkey, logPublic, logPrivate []byte, err error) {
+	wkey = make([]byte, walletKeyLen)
+	if _, err := rand.Read(wkey); err != nil {
+		return nil, nil, nil, err
+	}
+	pub, priv, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		clear(wkey)
+		return nil, nil, nil, err
+	}
+	logPrivate, err = sealWith(wkey, sealedLogKey, priv[:])
+	clear(priv[:])
+	if err != nil {
+		clear(wkey)
+		return nil, nil, nil, err
+	}
+	return wkey, pub[:], logPrivate, nil
+}
+
+// upgradeVault gives a vault of format 1 its wallet key, once password
+// proves to be its own, and saves it as format 2. Its phrases'
+// fingerprints stay in it until the labels take them (open). The caller
+// holds w.keyMu.
+func (w *Wallet) upgradeVault(v *vaultFile, password string) (*vaultFile, error) {
+	wkey, logPublic, logPrivate, err := newWalletKeys()
+	if err != nil {
+		return nil, err
+	}
+	defer clear(wkey)
+	next, err := newVault(password, wkey, logPublic, logPrivate)
+	if err != nil {
+		return nil, err
+	}
+	next.Seeds = v.Seeds
+	if err := w.saveVaultOnly(next); err != nil {
+		return nil, err
+	}
+	logging.Info("Upgraded the wallet's vault: everything beside the keys is sealed from now on")
+	return next, nil
 }
 
 // verifyPassword opens v's check with password.
@@ -120,12 +226,28 @@ func verifyPassword(v *vaultFile, password string) error {
 	if len(password) > maxPasswordLen {
 		return ErrWrongPassword
 	}
-	check, err := decrypt(v.Check, password)
+	proof := v.Key
+	if proof == nil {
+		proof = v.Check
+	}
+	if proof == nil {
+		return ErrWrongPassword
+	}
+	check, err := decrypt(*proof, password)
 	if err != nil {
 		return err
 	}
 	clear(check)
 	return nil
+}
+
+// noVaultError is why a wallet without a vault can't open: it has keys
+// from before passwords (to set one that opens them), or nothing yet.
+func (w *Wallet) noVaultError() error {
+	if len(w.keys().Accounts()) > 0 {
+		return ErrNeedsSetup
+	}
+	return ErrNoPassword
 }
 
 // unlockVault returns the vault once password proves to be the wallet's.
@@ -137,10 +259,7 @@ func (w *Wallet) unlockVault(password string) (*vaultFile, error) {
 		return nil, err
 	}
 	if v == nil {
-		if len(w.keys().Accounts()) > 0 {
-			return nil, ErrNeedsSetup
-		}
-		return nil, ErrNoPassword
+		return nil, w.noVaultError()
 	}
 	if err := verifyPassword(v, password); err != nil {
 		return nil, err
@@ -168,19 +287,31 @@ func (w *Wallet) SetupPassword(password string) error {
 			return ErrSetupMismatch
 		}
 	}
-	v, err := newVault(password)
+	wkey, logPublic, logPrivate, err := newWalletKeys()
 	if err != nil {
 		return err
 	}
-	if err := w.saveVault(v); err != nil {
+	defer clear(wkey)
+	v, err := newVault(password, wkey, logPublic, logPrivate)
+	if err != nil {
+		return err
+	}
+	if err := w.saveVaultOnly(v); err != nil {
 		return err
 	}
 	logging.Info("Set the wallet password")
 	// The password just chosen opens the wallet; short of protected memory
 	// it stays locked, for the lock screen to open
-	if err := w.keep(password); err != nil {
+	if err := w.keep(password, wkey); err != nil {
 		logging.Warn("Failed to unlock the wallet", "err", err)
+		return nil
 	}
+	if err := w.open(password); err != nil {
+		logging.Warn("Failed to open the wallet", "err", err)
+		w.Lock()
+		return nil
+	}
+	w.announce()
 	return nil
 }
 
@@ -220,6 +351,9 @@ func (w *Wallet) keyError(password string) error {
 // password first, and nothing changes if any of it fails to open. The new
 // files are all written aside before any replaces an old one.
 func (w *Wallet) ChangePassword(oldPassword, newPassword string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
 	if err := checkPassword(newPassword); err != nil {
 		return err
 	}
@@ -232,9 +366,15 @@ func (w *Wallet) ChangePassword(oldPassword, newPassword string) error {
 	if v == nil {
 		return ErrNoPassword
 	}
-	if err := verifyPassword(v, oldPassword); err != nil {
+	if v.Key == nil {
+		// Unlocked, the vault has its wallet key: this is one that hasn't been
+		return ErrLocked
+	}
+	wkey, err := decrypt(*v.Key, oldPassword)
+	if err != nil {
 		return err
 	}
+	defer clear(wkey)
 
 	// The keys, re-encrypted beside the originals (the keystore ignores
 	// hidden files)
@@ -269,8 +409,8 @@ func (w *Wallet) ChangePassword(oldPassword, newPassword string) error {
 		files = append(files, staged{tmp, acc.URL.Path})
 	}
 
-	// The vault: a new check, and each phrase under the new password
-	next, err := newVault(newPassword)
+	// The vault: the same wallet key, and each phrase, under the new password
+	next, err := newVault(newPassword, wkey, v.LogPublic, v.LogPrivate)
 	if err != nil {
 		return err
 	}
@@ -301,12 +441,12 @@ func (w *Wallet) ChangePassword(oldPassword, newPassword string) error {
 		}
 	}
 	files = nil
-	if err := w.saveVault(next); err != nil {
+	if err := w.saveVaultOnly(next); err != nil {
 		return fmt.Errorf("wallet: changing the password failed partway: %w", err)
 	}
 	logging.Info("Changed the wallet password")
 	// The session keeps the new one from here
-	if err := w.keep(newPassword); err != nil {
+	if err := w.keep(newPassword, wkey); err != nil {
 		logging.Warn("Failed to unlock the wallet", "err", err)
 	}
 	return nil

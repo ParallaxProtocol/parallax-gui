@@ -17,7 +17,6 @@ import (
 	"github.com/ParallaxProtocol/parallax/v2/util"
 	"github.com/ParallaxProtocol/parallax/v2/util/hexutil"
 	"github.com/ParallaxProtocol/parallax/v2/wallet"
-	"github.com/ParallaxProtocol/parallax/v2/wallet/keystore"
 )
 
 // Signing and verifying messages: text signed with an account's key to
@@ -192,6 +191,9 @@ func VerifyMessage(address, message, signature string) (MessageCheck, error) {
 
 // SignMessage signs message with one of the wallet's keys and its password.
 func (w *Wallet) SignMessage(address, message, password string) (SignedMessage, error) {
+	if err := w.requireOpen(); err != nil {
+		return SignedMessage{}, err
+	}
 	acc, err := w.find(address)
 	if err != nil {
 		if _, watch, _ := w.known(address); watch {
@@ -210,9 +212,11 @@ func (w *Wallet) signMessage(acc wallet.Account, message, password string) (Sign
 		return SignedMessage{}, ErrWrongPassword
 	}
 	w.keyMu.Lock()
-	sig, err := w.keys().SignHashWithPassphrase(acc, password, wallet.TextHash([]byte(message)))
-	if errors.Is(err, keystore.ErrDecrypt) {
-		err = w.keyError(password)
+	key, err := w.signingKey(acc, password)
+	var sig []byte
+	if err == nil {
+		sig, err = crypto.Sign(wallet.TextHash([]byte(message)), key)
+		zeroPrivateKey(key)
 	}
 	w.keyMu.Unlock()
 	if err != nil {
@@ -233,6 +237,9 @@ func (w *Wallet) signMessage(acc wallet.Account, message, password string) (Sign
 // BuildMessageRequest makes a message signing request for a watch-only
 // account, to sign on its offline signer.
 func (w *Wallet) BuildMessageRequest(address, message string) (MessageRequest, error) {
+	if err := w.requireOpen(); err != nil {
+		return MessageRequest{}, err
+	}
 	from, watch, err := w.known(address)
 	if err != nil {
 		return MessageRequest{}, err
@@ -287,6 +294,9 @@ func parseMessageRequest(data string) (MessageRequest, error) {
 // ReviewMessageRequest checks a scanned message signing request on the
 // signer, which must hold the account's key.
 func (w *Wallet) ReviewMessageRequest(data string) (MessageRequest, error) {
+	if err := w.requireOpen(); err != nil {
+		return MessageRequest{}, err
+	}
 	req, err := parseMessageRequest(data)
 	if err != nil {
 		return MessageRequest{}, err
@@ -300,6 +310,9 @@ func (w *Wallet) ReviewMessageRequest(data string) (MessageRequest, error) {
 // SignMessageRequest signs a message signing request on the signer and
 // returns the signed document to carry back.
 func (w *Wallet) SignMessageRequest(data, password string) (SignedMessage, error) {
+	if err := w.requireOpen(); err != nil {
+		return SignedMessage{}, err
+	}
 	req, err := parseMessageRequest(data)
 	if err != nil {
 		return SignedMessage{}, err

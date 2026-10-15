@@ -687,6 +687,16 @@ const ru: Dict = {
   // Wallet: errors
   "wallet.err.wrongPassword": "Неверный пароль.",
   "wallet.err.locked": "Кошелёк заблокирован. Разблокируйте его и попробуйте снова.",
+  "wallet.err.sealed": "Файл кошелька повреждён или принадлежит другому кошельку, поэтому его нельзя открыть.",
+  "wallet.damaged.title": "Некоторые файлы кошелька были повреждены",
+  "wallet.damaged.desc":
+    "Они отложены, и кошелёк открылся с последней читаемой копией или без них: {what}. Ваших ключей и фраз восстановления в этих файлах нет.",
+  "wallet.damaged.vault": "хранилище (из последней копии)",
+  "wallet.damaged.labels": "имена и группы аккаунтов",
+  "wallet.damaged.contacts": "контакты",
+  "wallet.damaged.requests": "запросы офлайн-подписи",
+  "wallet.damaged.signed": "журнал подписанных запросов",
+  "wallet.damaged.pending": "отправки, ожидающие блока",
   "wallet.err.weakPassword": "Пароль должен содержать не менее 8 символов.",
   "wallet.err.longPassword": "Пароль слишком длинный.",
   "wallet.err.unknownAccount": "Этого аккаунта больше нет в кошельке.",
@@ -735,7 +745,8 @@ const ru: Dict = {
   "storage.wallet.restarting": "Перезапуск…",
   "storage.wallet.moveSubmit": "Переместить и перезапустить",
   "storage.wallet.delete": "Удалить кошелёк",
-  "storage.wallet.deleteDesc": "Удаляет с этого компьютера все ключи, фразы восстановления и имена аккаунтов.",
+  "storage.wallet.deleteDesc":
+    "Удаляет с этого компьютера все ключи, фразы восстановления, имена аккаунтов и контакты.",
   "storage.wallet.deleteTitle": "Удалить кошелёк",
   "storage.wallet.deleteWarn":
     "Все аккаунты этого кошелька будут удалены вместе с ним. Без резервной копии ключей или фраз восстановления их средства потеряны навсегда: никто не сможет их вернуть.",

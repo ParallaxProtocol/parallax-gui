@@ -42,9 +42,17 @@ const (
 )
 
 // walletFiles are what the wallet keeps in its folder: the keystore, the
-// labels, the vault (its password check and recovery phrases), and the
-// signing requests it follows and those it signed (offline.go).
-var walletFiles = []string{"keystore", "wallet.json", vaultFileName, "requests.json", "signed.json"}
+// vault (its wallet key and recovery phrases), and what's sealed under
+// the wallet key (sealed.go): the labels, the signing requests it follows
+// and those it signed (offline.go), and the sends waiting for a block
+// (resubmit.go). The files an earlier version kept in the clear come
+// last: one not yet sealed moves, or goes, with the rest.
+var walletFiles = []string{
+	"keystore", vaultFileName, sealedMeta, sealedRequests, sealedSigned, sealedPending,
+	// Each one's previous version (sealed.go)
+	vaultFileName + ".1", sealedMeta + ".1", sealedRequests + ".1", sealedSigned + ".1", sealedPending + ".1",
+	"wallet.json", "requests.json", "signed.json",
+}
 
 // StorageProgress is a move's progress, for the frontend's
 // "storage-progress" event: the bytes copied of the total. A move within
@@ -482,7 +490,9 @@ func FinishWalletMove(cfg *ConfigStore) {
 
 // Wipe deletes the whole wallet from this computer, once password proves
 // to be the wallet's: every key, recovery phrase and label, the password
-// itself, and the signing requests. Without a backup, the funds of its
+// itself and the wallet key, and the signing requests and sends kept.
+// What else was sealed under the wallet key (the contacts, the logs) is
+// the app's to delete. Without a backup, the funds of its
 // accounts are lost for good. The wallet is then as on a first launch.
 func (w *Wallet) Wipe(password string) error {
 	if len(password) > maxPasswordLen {
@@ -514,7 +524,6 @@ func (w *Wallet) Wipe(password string) error {
 				return err
 			}
 		}
-		w.meta = walletMeta{Names: map[string]string{}, BackedUp: map[string]bool{}, Seeds: map[string]seedMeta{}, SeedOf: map[string]seedRef{}}
 		return nil
 	}()
 	if err == nil {
