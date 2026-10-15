@@ -585,7 +585,6 @@ const fr: Dict = {
     "Votre nœud relaie la transaction au réseau. Elle sera confirmée dès qu'un bloc l'inclura, environ toutes les dix minutes.",
   "wallet.sent.hash": "Transaction",
   "wallet.sent.nonce": "Nonce",
-  "wallet.sent.again": "Envoyer à nouveau",
   "wallet.sent.done": "Terminé",
 
   // Wallet: receive

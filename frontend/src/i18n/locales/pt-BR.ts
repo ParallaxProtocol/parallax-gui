@@ -583,7 +583,6 @@ const ptBR: Dict = {
     "Seu nó está retransmitindo a transação para a rede. Ela é confirmada quando um bloco a inclui, mais ou menos a cada dez minutos.",
   "wallet.sent.hash": "Transação",
   "wallet.sent.nonce": "Nonce",
-  "wallet.sent.again": "Enviar outra",
   "wallet.sent.done": "Concluído",
 
   // Wallet: receive

@@ -605,7 +605,6 @@ export const en: Dict = {
   "wallet.send.noContacts": "No contacts yet",
   "wallet.send.noContactMatch": "No contact matches",
   "contacts.recipient": "Sending to {name}",
-  "contacts.saveRecipient": "Save to address book",
   "contacts.savedRecipient": "Saved as {name}",
   "contacts.err.name": "Give the contact a name of at most 64 characters.",
   "contacts.err.note": "The note can be at most 500 characters.",
@@ -877,7 +876,6 @@ export const en: Dict = {
     "Your node is relaying it to the network. It confirms once a block includes it, about every ten minutes.",
   "wallet.sent.hash": "Transaction",
   "wallet.sent.nonce": "Nonce",
-  "wallet.sent.again": "Send another",
   "wallet.sent.done": "Done",
 
   // Wallet: receive

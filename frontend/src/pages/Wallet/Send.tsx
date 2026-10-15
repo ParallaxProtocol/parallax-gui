@@ -12,14 +12,12 @@ import {
   QrCode,
   ScanLine,
   Send as SendIcon,
-  UserPlus,
   X,
 } from "lucide-react";
 import { api, SendQuote, SentTx, SigningRequest, walletError, type AddressView } from "../../lib/api";
 import { formatGwei, formatInt, formatUnits, isAddress, parseUnits, sameAddress, shortHex } from "../../lib/format";
 import { useContacts } from "../../lib/contacts";
 import { FADE_IN, FADE_OUT, POPUP, POPUP_ROW, POPUP_ROWS, SPRING, useStagger } from "../../lib/motion";
-import { ContactModal } from "../Contacts/ContactForm";
 import { DocCard } from "../../components/offline/parts";
 import { docFileName } from "../../lib/offline";
 import { BroadcastFlow } from "../Offline/Broadcast";
@@ -126,16 +124,7 @@ export default function SendPage() {
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={step} {...PAGE}>
           {sent && quote ? (
-            <Sent
-              tx={sent}
-              quote={quote}
-              onAgain={() => {
-                setSent(null);
-                setQuote(null);
-                setTo("");
-                setAmount("");
-              }}
-            />
+            <Sent tx={sent} quote={quote} />
           ) : scanning && request ? (
             <BroadcastFlow expect={request.tx.id} onBack={() => setScanning(false)} />
           ) : request ? (
@@ -656,51 +645,74 @@ function Review({
   );
 }
 
-function Sent({ tx, quote, onAgain }: { tx: SentTx; quote: SendQuote; onAgain: () => void }) {
+/** How long the Send page's confirmation stays before returning to the overview (ms). */
+const SENT_PAGE_MS = 10_000;
+
+/**
+ * Sent confirms a send as the assistant bar confirms one an assistant asked
+ * for, laid out for the page: the check drawing itself in, what left, where
+ * to, and the transaction itself. Beneath Done, a slim bar runs down the
+ * time until it returns to the overview by itself.
+ */
+function Sent({ tx, quote }: { tx: SentTx; quote: SendQuote }) {
   const t = useT();
   const navigate = useNavigate();
   const { byAddress } = useContacts();
   const { info } = useWallet();
-  const [saving, setSaving] = useState(false);
-  const contact = byAddress(quote.to);
-  // A new recipient, not one of the wallet's own accounts, can be saved
-  const savable = !contact && !quote.toSelf && !info?.accounts.some((a) => sameAddress(a.address, quote.to));
+  useEffect(() => {
+    const close = setTimeout(() => navigate("/"), SENT_PAGE_MS);
+    return () => clearTimeout(close);
+  }, [navigate]);
+  const own = info?.accounts.find((a) => sameAddress(a.address, quote.to));
+  const toName = own && info ? accountLabel(own, info.accounts, t) : byAddress(quote.to)?.name;
   return (
-    <div className="flex flex-col items-center gap-6 pt-6 text-center">
+    <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 pt-10 text-center">
       <span className="scale-150">
         <DrawnCheck />
       </span>
-      <div className="flex flex-col items-center gap-2">
+      <motion.div
+        className="flex flex-col items-center gap-2"
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0, transition: { ...SPRING, delay: 0.15 } }}
+      >
         <h2 className="text-3xl font-semibold tracking-tight">{t("wallet.sent.title")}</h2>
         <p className="text-lg">{t("wallet.sent.desc", { amount: formatUnits(quote.valueWei, LAX_DECIMALS) })}</p>
         <p className="max-w-md text-muted-foreground">{t("wallet.sent.wait")}</p>
-      </div>
-      <Rows as="dl" className="w-full text-left">
-        <Property label={t("wallet.sent.hash")} mono>
-          <span className="selectable truncate">{tx.hash}</span>
-          <CopyButton value={tx.hash} className="-my-1 -mr-2" />
-        </Property>
-        <Property label={t("wallet.send.to")} mono>
-          <span className="selectable truncate">{quote.to}</span>
-          {contact && <span className="shrink-0 font-sans text-muted-foreground">{contact.name}</span>}
-        </Property>
-        <Property label={t("wallet.sent.nonce")}>{formatInt(tx.nonce)}</Property>
-      </Rows>
-      {savable && (
-        <button type="button" className="btn btn-tinted" onClick={() => setSaving(true)}>
-          <UserPlus className="size-4" />
-          {t("contacts.saveRecipient")}
-        </button>
-      )}
-      <ContactModal open={saving} onClose={() => setSaving(false)} initial={{ address: quote.to }} />
-      <div className="flex justify-center gap-3">
-        <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onAgain}>
-          {t("wallet.sent.again")}
-        </button>
+      </motion.div>
+      <motion.div
+        className="w-full"
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0, transition: { ...SPRING, delay: 0.25 } }}
+      >
+        <Rows as="dl" className="w-full text-left">
+          <Property label={t("wallet.send.to")} mono>
+            <span className="selectable truncate">{quote.to}</span>
+            {toName && <span className="shrink-0 font-sans text-muted-foreground">{toName}</span>}
+          </Property>
+          <Property label={t("wallet.sent.hash")} mono>
+            <span className="selectable truncate">{tx.hash}</span>
+            <CopyButton value={tx.hash} className="-my-1 -mr-2" />
+          </Property>
+          <Property label={t("wallet.sent.nonce")}>{formatInt(tx.nonce)}</Property>
+        </Rows>
+      </motion.div>
+      <motion.div
+        className="flex flex-col items-center gap-3"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, transition: { ...SPRING, delay: 0.35 } }}
+      >
         <button type="button" className="btn btn-primary btn-lg min-w-36" onClick={() => navigate("/")}>
           {t("wallet.sent.done")}
         </button>
-      </div>
+        <span aria-hidden className="h-[3px] w-36 overflow-hidden rounded-full bg-muted">
+          <motion.span
+            className="block h-full origin-left bg-brand-fill"
+            initial={{ scaleX: 1 }}
+            animate={{ scaleX: 0 }}
+            transition={{ duration: SENT_PAGE_MS / 1000, ease: "linear" }}
+          />
+        </span>
+      </motion.div>
     </div>
   );
 }

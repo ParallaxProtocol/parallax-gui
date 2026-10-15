@@ -552,7 +552,6 @@ const zhTW: Dict = {
   "wallet.sent.wait": "您的節點正在將交易轉送到網路。交易被打包進區塊後即確認，大約每十分鐘產生一個區塊。",
   "wallet.sent.hash": "交易",
   "wallet.sent.nonce": "Nonce",
-  "wallet.sent.again": "再傳一筆",
   "wallet.sent.done": "完成",
 
   // Wallet: receive

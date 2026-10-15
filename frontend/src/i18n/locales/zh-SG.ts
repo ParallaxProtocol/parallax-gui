@@ -551,7 +551,6 @@ const zhSG: Dict = {
   "wallet.sent.wait": "您的节点正在将交易中继到网络。交易被打包进区块后即确认，大约每十分钟出一个区块。",
   "wallet.sent.hash": "交易",
   "wallet.sent.nonce": "Nonce",
-  "wallet.sent.again": "再发一笔",
   "wallet.sent.done": "完成",
 
   // Wallet: receive

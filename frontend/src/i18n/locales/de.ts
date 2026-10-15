@@ -591,7 +591,6 @@ const de: Dict = {
     "Ihr Node leitet die Transaktion an das Netzwerk weiter. Sie ist bestätigt, sobald ein Block sie aufnimmt — etwa alle zehn Minuten.",
   "wallet.sent.hash": "Transaktion",
   "wallet.sent.nonce": "Nonce",
-  "wallet.sent.again": "Weitere senden",
   "wallet.sent.done": "Fertig",
 
   // Wallet: receive

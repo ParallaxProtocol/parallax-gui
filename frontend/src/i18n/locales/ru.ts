@@ -582,7 +582,6 @@ const ru: Dict = {
     "Ваш узел передаёт транзакцию в сеть. Она будет подтверждена, когда её включат в блок; блоки выходят примерно каждые десять минут.",
   "wallet.sent.hash": "Транзакция",
   "wallet.sent.nonce": "Nonce",
-  "wallet.sent.again": "Отправить ещё",
   "wallet.sent.done": "Готово",
 
   // Wallet: receive
