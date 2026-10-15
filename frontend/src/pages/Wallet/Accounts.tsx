@@ -1,11 +1,24 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { Check, Eye, FileKey2, HardDrive, KeyRound, Lock, Pencil, Plus, ScrollText, Trash2, X } from "lucide-react";
+import {
+  Check,
+  ChevronRight,
+  Download,
+  FileKey2,
+  HardDrive,
+  Lock,
+  Pencil,
+  Plus,
+  ScrollText,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { api, SeedInfo, walletError, WalletAccount } from "../../lib/api";
 import { shortHex } from "../../lib/format";
 import { STAGGER, useStagger } from "../../lib/motion";
-import { accountLabel, useWallet } from "../../lib/wallet";
+import { accountLabel, groupAccounts, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Panel, Section } from "../../components/ui/Panel";
 import { IconBadge } from "../../components/ui/IconBadge";
@@ -15,120 +28,147 @@ import { CopyButton, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { BackupModal, DeriveModal, PasswordModal, RemoveModal, RemoveSeedModal } from "./AccountForms";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
+import { GroupedAddress } from "../../components/ui/AccountParts";
 import { RevealPhraseModal } from "./Phrase";
-import { useSettingsSheet } from "../../components/shell/SettingsSheet";
+import { useSettingsSheet, type SettingsPage } from "../../components/shell/SettingsSheet";
+import { AccountPage } from "../Settings/accounts";
+import { FindAccountsModal } from "../Settings/accounts/Find";
 import { RemoveWatchOnlyModal } from "./WatchOnly";
-import { useOfflineMode } from "../../lib/offline";
 
 type Action = "backup" | "remove";
 type SeedAction = "reveal" | "derive" | "remove";
 
 /**
  * AccountsSettings is Settings' Accounts section, managing the wallet: its
- * accounts (which one the app shows, their names and backups, adding and
- * removing them), its recovery phrases, its password, and where the
- * encrypted keys are kept on this computer. Adding an account leaves
- * Settings for the page that does it.
+ * accounts grouped by what keeps their keys (each recovery phrase, with
+ * its own accounts and the way to add another; single keys; watch-only
+ * accounts), which one the app shows, their names and backups, the
+ * wallet's password, and where the encrypted keys are kept on this
+ * computer. Adding accounts, or finding more of a phrase's, drills into a
+ * page within the section, and comes back to the list.
  */
 export function AccountsSettings() {
   const t = useT();
-  const stagger = useStagger();
   const wallet = useWallet();
-  const { setOpen } = useSettingsSheet();
-  const offline = useOfflineMode();
+  const { setOpen, page, setPage } = useSettingsSheet();
+  const navigate = useNavigate();
   const [seedAction, setSeedAction] = useState<{ kind: SeedAction; seed: SeedInfo } | null>(null);
   const [changing, setChanging] = useState(false);
+  const [finding, setFinding] = useState<SeedInfo | null>(null);
   const [action, setAction] = useState<{ kind: Action; account: WalletAccount } | null>(null);
 
   const info = wallet.info;
   if (!info) return null;
+  if (page) return <AccountPage page={page} onLeave={() => setPage(null)} />;
+  // Adding accounts takes the wallet password: until there is one, the
+  // Welcome page sets it
+  const drill = (p: SettingsPage) => {
+    if (info.hasPassword) return setPage(p);
+    setOpen(false);
+    navigate("/");
+  };
   const label = (a: WalletAccount) => accountLabel(a, info.accounts, t);
   const close = () => setAction(null);
   const target = action?.account ?? null;
 
+  const groups = groupAccounts(info);
+  const ofSeed = (id: string) => groups.find((g) => g.kind === "phrase" && g.seed.id === id)?.accounts ?? [];
+  const keys = groups.find((g) => g.kind === "keys")?.accounts ?? [];
+  const watched = groups.find((g) => g.kind === "watch")?.accounts ?? [];
+  const row = (a: WalletAccount) => (
+    <AccountRow
+      account={a}
+      label={label(a)}
+      selected={a.address === wallet.account?.address}
+      onSelect={() => wallet.select(a.address)}
+      onAction={(kind) => setAction({ kind, account: a })}
+    />
+  );
+
   return (
     <div className="flex flex-col gap-7">
-      {/* The accounts, then the ways to add one */}
-      <section>
-        <Panel className="overflow-hidden">
-          {info.accounts.length === 0 ? (
-            <p className="py-12 text-center text-muted-foreground">{t("wallet.accounts.empty")}</p>
-          ) : (
-            <motion.ul {...stagger} className="divide-y divide-border">
-              {info.accounts.map((a) => (
-                <motion.li variants={STAGGER.item} key={a.address}>
-                  <AccountRow
-                    account={a}
-                    label={label(a)}
-                    seedName={info.seeds.find((s) => s.id === a.seedId)?.name}
-                    selected={a.address === wallet.account?.address}
-                    onSelect={() => wallet.select(a.address)}
-                    onAction={(kind) => setAction({ kind, account: a })}
-                  />
-                </motion.li>
-              ))}
-            </motion.ul>
-          )}
-          {/* Adding one, at the list's foot, as a settings list does */}
-          <div className="flex flex-col divide-y divide-border border-t border-border">
-            <AddRow to="/accounts/new" icon={Plus} label={t("wallet.accounts.create")} onGo={() => setOpen(false)} />
-            <AddRow
-              to="/accounts/import"
-              icon={KeyRound}
-              label={t("wallet.accounts.import")}
-              onGo={() => setOpen(false)}
-            />
-            {/* An offline signer holds keys only; following one is for a wallet online */}
-            {!offline && (
-              <AddRow to="/accounts/watch" icon={Eye} label={t("offline.watch.add")} onGo={() => setOpen(false)} />
-            )}
-          </div>
-        </Panel>
-      </section>
+      <Panel className="overflow-hidden">
+        {info.accounts.length === 0 && (
+          <p className="border-b border-border py-10 text-center text-muted-foreground">{t("wallet.accounts.empty")}</p>
+        )}
+        <AddRow
+          icon={Plus}
+          label={t("wallet.accounts.createTitle")}
+          onClick={() => drill({ kind: "accounts.add" })}
+          chevron
+        />
+        <div className="border-t border-border">
+          <AddRow
+            icon={Download}
+            label={t("wallet.accounts.importTitle")}
+            onClick={() => drill({ kind: "accounts.import" })}
+            chevron
+          />
+        </div>
+      </Panel>
 
       {info.seeds.length > 0 && (
-        <Section title={t("wallet.phrase.section")} count={info.seeds.length}>
+        <Section title={t("wallet.accounts.phrases")} count={info.seeds.length}>
+          {info.seeds.map((seed) => (
+            <Panel key={seed.id} className="overflow-hidden">
+              <SeedRow
+                seed={seed}
+                onAction={(kind) => (kind === "find" ? setFinding(seed) : setSeedAction({ kind, seed }))}
+              />
+              <Rows accounts={ofSeed(seed.id)} row={row} />
+              <AddRow
+                icon={Plus}
+                label={t("wallet.derive.cta")}
+                onClick={() => setSeedAction({ kind: "derive", seed })}
+              />
+            </Panel>
+          ))}
+        </Section>
+      )}
+
+      {keys.length > 0 && (
+        <Section title={t("wallet.accounts.keys")} count={keys.length}>
           <Panel className="overflow-hidden">
-            <motion.ul {...stagger} className="divide-y divide-border">
-              {info.seeds.map((seed) => (
-                <motion.li variants={STAGGER.item} key={seed.id}>
-                  <SeedRow seed={seed} onAction={(kind) => setSeedAction({ kind, seed })} />
-                </motion.li>
-              ))}
-            </motion.ul>
+            <Rows accounts={keys} row={row} />
           </Panel>
         </Section>
       )}
 
-      <div className="flex flex-col gap-7">
-        {info.hasPassword && (
-          <Section title={t("wallet.security")}>
-            <Panel className="flex h-full items-center gap-3.5 p-5">
-              <IconBadge icon={Lock} />
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="font-semibold">{t("wallet.walletPassword")}</span>
-                <span className="text-sm text-muted-foreground">{t("wallet.securityDesc")}</span>
-              </div>
-              <button type="button" className="btn btn-tinted btn-sm shrink-0" onClick={() => setChanging(true)}>
-                {t("wallet.changePassword.title")}
-              </button>
-            </Panel>
-          </Section>
-        )}
-
-        <Section title={t("wallet.accounts.storage")}>
-          <Panel className="flex h-full flex-col gap-3 p-5">
-            <div className="flex items-start gap-3.5">
-              <IconBadge icon={HardDrive} />
-              <p className="text-sm text-muted-foreground">{t("wallet.accounts.storageDesc")}</p>
-            </div>
-            <div className="flex items-center gap-1 rounded-xl bg-muted py-1 pr-1 pl-3">
-              <code className="selectable min-w-0 flex-1 truncate font-mono text-sm">{info.keystoreDir}</code>
-              <CopyButton value={info.keystoreDir} />
-            </div>
+      {watched.length > 0 && (
+        <Section title={t("offline.watchOnly")} count={watched.length}>
+          <Panel className="overflow-hidden">
+            <Rows accounts={watched} row={row} />
           </Panel>
         </Section>
-      </div>
+      )}
+
+      {info.hasPassword && (
+        <Section title={t("wallet.security")}>
+          <Panel className="flex h-full items-center gap-3.5 p-5">
+            <IconBadge icon={Lock} />
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span>{t("wallet.walletPassword")}</span>
+              <span className="text-sm text-muted-foreground">{t("wallet.securityDesc")}</span>
+            </div>
+            <button type="button" className="btn btn-tinted btn-sm shrink-0" onClick={() => setChanging(true)}>
+              {t("wallet.changePassword.title")}
+            </button>
+          </Panel>
+        </Section>
+      )}
+
+      <Section title={t("wallet.accounts.storage")}>
+        <Panel className="flex h-full flex-col gap-3 p-5">
+          <div className="flex items-start gap-3.5">
+            <IconBadge icon={HardDrive} />
+            <p className="text-sm text-muted-foreground">{t("wallet.accounts.storageDesc")}</p>
+          </div>
+          <div className="flex items-center gap-1 rounded-xl bg-muted py-1 pr-1 pl-3">
+            <code className="selectable min-w-0 flex-1 truncate font-mono text-sm">{info.keystoreDir}</code>
+            <CopyButton value={info.keystoreDir} />
+          </div>
+        </Panel>
+      </Section>
 
       <BackupModal
         open={action?.kind === "backup"}
@@ -137,6 +177,14 @@ export function AccountsSettings() {
         label={target ? label(target) : ""}
       />
       <PasswordModal open={changing} onClose={() => setChanging(false)} />
+      <FindAccountsModal
+        seed={finding}
+        onClose={() => setFinding(null)}
+        onOpen={(seed, password, first) => {
+          setFinding(null);
+          drill({ kind: "accounts.find", seedId: seed.id, password, first });
+        }}
+      />
       <RevealPhraseModal
         open={seedAction?.kind === "reveal"}
         onClose={() => setSeedAction(null)}
@@ -167,17 +215,35 @@ export function AccountsSettings() {
   );
 }
 
+/** Rows lists a group's accounts, one after another as they first show. */
+function Rows({ accounts, row }: { accounts: WalletAccount[]; row: (a: WalletAccount) => ReactNode }) {
+  const stagger = useStagger();
+  if (accounts.length === 0) return null;
+  return (
+    <motion.ul {...stagger} className="divide-y divide-border border-b border-border last:border-b-0">
+      {accounts.map((a) => (
+        <motion.li variants={STAGGER.item} key={a.address}>
+          {row(a)}
+        </motion.li>
+      ))}
+    </motion.ul>
+  );
+}
+
+/**
+ * AccountRow is one account: whether it's the one shown, its name
+ * (renamable), its address, and its backup. An account of a recovery
+ * phrase is backed up by the phrase, whose state its group shows.
+ */
 function AccountRow({
   account,
   label,
-  seedName,
   selected,
   onSelect,
   onAction,
 }: {
   account: WalletAccount;
   label: string;
-  seedName?: string;
   selected: boolean;
   onSelect: () => void;
   onAction: (a: Action) => void;
@@ -187,6 +253,7 @@ function AccountRow({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(account.name);
   const [error, setError] = useState<string | null>(null);
+  const single = !account.watchOnly && !account.fromSeed;
 
   const rename = async () => {
     try {
@@ -215,7 +282,7 @@ function AccountRow({
           <RadioMark selected={selected} className="hover:border-foreground/40" />
         </button>
         <AddressAvatar address={account.address} size={40} />
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="@container flex min-w-0 flex-1 flex-col gap-0.5">
           {editing ? (
             <RenameForm
               value={name}
@@ -229,37 +296,32 @@ function AccountRow({
             />
           ) : (
             <div className="flex items-center gap-2">
-              <span className="truncate font-semibold">{label}</span>
-              {account.watchOnly ? (
-                <Tooltip content={t("offline.watchOnly.desc")}>
-                  <Pill>{t("offline.watchOnly")}</Pill>
-                </Tooltip>
-              ) : (
-                !account.backedUp && <Pill tone="warn">{t("wallet.accounts.noBackup")}</Pill>
-              )}
+              <span className="truncate">{label}</span>
+              {single && !account.backedUp && <Pill tone="warn">{t("wallet.accounts.noBackup")}</Pill>}
             </div>
           )}
           <div className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
+            {/* The whole address, grouped as a card number is, where the row
+                has room for it; shortened where it hasn't */}
+            <span className="hidden @md:inline">
+              <GroupedAddress address={account.address} />
+            </span>
             <Tooltip content={account.address} mono>
-              <span className="font-mono">{shortHex(account.address, 12, 10)}</span>
+              <span className="font-mono @md:hidden">{shortHex(account.address, 12, 10)}</span>
             </Tooltip>
             <CopyButton value={account.address} className="-my-1" />
+            {/* Where under its phrase: a number along the standard path, the path itself along another */}
             {account.fromSeed && (
               <Tooltip content={account.seedPath} mono>
-                <span className="ml-1 flex min-w-0 items-center gap-1">
-                  <ScrollText className="size-3 shrink-0" />
-                  <span className="truncate">
-                    {account.seedStandard
-                      ? t("wallet.accounts.fromPhrase", { name: seedName ?? "", n: account.seedIndex + 1 })
-                      : `${seedName ?? ""} · ${account.seedPath}`}
-                  </span>
+                <span className={`ml-1 truncate ${account.seedStandard ? "" : "font-mono"}`}>
+                  {account.seedStandard ? `#${account.seedIndex + 1}` : account.seedPath}
                 </span>
               </Tooltip>
             )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          {!account.watchOnly && (
+          {single && (
             <button type="button" className="btn btn-tinted btn-sm" onClick={() => onAction("backup")}>
               <FileKey2 className="size-3.5" />
               {t("wallet.backup.cta")}
@@ -277,8 +339,12 @@ function AccountRow({
   );
 }
 
-/** SeedRow is one recovery phrase: its name (renamable), its state, and what can be done with it. */
-function SeedRow({ seed, onAction }: { seed: SeedInfo; onAction: (a: SeedAction) => void }) {
+/**
+ * SeedRow heads a recovery phrase's group: its name (renamable), its
+ * state, and what can be done with it: showing it (and confirming it was
+ * written down), finding more of its accounts, renaming and removing it.
+ */
+function SeedRow({ seed, onAction }: { seed: SeedInfo; onAction: (a: SeedAction | "find") => void }) {
   const t = useT();
   const wallet = useWallet();
   const [editing, setEditing] = useState(false);
@@ -297,7 +363,7 @@ function SeedRow({ seed, onAction }: { seed: SeedInfo; onAction: (a: SeedAction)
   };
 
   return (
-    <div className="group flex flex-col gap-2 px-4 py-3.5 transition-colors hover:bg-hover">
+    <div className="group flex flex-col gap-2 border-b border-border bg-background/30 px-4 py-3.5">
       <div className="flex items-center gap-3.5">
         <IconBadge icon={ScrollText} tone={seed.confirmed ? "neutral" : "warn"} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -329,9 +395,9 @@ function SeedRow({ seed, onAction }: { seed: SeedInfo; onAction: (a: SeedAction)
           <button type="button" className="btn btn-tinted btn-sm" onClick={() => onAction("reveal")}>
             {seed.confirmed ? t("wallet.phrase.show") : t("wallet.phrase.showConfirm")}
           </button>
-          <button type="button" className="btn btn-tinted btn-sm" onClick={() => onAction("derive")}>
-            <Plus className="size-3.5" />
-            {t("wallet.derive.cta")}
+          <button type="button" className="btn btn-tinted btn-sm" onClick={() => onAction("find")}>
+            <Search className="size-3.5" />
+            {t("wallet.find.cta")}
           </button>
           <RowActions
             onRename={() => setEditing(true)}
@@ -345,13 +411,30 @@ function SeedRow({ seed, onAction }: { seed: SeedInfo; onAction: (a: SeedAction)
   );
 }
 
-/** AddRow is a list's last rows: a way to add to it, leaving Settings for the page that does it. */
-function AddRow({ to, icon: Icon, label, onGo }: { to: string; icon: typeof Plus; label: string; onGo: () => void }) {
+/** AddRow is a way to add to a list: at a group's foot, or (leading on to a page) above the groups. */
+function AddRow({
+  icon: Icon,
+  label,
+  onClick,
+  chevron,
+}: {
+  icon: typeof Plus;
+  label: string;
+  onClick: () => void;
+  chevron?: boolean;
+}) {
   return (
-    <Link to={to} onClick={onGo} className="flex h-14 items-center gap-3.5 px-4 transition-colors hover:bg-hover">
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex h-14 w-full items-center gap-3.5 px-4 text-left transition-colors hover:bg-hover"
+    >
       <IconBadge icon={Icon} />
-      <span className="font-medium">{label}</span>
-    </Link>
+      <span className="flex-1">{label}</span>
+      {chevron && (
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
+      )}
+    </button>
   );
 }
 

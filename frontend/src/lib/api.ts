@@ -426,7 +426,8 @@ export type SeedCandidate = {
   inWallet: boolean;
 };
 
-export type SeedPick = { scheme: SeedScheme; index: number };
+/** An account picked from a scan of a phrase, and the name it takes (none if absent). */
+export type SeedPick = { scheme: SeedScheme; index: number; name?: string };
 
 /** An account's keystore file, still encrypted. */
 export type WalletBackup = { fileName: string; keyfile: string };
@@ -610,6 +611,7 @@ const WALLET_ERRORS: Record<string, string> = {
   "wallet: the node has no peers to send the transaction to": "wallet.err.noPeers",
   "wallet: the balance does not cover the amount and the fee": "wallet.err.insufficient",
   "wallet: this recovery phrase is already in the wallet": "wallet.err.seedExists",
+  "wallet: the accounts picked are already in the wallet": "wallet.err.accountsInWallet",
   "wallet: not a valid recovery phrase": "wallet.err.badMnemonic",
   "wallet: the passphrase is too long": "wallet.err.longPassphrase",
   "wallet: no such recovery phrase in this wallet": "wallet.err.unknownSeed",
@@ -860,10 +862,17 @@ export const api = {
     call<void>("WalletChangePassword", oldPassword, newPassword),
   walletCreateSeed: (name: string, password: string, passphrase: string) =>
     call<SeedPhrase>("WalletCreateSeed", name, password, passphrase),
+  walletNewSeedWords: (count: 12 | 24) => call<string[]>("WalletNewSeedWords", count),
+  walletCreateSeedWords: (name: string, words: string, passphrase: string, password: string, confirmed: boolean) =>
+    call<WalletAccount>("WalletCreateSeedWords", name, words, passphrase, password, confirmed),
   walletScanSeed: (words: string, passphrase: string, scheme: SeedScheme, from: number, count: number) =>
     call<SeedCandidate[]>("WalletScanSeed", words, passphrase, scheme, from, count),
   walletImportSeed: (name: string, words: string, passphrase: string, password: string, picks: SeedPick[]) =>
     call<WalletAccount>("WalletImportSeed", name, words, passphrase, password, picks),
+  walletScanWalletSeed: (seedId: string, password: string, scheme: SeedScheme, from: number, count: number) =>
+    call<SeedCandidate[]>("WalletScanWalletSeed", seedId, password, scheme, from, count),
+  walletAddSeedAccounts: (seedId: string, password: string, picks: SeedPick[]) =>
+    call<WalletAccount>("WalletAddSeedAccounts", seedId, password, picks),
   walletDeriveAccount: (seedId: string, name: string, password: string) =>
     call<WalletAccount>("WalletDeriveAccount", seedId, name, password),
   walletRevealSeed: (seedId: string, password: string) => call<SeedPhrase>("WalletRevealSeed", seedId, password),

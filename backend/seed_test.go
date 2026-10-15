@@ -325,8 +325,12 @@ func TestScanSeed(t *testing.T) {
 
 	// Picks across schemes all come in; the standard index carries on after them
 	acc, err := w.ImportSeed("Main", devPhrase, "", testPassword, []SeedPick{
-		{SchemeStandard, 0}, {SchemeStandard, 2}, {SchemeLedgerLive, 1}, {SchemeLegacy, 0},
+		{Scheme: SchemeStandard, Index: 0, Name: "Account 1"},
+		{Scheme: SchemeStandard, Index: 2, Name: "Account 2"},
+		{Scheme: SchemeLedgerLive, Index: 1},
+		{Scheme: SchemeLegacy, Index: 0},
 	})
+	// The name given wins over the first pick's; the others take their picks'
 	if err != nil || acc.Address != devAccounts[0] || acc.Name != "Main" {
 		t.Fatalf("ImportSeed(picks) = %+v, %v", acc, err)
 	}
@@ -340,6 +344,9 @@ func TestScanSeed(t *testing.T) {
 			t.Errorf("%+v isn't a backed-up account of the phrase", a)
 		}
 		paths[a.SeedPath] = true
+		if a.SeedPath == "m/44'/60'/0'/0/2" && a.Name != "Account 2" {
+			t.Errorf("the second pick is named %q, want its pick's", a.Name)
+		}
 	}
 	for _, want := range []string{"m/44'/60'/0'/0/0", "m/44'/60'/0'/0/2", "m/44'/60'/1'/0/0", "m/44'/60'/0'/0"} {
 		if !paths[want] {
@@ -353,5 +360,108 @@ func TestScanSeed(t *testing.T) {
 	again, _ := w.ScanSeed(devPhrase, "", SchemeStandard, 0, 1)
 	if !again[0].InWallet {
 		t.Fatal("a scan doesn't mark the accounts already in the wallet")
+	}
+}
+
+func TestFindWalletSeedAccounts(t *testing.T) {
+	w, _ := newTestWallet(t)
+	w.node = &NodeController{cfg: &ConfigStore{cfg: defaultGUIConfig()}} // stopped: addresses only
+
+	acc, err := w.ImportSeed("Main", devPhrase, "", testPassword, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The phrase the wallet holds scans as its words do, without them
+	found, err := w.ScanWalletSeed(acc.SeedID, testPassword, SchemeStandard, 0, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, c := range found {
+		if c.Address != devAccounts[i] || c.InWallet != (i == 0) {
+			t.Errorf("candidate %d = %+v", i, c)
+		}
+	}
+	if _, err := w.ScanWalletSeed(acc.SeedID, "wrong password", SchemeStandard, 0, 1); err == nil {
+		t.Fatal("a scan opened the phrase with the wrong password")
+	}
+	if _, err := w.ScanWalletSeed("nope", testPassword, SchemeStandard, 0, 1); !errors.Is(err, ErrUnknownSeed) {
+		t.Fatalf("ScanWalletSeed(unknown) = %v", err)
+	}
+
+	// Picks come in as the phrase's, those already in the wallet skipped
+	added, err := w.AddSeedAccounts(acc.SeedID, testPassword, []SeedPick{
+		{Scheme: SchemeStandard, Index: 0, Name: "Taken"},
+		{Scheme: SchemeStandard, Index: 2, Name: "Account 2"},
+		{Scheme: SchemeLedgerLive, Index: 1, Name: "Account 3"},
+	})
+	if err != nil || added.Address != devAccounts[2] || added.SeedID != acc.SeedID || added.Name != "Account 2" {
+		t.Fatalf("AddSeedAccounts = %+v, %v", added, err)
+	}
+	info := w.Info()
+	// The account selected before stays so
+	if len(info.Accounts) != 3 || info.Selected != devAccounts[0] {
+		t.Fatalf("wallet has %d accounts, %s selected", len(info.Accounts), info.Selected)
+	}
+	names := map[string]bool{}
+	for _, a := range info.Accounts {
+		if a.SeedID != acc.SeedID || !a.BackedUp {
+			t.Errorf("%+v isn't a backed-up account of the phrase", a)
+		}
+		names[a.Name] = true
+	}
+	// Each takes its pick's name; the one skipped keeps its own
+	if !names["Main"] || !names["Account 2"] || !names["Account 3"] || names["Taken"] {
+		t.Errorf("names after AddSeedAccounts = %v", names)
+	}
+	if _, err := w.AddSeedAccounts(acc.SeedID, testPassword, []SeedPick{{Scheme: SchemeStandard, Index: 0}}); !errors.Is(err, ErrAccountsInWallet) {
+		t.Fatalf("adding what's there = %v, want ErrAccountsInWallet", err)
+	}
+	// The standard index carries on after the picks
+	next, err := w.DeriveAccount(acc.SeedID, "", testPassword)
+	if err != nil || next.SeedPath != "m/44'/60'/0'/0/3" {
+		t.Fatalf("DeriveAccount after picks = %+v, %v; want m/44'/60'/0'/0/3", next, err)
+	}
+}
+
+func TestCreateSeedWords(t *testing.T) {
+	w, _ := newTestWallet(t)
+	words, err := w.NewSeedWords(12)
+	if err != nil || len(words) != 12 {
+		t.Fatalf("NewSeedWords(12) = %v, %v", words, err)
+	}
+	if long, err := w.NewSeedWords(24); err != nil || len(long) != 24 {
+		t.Fatalf("NewSeedWords(24) = %v, %v", long, err)
+	} else if _, err := entropyFromWords(strings.Join(long, " ")); err != nil {
+		t.Fatalf("24 words don't read back: %v", err)
+	}
+	if _, err := w.NewSeedWords(18); err == nil {
+		t.Fatal("NewSeedWords(18) accepted")
+	}
+	if len(w.Info().Seeds) != 0 {
+		t.Fatal("making the words stored something")
+	}
+	phrase := strings.Join(words, " ")
+	if _, err := w.CreateSeedWords("Main", phrase, "", "wrong password", true); err == nil {
+		t.Fatal("stored under the wrong password")
+	}
+	acc, err := w.CreateSeedWords("Main", phrase, "hidden", testPassword, false)
+	if err != nil || acc.Name != "Main" || !acc.FromSeed || acc.BackedUp {
+		t.Fatalf("CreateSeedWords = %+v, %v", acc, err)
+	}
+	if got := addrAt(t, phrase, "hidden", SchemeStandard, 0); acc.Address != got {
+		t.Fatalf("first account %s, want the passphrase's %s", acc.Address, got)
+	}
+	info := w.Info()
+	if len(info.Seeds) != 1 || info.Seeds[0].Confirmed || !info.Seeds[0].HasPassphrase || info.Selected != acc.Address {
+		t.Fatalf("seeds after CreateSeedWords = %+v, selected %s", info.Seeds, info.Selected)
+	}
+	if _, err := w.CreateSeedWords("", phrase, "hidden", testPassword, true); !errors.Is(err, ErrSeedExists) {
+		t.Fatalf("same words again = %v, want ErrSeedExists", err)
+	}
+	// Confirmed, the phrase backs its accounts up
+	other, _ := w.NewSeedWords(24)
+	acc2, err := w.CreateSeedWords("", strings.Join(other, " "), "", testPassword, true)
+	if err != nil || !acc2.BackedUp {
+		t.Fatalf("confirmed CreateSeedWords = %+v, %v", acc2, err)
 	}
 }

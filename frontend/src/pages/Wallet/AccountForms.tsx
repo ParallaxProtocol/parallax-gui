@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { FileKey2, KeyRound, Loader2, Plus, Trash2 } from "lucide-react";
 import { SPRING } from "../../lib/motion";
 import { api, SeedInfo, WalletAccount } from "../../lib/api";
-import { backUp, useBusy } from "./accountActions";
+import { backUp, useBusy, useDefaultName } from "./accountActions";
 import { useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Modal, ModalForm } from "../../components/ui/Modal";
@@ -21,6 +21,7 @@ import { AddressAvatar } from "../../components/ui/AddressAvatar";
 
 export function NameField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const t = useT();
+  const defaultName = useDefaultName();
   return (
     <Field label={t("wallet.name")} hint={t("wallet.name.hint")}>
       {(id) => (
@@ -30,7 +31,7 @@ export function NameField({ value, onChange }: { value: string; onChange: (v: st
           value={value}
           maxLength={64}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={t("wallet.name.placeholder")}
+          placeholder={defaultName}
           spellCheck={false}
           autoFocus
         />
@@ -313,7 +314,7 @@ function rich(template: string, parts: Record<string, ReactNode>): ReactNode[] {
   });
 }
 
-/** DeriveModal makes another account from one recovery phrase: a name and the wallet password. */
+/** DeriveModal makes another account from one recovery phrase, named Account N (renamable in the list), with the wallet password. */
 export function DeriveModal({ open, onClose, seed }: { open: boolean; onClose: () => void; seed: SeedInfo | null }) {
   const t = useT();
   return (
@@ -331,8 +332,8 @@ export function DeriveModal({ open, onClose, seed }: { open: boolean; onClose: (
 
 function Derive({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) {
   const t = useT();
+  const defaultName = useDefaultName();
   const wallet = useWallet();
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const { busy, error, run } = useBusy();
   useEffect(() => () => setPassword(""), []);
@@ -340,7 +341,7 @@ function Derive({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) {
     <ModalForm
       onSubmit={async () => {
         if (busy || !password) return;
-        const acc = await run(() => api.walletDeriveAccount(seed.id, name, password));
+        const acc = await run(() => api.walletDeriveAccount(seed.id, defaultName, password));
         if (acc) {
           await wallet.refresh();
           onClose();
@@ -359,9 +360,8 @@ function Derive({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) {
       }
     >
       <p className="text-muted-foreground">{t("wallet.derive.desc")}</p>
-      <NameField value={name} onChange={setName} />
       <Field label={t("wallet.walletPassword")}>
-        {(id) => <PasswordInput id={id} value={password} onChange={setPassword} />}
+        {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus />}
       </Field>
       {error && <Notice tone="critical">{error}</Notice>}
     </ModalForm>

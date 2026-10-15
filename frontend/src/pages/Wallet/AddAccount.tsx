@@ -9,7 +9,7 @@ import { useT } from "../../i18n";
 import { Notice } from "../../components/ui/bits";
 import { DrawnCheck, Field, PasswordInput } from "./common";
 import { NameField } from "./AccountForms";
-import { backUp, useBusy } from "./accountActions";
+import { backUp, useBusy, useDefaultName } from "./accountActions";
 import { CreateIntro, DetailsStep, SetupPasswordStep } from "./CreateStep";
 import { FlowPage, Part, StepFooter, StepPanel } from "./flow";
 import { PhraseGrid, PhraseQuiz, PhraseWarning } from "./Phrase";
@@ -39,6 +39,7 @@ function useUnlocked(): ReactNode | null {
  */
 export function SetupPasswordPage() {
   const t = useT();
+  const defaultName = useDefaultName();
   const navigate = useNavigate();
   const wallet = useWallet();
   const [existing] = useState(() => !!wallet.info?.needsSetup);
@@ -94,7 +95,7 @@ export function SetupPasswordPage() {
               disabled={busy}
               autoFocus
               onClick={async () => {
-                const made = await run(() => api.walletCreateSeed("", password, ""));
+                const made = await run(() => api.walletCreateSeed(defaultName, password, ""));
                 if (made) {
                   setPassword("");
                   setPhrase({ seedId: made.seedId, words: made.words });
@@ -196,6 +197,7 @@ type PhraseStage = "intro" | "details" | "phrase" | "confirm";
  */
 function CreateWallet({ onBack }: { onBack: () => void }) {
   const t = useT();
+  const defaultName = useDefaultName();
   const navigate = useNavigate();
   const wallet = useWallet();
   const [stage, setStage] = useState<PhraseStage>("intro");
@@ -233,7 +235,7 @@ function CreateWallet({ onBack }: { onBack: () => void }) {
           allowPassphrase
           onBack={() => setStage("intro")}
           onSubmit={async (name, password, passphrase) => {
-            const phrase = await run(() => api.walletCreateSeed(name, password, passphrase));
+            const phrase = await run(() => api.walletCreateSeed(name.trim() || defaultName, password, passphrase));
             if (phrase) {
               setSeedId(phrase.seedId);
               setWords(phrase.words);
@@ -385,6 +387,7 @@ function PhraseSteps({
  */
 function DeriveAccount({ seeds, onBack }: { seeds: SeedInfo[]; onBack: () => void }) {
   const t = useT();
+  const defaultName = useDefaultName();
   const navigate = useNavigate();
   const wallet = useWallet();
   const [seedId, setSeedId] = useState(seeds[0]?.id ?? "");
@@ -399,7 +402,7 @@ function DeriveAccount({ seeds, onBack }: { seeds: SeedInfo[]; onBack: () => voi
       <StepPanel
         onSubmit={async () => {
           if (!ready) return;
-          const acc = await run(() => api.walletDeriveAccount(seedId, name, password));
+          const acc = await run(() => api.walletDeriveAccount(seedId, name.trim() || defaultName, password));
           if (acc) {
             await wallet.refresh();
             navigate("/", { replace: true });
@@ -453,6 +456,7 @@ type KeyStage = "intro" | "details" | "backup";
  */
 function CreateKey({ onBack }: { onBack: () => void }) {
   const t = useT();
+  const defaultName = useDefaultName();
   const navigate = useNavigate();
   const wallet = useWallet();
   const [stage, setStage] = useState<KeyStage>("intro");
@@ -484,7 +488,7 @@ function CreateKey({ onBack }: { onBack: () => void }) {
           next={t("wallet.create.keyNext")}
           onBack={() => setStage("intro")}
           onSubmit={async (name, pass) => {
-            const acc = await run(() => api.walletCreate(name, pass));
+            const acc = await run(() => api.walletCreate(name.trim() || defaultName, pass));
             if (acc) {
               setPassword(pass);
               setCreated(acc);
@@ -663,6 +667,7 @@ function SourceChoice({
 /** ImportDetails brings in a single key, from a keystore file or as hex, under the wallet password. */
 function ImportDetails({ kind, onBack }: { kind: "keyfile" | "key"; onBack: () => void }) {
   const t = useT();
+  const defaultName = useDefaultName();
   const navigate = useNavigate();
   const wallet = useWallet();
   const [name, setName] = useState("");
@@ -712,8 +717,8 @@ function ImportDetails({ kind, onBack }: { kind: "keyfile" | "key"; onBack: () =
         if (!ready) return;
         const acc = await run(() =>
           kind === "key"
-            ? api.walletImportPrivateKey(name, keyHex, walletPassword)
-            : api.walletImportKeyfile(name, file!.json, filePassword, walletPassword),
+            ? api.walletImportPrivateKey(name.trim() || defaultName, keyHex, walletPassword)
+            : api.walletImportKeyfile(name.trim() || defaultName, file!.json, filePassword, walletPassword),
         );
         if (acc) {
           await wallet.refresh();

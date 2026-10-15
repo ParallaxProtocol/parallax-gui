@@ -23,7 +23,7 @@ import { FADE_IN, FADE_OUT, GLIDE, SPRING, usePageSwap } from "../../lib/motion"
 import { CONFIG_UPDATED_EVENT } from "../../App";
 import { useLang, useT, Lang } from "../../i18n";
 import { LANG_NAMES } from "../../i18n/translations";
-import { useSettingsSheet, type SettingsSection } from "../../components/shell/SettingsSheet";
+import { pageKey, useSettingsSheet, type SettingsSection } from "../../components/shell/SettingsSheet";
 import { Select } from "../../components/ui/Select";
 import { Tooltip } from "../../components/ui/Tooltip";
 import logo from "../../assets/logo.svg";
@@ -88,7 +88,7 @@ export default function Settings() {
   const [restartPending, setRestartPending] = useState(false);
   const [appRestartPending, setAppRestartPending] = useState(false);
   const [restarting, setRestarting] = useState(false);
-  const { section: chosen, setSection } = useSettingsSheet();
+  const { section: chosen, setSection, page } = useSettingsSheet();
   // An offline signer never runs its node: its sections aren't shown, and
   // one left open shows General instead
   const offline = useOfflineMode();
@@ -253,13 +253,20 @@ export default function Settings() {
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <motion.div key={section} {...swap} className="min-h-0 flex-1 [scrollbar-gutter:stable] overflow-y-auto">
+        <motion.div
+          key={page ? pageKey(page) : section}
+          {...swap}
+          className="min-h-0 flex-1 [scrollbar-gutter:stable] overflow-y-auto"
+        >
           <div className={`flex flex-col gap-7 px-6 py-6 ${PAGE_NARROW}`}>
-            {/* The section's own header, as in System Settings */}
-            <div className="flex items-center gap-4">
-              <SectionTile id={section} large />
-              <h2 className="text-2xl font-semibold tracking-tight">{t(`settings.section.${section}`)}</h2>
-            </div>
+            {/* The section's own header, as in System Settings; a page drilled
+                into draws its own, the way back to the section in it */}
+            {!page && (
+              <div className="flex items-center gap-4">
+                <SectionTile id={section} large />
+                <h2 className="text-2xl font-semibold tracking-tight">{t(`settings.section.${section}`)}</h2>
+              </div>
+            )}
             {err && <Notice tone="critical">{err}</Notice>}
 
             {section === "accounts" && <AccountsSettings />}

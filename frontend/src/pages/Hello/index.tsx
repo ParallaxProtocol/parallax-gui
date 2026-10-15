@@ -13,10 +13,11 @@ import { Meter, Notice } from "../../components/ui/bits";
 import logo from "../../assets/logo.svg";
 import Toggle from "../../components/ui/Toggle";
 import { Checkbox, DrawnCheck, Field, MIN_PASSWORD, PasswordInput } from "../Wallet/common";
-import { rate, Requirement, StrengthMeter } from "../Wallet/CreateStep";
+import { Requirement, StrengthMeter } from "../Wallet/CreateStep";
 import { Choice } from "../../components/ui/Choice";
 import { PhraseGrid, PhraseInput, PhraseQuiz, PhraseWarning } from "../Wallet/Phrase";
 import { AccountPicker, Found, PHRASE_LENGTHS, pickKey, picksOf } from "../Wallet/PhraseImport";
+import { rate, useDefaultName, useNamePicks } from "../Wallet/accountActions";
 
 /**
  * The words the greeting cycles through, each in its own language: the
@@ -613,6 +614,7 @@ function Offer({
   onImport: () => void;
 }) {
   const t = useT();
+  const defaultName = useDefaultName();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   return (
@@ -628,7 +630,7 @@ function Offer({
             setBusy(true);
             setError(null);
             try {
-              const made = await api.walletCreateSeed("", password, "");
+              const made = await api.walletCreateSeed(defaultName, password, "");
               onMade({ seedId: made.seedId, words: made.words });
             } catch (e) {
               setError(walletError(e, t));
@@ -741,6 +743,7 @@ function ImportAccounts({
   onImported: () => void;
 }) {
   const t = useT();
+  const namePicks = useNamePicks();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const picks = picksOf(found, picked);
@@ -762,7 +765,14 @@ function ImportAccounts({
             setError(null);
             try {
               const batch = await api.walletScanSeed(words, passphrase, scheme, from, SCAN_BATCH);
-              setFound((f) => ({ ...f, [scheme]: [...f[scheme].filter((c) => c.index < from), ...batch] }));
+              setFound((f) => ({
+                ...f,
+                [scheme]: [
+                  ...f[scheme].filter((c) => c.index < from),
+                  ...batch,
+                  ...f[scheme].filter((c) => c.index >= from + batch.length),
+                ],
+              }));
               setPicked((p) => {
                 const next = new Set(p);
                 for (const c of batch) if (c.used && !c.inWallet) next.add(pickKey(c));
@@ -786,7 +796,7 @@ function ImportAccounts({
             setBusy(true);
             setError(null);
             try {
-              await api.walletImportSeed("", words, passphrase, password, picks);
+              await api.walletImportSeed("", words, passphrase, password, namePicks(picks, ""));
               onImported();
             } catch (e) {
               setError(walletError(e, t));

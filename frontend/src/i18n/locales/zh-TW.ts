@@ -28,6 +28,7 @@ const zhTW: Dict = {
   "hello.confirm.cta": "設定密碼",
 
   // Common
+  "common.skipped": "已略過",
   "common.back": "返回",
   "common.continue": "繼續",
   "common.cancel": "取消",
@@ -208,6 +209,8 @@ const zhTW: Dict = {
   "nav.receive": "接收",
   "nav.accounts": "帳戶",
   "nav.manageAccounts": "管理帳戶…",
+  "nav.searchAccounts": "搜尋帳戶",
+  "nav.noAccountsFound": "沒有相符的帳戶。",
   "nav.node": "節點",
   "node.state.stopped": "離線",
   "node.state.syncing": "同步中",
@@ -386,7 +389,6 @@ const zhTW: Dict = {
   "wallet.password.hide": "隱藏密碼",
   "wallet.name": "名稱",
   "wallet.name.hint": "只會在本應用程式中顯示。",
-  "wallet.name.placeholder": "儲蓄",
 
   // Wallet: create
   "wallet.create.title": "建立帳戶",
@@ -398,6 +400,8 @@ const zhTW: Dict = {
   "wallet.create.kind.phrase": "新助記詞",
   "wallet.create.kind.phraseDesc":
     "12 個單字，可備份此帳戶以及您之後新增的所有帳戶。適用於 MetaMask 和大多數其他錢包。",
+  "wallet.create.kind.phraseDescAny":
+    "12 或 24 個單字，可備份由它們產生的所有帳戶，無論現在或日後。可在 MetaMask 和大多數其他錢包中使用。",
   "wallet.create.kind.key": "單一金鑰",
   "wallet.create.kind.keyDesc": "一個擁有獨立金鑰的帳戶，以加密的 keystore 檔案備份。",
   "wallet.create.recommended": "推薦",
@@ -412,6 +416,11 @@ const zhTW: Dict = {
   "wallet.create.fact1": "一組助記詞",
   "wallet.create.fact1Desc":
     "12 個單字，在此由系統的安全隨機來源產生。憑它們可以在本錢包或任何相容錢包中還原您的帳戶。",
+  "wallet.create.fact1DescN":
+    "{n} 個單字，在此由系統的安全隨機來源產生。憑它們可以在本錢包或任何相容錢包中還原您的帳戶。",
+  "wallet.create.words24": "改用 24 個單字",
+  "wallet.create.words24Desc":
+    "256 位元，與 Ledger 和 Trezor 產生的相同。需要抄寫的內容加倍，而 12 個單字已遠超可被猜中的範圍。兩者都可在 MetaMask 和其他錢包中使用。",
   "wallet.create.fact2": "以您的密碼鎖定",
   "wallet.create.fact2Desc": "助記詞和您帳戶的金鑰會以您在下一頁設定的密碼加密。",
   "wallet.create.fact3": "保存在這台電腦上",
@@ -427,13 +436,14 @@ const zhTW: Dict = {
   "wallet.create.cta": "建立帳戶",
   "wallet.create.detailsTitle": "帳戶詳細資料",
   "wallet.derive.title": "新帳戶",
-  "wallet.derive.cta": "新增帳戶",
+  "wallet.derive.cta": "從此助記詞新增帳戶",
   "wallet.derive.which": "助記詞",
   "wallet.derive.desc": "它由助記詞產生，助記詞已為它提供備份：無需另行備份。",
   "wallet.create.busy": "正在建立…",
   "wallet.created.later": "稍後再說",
   "wallet.created.savedDesc": "請妥善保管檔案和密碼，並分開存放。",
   "wallet.created.open": "前往錢包",
+  "wallet.create.step.type": "類型",
   "wallet.create.step.intro": "運作方式",
   "wallet.create.step.details": "詳細資料",
   "wallet.create.step.phrase": "助記詞",
@@ -509,13 +519,32 @@ const zhTW: Dict = {
   "wallet.remove.confirm": "我已了解，並且已有備份，或此帳戶中沒有任何資產。",
 
   // Wallet: accounts
-  "wallet.accounts.create": "建立",
-  "wallet.accounts.import": "匯入",
   "wallet.accounts.empty": "還沒有帳戶。",
+  "wallet.accounts.add": "新增帳戶",
+  "wallet.accounts.createTitle": "建立帳戶",
+  "wallet.accounts.importTitle": "匯入帳戶",
+  "wallet.accounts.addDesc": "助記詞可備份由它產生的所有帳戶；單一金鑰有自己的備份。",
+  "wallet.accounts.phrases": "助記詞",
+  "wallet.accounts.keys": "單一金鑰",
+  "wallet.add.importPhrase": "匯入助記詞",
+  "wallet.add.newKey": "新的單一金鑰",
+  "wallet.add.importKey": "匯入金鑰",
+  "wallet.add.importKeyDesc": "從 keystore 檔案匯入，或輸入其私鑰。",
+  "wallet.add.watch": "觀察地址",
+  "wallet.add.watchDesc": "只匯入地址：金鑰保留在離線簽署器上，由它簽署您從該帳戶傳送的交易。",
+  "wallet.find.cta": "尋找帳戶",
+  "wallet.find.desc":
+    "{name} 可能包含比錢包顯示更多的帳戶：在其他錢包中或沿其他路徑建立。錢包密碼會開啟它以尋找這些帳戶。",
+  "wallet.find.pathGroup": "路徑",
+  "wallet.find.pathDesc":
+    "錢包會沿不同路徑存放助記詞的帳戶。請沿另一個錢包使用的路徑尋找：MetaMask、Trezor 和大多數錢包使用標準路徑。",
+  "wallet.find.path": "衍生路徑",
+  "wallet.find.accountsGroup": "帳戶",
+  "wallet.find.accountsDesc": "已使用過的帳戶已選取；已在錢包中的帳戶已勾選。",
+  "wallet.err.accountsInWallet": "所選帳戶已在錢包中。",
   "wallet.accounts.show": "顯示 {name}",
   "wallet.accounts.rename": "重新命名",
   "wallet.accounts.noBackup": "無備份",
-  "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "儲存位置",
   "wallet.accounts.storageDesc":
     "私鑰保存在此資料夾中，全部以你的錢包密碼加密。節點永遠看不到它們，任何連線到節點 RPC 的程式也無法使用它們。",

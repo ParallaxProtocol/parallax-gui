@@ -1,6 +1,7 @@
 import { createContext, lazy, ReactNode, Suspense, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Minimize2, Settings2 } from "lucide-react";
+import type { SeedCandidate } from "../../lib/api";
 import { useT } from "../../i18n";
 import { FADE_IN, FADE_OUT } from "../../lib/motion";
 import { useSidebar } from "../../lib/sidebar";
@@ -27,34 +28,66 @@ export const SETTINGS_SECTIONS = [
 ] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
+/**
+ * The pages a section drills into, in place of the section. Finding a
+ * phrase's accounts carries the password that opened it and the accounts
+ * first read, for as long as the page shows.
+ */
+export type SettingsPage =
+  | { kind: "accounts.add" }
+  | { kind: "accounts.import" }
+  | { kind: "accounts.find"; seedId: string; password: string; first: SeedCandidate[] };
+
+/** pageKey tells pages apart, for their transitions: by what they show, not the secrets they hold. */
+export const pageKey = (p: SettingsPage) => (p.kind === "accounts.find" ? `${p.kind}:${p.seedId}` : p.kind);
+
 // Whether Settings is open, over the page it was opened from, and the
-// section it shows (kept while closed, so it reopens where it was left)
+// section it shows (kept while closed, so it reopens where it was left),
+// and the page within it drilled into, if any (not kept: a flow left
+// half done starts over)
 type Sheet = {
   open: boolean;
   setOpen: (open: boolean) => void;
   section: SettingsSection;
   setSection: (section: SettingsSection) => void;
-  /** openAt opens Settings at a section. */
-  openAt: (section: SettingsSection) => void;
+  page: SettingsPage | null;
+  setPage: (page: SettingsPage | null) => void;
+  /** openAt opens Settings at a section, or at a page within it. */
+  openAt: (section: SettingsSection, page?: SettingsPage) => void;
 };
 const SheetContext = createContext<Sheet>({
   open: false,
   setOpen: () => {},
   section: "general",
   setSection: () => {},
+  page: null,
+  setPage: () => {},
   openAt: () => {},
 });
 
 export function SettingsSheetProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [section, setSection] = useState<SettingsSection>("general");
+  const [section, setSectionState] = useState<SettingsSection>("general");
+  const [page, setPage] = useState<SettingsPage | null>(null);
+  // Choosing a section leaves the page drilled into
+  const setSection = useCallback((s: SettingsSection) => {
+    setSectionState(s);
+    setPage(null);
+  }, []);
   // Stable, so a caller's effect that opens Settings (OpenSettings, for
   // /accounts) runs once, not again on every section chosen after it
-  const openAt = useCallback((s: SettingsSection) => {
-    setSection(s);
+  const openAt = useCallback((s: SettingsSection, p?: SettingsPage) => {
+    setSectionState(s);
+    setPage(p ?? null);
     setOpen(true);
   }, []);
-  const value = useMemo(() => ({ open, setOpen, section, setSection, openAt }), [open, section, openAt]);
+  useEffect(() => {
+    if (!open) setPage(null);
+  }, [open]);
+  const value = useMemo(
+    () => ({ open, setOpen, section, setSection, page, setPage, openAt }),
+    [open, section, setSection, page, openAt],
+  );
   return <SheetContext.Provider value={value}>{children}</SheetContext.Provider>;
 }
 

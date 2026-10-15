@@ -30,6 +30,7 @@ const fr: Dict = {
   "hello.confirm.cta": "Définir le mot de passe",
 
   // Common
+  "common.skipped": "Ignorée",
   "common.back": "Retour",
   "common.continue": "Continuer",
   "common.cancel": "Annuler",
@@ -215,6 +216,8 @@ const fr: Dict = {
   "nav.receive": "Recevoir",
   "nav.accounts": "Comptes",
   "nav.manageAccounts": "Gérer les comptes…",
+  "nav.searchAccounts": "Rechercher des comptes",
+  "nav.noAccountsFound": "Aucun compte ne correspond.",
   "nav.node": "Nœud",
   "node.state.stopped": "Hors ligne",
   "node.state.syncing": "Synchronisation",
@@ -402,7 +405,6 @@ const fr: Dict = {
   "wallet.password.hide": "Masquer le mot de passe",
   "wallet.name": "Nom",
   "wallet.name.hint": "Affiché uniquement dans cette application.",
-  "wallet.name.placeholder": "Épargne",
 
   // Wallet: create
   "wallet.create.title": "Créer un compte",
@@ -414,6 +416,8 @@ const fr: Dict = {
   "wallet.create.kind.phrase": "Nouvelle phrase de récupération",
   "wallet.create.kind.phraseDesc":
     "12 mots qui sauvegardent ce compte et tous ceux ajoutés plus tard. Ils fonctionnent dans MetaMask et la plupart des autres portefeuilles.",
+  "wallet.create.kind.phraseDescAny":
+    "12 ou 24 mots qui sauvegardent chaque compte qui en est issu, maintenant ou plus tard. Ils fonctionnent dans MetaMask et la plupart des autres portefeuilles.",
   "wallet.create.kind.key": "Clé unique",
   "wallet.create.kind.keyDesc": "Un compte avec sa propre clé, sauvegardée dans un fichier keystore chiffré.",
   "wallet.create.recommended": "Recommandé",
@@ -430,6 +434,11 @@ const fr: Dict = {
   "wallet.create.fact1": "Une phrase de récupération",
   "wallet.create.fact1Desc":
     "12 mots, générés ici à partir de la source aléatoire sécurisée de votre système. Ils restaurent vos comptes dans ce portefeuille ou dans tout portefeuille compatible.",
+  "wallet.create.fact1DescN":
+    "{n} mots, générés ici à partir de la source aléatoire sécurisée de votre système. Ils restaurent vos comptes dans ce portefeuille ou dans tout portefeuille compatible.",
+  "wallet.create.words24": "Utiliser 24 mots à la place",
+  "wallet.create.words24Desc":
+    "256 bits, comme le font Ledger et Trezor. Deux fois plus à noter, et 12 mots sont déjà bien au-delà de toute devinette. Les deux fonctionnent dans MetaMask et d'autres portefeuilles.",
   "wallet.create.fact2": "Verrouillée par votre mot de passe",
   "wallet.create.fact2Desc":
     "La phrase et la clé de votre compte sont chiffrées avec le mot de passe choisi à la page suivante.",
@@ -446,7 +455,7 @@ const fr: Dict = {
   "wallet.create.cta": "Créer le compte",
   "wallet.create.detailsTitle": "Détails du compte",
   "wallet.derive.title": "Nouveau compte",
-  "wallet.derive.cta": "Ajouter le compte",
+  "wallet.derive.cta": "Nouveau compte depuis cette phrase",
   "wallet.derive.which": "Phrase de récupération",
   "wallet.derive.desc":
     "Il provient de la phrase de récupération, qui le sauvegarde déjà : aucune sauvegarde séparée n'est nécessaire.",
@@ -454,6 +463,7 @@ const fr: Dict = {
   "wallet.created.later": "Plus tard",
   "wallet.created.savedDesc": "Gardez le fichier et le mot de passe en lieu sûr, séparément.",
   "wallet.created.open": "Aller au portefeuille",
+  "wallet.create.step.type": "Type",
   "wallet.create.step.intro": "Fonctionnement",
   "wallet.create.step.details": "Détails",
   "wallet.create.step.phrase": "Phrase",
@@ -540,13 +550,34 @@ const fr: Dict = {
   "wallet.remove.confirm": "Je comprends et j'ai une sauvegarde, ou le compte ne contient rien.",
 
   // Wallet: accounts
-  "wallet.accounts.create": "Créer",
-  "wallet.accounts.import": "Importer",
   "wallet.accounts.empty": "Aucun compte pour l'instant.",
+  "wallet.accounts.add": "Ajouter des comptes",
+  "wallet.accounts.createTitle": "Créer des comptes",
+  "wallet.accounts.importTitle": "Importer des comptes",
+  "wallet.accounts.addDesc":
+    "Une phrase de récupération sauvegarde chaque compte qui en est issu ; une clé unique a sa propre sauvegarde.",
+  "wallet.accounts.phrases": "Phrases de récupération",
+  "wallet.accounts.keys": "Clés uniques",
+  "wallet.add.importPhrase": "Importer une phrase de récupération",
+  "wallet.add.newKey": "Nouvelle clé unique",
+  "wallet.add.importKey": "Importer une clé",
+  "wallet.add.importKeyDesc": "Depuis un fichier keystore, ou en saisissant sa clé privée.",
+  "wallet.add.watch": "Surveiller une adresse",
+  "wallet.add.watchDesc":
+    "Seule son adresse est importée : la clé reste sur le signataire hors ligne, qui signe ce que vous en envoyez.",
+  "wallet.find.cta": "Trouver des comptes",
+  "wallet.find.desc":
+    "{name} peut contenir plus de comptes que le portefeuille n'en affiche : créés dans un autre portefeuille, ou sur un autre chemin. Le mot de passe du portefeuille l'ouvre pour les chercher.",
+  "wallet.find.pathGroup": "Chemin",
+  "wallet.find.pathDesc":
+    "Les portefeuilles rangent les comptes d'une phrase sur différents chemins. Cherchez sur celui qu'a utilisé l'autre portefeuille : MetaMask, Trezor et la plupart des portefeuilles utilisent Standard.",
+  "wallet.find.path": "Chemin de dérivation",
+  "wallet.find.accountsGroup": "Comptes",
+  "wallet.find.accountsDesc": "Ceux qui ont déjà servi sont sélectionnés ; ceux déjà dans le portefeuille sont cochés.",
+  "wallet.err.accountsInWallet": "Les comptes choisis sont déjà dans le portefeuille.",
   "wallet.accounts.show": "Afficher {name}",
   "wallet.accounts.rename": "Renommer",
   "wallet.accounts.noBackup": "Pas de sauvegarde",
-  "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "Stockage",
   "wallet.accounts.storageDesc":
     "Les clés sont conservées dans ce dossier, toutes chiffrées avec le mot de passe de votre portefeuille. Le nœud ne les voit jamais, et rien de ce qui se connecte à son RPC ne peut les utiliser.",

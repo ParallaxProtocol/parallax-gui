@@ -13,7 +13,7 @@ import { Notice } from "../../components/ui/bits";
 import { Segmented } from "../../components/ui/Segmented";
 import { Checkbox, Field, PasswordInput } from "./common";
 import { NameField } from "./AccountForms";
-import { useBusy } from "./accountActions";
+import { useBusy, useNamePicks, useRescanUnread } from "./accountActions";
 import { FlowPage, Part, StepFooter, StepPanel } from "./flow";
 import { PhraseInput } from "./Phrase";
 import { Pill } from "../../components/ui/Pill";
@@ -51,6 +51,7 @@ export function picksOf(found: Found, picked: Set<string>): SeedPick[] {
  */
 export function PhraseImport({ onBack }: { onBack: () => void }) {
   const t = useT();
+  const namePicks = useNamePicks();
   const navigate = useNavigate();
   const wallet = useWallet();
   const [stage, setStage] = useState<Stage>("phrase");
@@ -85,7 +86,14 @@ export function PhraseImport({ onBack }: { onBack: () => void }) {
   /** scan reads the next batch of a scheme, and picks the used accounts in it. */
   const scan = async (scheme: SeedScheme, from: number) => {
     const batch = await api.walletScanSeed(words, pass, scheme, from, BATCH);
-    setFound((f) => ({ ...f, [scheme]: [...f[scheme].filter((c) => c.index < from), ...batch] }));
+    setFound((f) => ({
+      ...f,
+      [scheme]: [
+        ...f[scheme].filter((c) => c.index < from),
+        ...batch,
+        ...f[scheme].filter((c) => c.index >= from + batch.length),
+      ],
+    }));
     setPicked((p) => {
       const next = new Set(p);
       for (const c of batch) if (c.used && !c.inWallet) next.add(pickKey(c));
@@ -182,7 +190,7 @@ export function PhraseImport({ onBack }: { onBack: () => void }) {
       <StepPanel
         onSubmit={async () => {
           if (busy || !password || picks.length === 0) return;
-          const acc = await run(() => api.walletImportSeed(name, words, pass, password, picks));
+          const acc = await run(() => api.walletImportSeed("", words, pass, password, namePicks(picks, name)));
           if (acc) {
             setWords("");
             await wallet.refresh();
@@ -283,6 +291,8 @@ export function AccountPicker({
     if (found[scheme].length === 0) load(scheme, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheme]);
+
+  useRescanUnread(found, onScan, BATCH);
 
   return (
     <>

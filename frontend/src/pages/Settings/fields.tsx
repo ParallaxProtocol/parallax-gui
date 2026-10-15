@@ -166,26 +166,32 @@ export function Group({
   title,
   desc,
   more,
+  aside,
   className = "",
   children,
 }: {
   title: string;
   desc?: ReactNode;
   more?: string;
+  /** What acts on the whole group, across from its title. */
+  aside?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
   const { link, drawer } = useReadMore(title, more, undefined, desc);
   return (
     <section className={`flex flex-col gap-2.5 ${className}`}>
-      <div className="flex flex-col gap-0.5 px-1">
-        <h3 className="text-base font-semibold">{title}</h3>
-        {(desc || link) && (
-          <p className="text-sm text-muted-foreground">
-            {desc}
-            {link}
-          </p>
-        )}
+      <div className="flex items-end justify-between gap-4 px-1">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h3 className="text-base font-semibold">{title}</h3>
+          {(desc || link) && (
+            <p className="text-sm text-muted-foreground">
+              {desc}
+              {link}
+            </p>
+          )}
+        </div>
+        {aside && <div className="flex shrink-0 items-center gap-3">{aside}</div>}
       </div>
       {children}
       {drawer}

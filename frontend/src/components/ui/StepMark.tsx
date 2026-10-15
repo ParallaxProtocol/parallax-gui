@@ -1,27 +1,40 @@
 import { AnimatePresence, motion } from "motion/react";
 import { GLIDE } from "../../lib/motion";
 
-export type StepState = "done" | "current" | "todo";
+export type StepState = "done" | "current" | "todo" | "skipped";
 
 /**
  * StepMark is a checklist item's state: an empty ring to do, a disc
  * painted in the accent for the step at hand, and once done the same
- * disc with a check drawing itself in.
+ * disc with a check drawing itself in. A step passed without being done
+ * is a dashed ring with a dash in it, in grey.
  */
 export function StepMark({ state, size = 20 }: { state: StepState; size?: number }) {
   return (
     <span className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }}>
       <motion.span
-        className="absolute inset-0 rounded-full border"
+        className={`absolute inset-0 rounded-full border ${state === "skipped" ? "border-dashed" : ""}`}
         initial={false}
         animate={{
-          borderColor: state === "todo" ? "var(--border-strong)" : "var(--brand-mark)",
+          borderColor: state === "todo" || state === "skipped" ? "var(--border-strong)" : "var(--brand-mark)",
           borderWidth: state === "current" ? 2 : 1,
         }}
         transition={GLIDE}
       />
       <AnimatePresence initial={false}>
-        {state !== "todo" && (
+        {state === "skipped" && (
+          <motion.span
+            key="skip"
+            aria-hidden
+            className="h-[1.5px] rounded-full bg-muted-foreground"
+            style={{ width: size * 0.4 }}
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            exit={{ scaleX: 0 }}
+            transition={GLIDE}
+          />
+        )}
+        {(state === "done" || state === "current") && (
           <motion.span
             key="fill"
             className="absolute inset-0 grid place-items-center rounded-full bg-brand-fill text-brand-foreground"

@@ -45,6 +45,8 @@ var (
 	ErrSeedExists     = errors.New("wallet: this recovery phrase is already in the wallet")
 	ErrBadMnemonic    = errors.New("wallet: not a valid recovery phrase")
 	ErrLongPassphrase = errors.New("wallet: the passphrase is too long")
+	// ErrAccountsInWallet: every account picked is in the wallet already
+	ErrAccountsInWallet = errors.New("wallet: the accounts picked are already in the wallet")
 )
 
 const (
@@ -88,10 +90,12 @@ type SeedPhrase struct {
 	Account    WalletAccount `json:"account"`
 }
 
-// SeedPick is one account chosen from a scan of a phrase.
+// SeedPick is one account chosen from a scan of a phrase, and the name it
+// takes (none if empty).
 type SeedPick struct {
 	Scheme string `json:"scheme"`
 	Index  uint32 `json:"index"`
+	Name   string `json:"name,omitempty"`
 }
 
 // SeedCandidate is one account a phrase holds, as a scan found it: where,
@@ -210,7 +214,34 @@ func (w *Wallet) ScanSeed(words, passphrase, scheme string, from, count uint32) 
 	if passphrase, err = normPassphrase(passphrase); err != nil {
 		return nil, err
 	}
+	return w.scan(entropy, passphrase, scheme, from, count)
+}
 
+// ScanWalletSeed is ScanSeed for a phrase the wallet holds, once the
+// wallet password opens it, so the accounts it has beyond those in the
+// wallet can be found without typing its words again.
+func (w *Wallet) ScanWalletSeed(seedID, password, scheme string, from, count uint32) ([]SeedCandidate, error) {
+	if count == 0 || count > maxScan || from > maxSeedIndex {
+		return nil, errors.New("wallet: scan out of range")
+	}
+	w.keyMu.Lock()
+	defer w.keyMu.Unlock()
+	_, s, _, err := w.seedFor(seedID, password)
+	if err != nil {
+		return nil, err
+	}
+	entropy, pass, err := openSeed(s, password)
+	if err != nil {
+		return nil, err
+	}
+	defer clear(entropy)
+	defer clear(pass)
+	return w.scan(entropy, string(pass), scheme, from, count)
+}
+
+// scan is ScanSeed once the phrase is read: its entropy, and its
+// passphrase normalised.
+func (w *Wallet) scan(entropy []byte, passphrase, scheme string, from, count uint32) ([]SeedCandidate, error) {
 	// The head state, if the node has one: missing while stopped or snap
 	// syncing, when the scan shows addresses only
 	type reader interface {
@@ -274,7 +305,7 @@ func (w *Wallet) CreateSeed(name, password, passphrase string) (SeedPhrase, erro
 	w.keyMu.Lock()
 	defer w.keyMu.Unlock()
 	first, _ := schemePath(SchemeStandard, 0)
-	id, acc, err := w.storeSeed(entropy, passphrase, name, password, false, []wallet.DerivationPath{first})
+	id, acc, err := w.storeSeed(entropy, passphrase, []string{name}, password, false, []wallet.DerivationPath{first})
 	if err != nil {
 		return SeedPhrase{}, err
 	}
@@ -282,10 +313,66 @@ func (w *Wallet) CreateSeed(name, password, passphrase string) (SeedPhrase, erro
 	return SeedPhrase{SeedID: id, Words: strings.Fields(mnemonic), Passphrase: passphrase, Account: acc}, nil
 }
 
+// NewSeedWords makes the words of a new recovery phrase from the operating
+// system's random source, 12 (128 bits, as MetaMask makes) or 24 (256
+// bits, as hardware wallets do), for the user to write down and confirm
+// before anything is stored: CreateSeedWords stores them once they have,
+// with the passphrase chosen then, if any.
+func (w *Wallet) NewSeedWords(count int) ([]string, error) {
+	var bits int
+	switch count {
+	case 12:
+		bits = 128
+	case 24:
+		bits = 256
+	default:
+		return nil, errors.New("wallet: a new recovery phrase has 12 or 24 words")
+	}
+	entropy, err := bip39.NewEntropy(bits)
+	if err != nil {
+		return nil, err
+	}
+	defer clear(entropy)
+	mnemonic, err := bip39.NewMnemonic(entropy)
+	if err != nil {
+		return nil, err
+	}
+	return strings.Fields(mnemonic), nil
+}
+
+// CreateSeedWords stores a recovery phrase NewSeedWords made, with
+// passphrase if not empty, encrypted with the wallet password, and makes
+// its first account, named name and selected. confirmed records whether
+// the user proved they wrote the words down.
+func (w *Wallet) CreateSeedWords(name, mnemonic, passphrase, password string, confirmed bool) (WalletAccount, error) {
+	name, err := cleanName(name)
+	if err != nil {
+		return WalletAccount{}, err
+	}
+	entropy, err := entropyFromWords(mnemonic)
+	if err != nil {
+		return WalletAccount{}, err
+	}
+	defer clear(entropy)
+	if passphrase, err = normPassphrase(passphrase); err != nil {
+		return WalletAccount{}, err
+	}
+
+	w.keyMu.Lock()
+	defer w.keyMu.Unlock()
+	first, _ := schemePath(SchemeStandard, 0)
+	_, acc, err := w.storeSeed(entropy, passphrase, []string{name}, password, confirmed, []wallet.DerivationPath{first})
+	if err != nil {
+		return WalletAccount{}, err
+	}
+	logging.Info("Created a recovery phrase", "account", acc.Address)
+	return acc, nil
+}
+
 // ImportSeed brings a recovery phrase (with passphrase if not empty) into
 // the wallet, encrypted with the wallet password, and makes the accounts
-// picked from a scan of it (the first standard account when none are). The
-// name goes to the first.
+// picked from a scan of it (the first standard account when none are),
+// each with its pick's name. A name given goes to the first instead.
 func (w *Wallet) ImportSeed(name, mnemonic, passphrase, password string, picks []SeedPick) (WalletAccount, error) {
 	name, err := cleanName(name)
 	if err != nil {
@@ -302,20 +389,19 @@ func (w *Wallet) ImportSeed(name, mnemonic, passphrase, password string, picks [
 	if len(picks) == 0 {
 		picks = []SeedPick{{Scheme: SchemeStandard, Index: 0}}
 	}
-	if len(picks) > maxScan*3 {
-		return WalletAccount{}, errors.New("wallet: too many accounts picked")
+	paths, names, err := pickedPaths(picks)
+	if err != nil {
+		return WalletAccount{}, err
 	}
-	paths := make([]wallet.DerivationPath, len(picks))
-	for i, p := range picks {
-		if paths[i], err = schemePath(p.Scheme, p.Index); err != nil {
-			return WalletAccount{}, err
-		}
+	// The name given goes to the first, before any its pick has
+	if name != "" {
+		names[0] = name
 	}
 
 	w.keyMu.Lock()
 	defer w.keyMu.Unlock()
 	// The user brought the words: they are already written down
-	_, acc, err := w.storeSeed(entropy, passphrase, name, password, true, paths)
+	_, acc, err := w.storeSeed(entropy, passphrase, names, password, true, paths)
 	if err != nil {
 		return WalletAccount{}, err
 	}
@@ -323,10 +409,30 @@ func (w *Wallet) ImportSeed(name, mnemonic, passphrase, password string, picks [
 	return acc, nil
 }
 
+// pickedPaths is where the accounts picked from a scan are, and the names
+// they take.
+func pickedPaths(picks []SeedPick) ([]wallet.DerivationPath, []string, error) {
+	if len(picks) > maxScan*3 {
+		return nil, nil, errors.New("wallet: too many accounts picked")
+	}
+	paths := make([]wallet.DerivationPath, len(picks))
+	names := make([]string, len(picks))
+	for i, p := range picks {
+		var err error
+		if paths[i], err = schemePath(p.Scheme, p.Index); err != nil {
+			return nil, nil, err
+		}
+		if names[i], err = cleanName(p.Name); err != nil {
+			return nil, nil, err
+		}
+	}
+	return paths, names, nil
+}
+
 // storeSeed adds a phrase to the vault, encrypted with the wallet password,
-// and makes the accounts at paths from it, the first named name and
-// selected. The caller holds w.keyMu.
-func (w *Wallet) storeSeed(entropy []byte, passphrase, name, password string, confirmed bool, paths []wallet.DerivationPath) (string, WalletAccount, error) {
+// and makes the accounts at paths from it, each named by names (in step
+// with paths), the first selected. The caller holds w.keyMu.
+func (w *Wallet) storeSeed(entropy []byte, passphrase string, names []string, password string, confirmed bool, paths []wallet.DerivationPath) (string, WalletAccount, error) {
 	v, err := w.unlockVault(password)
 	if err != nil {
 		return "", WalletAccount{}, err
@@ -363,11 +469,7 @@ func (w *Wallet) storeSeed(entropy []byte, passphrase, name, password string, co
 	var first string
 	next := uint32(0)
 	for i, path := range paths {
-		label := ""
-		if i == 0 {
-			label = name
-		}
-		addr, err := w.deriveAccount(entropy, passphrase, id, path, label, password)
+		addr, err := w.deriveAccount(entropy, passphrase, id, path, names[i], password)
 		if err != nil {
 			if i == 0 {
 				// Without its first account the phrase is of no use: take it out
@@ -469,6 +571,85 @@ func (w *Wallet) DeriveAccount(seedID, name, password string) (WalletAccount, er
 		return w.accountView(addr), nil
 	}
 	return WalletAccount{}, errors.New("wallet: no free account index found")
+}
+
+// AddSeedAccounts makes the accounts picked from a scan of a phrase the
+// wallet holds (ScanWalletSeed), each with its pick's name, skipping those
+// already in the wallet. The
+// first one made is returned; the account selected stays so, as these add
+// to a phrase the user has rather than bring in a new one. The standard
+// index carries on after the picks.
+func (w *Wallet) AddSeedAccounts(seedID, password string, picks []SeedPick) (WalletAccount, error) {
+	if len(picks) == 0 {
+		return WalletAccount{}, errors.New("wallet: no accounts picked")
+	}
+	paths, names, err := pickedPaths(picks)
+	if err != nil {
+		return WalletAccount{}, err
+	}
+	w.keyMu.Lock()
+	defer w.keyMu.Unlock()
+	_, s, _, err := w.seedFor(seedID, password)
+	if err != nil {
+		return WalletAccount{}, err
+	}
+	entropy, pass, err := openSeed(s, password)
+	if err != nil {
+		return WalletAccount{}, err
+	}
+	defer clear(entropy)
+	defer clear(pass)
+
+	w.mu.Lock()
+	next := w.meta.Seeds[seedID].Next
+	selected := w.meta.Selected
+	w.mu.Unlock()
+	// deriveAccount selects each account it makes: the one selected before
+	// stays so (or, with none, the first made), on failure part-way too
+	defer func() {
+		if selected != "" {
+			w.mu.Lock()
+			w.meta.Selected = selected
+			w.mu.Unlock()
+		}
+	}()
+	var first string
+	for i, path := range paths {
+		addr, err := deriveAddress(entropy, string(pass), path)
+		if err != nil {
+			return WalletAccount{}, err
+		}
+		if w.ks.HasAddress(util.HexToAddress(addr)) {
+			continue
+		}
+		if _, err := w.deriveAccount(entropy, string(pass), seedID, path, names[i], password); err != nil {
+			return WalletAccount{}, err
+		}
+		if first == "" {
+			first = addr
+		}
+		if idx, ok := standardIndex(path.String()); ok && idx+1 > next {
+			next = idx + 1
+		}
+	}
+	if first == "" {
+		return WalletAccount{}, ErrAccountsInWallet
+	}
+
+	w.mu.Lock()
+	m := w.meta.Seeds[seedID]
+	m.Next = next
+	w.meta.Seeds[seedID] = m
+	if selected != "" {
+		w.meta.Selected = selected
+	}
+	err = w.saveMeta()
+	w.mu.Unlock()
+	if err != nil {
+		logging.Warn("Failed to save the wallet's labels", "err", err)
+	}
+	logging.Info("Added accounts from a recovery phrase", "account", first, "picked", len(paths))
+	return w.accountView(first), nil
 }
 
 // RevealSeed returns a recovery phrase's words, and its passphrase if it has

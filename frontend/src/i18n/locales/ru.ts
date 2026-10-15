@@ -30,6 +30,7 @@ const ru: Dict = {
   "hello.confirm.cta": "Задать пароль",
 
   // Common
+  "common.skipped": "Пропущено",
   "common.back": "Назад",
   "common.continue": "Продолжить",
   "common.cancel": "Отмена",
@@ -215,6 +216,8 @@ const ru: Dict = {
   "nav.receive": "Получить",
   "nav.accounts": "Аккаунты",
   "nav.manageAccounts": "Управление аккаунтами…",
+  "nav.searchAccounts": "Поиск счетов",
+  "nav.noAccountsFound": "Подходящих счетов нет.",
   "nav.node": "Нода",
   "node.state.stopped": "Офлайн",
   "node.state.syncing": "Синхронизация",
@@ -400,7 +403,6 @@ const ru: Dict = {
   "wallet.password.hide": "Скрыть пароль",
   "wallet.name": "Название",
   "wallet.name.hint": "Видно только в этом приложении.",
-  "wallet.name.placeholder": "Сбережения",
 
   // Wallet: create
   "wallet.create.title": "Создать аккаунт",
@@ -412,6 +414,8 @@ const ru: Dict = {
   "wallet.create.kind.phrase": "Новая фраза восстановления",
   "wallet.create.kind.phraseDesc":
     "12 слов, которые служат резервной копией этого аккаунта и всех, что вы добавите позже. Работают в MetaMask и большинстве других кошельков.",
+  "wallet.create.kind.phraseDescAny":
+    "Фраза из 12 или 24 слов — резервная копия всех счетов, созданных из неё сейчас или позже. Работает в MetaMask и большинстве других кошельков.",
   "wallet.create.kind.key": "Отдельный ключ",
   "wallet.create.kind.keyDesc": "Один аккаунт со своим ключом, резервная копия — зашифрованный файл keystore.",
   "wallet.create.recommended": "Рекомендуется",
@@ -428,6 +432,11 @@ const ru: Dict = {
   "wallet.create.fact1": "Фраза восстановления",
   "wallet.create.fact1Desc":
     "12 слов, созданных здесь из надёжного источника случайных чисел вашей системы. По ним можно восстановить ваши аккаунты в этом или любом совместимом кошельке.",
+  "wallet.create.fact1DescN":
+    "Фраза из {n} слов, созданная здесь из надёжного источника случайных чисел вашей системы. По ней можно восстановить ваши аккаунты в этом или любом совместимом кошельке.",
+  "wallet.create.words24": "Использовать 24 слова",
+  "wallet.create.words24Desc":
+    "256 бит, как делают Ledger и Trezor. Вдвое больше записывать, а 12 слов уже далеко за пределами подбора. Оба варианта работают в MetaMask и других кошельках.",
   "wallet.create.fact2": "Защищён вашим паролем",
   "wallet.create.fact2Desc":
     "Фраза и ключ вашего аккаунта шифруются паролем, который вы выберете на следующей странице.",
@@ -444,7 +453,7 @@ const ru: Dict = {
   "wallet.create.cta": "Создать аккаунт",
   "wallet.create.detailsTitle": "Данные аккаунта",
   "wallet.derive.title": "Новый аккаунт",
-  "wallet.derive.cta": "Добавить аккаунт",
+  "wallet.derive.cta": "Новый счёт из этой фразы",
   "wallet.derive.which": "Фраза восстановления",
   "wallet.derive.desc":
     "Он создаётся из фразы восстановления, которая уже служит его резервной копией: отдельная резервная копия не нужна.",
@@ -452,6 +461,7 @@ const ru: Dict = {
   "wallet.created.later": "Сделаю позже",
   "wallet.created.savedDesc": "Храните файл и пароль в надёжном месте и раздельно.",
   "wallet.created.open": "Перейти в кошелёк",
+  "wallet.create.step.type": "Тип",
   "wallet.create.step.intro": "Как это работает",
   "wallet.create.step.details": "Данные",
   "wallet.create.step.phrase": "Фраза",
@@ -537,13 +547,34 @@ const ru: Dict = {
   "wallet.remove.confirm": "Я понимаю и у меня есть резервная копия, либо на аккаунте ничего нет.",
 
   // Wallet: accounts
-  "wallet.accounts.create": "Создать",
-  "wallet.accounts.import": "Импортировать",
   "wallet.accounts.empty": "Аккаунтов пока нет.",
+  "wallet.accounts.add": "Добавить счета",
+  "wallet.accounts.createTitle": "Создать счета",
+  "wallet.accounts.importTitle": "Импортировать счета",
+  "wallet.accounts.addDesc":
+    "Фраза восстановления служит резервной копией для всех созданных из неё счетов; у отдельного ключа своя резервная копия.",
+  "wallet.accounts.phrases": "Фразы восстановления",
+  "wallet.accounts.keys": "Отдельные ключи",
+  "wallet.add.importPhrase": "Импортировать фразу восстановления",
+  "wallet.add.newKey": "Новый отдельный ключ",
+  "wallet.add.importKey": "Импортировать ключ",
+  "wallet.add.importKeyDesc": "Из файла keystore или вводом закрытого ключа.",
+  "wallet.add.watch": "Отслеживать адрес",
+  "wallet.add.watchDesc":
+    "Добавляется только адрес: ключ остаётся на офлайн-подписанте, который подписывает то, что вы с него отправляете.",
+  "wallet.find.cta": "Найти счета",
+  "wallet.find.desc":
+    "В «{name}» может быть больше счетов, чем показывает кошелёк: созданных в другом кошельке или по другому пути. Пароль кошелька открывает фразу, чтобы найти их.",
+  "wallet.find.pathGroup": "Путь",
+  "wallet.find.pathDesc":
+    "Кошельки хранят счета фразы по разным путям. Ищите по тому, что использовал другой кошелёк: MetaMask, Trezor и большинство кошельков используют стандартный.",
+  "wallet.find.path": "Путь деривации",
+  "wallet.find.accountsGroup": "Счета",
+  "wallet.find.accountsDesc": "Уже использованные счета выбраны; счета, которые есть в кошельке, отмечены.",
+  "wallet.err.accountsInWallet": "Выбранные счета уже есть в кошельке.",
   "wallet.accounts.show": "Показать {name}",
   "wallet.accounts.rename": "Переименовать",
   "wallet.accounts.noBackup": "Нет резервной копии",
-  "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "Хранилище",
   "wallet.accounts.storageDesc":
     "Ключи хранятся в этой папке, все зашифрованы паролем кошелька. Узел их никогда не видит, и ничто, подключённое к его RPC, не может ими воспользоваться.",

@@ -30,6 +30,7 @@ const de: Dict = {
   "hello.confirm.cta": "Passwort festlegen",
 
   // Common
+  "common.skipped": "Übersprungen",
   "common.back": "Zurück",
   "common.continue": "Weiter",
   "common.cancel": "Abbrechen",
@@ -215,6 +216,8 @@ const de: Dict = {
   "nav.receive": "Empfangen",
   "nav.accounts": "Konten",
   "nav.manageAccounts": "Konten verwalten…",
+  "nav.searchAccounts": "Konten durchsuchen",
+  "nav.noAccountsFound": "Keine passenden Konten.",
   "nav.node": "Node",
   "node.state.stopped": "Offline",
   "node.state.syncing": "Synchronisiert",
@@ -405,7 +408,6 @@ const de: Dict = {
   "wallet.password.hide": "Passwort verbergen",
   "wallet.name": "Name",
   "wallet.name.hint": "Wird nur in dieser App angezeigt.",
-  "wallet.name.placeholder": "Ersparnisse",
 
   // Wallet: create
   "wallet.create.title": "Konto erstellen",
@@ -417,6 +419,8 @@ const de: Dict = {
   "wallet.create.kind.phrase": "Neue Wiederherstellungsphrase",
   "wallet.create.kind.phraseDesc":
     "12 Wörter, die dieses Konto und alle später hinzugefügten sichern. Sie funktionieren in MetaMask und den meisten anderen Wallets.",
+  "wallet.create.kind.phraseDescAny":
+    "12 oder 24 Wörter, die jedes daraus erstellte Konto sichern, jetzt oder später. Sie funktionieren in MetaMask und den meisten anderen Wallets.",
   "wallet.create.kind.key": "Einzelner Schlüssel",
   "wallet.create.kind.keyDesc": "Ein Konto mit eigenem Schlüssel, gesichert als verschlüsselte Keystore-Datei.",
   "wallet.create.recommended": "Empfohlen",
@@ -434,6 +438,11 @@ const de: Dict = {
   "wallet.create.fact1": "Eine Wiederherstellungsphrase",
   "wallet.create.fact1Desc":
     "12 Wörter, hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihnen stellen Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wieder her.",
+  "wallet.create.fact1DescN":
+    "{n} Wörter, hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihnen stellen Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wieder her.",
+  "wallet.create.words24": "Stattdessen 24 Wörter verwenden",
+  "wallet.create.words24Desc":
+    "256 Bit, wie Ledger und Trezor sie erzeugen. Doppelt so viel zum Aufschreiben, und schon 12 Wörter sind weit jenseits des Erratbaren. Beide funktionieren in MetaMask und anderen Wallets.",
   "wallet.create.fact2": "Mit Ihrem Passwort gesperrt",
   "wallet.create.fact2Desc":
     "Die Phrase und der Schlüssel Ihres Kontos werden mit dem Passwort verschlüsselt, das Sie auf der nächsten Seite wählen.",
@@ -451,7 +460,7 @@ const de: Dict = {
   "wallet.create.cta": "Konto erstellen",
   "wallet.create.detailsTitle": "Kontodetails",
   "wallet.derive.title": "Neues Konto",
-  "wallet.derive.cta": "Konto hinzufügen",
+  "wallet.derive.cta": "Neues Konto aus dieser Phrase",
   "wallet.derive.which": "Wiederherstellungsphrase",
   "wallet.derive.desc":
     "Es wird aus der Wiederherstellungsphrase abgeleitet, die es bereits sichert: Eine separate Sicherung ist nicht nötig.",
@@ -459,6 +468,7 @@ const de: Dict = {
   "wallet.created.later": "Später erledigen",
   "wallet.created.savedDesc": "Bewahren Sie Datei und Passwort sicher und getrennt auf.",
   "wallet.created.open": "Zur Wallet",
+  "wallet.create.step.type": "Art",
   "wallet.create.step.intro": "So funktioniert's",
   "wallet.create.step.details": "Details",
   "wallet.create.step.phrase": "Phrase",
@@ -546,13 +556,34 @@ const de: Dict = {
   "wallet.remove.confirm": "Ich habe verstanden und besitze eine Sicherung, oder das Konto enthält nichts.",
 
   // Wallet: accounts
-  "wallet.accounts.create": "Erstellen",
-  "wallet.accounts.import": "Importieren",
   "wallet.accounts.empty": "Noch keine Konten.",
+  "wallet.accounts.add": "Konten hinzufügen",
+  "wallet.accounts.createTitle": "Konten erstellen",
+  "wallet.accounts.importTitle": "Konten importieren",
+  "wallet.accounts.addDesc":
+    "Eine Wiederherstellungsphrase sichert jedes daraus erstellte Konto; ein einzelner Schlüssel hat eine eigene Sicherung.",
+  "wallet.accounts.phrases": "Wiederherstellungsphrasen",
+  "wallet.accounts.keys": "Einzelne Schlüssel",
+  "wallet.add.importPhrase": "Wiederherstellungsphrase importieren",
+  "wallet.add.newKey": "Neuer einzelner Schlüssel",
+  "wallet.add.importKey": "Schlüssel importieren",
+  "wallet.add.importKeyDesc": "Aus einer Keystore-Datei oder durch Eingabe des privaten Schlüssels.",
+  "wallet.add.watch": "Adresse beobachten",
+  "wallet.add.watchDesc":
+    "Nur die Adresse kommt herein: Der Schlüssel bleibt auf dem Offline-Signierer, der signiert, was Sie davon senden.",
+  "wallet.find.cta": "Konten finden",
+  "wallet.find.desc":
+    "{name} kann mehr Konten enthalten, als die Wallet zeigt: in einer anderen Wallet oder entlang eines anderen Pfads erstellt. Das Wallet-Passwort öffnet sie, um danach zu suchen.",
+  "wallet.find.pathGroup": "Pfad",
+  "wallet.find.pathDesc":
+    "Wallets legen die Konten einer Phrase entlang verschiedener Pfade ab. Suchen Sie entlang des Pfads, den die andere Wallet verwendet hat: MetaMask, Trezor und die meisten Wallets nutzen Standard.",
+  "wallet.find.path": "Ableitungspfad",
+  "wallet.find.accountsGroup": "Konten",
+  "wallet.find.accountsDesc": "Bereits verwendete Konten sind ausgewählt; Konten in der Wallet sind abgehakt.",
+  "wallet.err.accountsInWallet": "Die gewählten Konten sind bereits in der Wallet.",
   "wallet.accounts.show": "{name} anzeigen",
   "wallet.accounts.rename": "Umbenennen",
   "wallet.accounts.noBackup": "Keine Sicherung",
-  "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "Speicherort",
   "wallet.accounts.storageDesc":
     "Die Schlüssel liegen in diesem Ordner, alle mit Ihrem Wallet-Passwort verschlüsselt. Der Node sieht sie nie, und nichts, was sich mit seinem RPC verbindet, kann sie verwenden.",

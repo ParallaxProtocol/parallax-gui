@@ -8,6 +8,7 @@ import { api, walletError } from "../../lib/api";
 import { Checkbox, MIN_PASSWORD, PasswordInput } from "./common";
 import { Part, StepFooter, StepPanel } from "./flow";
 import { IconBadge } from "../../components/ui/IconBadge";
+import { rate, useDefaultName, type Strength } from "./accountActions";
 
 /**
  * CreateIntro opens the making of an account: what is about to happen, on
@@ -160,6 +161,7 @@ export function DetailsStep({
   onSubmit: (name: string, password: string, passphrase: string) => void;
 }) {
   const t = useT();
+  const defaultName = useDefaultName();
   const nameId = useId();
   const passId = useId();
   const [name, setName] = useState("");
@@ -182,7 +184,7 @@ export function DetailsStep({
           value={name}
           maxLength={64}
           onChange={(e) => setName(e.target.value)}
-          placeholder={t("wallet.name.placeholder")}
+          placeholder={defaultName}
           spellCheck={false}
           autoFocus
         />
@@ -346,22 +348,6 @@ export function Requirement({ met, label }: { met: boolean; label: string }) {
       {label}
     </li>
   );
-}
-
-export type Strength = 0 | 1 | 2 | 3 | 4;
-
-/**
- * rate gives a rough strength for a password, 0 (too short) to 4: length
- * counts most, with a step for mixing kinds of character. It only guides;
- * the backend's rule is the minimum length.
- */
-export function rate(p: string): Strength {
-  const n = [...p].length;
-  if (n < MIN_PASSWORD) return 0;
-  const kinds = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((r) => r.test(p)).length;
-  let s = n >= 20 ? 3 : n >= 14 ? 2 : 1;
-  if (kinds >= 3 || /\s\S+\s/.test(p)) s += 1;
-  return Math.min(4, s) as Strength;
 }
 
 const STRENGTH: Record<Strength, { key: string; color: string }> = {

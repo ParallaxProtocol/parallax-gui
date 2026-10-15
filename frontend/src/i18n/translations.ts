@@ -48,6 +48,7 @@ export const en: Dict = {
   "hello.confirm.cta": "Set password",
 
   // Common
+  "common.skipped": "Skipped",
   "common.back": "Back",
   "common.continue": "Continue",
   "common.cancel": "Cancel",
@@ -234,6 +235,8 @@ export const en: Dict = {
   "nav.verifyMessage": "Verify message",
   "nav.accounts": "Accounts",
   "nav.manageAccounts": "Manage accounts…",
+  "nav.searchAccounts": "Search accounts",
+  "nav.noAccountsFound": "No accounts match.",
   "nav.node": "Node",
   "node.state.stopped": "Offline",
   "node.state.syncing": "Syncing",
@@ -512,7 +515,6 @@ export const en: Dict = {
     "A later request from this account waits on this one's nonce. Cancel this one with a replacement instead, or the later one will never confirm.",
   "offline.pending.discardCta": "Discard",
   "offline.watch.title": "Add a watch-only account",
-  "offline.watch.add": "Add a watch-only account",
   "offline.watch.welcome": "Or follow an account kept on an offline signer",
   "offline.watch.desc":
     "Follow an account whose key is on an offline signer. This wallet shows its balance and activity, and sends from it by signing request.",
@@ -520,6 +522,9 @@ export const en: Dict = {
     "On the signer, open Signer › Show for watch-only and scan the code, or type the address.",
   "offline.watch.scan": "Scan",
   "offline.watch.scanHint": "Hold the signer's address QR code up to the camera.",
+  "offline.watch.scanDenied":
+    "The camera isn't allowed. Allow it in your system settings, or type or paste the address instead.",
+  "offline.watch.scanNone": "No camera found. Type or paste the address instead.",
   "offline.watch.cta": "Add account",
   "offline.watch.removeTitle": "Remove watch-only account",
   "offline.watch.removeDesc": "This wallet stops following it. Its key stays safe on the offline signer.",
@@ -703,7 +708,6 @@ export const en: Dict = {
   "wallet.password.hide": "Hide password",
   "wallet.name": "Name",
   "wallet.name.hint": "Only shown in this app.",
-  "wallet.name.placeholder": "Savings",
 
   // Wallet: create
   "wallet.create.title": "Create an account",
@@ -715,6 +719,8 @@ export const en: Dict = {
   "wallet.create.kind.phrase": "New recovery phrase",
   "wallet.create.kind.phraseDesc":
     "12 words that back up this account and any you add later. They work in MetaMask and most other wallets.",
+  "wallet.create.kind.phraseDescAny":
+    "12 or 24 words that back up every account made from them, now or later. They work in MetaMask and most other wallets.",
   "wallet.create.kind.key": "Single key",
   "wallet.create.kind.keyDesc": "One account with a key of its own, backed up as an encrypted keystore file.",
   "wallet.create.recommended": "Recommended",
@@ -730,6 +736,11 @@ export const en: Dict = {
   "wallet.create.fact1": "A recovery phrase",
   "wallet.create.fact1Desc":
     "12 words, generated here from your system's secure random source. They restore your accounts in this or any compatible wallet.",
+  "wallet.create.fact1DescN":
+    "{n} words, generated here from your system's secure random source. They restore your accounts in this or any compatible wallet.",
+  "wallet.create.words24": "Use 24 words instead",
+  "wallet.create.words24Desc":
+    "256 bits, as Ledger and Trezor make. Twice as much to write down, and 12 words are already far beyond guessing. Both work in MetaMask and other wallets.",
   "wallet.create.fact2": "Locked with your password",
   "wallet.create.fact2Desc":
     "The phrase and your account's key are encrypted with the password you choose on the next page.",
@@ -746,13 +757,14 @@ export const en: Dict = {
   "wallet.create.cta": "Create account",
   "wallet.create.detailsTitle": "Account details",
   "wallet.derive.title": "New account",
-  "wallet.derive.cta": "Add account",
+  "wallet.derive.cta": "New account from this phrase",
   "wallet.derive.which": "Recovery phrase",
   "wallet.derive.desc": "It comes from the recovery phrase, which already backs it up: no separate backup needed.",
   "wallet.create.busy": "Creating…",
   "wallet.created.later": "I'll do it later",
   "wallet.created.savedDesc": "Keep the file and the password safe, and apart.",
   "wallet.created.open": "Go to wallet",
+  "wallet.create.step.type": "Type",
   "wallet.create.step.intro": "How it works",
   "wallet.create.step.details": "Details",
   "wallet.create.step.phrase": "Phrase",
@@ -837,13 +849,34 @@ export const en: Dict = {
   "wallet.remove.confirm": "I understand and have a backup, or the account holds nothing.",
 
   // Wallet: accounts
-  "wallet.accounts.create": "Create",
-  "wallet.accounts.import": "Import",
   "wallet.accounts.empty": "No accounts yet.",
+  "wallet.accounts.add": "Add accounts",
+  "wallet.accounts.createTitle": "Create accounts",
+  "wallet.accounts.importTitle": "Import accounts",
+  "wallet.accounts.addDesc":
+    "A recovery phrase backs up every account made from it; a single key has a backup of its own.",
+  "wallet.accounts.phrases": "Recovery phrases",
+  "wallet.accounts.keys": "Single keys",
+  "wallet.add.importPhrase": "Import a recovery phrase",
+  "wallet.add.newKey": "New single key",
+  "wallet.add.importKey": "Import a key",
+  "wallet.add.importKeyDesc": "From a keystore file, or its private key typed in.",
+  "wallet.add.watch": "Watch an address",
+  "wallet.add.watchDesc":
+    "Only its address comes in: the key stays on the offline signer, which signs what you send from it.",
+  "wallet.find.cta": "Find accounts",
+  "wallet.find.desc":
+    "{name} may hold more accounts than the wallet shows: made in another wallet, or along another path. The wallet password opens it to look for them.",
+  "wallet.find.pathGroup": "Path",
+  "wallet.find.pathDesc":
+    "Wallets keep a phrase's accounts along different paths. Look along the one the other wallet used: MetaMask, Trezor and most wallets use Standard.",
+  "wallet.find.path": "Derivation path",
+  "wallet.find.accountsGroup": "Accounts",
+  "wallet.find.accountsDesc": "Those that have been used are already selected; those in the wallet are ticked off.",
+  "wallet.err.accountsInWallet": "The accounts picked are already in the wallet.",
   "wallet.accounts.show": "Show {name}",
   "wallet.accounts.rename": "Rename",
   "wallet.accounts.noBackup": "No backup",
-  "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "Storage",
   "wallet.accounts.storageDesc":
     "The keys are kept in this folder, all encrypted with your wallet password. The node never sees them, and nothing that connects to its RPC can use them.",

@@ -30,6 +30,7 @@ const ptBR: Dict = {
   "hello.confirm.cta": "Definir senha",
 
   // Common
+  "common.skipped": "Pulada",
   "common.back": "Voltar",
   "common.continue": "Continuar",
   "common.cancel": "Cancelar",
@@ -215,6 +216,8 @@ const ptBR: Dict = {
   "nav.receive": "Receber",
   "nav.accounts": "Contas",
   "nav.manageAccounts": "Gerenciar contas…",
+  "nav.searchAccounts": "Pesquisar contas",
+  "nav.noAccountsFound": "Nenhuma conta corresponde.",
   "nav.node": "Nó",
   "node.state.stopped": "Offline",
   "node.state.syncing": "Sincronizando",
@@ -401,7 +404,6 @@ const ptBR: Dict = {
   "wallet.password.hide": "Ocultar senha",
   "wallet.name": "Nome",
   "wallet.name.hint": "Exibido apenas neste app.",
-  "wallet.name.placeholder": "Poupança",
 
   // Wallet: create
   "wallet.create.title": "Criar uma conta",
@@ -413,6 +415,8 @@ const ptBR: Dict = {
   "wallet.create.kind.phrase": "Nova frase de recuperação",
   "wallet.create.kind.phraseDesc":
     "12 palavras que fazem o backup desta conta e de todas que você adicionar depois. Funcionam no MetaMask e na maioria das outras carteiras.",
+  "wallet.create.kind.phraseDescAny":
+    "12 ou 24 palavras que fazem o backup de todas as contas criadas a partir delas, agora ou depois. Funcionam no MetaMask e na maioria das outras carteiras.",
   "wallet.create.kind.key": "Chave única",
   "wallet.create.kind.keyDesc": "Uma conta com chave própria, com backup em um arquivo keystore criptografado.",
   "wallet.create.recommended": "Recomendado",
@@ -429,6 +433,11 @@ const ptBR: Dict = {
   "wallet.create.fact1": "Uma frase de recuperação",
   "wallet.create.fact1Desc":
     "12 palavras, geradas aqui a partir da fonte aleatória segura do seu sistema. Elas restauram suas contas nesta ou em qualquer carteira compatível.",
+  "wallet.create.fact1DescN":
+    "{n} palavras, geradas aqui a partir da fonte aleatória segura do seu sistema. Elas restauram suas contas nesta ou em qualquer carteira compatível.",
+  "wallet.create.words24": "Usar 24 palavras",
+  "wallet.create.words24Desc":
+    "256 bits, como Ledger e Trezor geram. O dobro para anotar, e 12 palavras já estão muito além de qualquer adivinhação. Ambas funcionam no MetaMask e em outras carteiras.",
   "wallet.create.fact2": "Protegida pela sua senha",
   "wallet.create.fact2Desc":
     "A frase e a chave da sua conta são criptografadas com a senha que você escolher na próxima página.",
@@ -445,7 +454,7 @@ const ptBR: Dict = {
   "wallet.create.cta": "Criar conta",
   "wallet.create.detailsTitle": "Detalhes da conta",
   "wallet.derive.title": "Nova conta",
-  "wallet.derive.cta": "Adicionar conta",
+  "wallet.derive.cta": "Nova conta desta frase",
   "wallet.derive.which": "Frase de recuperação",
   "wallet.derive.desc":
     "Ela vem da frase de recuperação, que já serve de backup para ela: não é preciso um backup separado.",
@@ -453,6 +462,7 @@ const ptBR: Dict = {
   "wallet.created.later": "Fazer depois",
   "wallet.created.savedDesc": "Guarde o arquivo e a senha em segurança, e separados.",
   "wallet.created.open": "Ir para a carteira",
+  "wallet.create.step.type": "Tipo",
   "wallet.create.step.intro": "Como funciona",
   "wallet.create.step.details": "Detalhes",
   "wallet.create.step.phrase": "Frase",
@@ -538,13 +548,35 @@ const ptBR: Dict = {
   "wallet.remove.confirm": "Entendo e tenho um backup, ou a conta não tem nada.",
 
   // Wallet: accounts
-  "wallet.accounts.create": "Criar",
-  "wallet.accounts.import": "Importar",
   "wallet.accounts.empty": "Nenhuma conta ainda.",
+  "wallet.accounts.add": "Adicionar contas",
+  "wallet.accounts.createTitle": "Criar contas",
+  "wallet.accounts.importTitle": "Importar contas",
+  "wallet.accounts.addDesc":
+    "Uma frase de recuperação faz o backup de todas as contas criadas a partir dela; uma chave única tem um backup próprio.",
+  "wallet.accounts.phrases": "Frases de recuperação",
+  "wallet.accounts.keys": "Chaves únicas",
+  "wallet.add.importPhrase": "Importar uma frase de recuperação",
+  "wallet.add.newKey": "Nova chave única",
+  "wallet.add.importKey": "Importar uma chave",
+  "wallet.add.importKeyDesc": "De um arquivo keystore, ou digitando a chave privada.",
+  "wallet.add.watch": "Observar um endereço",
+  "wallet.add.watchDesc":
+    "Só o endereço é trazido: a chave fica no assinador offline, que assina o que você envia a partir dela.",
+  "wallet.find.cta": "Encontrar contas",
+  "wallet.find.desc":
+    "{name} pode ter mais contas do que a carteira mostra: criadas em outra carteira ou em outro caminho. A senha da carteira a abre para procurá-las.",
+  "wallet.find.pathGroup": "Caminho",
+  "wallet.find.pathDesc":
+    "As carteiras guardam as contas de uma frase em caminhos diferentes. Procure no que a outra carteira usou: MetaMask, Trezor e a maioria das carteiras usam o Padrão.",
+  "wallet.find.path": "Caminho de derivação",
+  "wallet.find.accountsGroup": "Contas",
+  "wallet.find.accountsDesc":
+    "As que já foram usadas estão selecionadas; as que já estão na carteira aparecem marcadas.",
+  "wallet.err.accountsInWallet": "As contas escolhidas já estão na carteira.",
   "wallet.accounts.show": "Mostrar {name}",
   "wallet.accounts.rename": "Renomear",
   "wallet.accounts.noBackup": "Sem backup",
-  "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "Armazenamento",
   "wallet.accounts.storageDesc":
     "As chaves ficam nesta pasta, todas criptografadas com a senha da sua carteira. O nó nunca as vê, e nada que se conecte ao RPC dele pode usá-las.",

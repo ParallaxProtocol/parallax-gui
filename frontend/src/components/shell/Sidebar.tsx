@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -10,6 +10,7 @@ import {
   FileSignature,
   PenLine,
   Radio,
+  Search,
   ShieldCheck,
   Sparkles,
   Wallet,
@@ -18,7 +19,7 @@ import { useOfflineMode } from "../../lib/offline";
 import { SIDEBAR_RAIL, SIDEBAR_RAIL_MAC, SIDEBAR_WIDTH, useSidebar } from "../../lib/sidebar";
 import { api } from "../../lib/api";
 import { FADE_IN, FADE_OUT, GLIDE, ROW_IN, SPRING, useStagger } from "../../lib/motion";
-import { accountLabel, useBalances, useWallet } from "../../lib/wallet";
+import { accountLabel, groupAccounts, useBalances, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import logo from "../../assets/logo.svg";
 import { NODE_BAR_ROOM } from "./NodeBar";
@@ -35,6 +36,10 @@ const RAIL = MAC ? SIDEBAR_RAIL_MAC : SIDEBAR_RAIL;
 const RAIL_ITEM = 40;
 /** The account card's width open: the sidebar's, less the items' padding. */
 const CARD_WIDTH = SIDEBAR_WIDTH - 24;
+/** The switcher's list: wider than the card, for names and balances side by side. */
+const LIST_WIDTH = 300;
+/** From how many accounts the list can be searched. */
+const SEARCH_FROM = 7;
 /** What fades as the sidebar collapses goes quickly; what comes back waits for the room. */
 const fade = (shown: boolean) => ({
   opacity: shown ? 1 : 0,
@@ -154,6 +159,7 @@ function AccountSwitcher() {
   // An offline signer has no chain to read balances from
   const offline = useOfflineMode();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const box = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
   const stagger = useStagger();
@@ -161,6 +167,10 @@ function AccountSwitcher() {
 
   // Another page closes it, however it was reached
   useEffect(() => setOpen(false), [pathname]);
+  // Each opening starts from the whole list
+  useEffect(() => {
+    if (!open) setQuery("");
+  }, [open]);
 
   // A press anywhere else closes it, heard before the page can swallow it;
   // so does the window losing focus (a press on another window or the
@@ -196,6 +206,18 @@ function AccountSwitcher() {
 
   if (!info || !account) return null;
   const accounts = info.accounts;
+  // Grouped as Settings shows them, the empty groups left out; searched by
+  // name or address once there are enough to need it
+  const searchable = accounts.length >= SEARCH_FROM;
+  const q = query.trim().toLowerCase();
+  const shown = groupAccounts(info)
+    .map((g) => ({
+      ...g,
+      accounts: g.accounts.filter(
+        (a) => !q || accountLabel(a, accounts, t).toLowerCase().includes(q) || a.address.toLowerCase().includes(q),
+      ),
+    }))
+    .filter((g) => g.accounts.length > 0);
 
   const name = accountLabel(account, accounts, t);
 
@@ -332,59 +354,95 @@ function AccountSwitcher() {
             role="listbox"
             aria-label={t("nav.accounts")}
             className={`menu absolute z-50 flex flex-col gap-px p-1.5 ${
-              // From the card, as wide as it; from the rail's avatar, beside it at the card's width
-              collapsed ? "top-0 left-full ml-2 origin-top-left" : "inset-x-0 top-full mt-1.5 origin-top"
+              // From the card, under it and reaching past the sidebar for names and
+              // balances; from the rail's avatar, beside it
+              collapsed ? "top-0 left-full ml-2 origin-top-left" : "top-full left-0 mt-1.5 origin-top-left"
             }`}
-            style={collapsed ? { width: CARD_WIDTH } : undefined}
+            style={{ width: LIST_WIDTH }}
             initial={{ opacity: 0, scale: 0.96, y: -4 }}
             animate={{ opacity: 1, scale: 1, y: 0, transition: SPRING }}
             exit={{ opacity: 0, scale: 0.98, transition: FADE_OUT }}
           >
-            <motion.div className="flex max-h-96 flex-col gap-px overflow-y-auto" {...stagger}>
-              {accounts.map((a) => {
-                const here = a.address === account.address;
-                return (
-                  <motion.button
-                    key={a.address}
-                    type="button"
-                    role="option"
-                    aria-selected={here}
+            {searchable && (
+              <div className="px-1 pt-0.5 pb-1.5">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    className="input h-8 pl-8"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t("nav.searchAccounts")}
+                    aria-label={t("nav.searchAccounts")}
+                    spellCheck={false}
+                    autoComplete="off"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+            {/* As tall as the window leaves room for under the card, scrolling past that */}
+            <motion.div
+              className="flex max-h-[calc(100dvh-22rem)] min-h-0 flex-col gap-px overflow-y-auto overscroll-contain"
+              {...stagger}
+            >
+              {shown.length === 0 && (
+                <p className="px-2.5 py-6 text-center text-sm text-muted-foreground">{t("nav.noAccountsFound")}</p>
+              )}
+              {shown.map((g) => (
+                <Fragment key={g.kind === "phrase" ? g.seed.id : g.kind}>
+                  {/* What keeps the accounts under it, a hairline above it parting it
+                      from the group before, on the list's own glass */}
+                  <motion.div
                     variants={ROW_IN}
-                    onClick={() => choose(a.address)}
-                    className="menu-item relative gap-2.5 py-2"
+                    className="mt-1.5 truncate border-t border-border px-2.5 pt-3 pb-1.5 font-semibold text-foreground first:mt-0 first:border-t-0 first:pt-1.5"
                   >
-                    {/* The chosen account is lit as the sidebar's page is, and the light glides to a new choice */}
-                    {here && (
-                      <motion.span
-                        layoutId="switcher-selection"
-                        transition={GLIDE}
-                        className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
-                      />
-                    )}
-                    <span className="relative">
-                      <AddressAvatar address={a.address} size={28} />
-                    </span>
-                    <span className="relative min-w-0 flex-1">
-                      <span className="flex min-w-0 items-baseline gap-2">
-                        <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                          <span className={`truncate ${here ? "font-medium" : ""}`}>
-                            {accountLabel(a, accounts, t)}
-                          </span>
-                          {a.watchOnly && <WatchOnlyBadge />}
-                        </span>
-                        {!offline && (
-                          <span className="shrink-0 text-xs tabular-nums">
-                            <Balance wei={balances[a.address]} />
-                          </span>
+                    {g.kind === "phrase"
+                      ? g.seed.name
+                      : g.kind === "keys"
+                        ? t("wallet.accounts.keys")
+                        : t("offline.watchOnly")}
+                  </motion.div>
+                  {g.accounts.map((a) => {
+                    const here = a.address === account.address;
+                    return (
+                      <motion.button
+                        key={a.address}
+                        type="button"
+                        role="option"
+                        aria-selected={here}
+                        variants={ROW_IN}
+                        onClick={() => choose(a.address)}
+                        className="menu-item relative gap-2.5 py-1.5"
+                      >
+                        {/* The chosen account is lit as the sidebar's page is, and the light glides to a new choice */}
+                        {here && (
+                          <motion.span
+                            layoutId="switcher-selection"
+                            transition={GLIDE}
+                            className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
+                          />
                         )}
-                      </span>
-                      <span className="flex">
-                        <ShortAddress address={a.address} />
-                      </span>
-                    </span>
-                  </motion.button>
-                );
-              })}
+                        <span className="relative flex">
+                          <AddressAvatar address={a.address} size={24} />
+                        </span>
+                        <span className="relative flex min-w-0 flex-1 flex-col">
+                          <span className="flex min-w-0 items-baseline gap-2">
+                            <span className={`min-w-0 flex-1 truncate ${here ? "font-medium" : ""}`}>
+                              {accountLabel(a, accounts, t)}
+                            </span>
+                            {!offline && (
+                              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                                <Balance wei={balances[a.address]} />
+                              </span>
+                            )}
+                          </span>
+                          <ShortAddress address={a.address} />
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </Fragment>
+              ))}
             </motion.div>
             <div className="my-0.5 border-t border-border" />
             <button

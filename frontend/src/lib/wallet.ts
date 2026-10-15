@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { api, type WalletAccount, type WalletInfo } from "./api";
+import { api, type SeedInfo, type WalletAccount, type WalletInfo } from "./api";
 import { useNode } from "./live";
 
 // The wallet's accounts, read through these hooks; WalletProvider.tsx
@@ -33,6 +33,36 @@ export function accountLabel(
   if (a.name) return a.name;
   const i = accounts.findIndex((x) => x.address === a.address);
   return t("wallet.account.default", { n: i + 1 });
+}
+
+/**
+ * AccountGroup is the wallet's accounts gathered by what keeps their keys:
+ * each recovery phrase (with none yet, if all were removed), single keys,
+ * and watch-only accounts, whose keys are on an offline signer.
+ */
+export type AccountGroup =
+  | { kind: "phrase"; seed: SeedInfo; accounts: WalletAccount[] }
+  | { kind: "keys" | "watch"; accounts: WalletAccount[] };
+
+/**
+ * groupAccounts gathers the accounts as Settings and the account switcher
+ * show them: the phrases in the order they were added, then single keys,
+ * then watch-only accounts, each in the wallet's order. An account whose
+ * phrase is gone from the vault (another tool) counts as a single key, as
+ * it is one now.
+ */
+export function groupAccounts(info: WalletInfo): AccountGroup[] {
+  const seedIds = new Set(info.seeds.map((s) => s.id));
+  const ofPhrase = (a: WalletAccount) => a.fromSeed && seedIds.has(a.seedId);
+  return [
+    ...info.seeds.map((seed) => ({
+      kind: "phrase" as const,
+      seed,
+      accounts: info.accounts.filter((a) => a.fromSeed && a.seedId === seed.id),
+    })),
+    { kind: "keys" as const, accounts: info.accounts.filter((a) => !a.watchOnly && !ofPhrase(a)) },
+    { kind: "watch" as const, accounts: info.accounts.filter((a) => a.watchOnly) },
+  ];
 }
 
 /**

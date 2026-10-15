@@ -11,7 +11,7 @@ import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { Modal, ModalForm } from "../../components/ui/Modal";
 import { QRScanner } from "../../components/offline/QRScanner";
 import { NameField } from "./AccountForms";
-import { useBusy } from "./accountActions";
+import { useBusy, useDefaultName } from "./accountActions";
 import { Field } from "./common";
 import { FlowPage, Part, StepFooter, StepPanel } from "./flow";
 
@@ -23,6 +23,7 @@ import { FlowPage, Part, StepFooter, StepPanel } from "./flow";
  */
 export function AddWatchOnlyPage() {
   const t = useT();
+  const defaultName = useDefaultName();
   const navigate = useNavigate();
   const wallet = useWallet();
   const [name, setName] = useState("");
@@ -37,7 +38,7 @@ export function AddWatchOnlyPage() {
       <StepPanel
         onSubmit={async () => {
           if (!ok || busy) return;
-          const acc = await run(() => api.walletAddWatchOnly(name, addr));
+          const acc = await run(() => api.walletAddWatchOnly(name.trim() || defaultName, addr));
           if (acc) {
             await wallet.refresh();
             navigate("/", { replace: true });

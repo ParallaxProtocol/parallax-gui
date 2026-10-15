@@ -433,6 +433,26 @@ func (a *App) WalletCreateSeed(name, password, passphrase string) (backend.SeedP
 	return w.CreateSeed(name, password, passphrase)
 }
 
+// WalletNewSeedWords makes the words of a new recovery phrase, 12 or 24,
+// storing nothing until WalletCreateSeedWords.
+func (a *App) WalletNewSeedWords(count int) ([]string, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return nil, err
+	}
+	return w.NewSeedWords(count)
+}
+
+// WalletCreateSeedWords stores a recovery phrase WalletNewSeedWords made,
+// with its passphrase if any, and makes its first account.
+func (a *App) WalletCreateSeedWords(name, words, passphrase, password string, confirmed bool) (backend.WalletAccount, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletAccount{}, err
+	}
+	return w.CreateSeedWords(name, words, passphrase, password, confirmed)
+}
+
 // WalletScanSeed lists accounts a recovery phrase holds under a derivation
 // scheme, with their balances, for the user to choose from. Nothing is
 // stored.
@@ -452,6 +472,27 @@ func (a *App) WalletImportSeed(name, words, passphrase, password string, picks [
 		return backend.WalletAccount{}, err
 	}
 	return w.ImportSeed(name, words, passphrase, password, picks)
+}
+
+// WalletScanWalletSeed lists accounts a recovery phrase the wallet holds
+// has under a derivation scheme, with their balances, for the user to
+// choose from. Nothing is stored.
+func (a *App) WalletScanWalletSeed(seedID, password, scheme string, from, count uint32) ([]backend.SeedCandidate, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return nil, err
+	}
+	return w.ScanWalletSeed(seedID, password, scheme, from, count)
+}
+
+// WalletAddSeedAccounts makes the accounts picked from a scan of a
+// recovery phrase the wallet holds.
+func (a *App) WalletAddSeedAccounts(seedID, password string, picks []backend.SeedPick) (backend.WalletAccount, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletAccount{}, err
+	}
+	return w.AddSeedAccounts(seedID, password, picks)
 }
 
 // WalletDeriveAccount makes the next account from a recovery phrase.
