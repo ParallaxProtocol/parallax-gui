@@ -40,14 +40,18 @@ export default function AssistantBar() {
   // Pointed at, or focused, the bar opens a little at once; it closes a
   // beat after neither is so, so crossing its edge doesn't flicker it. The
   // two are followed apart: focus leaving (a clicked button giving way to
-  // what it did) mustn't count as the pointer leaving
+  // what it did) mustn't count as the pointer leaving. Focus is read from
+  // the page rather than kept from its events: a focused button removed
+  // with the form it was in (Send giving way to the confirmation) never
+  // says it lost focus, and would hold the bar open for good
+  const section = useRef<HTMLElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>();
-  const inside = useRef({ pointer: false, focus: false });
-  const hover = (what: "pointer" | "focus", on: boolean) => {
-    inside.current[what] = on;
-    const any = inside.current.pointer || inside.current.focus;
+  const pointer = useRef(false);
+  const inside = () => pointer.current || !!section.current?.contains(document.activeElement);
+  const hover = (pointed?: boolean) => {
+    if (pointed !== undefined) pointer.current = pointed;
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setHovered(any), any ? 0 : 250);
+    timer.current = setTimeout(() => setHovered(inside()), inside() ? 0 : 250);
   };
   useEffect(() => () => clearTimeout(timer.current), []);
   // The request shown, or, once a send is carried out, its confirmation
@@ -100,10 +104,11 @@ export default function AssistantBar() {
           animate={{ opacity: 1, y: 0, scale: 1, width, height, borderRadius: open ? 28 : NODE_BAR_HEIGHT / 2 }}
           exit={{ opacity: 0, y: 16, scale: 0.88 }}
           transition={BAR_SPRING}
-          onMouseEnter={() => hover("pointer", true)}
-          onMouseLeave={() => hover("pointer", false)}
-          onFocusCapture={() => hover("focus", true)}
-          onBlurCapture={() => hover("focus", false)}
+          ref={section}
+          onMouseEnter={() => hover(true)}
+          onMouseLeave={() => hover(false)}
+          onFocusCapture={() => hover()}
+          onBlurCapture={() => hover()}
         >
           {/* The assistants' blue, fading in as the bar opens on a request and out as it closes */}
           <motion.div
