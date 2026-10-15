@@ -77,7 +77,8 @@ export function PendingRequests() {
                   <Pill tone={TONE[r.status]}>{t(`offline.pending.status.${r.status}`)}</Pill>
                 </div>
                 <div className="flex items-center gap-2 truncate text-sm text-muted-foreground tabular-nums">
-                  <span>{name(r.tx.from)}</span>·<span>{t("offline.pending.nonce", { n: formatInt(r.tx.nonce) })}</span>·
+                  <span>{name(r.tx.from)}</span>·<span>{t("offline.pending.nonce", { n: formatInt(r.tx.nonce) })}</span>
+                  ·
                   <Fingerprint value={r.tx.fingerprint} />
                   {r.tx.memo && <span className="truncate">· {r.tx.memo}</span>}
                 </div>
@@ -230,7 +231,12 @@ function ConfirmModal({
               <button type="button" className="btn btn-secondary" onClick={onClose}>
                 {t("common.cancel")}
               </button>
-              <button type="submit" className={`btn ${replace ? "btn-primary" : "btn-danger"}`} disabled={busy} autoFocus>
+              <button
+                type="submit"
+                className={`btn ${replace ? "btn-primary" : "btn-danger"}`}
+                disabled={busy}
+                autoFocus
+              >
                 {busy && <Loader2 className="size-3.5 animate-spin" />}
                 {replace ? t("offline.pending.replaceCta") : t("offline.pending.discardCta")}
               </button>

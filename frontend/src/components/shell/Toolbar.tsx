@@ -7,9 +7,6 @@ import { useWallet } from "../../lib/wallet";
 import { useOfflineMode } from "../../lib/offline";
 import { useT } from "../../i18n";
 
-/** The title bar's height (h-14), which the page keeps clear when it scrolls to a field. */
-export const TOOLBAR_HEIGHT = 56;
-
 const TITLES: Record<string, string> = {
   "/": "nav.overview",
   "/send": "nav.send",
@@ -55,7 +52,7 @@ export default function Toolbar() {
           little past the bar's foot, its blur fading with it */}
       <div
         aria-hidden
-        className={`pointer-events-none absolute inset-x-0 top-0 -bottom-4 bg-background/80 backdrop-blur-md transition-opacity duration-300 [mask-image:linear-gradient(to_bottom,black_50%,transparent)] ${
+        className={`pointer-events-none absolute inset-x-0 top-0 -bottom-4 bg-background/80 [mask-image:linear-gradient(to_bottom,black_50%,transparent)] backdrop-blur-md transition-opacity duration-300 ${
           scrolled ? "opacity-100" : "opacity-0"
         }`}
       />

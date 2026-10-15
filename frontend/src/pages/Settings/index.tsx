@@ -251,11 +251,7 @@ export default function Settings() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={section}
-            {...PAGE}
-            className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]"
-          >
+          <motion.div key={section} {...PAGE} className="min-h-0 flex-1 [scrollbar-gutter:stable] overflow-y-auto">
             <div className={`flex flex-col gap-7 px-6 py-6 ${PAGE_NARROW}`}>
               {/* The section's own header, as in System Settings */}
               <div className="flex items-center gap-4">
@@ -301,39 +297,39 @@ export default function Settings() {
                   </Group>
                   {/* Syncing, notifications of the chain, update checks: none on a signer */}
                   {!offline && (
-                  <Group title={t("settings.group.background")}>
-                    <Rows>
-                      <Setting
-                        title={t("settings.preventSleep")}
-                        more={t("settings.preventSleep.more")}
-                        desc={t("settings.preventSleep.desc")}
-                      >
-                        <Toggle
-                          checked={cfg.preventSleep}
-                          onChange={(v) => update({ preventSleep: v })}
-                          label={t("settings.preventSleep")}
-                        />
-                      </Setting>
-                      <Setting
-                        title={t("settings.notifications")}
-                        more={t("settings.notifications.more")}
-                        desc={t("settings.notifications.desc")}
-                      >
-                        <Toggle
-                          checked={cfg.notifications}
-                          onChange={(v) => update({ notifications: v })}
-                          label={t("settings.notifications")}
-                        />
-                      </Setting>
-                      <Setting title={t("settings.updateCheck")} desc={t("settings.updateCheck.desc")}>
-                        <Toggle
-                          checked={!cfg.noUpdateCheck}
-                          onChange={(v) => update({ noUpdateCheck: !v })}
-                          label={t("settings.updateCheck")}
-                        />
-                      </Setting>
-                    </Rows>
-                  </Group>
+                    <Group title={t("settings.group.background")}>
+                      <Rows>
+                        <Setting
+                          title={t("settings.preventSleep")}
+                          more={t("settings.preventSleep.more")}
+                          desc={t("settings.preventSleep.desc")}
+                        >
+                          <Toggle
+                            checked={cfg.preventSleep}
+                            onChange={(v) => update({ preventSleep: v })}
+                            label={t("settings.preventSleep")}
+                          />
+                        </Setting>
+                        <Setting
+                          title={t("settings.notifications")}
+                          more={t("settings.notifications.more")}
+                          desc={t("settings.notifications.desc")}
+                        >
+                          <Toggle
+                            checked={cfg.notifications}
+                            onChange={(v) => update({ notifications: v })}
+                            label={t("settings.notifications")}
+                          />
+                        </Setting>
+                        <Setting title={t("settings.updateCheck")} desc={t("settings.updateCheck.desc")}>
+                          <Toggle
+                            checked={!cfg.noUpdateCheck}
+                            onChange={(v) => update({ noUpdateCheck: !v })}
+                            label={t("settings.updateCheck")}
+                          />
+                        </Setting>
+                      </Rows>
+                    </Group>
                   )}
                   <Group title={t("settings.group.offline")}>
                     <Rows>
@@ -1350,63 +1346,63 @@ export default function Settings() {
                     </Rows>
                   </Group>
                   {!offline && (
-                  <Group title={t("settings.group.metrics")}>
-                    <Rows>
-                      <Setting
-                        title={t("settings.metrics")}
-                        more={t("settings.metrics.more")}
-                        flag="--metrics"
-                        desc={t("settings.metrics.desc")}
-                        restart={restart("metrics")}
-                      >
-                        <Toggle
-                          checked={cfg.metrics}
-                          onChange={(v) => update({ metrics: v })}
-                          label={t("settings.metrics")}
-                        />
-                      </Setting>
-                    </Rows>
-                    {cfg.metrics && (
-                      <Advanced
-                        id="metrics"
-                        changed={countSet([cfg.metricsExpensive, cfg.metricsAddr, cfg.metricsPort])}
-                      >
+                    <Group title={t("settings.group.metrics")}>
+                      <Rows>
                         <Setting
-                          title={t("settings.metrics.expensive")}
-                          desc={t("settings.metrics.expensive.desc")}
-                          restart={restart("metricsExpensive")}
+                          title={t("settings.metrics")}
+                          more={t("settings.metrics.more")}
+                          flag="--metrics"
+                          desc={t("settings.metrics.desc")}
+                          restart={restart("metrics")}
                         >
                           <Toggle
-                            checked={cfg.metricsExpensive}
-                            onChange={(v) => update({ metricsExpensive: v })}
-                            label={t("settings.metrics.expensive")}
+                            checked={cfg.metrics}
+                            onChange={(v) => update({ metrics: v })}
+                            label={t("settings.metrics")}
                           />
                         </Setting>
-                        <Setting
-                          title={t("settings.metrics.http")}
-                          flag="--metrics.addr"
-                          desc={t("settings.metrics.http.desc")}
-                          restart={restart("metricsAddr", "metricsPort")}
+                      </Rows>
+                      {cfg.metrics && (
+                        <Advanced
+                          id="metrics"
+                          changed={countSet([cfg.metricsExpensive, cfg.metricsAddr, cfg.metricsPort])}
                         >
-                          <TextInput
-                            width="w-40"
-                            value={cfg.metricsAddr}
-                            placeholder={t("settings.off")}
-                            onChange={(v) => update({ metricsAddr: v.trim() })}
-                          />
-                          <span className="text-muted-foreground">:</span>
-                          <NumberInput
-                            optional
-                            min={1}
-                            width="w-24"
-                            value={cfg.metricsPort || null}
-                            placeholder={6060}
-                            onChange={(v) => update({ metricsPort: v ?? 0 })}
-                          />
-                        </Setting>
-                      </Advanced>
-                    )}
-                  </Group>
+                          <Setting
+                            title={t("settings.metrics.expensive")}
+                            desc={t("settings.metrics.expensive.desc")}
+                            restart={restart("metricsExpensive")}
+                          >
+                            <Toggle
+                              checked={cfg.metricsExpensive}
+                              onChange={(v) => update({ metricsExpensive: v })}
+                              label={t("settings.metrics.expensive")}
+                            />
+                          </Setting>
+                          <Setting
+                            title={t("settings.metrics.http")}
+                            flag="--metrics.addr"
+                            desc={t("settings.metrics.http.desc")}
+                            restart={restart("metricsAddr", "metricsPort")}
+                          >
+                            <TextInput
+                              width="w-40"
+                              value={cfg.metricsAddr}
+                              placeholder={t("settings.off")}
+                              onChange={(v) => update({ metricsAddr: v.trim() })}
+                            />
+                            <span className="text-muted-foreground">:</span>
+                            <NumberInput
+                              optional
+                              min={1}
+                              width="w-24"
+                              value={cfg.metricsPort || null}
+                              placeholder={6060}
+                              onChange={(v) => update({ metricsPort: v ?? 0 })}
+                            />
+                          </Setting>
+                        </Advanced>
+                      )}
+                    </Group>
                   )}
                   <Group title={t("settings.group.logs")} desc={t("settings.diagnostics.desc")}>
                     <LogsPanel />
@@ -1598,7 +1594,10 @@ function About() {
         >
           <span className="selectable font-medium tabular-nums">{client ? `v${client.release}` : "—"}</span>
         </Row>
-        <Row title={t("settings.about.updates")} desc={offline ? t("settings.about.offlineUpdates") : (result ?? undefined)}>
+        <Row
+          title={t("settings.about.updates")}
+          desc={offline ? t("settings.about.offlineUpdates") : (result ?? undefined)}
+        >
           {offline ? null : info ? (
             <button
               type="button"

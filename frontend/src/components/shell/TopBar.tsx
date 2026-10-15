@@ -1,6 +1,17 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, Bell, CheckCircle2, Download, HardDrive, Loader2, PanelLeftClose, PanelLeftOpen, XCircle } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Bell,
+  CheckCircle2,
+  Download,
+  HardDrive,
+  Loader2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  XCircle,
+} from "lucide-react";
 import { FADE_OUT, GLIDE } from "../../lib/motion";
 import { useNotifications, type NoticeKind } from "../../lib/notifications";
 import { useSidebar } from "../../lib/sidebar";
@@ -29,9 +40,17 @@ export default function TopBar() {
   const sidebarLabel = sidebar.collapsed ? t("nav.expandSidebar") : t("nav.collapseSidebar");
 
   return (
-    <header className="drag relative z-20 flex shrink-0 items-center gap-2 border-b border-border px-4" style={{ height: TOP_BAR_HEIGHT }}>
+    <header
+      className="drag relative z-20 flex shrink-0 items-center gap-2 border-b border-border px-4"
+      style={{ height: TOP_BAR_HEIGHT }}
+    >
       <Tooltip content={sidebarLabel}>
-        <button type="button" onClick={sidebar.toggle} aria-label={sidebarLabel} className="btn btn-ghost btn-icon -ml-2">
+        <button
+          type="button"
+          onClick={sidebar.toggle}
+          aria-label={sidebarLabel}
+          className="btn btn-ghost btn-icon -ml-2"
+        >
           {sidebar.collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
       </Tooltip>
@@ -68,7 +87,12 @@ export default function TopBar() {
         button={() => (
           <span className="btn btn-ghost btn-icon relative">
             <Bell className="size-4" />
-            {unread > 0 && <span aria-hidden className="absolute top-1.5 right-1.5 size-2 rounded-full bg-critical ring-2 ring-background" />}
+            {unread > 0 && (
+              <span
+                aria-hidden
+                className="absolute top-1.5 right-1.5 size-2 rounded-full bg-critical ring-2 ring-background"
+              />
+            )}
           </span>
         )}
       >
@@ -119,7 +143,13 @@ function Popover({
   return (
     <div ref={box} className="relative">
       <Tooltip content={label}>
-        <button type="button" aria-label={label} aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen((o) => !o)}>
+        <button
+          type="button"
+          aria-label={label}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          onClick={() => setOpen((o) => !o)}
+        >
           {button(open)}
         </button>
       </Tooltip>
@@ -189,11 +219,7 @@ function Notifications() {
         <ul className="flex max-h-96 flex-col gap-2 overflow-y-auto">
           {notices.map((n) => (
             <li key={n.id} className="flex items-start gap-3 rounded-xl bg-muted/60 p-3">
-              <IconBadge
-                icon={KIND_ICON[n.kind]}
-                tone={KIND_TONE[n.kind]}
-                size="sm"
-              />
+              <IconBadge icon={KIND_ICON[n.kind]} tone={KIND_TONE[n.kind]} size="sm" />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex items-baseline justify-between gap-2">
                   <span className="truncate font-semibold">{n.title}</span>

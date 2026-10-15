@@ -157,7 +157,7 @@ export default function LogsPanel() {
 const LogRow = memo(function LogRow({ ts, level, msg }: { ts: number; level: string; msg: string }) {
   const lvl = level.trim().toUpperCase();
   return (
-    <div className="grid grid-cols-[64px_44px_1fr] gap-3 px-4 hover:bg-hover [contain-intrinsic-size:auto_20px] [content-visibility:auto]">
+    <div className="grid grid-cols-[64px_44px_1fr] gap-3 px-4 [contain-intrinsic-size:auto_20px] [content-visibility:auto] hover:bg-hover">
       <span className="text-muted-foreground tabular-nums" title={stamp(ts)}>
         {clock(ts)}
       </span>

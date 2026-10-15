@@ -6,7 +6,6 @@ import { useT } from "../i18n";
 import { requestTitle, wideRequest } from "./assistantRequests";
 import { AssistantContext, SENT_MS, type SentInfo } from "./assistantContext";
 
-
 /** The least an assistant's activity shows for, so a quick call reads as a beat of work, not a flicker. */
 const MIN_ACTIVITY_MS = 600;
 
@@ -54,7 +53,11 @@ export function AssistantProvider({ enabled, children }: { enabled: boolean; chi
       setPending([]);
       return;
     }
-    const refresh = () => api.mcpStatus().then(setStatus).catch(() => {});
+    const refresh = () =>
+      api
+        .mcpStatus()
+        .then(setStatus)
+        .catch(() => {});
     refresh();
     const timer = setInterval(refresh, POLL_MS);
     window.addEventListener(CONFIG_UPDATED_EVENT, refresh);
@@ -72,7 +75,10 @@ export function AssistantProvider({ enabled, children }: { enabled: boolean; chi
           .catch(() => {});
       }
     };
-    api.assistantRequests().then(update).catch(() => {});
+    api
+      .assistantRequests()
+      .then(update)
+      .catch(() => {});
     const offRequests = onEvent<AssistantRequest[]>("assistant-requests", update);
 
     // An assistant at work: shown at once, and kept a moment at least
@@ -122,9 +128,20 @@ export function AssistantProvider({ enabled, children }: { enabled: boolean; chi
       // A narrow window keeps room for the node bar
       width = Math.min(width, Math.max(ASSISTANT_BAR_WIDTH.rest, Math.round(vw * 0.55)));
     }
-    return { status, pending, width, activity: working, restWidth, hovered, setHovered, shown: req, hold: setHolding, sent, showSent: setSent };
+    return {
+      status,
+      pending,
+      width,
+      activity: working,
+      restWidth,
+      hovered,
+      setHovered,
+      shown: req,
+      hold: setHolding,
+      sent,
+      showSent: setSent,
+    };
   }, [status, pending, vw, activity, hovered, holding, sent]);
 
   return <AssistantContext.Provider value={value}>{children}</AssistantContext.Provider>;
 }
-

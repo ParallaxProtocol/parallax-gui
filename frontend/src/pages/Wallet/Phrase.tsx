@@ -30,7 +30,7 @@ export function PhraseGrid({ words }: { words: string[] }) {
     <div className="relative">
       <motion.ol
         {...stagger}
-        className={`grid select-none grid-cols-3 gap-2 transition-[filter] duration-300 ${shown ? "" : "blur-md"}`}
+        className={`grid grid-cols-3 gap-2 transition-[filter] duration-300 select-none ${shown ? "" : "blur-md"}`}
         aria-hidden={!shown}
       >
         {words.map((w, i) => (
@@ -156,7 +156,13 @@ function QuizWord({
               aria-hidden
             >
               <svg viewBox="0 0 24 24" className="size-2.5" fill="none">
-                <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M5 12.5l4.5 4.5L19 7.5"
+                  stroke="currentColor"
+                  strokeWidth={3.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </motion.span>
           )}
@@ -219,7 +225,15 @@ export function PhraseWarning() {
  * RevealPhraseModal shows the recovery phrase once its password opens it,
  * and, if it was never confirmed, asks for three of its words to confirm it.
  */
-export function RevealPhraseModal({ open, onClose, seedId }: { open: boolean; onClose: () => void; seedId: string | null }) {
+export function RevealPhraseModal({
+  open,
+  onClose,
+  seedId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  seedId: string | null;
+}) {
   const t = useT();
   const wallet = useWallet();
   const seed = wallet.info?.seeds.find((s) => s.id === seedId);

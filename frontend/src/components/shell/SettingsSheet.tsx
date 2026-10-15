@@ -13,7 +13,18 @@ const Settings = lazy(() => import("../../pages/Settings"));
 /** How Settings grows out of its button, and shrinks back into it. */
 export const SETTINGS_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35 } as const;
 
-export const SETTINGS_SECTIONS = ["general", "appearance", "accounts", "node", "network", "rpc", "assistants", "permissions", "diagnostics", "about"] as const;
+export const SETTINGS_SECTIONS = [
+  "general",
+  "appearance",
+  "accounts",
+  "node",
+  "network",
+  "rpc",
+  "assistants",
+  "permissions",
+  "diagnostics",
+  "about",
+] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 // Whether Settings is open, over the page it was opened from, and the
@@ -113,7 +124,8 @@ export default function SettingsSheet() {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       // A dialog of the settings takes its own Escape
-      if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector("[role=dialog][aria-modal=true]")) setOpen(false);
+      if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector("[role=dialog][aria-modal=true]"))
+        setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

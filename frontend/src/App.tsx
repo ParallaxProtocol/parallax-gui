@@ -36,7 +36,8 @@ const ImportAccountPage = lazy(() =>
 const Hello = lazy(() => import("./pages/Hello"));
 import Sidebar from "./components/shell/Sidebar";
 import { SidebarProvider } from "./lib/SidebarProvider";
-import Toolbar, { TOOLBAR_HEIGHT } from "./components/shell/Toolbar";
+import Toolbar from "./components/shell/Toolbar";
+import { TOOLBAR_HEIGHT } from "./lib/layout";
 import NodeBar, { NODE_BAR_ROOM, NodeSheetProvider, OfflineBar, useNodeSheet } from "./components/shell/NodeBar";
 import TopBar from "./components/shell/TopBar";
 import SettingsSheet, {
@@ -198,16 +199,16 @@ export default function App() {
 
   return (
     <OfflineMode.Provider value={offline}>
-    <AnimationsOff.Provider value={animationsDisabled}>
-      <AvatarStyleContext.Provider value={avatarStyle}>
-        <MotionConfig
-          reducedMotion={animationsDisabled ? "always" : "never"}
-          transition={animationsDisabled ? { duration: 0 } : undefined}
-        >
-          {content}
-        </MotionConfig>
-      </AvatarStyleContext.Provider>
-    </AnimationsOff.Provider>
+      <AnimationsOff.Provider value={animationsDisabled}>
+        <AvatarStyleContext.Provider value={avatarStyle}>
+          <MotionConfig
+            reducedMotion={animationsDisabled ? "always" : "never"}
+            transition={animationsDisabled ? { duration: 0 } : undefined}
+          >
+            {content}
+          </MotionConfig>
+        </AvatarStyleContext.Provider>
+      </AnimationsOff.Provider>
     </OfflineMode.Provider>
   );
 }
@@ -221,7 +222,18 @@ function RoutedContent({ animate }: { animate: boolean }) {
   const routes = (
     <Suspense fallback={null}>
       <Routes location={location}>
-        <Route path="/" element={offline ? <Unlocked><SignerHome /></Unlocked> : <WalletPage />} />
+        <Route
+          path="/"
+          element={
+            offline ? (
+              <Unlocked>
+                <SignerHome />
+              </Unlocked>
+            ) : (
+              <WalletPage />
+            )
+          }
+        />
         <Route
           path="/send"
           element={
@@ -316,7 +328,7 @@ function RoutedContent({ animate }: { animate: boolean }) {
     // Its foot keeps room for the node's bar, inside the scroller, so a page
     // scrolls on beneath the bar while its end can still scroll clear of it
     <main
-      className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable]"
+      className="relative min-h-0 flex-1 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto"
       style={{ paddingBottom: NODE_BAR_ROOM, scrollPaddingTop: TOOLBAR_HEIGHT, scrollPaddingBottom: NODE_BAR_ROOM }}
     >
       {/* The page's title bar, held at the top as the page scrolls on beneath it */}

@@ -34,6 +34,7 @@ import { useSummary } from "./common";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
+import { GroupedAddress } from "../../components/ui/AccountParts";
 import { RevealPhraseModal } from "./Phrase";
 import { Detail, DetailCard, Unfold } from "../Overview/parts";
 import { useContacts } from "../../lib/contacts";
@@ -349,11 +350,7 @@ function ActivityDetails({ d, head }: { d: TxDetails | string | undefined; head:
         <Detail label={t("mempool.gasPrice")} value={formatGwei(d.gasPriceWei)} />
         <Detail
           label={t("wallet.tx.gas")}
-          value={
-            pending
-              ? formatInt(d.gasLimit)
-              : `${formatInt(d.gasUsed)} / ${formatInt(d.gasLimit)} (${used}%)`
-          }
+          value={pending ? formatInt(d.gasLimit) : `${formatInt(d.gasUsed)} / ${formatInt(d.gasLimit)} (${used}%)`}
         />
         <Detail label={t("mempool.nonce")} value={String(d.nonce)} />
         {!pending && <Detail label={t("wallet.tx.events")} value={formatInt(d.logs)} />}
@@ -396,26 +393,6 @@ function ActivityIcon({ kind, pending }: { kind: Activity["kind"]; pending: bool
       icon={pending ? Clock : kind === "in" ? ArrowDownLeft : ArrowUpRight}
       tone={pending ? "info" : kind === "in" ? "good" : "neutral"}
     />
-  );
-}
-
-/**
- * GroupedAddress shows an address as a card number is printed: 0x, then
- * its digits in groups of four. The gaps are margins, not spaces, so the
- * address selects and copies whole.
- */
-function GroupedAddress({ address }: { address: string }) {
-  const digits = address.replace(/^0x/i, "");
-  const groups = digits.match(/.{1,4}/g) ?? [digits];
-  return (
-    <span className="selectable font-mono tracking-wide">
-      <span className="mr-1.5">0x</span>
-      {groups.map((g, i) => (
-        <span key={i} className={i < groups.length - 1 ? "mr-1.5" : ""}>
-          {g}
-        </span>
-      ))}
-    </span>
   );
 }
 

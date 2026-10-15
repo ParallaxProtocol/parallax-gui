@@ -44,9 +44,20 @@ const daemonCommit = (() => {
     return "";
   }
 })();
-run("go", ["build", "-ldflags", `-X github.com/ParallaxProtocol/parallax-gui/backend.DaemonCommit=${daemonCommit}`, "-o", bin, "."], {
-  cwd: root,
-});
+run(
+  "go",
+  [
+    "build",
+    "-ldflags",
+    `-X github.com/ParallaxProtocol/parallax-gui/backend.DaemonCommit=${daemonCommit}`,
+    "-o",
+    bin,
+    ".",
+  ],
+  {
+    cwd: root,
+  },
+);
 run("node", ["build.mjs"], { cwd: desktop });
 
 // The first port from 5173 nobody listens on

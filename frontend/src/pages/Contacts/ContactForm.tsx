@@ -9,7 +9,7 @@ import { Modal, ModalForm } from "../../components/ui/Modal";
 import { Notice } from "../../components/ui/bits";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { Field } from "../Wallet/common";
-import { useBusy } from "../Wallet/AccountForms";
+import { useBusy } from "../Wallet/accountActions";
 
 const MAX_NAME = 64;
 const MAX_NOTE = 500;
@@ -155,7 +155,9 @@ function ContactFormBody({
       <Field
         label={t("contacts.note")}
         aside={
-          <span className={`text-xs tabular-nums ${note.length > MAX_NOTE ? "text-critical-ink" : "text-muted-foreground"}`}>
+          <span
+            className={`text-xs tabular-nums ${note.length > MAX_NOTE ? "text-critical-ink" : "text-muted-foreground"}`}
+          >
             {note.length} / {MAX_NOTE}
           </span>
         }

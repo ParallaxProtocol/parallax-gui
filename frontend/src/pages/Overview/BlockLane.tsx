@@ -40,7 +40,9 @@ export default function BlockLane({ blocks, now }: { blocks: BlockView[]; now: n
         <div
           aria-hidden
           className="absolute inset-x-0 bottom-0 h-1 border-b border-border-strong opacity-70"
-          style={{ backgroundImage: `repeating-linear-gradient(to left, var(--faint) 0 1px, transparent 1px ${100 / 12}%)` }}
+          style={{
+            backgroundImage: `repeating-linear-gradient(to left, var(--faint) 0 1px, transparent 1px ${100 / 12}%)`,
+          }}
         />
 
         {/* The wait for the next block: a band from the last block to now */}
@@ -86,7 +88,10 @@ export default function BlockLane({ blocks, now }: { blocks: BlockView[]; now: n
         )}
 
         {/* Now: the lane's leading edge */}
-        <div aria-hidden className="absolute right-0 bottom-0 h-full w-px bg-gradient-to-t from-brand-mark/70 to-transparent" />
+        <div
+          aria-hidden
+          className="absolute right-0 bottom-0 h-full w-px bg-gradient-to-t from-brand-mark/70 to-transparent"
+        />
 
         <AnimatePresence initial={false}>
           {shown.map((b, i) => {
@@ -100,7 +105,7 @@ export default function BlockLane({ blocks, now }: { blocks: BlockView[]; now: n
                 onMouseEnter={() => setHover(b.number)}
                 onFocus={() => setHover(b.number)}
                 onBlur={() => setHover(null)}
-                className="absolute bottom-0 w-2.5 -translate-x-1/2 origin-bottom"
+                className="absolute bottom-0 w-2.5 origin-bottom -translate-x-1/2"
                 style={{ left: `${x(b.timestamp)}%`, height: h, transition: "left 1s linear" }}
                 initial={{ scaleY: 0, opacity: 0 }}
                 animate={{ scaleY: 1, opacity: 1 }}

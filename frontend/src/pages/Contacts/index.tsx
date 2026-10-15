@@ -53,7 +53,8 @@ export default function ContactsPage() {
     const q = query.trim().toLowerCase();
     if (!contacts || !q) return contacts ?? [];
     return contacts.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.address.toLowerCase().includes(q) || c.note.toLowerCase().includes(q),
+      (c) =>
+        c.name.toLowerCase().includes(q) || c.address.toLowerCase().includes(q) || c.note.toLowerCase().includes(q),
     );
   }, [contacts, query]);
 
@@ -90,11 +91,7 @@ export default function ContactsPage() {
   return (
     <div className={`flex flex-col gap-5 p-5 ${PAGE_WIDE}`}>
       <ToolbarAccessory>
-        <MoreMenu
-          canExport={!empty}
-          onImport={() => fileInput.current?.click()}
-          onExport={doExport}
-        />
+        <MoreMenu canExport={!empty} onImport={() => fileInput.current?.click()} onExport={doExport} />
       </ToolbarAccessory>
       <input
         ref={fileInput}
@@ -172,7 +169,9 @@ export default function ContactsPage() {
 
           <Panel className="overflow-hidden">
             {shown.length === 0 ? (
-              <p className="py-14 text-center text-muted-foreground">{t("contacts.noMatch", { query: query.trim() })}</p>
+              <p className="py-14 text-center text-muted-foreground">
+                {t("contacts.noMatch", { query: query.trim() })}
+              </p>
             ) : (
               <motion.ul {...stagger} className="flex flex-col divide-y divide-border">
                 {shown.map((c) => (
@@ -182,9 +181,7 @@ export default function ContactsPage() {
                       onSend={() => navigate(`/send?to=${c.address}`)}
                       onEdit={() => setEditing(c)}
                       onRemove={() => setRemoving(c)}
-                      onFavorite={() =>
-                        setFavorite(c.id, !c.favorite).catch((e) => say("critical", walletError(e, t)))
-                      }
+                      onFavorite={() => setFavorite(c.id, !c.favorite).catch((e) => say("critical", walletError(e, t)))}
                     />
                   </motion.li>
                 ))}
@@ -231,7 +228,9 @@ function ContactRow({
       <button type="button" className="min-w-0 flex-1 text-left" onClick={onEdit}>
         <span className="flex items-center gap-1.5 font-medium">
           <span className="truncate">{c.name}</span>
-          {c.favorite && <Star className="size-3.5 shrink-0 fill-current text-warn" aria-label={t("contacts.favorite")} />}
+          {c.favorite && (
+            <Star className="size-3.5 shrink-0 fill-current text-warn" aria-label={t("contacts.favorite")} />
+          )}
         </span>
         <span className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
           <span className="shrink-0 font-mono">{shortHex(c.address, 8, 6)}</span>
@@ -257,7 +256,12 @@ function ContactRow({
         </Tooltip>
         <CopyButton value={c.address} />
         <Tooltip content={t("contacts.edit.title")}>
-          <button type="button" className="btn btn-ghost btn-icon text-muted-foreground" onClick={onEdit} aria-label={t("contacts.edit.title")}>
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon text-muted-foreground"
+            onClick={onEdit}
+            aria-label={t("contacts.edit.title")}
+          >
             <Pencil className="size-4" />
           </button>
         </Tooltip>

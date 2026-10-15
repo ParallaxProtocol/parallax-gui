@@ -1,19 +1,23 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { api } from "../../lib/api";
-import { formatLax, shortHex } from "../../lib/format";
-import { useNode } from "../../lib/live";
-import { FADE_OUT, GLIDE } from "../../lib/motion";
-import { accountLabel, useWallet } from "../../lib/wallet";
+import { ChevronsUpDown } from "lucide-react";
+import type { WalletAccount } from "../../lib/api";
+import { GLIDE, POPUP, POPUP_ROW, POPUP_ROWS, useStagger } from "../../lib/motion";
+import { accountLabel, useBalances, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
+import { Balance, GroupedAddress, ShortAddress, WatchOnlyBadge } from "../../components/ui/AccountParts";
+import { usePopup } from "../../components/ui/popup";
 
 /**
- * AccountSelect picks the account to send from: the wallet's accounts with
- * their balances, read from the node as the list opens. Picking one makes
- * it the wallet's selected account, so the rest of the app follows. With a
- * single account it shows just that one.
+ * AccountSelect picks the account to send or sign from, as a field: the
+ * account in a field's glass well, opening the wallet's accounts as the
+ * sidebar's switcher lists them, on the same frosted menu, the chosen one
+ * lit, the light gliding to a new choice. Picking one makes it the
+ * wallet's selected account, so the rest of the app follows. With a
+ * single account it shows just that one. The keyboard works as a
+ * listbox's: the arrows move, Enter or Space picks, Escape closes.
  */
 export function AccountSelect({
   id,
@@ -21,152 +25,199 @@ export function AccountSelect({
   noBalance,
 }: {
   id?: string;
+  /** The selected account's balance, where the page already reads it fresher than the list does. */
   balanceWei?: string;
   /** Leave balances out: where there is no chain to read them from (an offline signer). */
   noBalance?: boolean;
 }) {
   const t = useT();
   const listId = useId();
-  const node = useNode();
   const { info, account, select } = useWallet();
+  const balances = useBalances();
+  const stagger = useStagger();
+  const button = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [balances, setBalances] = useState<Record<string, string>>({});
-  const box = useRef<HTMLDivElement>(null);
-  const running = !!node?.running;
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  // Each account's balance, read as the list opens
-  useEffect(() => {
-    if (!open || !running || !info || noBalance) return;
-    let alive = true;
-    for (const a of info.accounts) {
-      api
-        .walletSummary(a.address)
-        .then((v) => alive && v.balanceWei && setBalances((b) => ({ ...b, [a.address]: v.balanceWei })))
-        .catch(() => {});
-    }
-    return () => {
-      alive = false;
-    };
-  }, [open, running, info]);
+  const [active, setActive] = useState(0);
+  const pos = usePopup(open, setOpen, button, menu);
 
   if (!info || !account) return null;
   const accounts = info.accounts;
   const several = accounts.length > 1;
-  const balanceOf = (address: string) =>
-    address === account.address && balanceWei ? balanceWei : balances[address];
+  const balanceOf = (address: string) => (address === account.address && balanceWei ? balanceWei : balances[address]);
+
+  const show = () => {
+    if (!several) return;
+    setActive(
+      Math.max(
+        0,
+        accounts.findIndex((a) => a.address === account.address),
+      ),
+    );
+    setOpen(true);
+  };
+  const pick = (i: number) => {
+    const a = accounts[i];
+    setOpen(false);
+    button.current?.focus();
+    if (a && a.address !== account.address) select(a.address);
+  };
+
+  const onKey = (e: React.KeyboardEvent) => {
+    if (!open) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        show();
+      }
+      return;
+    }
+    if (e.key === "Escape") {
+      // Only the menu closes, not what it sits in
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(false);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive((i) => Math.min(accounts.length - 1, i + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive((i) => Math.max(0, i - 1));
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      pick(active);
+    } else if (e.key === "Tab") {
+      setOpen(false);
+    }
+  };
 
   return (
-    <div ref={box} className="relative">
+    <>
       <button
+        ref={button}
         id={id}
         type="button"
-        onClick={() => several && setOpen((o) => !o)}
+        onClick={() => (open ? setOpen(false) : show())}
+        onKeyDown={onKey}
         aria-haspopup={several ? "listbox" : undefined}
         aria-expanded={several ? open : undefined}
-        aria-controls={several ? listId : undefined}
-        className={`flex w-full items-center gap-3 rounded-md border border-border-strong bg-field px-3 py-2 text-left transition-colors ${
-          several ? "hover:border-brand-mark/60" : "cursor-default"
-        } ${open ? "border-brand-mark shadow-[0_0_0_3px_var(--ring)]" : ""}`}
+        aria-controls={several && open ? listId : undefined}
+        // A field's well, as tall as the Send page's To field (h-11); lit as a focused field while open
+        className={`input flex h-11 items-center gap-3 text-left ${several ? "" : "cursor-default"} ${
+          open ? "border-brand-mark shadow-[var(--glass-shine),0_0_0_3px_var(--ring)]" : ""
+        }`}
       >
         <Row
+          account={account}
           label={accountLabel(account, accounts, t)}
-          address={account.address}
-          balance={balanceOf(account.address)}
-          noBalance={noBalance}
+          balance={noBalance ? null : balanceOf(account.address)}
+          size={28}
+          address={false}
         />
         {several && <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />}
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.ul
-            id={listId}
-            role="listbox"
-            aria-label={t("wallet.send.from")}
-            className="absolute inset-x-0 top-full z-50 mt-1 flex max-h-72 flex-col gap-px overflow-y-auto rounded-lg border border-border-strong bg-background p-1 shadow-[0_8px_24px_rgb(0_0_0/22%)]"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, transition: FADE_OUT }}
-            transition={GLIDE}
-          >
-            {accounts.map((a) => {
-              const here = a.address === account.address;
-              return (
-                <li key={a.address}>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={here}
-                    onClick={() => {
-                      setOpen(false);
-                      if (!here) select(a.address);
-                    }}
-                    className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left hover:bg-hover ${here ? "bg-selected" : ""}`}
-                  >
-                    <Row
-                      label={accountLabel(a, accounts, t)}
-                      address={a.address}
-                      balance={balanceOf(a.address)}
-                      noBalance={noBalance}
-                    />
-                    <span className="grid size-3.5 shrink-0 place-items-center">
-                      {here && <Check className="size-3.5 text-brand" />}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </motion.ul>
-        )}
-      </AnimatePresence>
-    </div>
+      {createPortal(
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              ref={menu}
+              id={listId}
+              role="listbox"
+              aria-label={t("wallet.send.from")}
+              aria-activedescendant={`${listId}-${active}`}
+              className={`menu no-drag fixed z-[150] flex flex-col p-1.5 ${pos?.up ? "origin-bottom" : "origin-top"}`}
+              // Placed by left/top: motion owns the transform, for the scale
+              style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, width: pos?.width, visibility: pos ? "visible" : "hidden" }}
+              {...POPUP}
+            >
+              <motion.div className="flex max-h-80 flex-col gap-px overflow-y-auto" {...stagger} variants={POPUP_ROWS}>
+                {accounts.map((a, i) => {
+                  const here = a.address === account.address;
+                  return (
+                    <motion.button
+                      key={a.address}
+                      id={`${listId}-${i}`}
+                      type="button"
+                      role="option"
+                      aria-selected={here}
+                      tabIndex={-1}
+                      variants={POPUP_ROW}
+                      onMouseEnter={() => setActive(i)}
+                      onClick={() => pick(i)}
+                      data-active={(i === active && !here) || undefined}
+                      className="menu-item relative gap-2.5 py-2"
+                    >
+                      {/* The chosen account is lit as the sidebar's is, and the light glides to a new choice */}
+                      {here && (
+                        <motion.span
+                          layoutId={`${listId}-selection`}
+                          transition={GLIDE}
+                          className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
+                        />
+                      )}
+                      <Row
+                        account={a}
+                        label={accountLabel(a, accounts, t)}
+                        balance={noBalance ? null : balanceOf(a.address)}
+                        size={28}
+                        here={here}
+                      />
+                    </motion.button>
+                  );
+                })}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
+    </>
   );
 }
 
-/** Row is an account in the picker: its name and address, and its balance on the right. */
+/** Row is an account as the pickers show it: its avatar, name and short address, and its balance on the right. */
 function Row({
+  account,
   label,
-  address,
   balance,
-  noBalance,
+  size,
+  here,
+  address = true,
 }: {
+  account: WalletAccount;
   label: string;
-  address: string;
-  balance?: string;
-  noBalance?: boolean;
+  /** Null where balances are left out. */
+  balance: string | undefined | null;
+  size: number;
+  here?: boolean;
+  /** Whether it shows its address: the list does, the field names just the account. */
+  address?: boolean;
 }) {
   return (
     <>
-      <AddressAvatar address={address} size={28} />
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate font-medium">{label}</span>
-        <span className="truncate font-mono text-xs text-muted-foreground">{shortHex(address, 10, 8)}</span>
+      <span className="relative">
+        <AddressAvatar address={account.address} size={size} />
       </span>
-      {!noBalance && (
-        <span className="shrink-0 text-right tabular-nums">
-          {balance !== undefined ? (
-            <>
-              {formatLax(balance, 6)} <span className="text-muted-foreground">LAX</span>
-            </>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
+      {/* The whole address where the row has room for it, shortened where it hasn't */}
+      <span className="@container relative flex min-w-0 flex-1 flex-col">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className={`truncate ${here === false ? "" : "font-medium"}`}>{label}</span>
+          {account.watchOnly && <WatchOnlyBadge />}
+        </span>
+        {address && (
+          <>
+            <span className="hidden truncate text-xs text-muted-foreground @sm:block">
+              <GroupedAddress address={account.address} />
+            </span>
+            <span className="flex @sm:hidden">
+              <ShortAddress address={account.address} />
+            </span>
+          </>
+        )}
+      </span>
+      {balance !== null && (
+        <span className="relative shrink-0 text-sm tabular-nums">
+          <Balance wei={balance} />
         </span>
       )}
     </>

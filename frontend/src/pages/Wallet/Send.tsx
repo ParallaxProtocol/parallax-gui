@@ -1,11 +1,24 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDown, ArrowLeft, ArrowRight, BookUser, Check, Loader2, QrCode, ScanLine, Send as SendIcon, UserPlus } from "lucide-react";
-import { api, SendQuote, SentTx, SigningRequest, walletError } from "../../lib/api";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  BookUser,
+  Check,
+  Loader2,
+  QrCode,
+  ScanLine,
+  Send as SendIcon,
+  UserPlus,
+  X,
+} from "lucide-react";
+import { api, SendQuote, SentTx, SigningRequest, walletError, type AddressView } from "../../lib/api";
 import { formatGwei, formatInt, formatUnits, isAddress, parseUnits, sameAddress, shortHex } from "../../lib/format";
 import { useContacts } from "../../lib/contacts";
-import { FADE_OUT, GLIDE } from "../../lib/motion";
+import { FADE_IN, FADE_OUT, POPUP, POPUP_ROW, POPUP_ROWS, SPRING, useStagger } from "../../lib/motion";
 import { ContactModal } from "../Contacts/ContactForm";
 import { DocCard } from "../../components/offline/parts";
 import { docFileName } from "../../lib/offline";
@@ -14,7 +27,7 @@ import { useNode } from "../../lib/live";
 import { PAGE } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { ToolbarAccessory } from "../../lib/toolbar";
-import { useT } from "../../i18n";
+import { useAgo, useT } from "../../i18n";
 import { Panel, Property, Rows } from "../../components/ui/Panel";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Segmented } from "../../components/ui/Segmented";
@@ -24,6 +37,9 @@ import { Steps } from "./flow";
 import { AccountSelect } from "./AccountSelect";
 import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
+import { GroupedAddress, ShortAddress } from "../../components/ui/AccountParts";
+import { usePopup } from "../../components/ui/popup";
+import { Tooltip } from "../../components/ui/Tooltip";
 
 const LAX_DECIMALS = 18;
 const GWEI_DECIMALS = 9;
@@ -93,7 +109,12 @@ export default function SendPage() {
   const watch = account.watchOnly;
   const step = sent ? "sent" : scanning ? "scan" : request ? "request" : quote ? "review" : "form";
   const steps = watch
-    ? [t("wallet.send.step.details"), t("wallet.send.review"), t("offline.send.step.sign"), t("offline.send.step.broadcast")]
+    ? [
+        t("wallet.send.step.details"),
+        t("wallet.send.review"),
+        t("offline.send.step.sign"),
+        t("offline.send.step.broadcast"),
+      ]
     : [t("wallet.send.step.details"), t("wallet.send.review"), t("wallet.sent.title")];
   const current = watch ? (scanning ? 3 : request ? 2 : quote ? 1 : 0) : sent ? 3 : quote ? 1 : 0;
 
@@ -153,6 +174,132 @@ export default function SendPage() {
           )}
         </motion.div>
       </AnimatePresence>
+    </div>
+  );
+}
+
+/** The custom price's field, at its width in the fee switch; Custom's own width is its label's. */
+const FEE_FIELD_WIDTH = 152;
+/** The fee switch's well, round its segments (p-[3px]). */
+const FEE_INSET = 3;
+
+/**
+ * FeeSwitch picks the network fee, as a segmented control does, Auto or
+ * Custom: chosen, Custom opens out into the price's own field. One lit
+ * thumb glides from Auto onto Custom and widens with it into the field's
+ * well, on the same spring as the segment, Custom's name giving way to the
+ * field as it goes; Auto draws it all back. Both stay laid out throughout,
+ * so nothing jumps as one replaces the other.
+ */
+function FeeSwitch({
+  id,
+  mode,
+  onMode,
+  gwei,
+  onGwei,
+}: {
+  id: string;
+  mode: FeeMode;
+  onMode: (m: FeeMode) => void;
+  gwei: string;
+  onGwei: (v: string) => void;
+}) {
+  const t = useT();
+  const custom = mode === "custom";
+  const auto = useRef<HTMLButtonElement>(null);
+  const field = useRef<HTMLInputElement>(null);
+  // Auto's width, as its label sets it in the interface's language: where the thumb starts, and where Custom does
+  const [autoWidth, setAutoWidth] = useState<number | null>(null);
+  const autoLabel = t("wallet.send.feeAuto");
+  useLayoutEffect(() => {
+    if (auto.current) setAutoWidth(auto.current.offsetWidth);
+  }, [autoLabel]);
+
+  // The field takes the focus as it opens on a click, not as the form returns from its review already custom
+  const opened = useRef(false);
+  useEffect(() => {
+    if (custom && opened.current) field.current?.focus();
+    opened.current = true;
+  }, [custom]);
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label={t("wallet.send.fee")}
+      className="relative inline-flex w-fit rounded-[10px] bg-segment-well p-[3px]"
+    >
+      {/* The one thumb, under whichever segment is chosen */}
+      {autoWidth !== null && (
+        <motion.span
+          aria-hidden
+          className="absolute top-[3px] bottom-[3px] left-0 rounded-[7px] bg-segment-thumb shadow-[var(--shadow-segment)]"
+          initial={false}
+          animate={{
+            x: custom ? FEE_INSET + autoWidth : FEE_INSET,
+            width: custom ? FEE_FIELD_WIDTH : autoWidth,
+          }}
+          transition={SPRING}
+        />
+      )}
+      <button
+        ref={auto}
+        type="button"
+        role="radio"
+        aria-checked={!custom}
+        onClick={() => onMode("suggested")}
+        className={`relative h-7 min-w-20 rounded-[7px] px-4 font-medium whitespace-nowrap transition-colors duration-200 ${
+          custom ? "text-muted-foreground hover:text-foreground" : "text-foreground"
+        }`}
+      >
+        {autoLabel}
+      </button>
+      <motion.div
+        className="relative h-7 overflow-hidden rounded-[7px]"
+        // At rest as wide as Custom's name; open, the field's width
+        initial={false}
+        animate={{ width: custom ? FEE_FIELD_WIDTH : "auto" }}
+        transition={SPRING}
+      >
+        {/* Custom's name: it sets the segment's width at rest, and fades as the field opens over it */}
+        <motion.button
+          type="button"
+          role="radio"
+          aria-checked={custom}
+          tabIndex={custom ? -1 : 0}
+          onClick={() => onMode("custom")}
+          className={`relative h-full min-w-20 px-4 font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground ${
+            custom ? "pointer-events-none" : ""
+          }`}
+          initial={false}
+          animate={{ opacity: custom ? 0 : 1, transition: custom ? FADE_OUT : FADE_IN }}
+        >
+          {t("wallet.send.feeManual")}
+        </motion.button>
+        {/* The price's field, laid out at its full width throughout, uncovered as the segment widens */}
+        <motion.label
+          className={`absolute inset-y-0 left-0 flex items-center ${custom ? "" : "pointer-events-none"}`}
+          style={{ width: FEE_FIELD_WIDTH }}
+          initial={false}
+          animate={{
+            opacity: custom ? 1 : 0,
+            transition: custom ? { ...FADE_IN, delay: 0.06 } : FADE_OUT,
+          }}
+        >
+          <input
+            ref={field}
+            id={id}
+            className="h-full w-full min-w-0 bg-transparent pr-12 pl-3 font-medium tabular-nums outline-none placeholder:text-faint"
+            inputMode="decimal"
+            placeholder="1"
+            value={gwei}
+            onChange={(e) => onGwei(e.target.value.replace(",", "."))}
+            aria-label={t("wallet.send.gasPrice")}
+            autoComplete="off"
+            disabled={!custom}
+          />
+          <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground">gwei</span>
+        </motion.label>
+      </motion.div>
     </div>
   );
 }
@@ -289,7 +436,7 @@ function SendForm({
             error={toTrim && !toOk && !looksLikeName(toTrim) ? t("wallet.err.badRecipient") : null}
             hint={<RecipientHint address={toOk ? toTrim : ""} />}
           >
-            {(id) => <RecipientInput id={id} value={to} onChange={set.setTo} />}
+            {(id) => <RecipientInput id={id} value={to} onChange={set.setTo} view={view} />}
           </Field>
         </div>
         <div className="p-4">
@@ -297,34 +444,7 @@ function SendForm({
             label={t("wallet.send.fee")}
             hint={feeMode === "suggested" ? t("wallet.send.feeSuggested") : t("wallet.send.feeCustom")}
           >
-            {(id) => (
-              <div className="flex flex-wrap items-center gap-3">
-                <Segmented<FeeMode>
-                  options={[
-                    { value: "suggested", label: t("wallet.send.feeAuto") },
-                    { value: "custom", label: t("wallet.send.feeManual") },
-                  ]}
-                  value={feeMode}
-                  onChange={set.setFeeMode}
-                />
-                {feeMode === "custom" && (
-                  <div className="relative w-40">
-                    <input
-                      id={id}
-                      className="input pr-14 tabular-nums"
-                      inputMode="decimal"
-                      placeholder="1"
-                      value={gwei}
-                      onChange={(e) => set.setGwei(e.target.value.replace(",", "."))}
-                      aria-label={t("wallet.send.gasPrice")}
-                    />
-                    <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">
-                      gwei
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+            {(id) => <FeeSwitch id={id} mode={feeMode} onMode={set.setFeeMode} gwei={gwei} onGwei={set.setGwei} />}
           </Field>
         </div>
       </Panel>
@@ -438,7 +558,9 @@ function Review({
                 <AddressAvatar address={quote.to} size={40} />
                 <span className="flex min-w-0 flex-col items-start">
                   <span className="max-w-full truncate text-2xl font-semibold tracking-tight">{contact.name}</span>
-                  <span className="selectable font-mono text-sm text-muted-foreground">{shortHex(quote.to, 10, 8)}</span>
+                  <span className="selectable font-mono text-sm text-muted-foreground">
+                    {shortHex(quote.to, 10, 8)}
+                  </span>
                 </span>
               </span>
             ) : (
@@ -588,131 +710,343 @@ function looksLikeName(s: string): boolean {
   return !/^0x[0-9a-f]*$/i.test(s);
 }
 
+/** How many recent counterparties the list offers. */
+const RECENT = 8;
+
+type SuggestionTab = "recent" | "contacts";
+
+/** A suggestion in the recipient's list: an address, named where the wallet knows it. */
+type Suggestion = {
+  address: string;
+  name?: string;
+  /** Whether it is in the address book: a contact goes by its name alone, as the From field's account does. */
+  contact?: boolean;
+  /** For a recent one: which way it went, and when (0 while in the pool). */
+  recent?: { kind: "in" | "out"; time: number };
+};
+
 /**
- * RecipientInput is the recipient's address, with the address book to pick
- * from: typing a name, part of an address or a note lists the matching
- * contacts (recently sent to first, then favourites), and the book's button
- * lists them all. Arrow keys move through the list and Enter picks.
+ * RecipientInput is the recipient's address, with what to pick it from
+ * listed under it as the field is focused, on two tabs: the addresses
+ * this account last sent to or received from, and the address book
+ * (recently sent to first, then favourites). Recent shows first while it
+ * has anything to show, until a tab is chosen. Typing a name, part of an
+ * address or a note narrows both. Arrow keys move through the list,
+ * Enter picks, Escape closes.
  */
-function RecipientInput({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+function RecipientInput({
+  id,
+  value,
+  onChange,
+  view,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  /** The sending account's activity, for its recent counterparties. */
+  view: AddressView | null;
+}) {
   const t = useT();
-  const { contacts } = useContacts();
+  const ago = useAgo();
+  const { contacts, byAddress } = useContacts();
+  const { info } = useWallet();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const box = useRef<HTMLDivElement>(null);
+  const field = useRef<HTMLInputElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  // The field is focused as the page arrives: the list waits for the user's own focus
+  const ready = useRef(false);
+  useEffect(() => {
+    ready.current = true;
+  }, []);
   const listId = useId();
+  const stagger = useStagger();
 
   const q = value.trim().toLowerCase();
-  const matches = useMemo(() => {
-    const all = [...(contacts ?? [])].sort(
-      (a, b) => b.lastSentAt - a.lastSentAt || Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name),
-    );
+  const { recent, book } = useMemo(() => {
     // A complete address needs no suggestions
-    if (isAddress(q)) return [];
-    if (!q) return all.slice(0, 8);
-    return all
-      .filter((c) => c.name.toLowerCase().includes(q) || c.address.toLowerCase().includes(q) || c.note.toLowerCase().includes(q))
-      .slice(0, 8);
-  }, [contacts, q]);
-  const showing = open && matches.length > 0;
-
-  useEffect(() => setActive(0), [q]);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    if (isAddress(q)) return { recent: [], book: [] };
+    const nameOf = (address: string) => {
+      const contact = byAddress(address);
+      if (contact) return contact.name;
+      const own = info?.accounts.find((a) => sameAddress(a.address, address));
+      return own && info ? accountLabel(own, info.accounts, t) : undefined;
     };
-    window.addEventListener("mousedown", onDown);
-    return () => window.removeEventListener("mousedown", onDown);
-  }, [open]);
+    const matches = (s: Suggestion, note = "") =>
+      !q ||
+      s.address.toLowerCase().includes(q) ||
+      !!s.name?.toLowerCase().includes(q) ||
+      note.toLowerCase().includes(q);
+
+    // The account's last counterparties in transfers, newest first, each once
+    const recent: Suggestion[] = [];
+    if (view) {
+      const seen = new Set<string>();
+      for (const tx of [...view.pending, ...view.transactions]) {
+        if (tx.kind !== "transfer") continue;
+        const out = sameAddress(tx.from, view.address);
+        const other = out ? tx.to : tx.from;
+        if (!other || sameAddress(other, view.address) || seen.has(other.toLowerCase())) continue;
+        seen.add(other.toLowerCase());
+        const s = {
+          address: other,
+          name: nameOf(other),
+          contact: !!byAddress(other),
+          recent: { kind: out ? "out" : "in", time: tx.timestamp },
+        } as const;
+        if (matches(s)) recent.push(s);
+        if (recent.length === RECENT) break;
+      }
+    }
+    const book = [...(contacts ?? [])]
+      .sort(
+        (a, b) =>
+          b.lastSentAt - a.lastSentAt || Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name),
+      )
+      .filter((c) => matches(c, c.note))
+      .map((c): Suggestion => ({ address: c.address, name: c.name, contact: true }));
+    return { recent, book };
+  }, [contacts, byAddress, info, view, q, t]);
+  const [chosen, setChosen] = useState<SuggestionTab | null>(null);
+  const tab: SuggestionTab = chosen ?? (recent.length > 0 ? "recent" : "contacts");
+  const all = tab === "recent" ? recent : book;
+  // Open while either tab has something to offer; a tab with nothing says so
+  const showing = open && recent.length + book.length > 0;
+
+  const pos = usePopup(showing, setOpen, field, menu);
+
+  useEffect(() => setActive(0), [q, tab]);
+  // The row the keys reach scrolls into view
+  useEffect(() => {
+    if (showing) document.getElementById(`${listId}-${active}`)?.scrollIntoView({ block: "nearest" });
+  }, [showing, active, listId]);
 
   const pick = (address: string) => {
     onChange(address);
     setOpen(false);
+    setEditing(false);
   };
 
-  return (
-    <div ref={box} className="relative">
-      <div className="flex items-center gap-2">
-        <input
+  // A contact's address shows as the contact, by name, as the From field
+  // shows its account; clicked, it opens to its address to change
+  const [editing, setEditing] = useState(false);
+  const toContact = isAddress(value.trim()) ? byAddress(value.trim()) : undefined;
+  useEffect(() => {
+    if (!editing) return;
+    field.current?.focus();
+    field.current?.select();
+  }, [editing]);
+
+  // Each row as the From list draws an account: its avatar, its name over
+  // its short address, and on the right, for a recent one, when
+  const row = (s: Suggestion, i: number) => (
+    <motion.li key={s.address} role="presentation" variants={POPUP_ROW}>
+      <button
+        id={`${listId}-${i}`}
+        type="button"
+        role="option"
+        tabIndex={-1}
+        aria-selected={i === active}
+        data-active={i === active || undefined}
+        onMouseEnter={() => setActive(i)}
+        // The field keeps its focus, so picking leaves the caret there
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => pick(s.address)}
+        className="menu-item relative w-full gap-2.5 py-2"
+      >
+        <AddressAvatar address={s.address} size={28} />
+        {/* A contact by its name alone; any other address in full where the row
+            has room for it, shortened where it hasn't */}
+        <span className="@container flex min-w-0 flex-1 flex-col">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate font-medium">
+              {s.name ?? (s.recent ? t(`wallet.kind.${s.recent.kind}`) : shortHex(s.address, 8, 6))}
+            </span>
+            {s.contact && <ContactMark />}
+          </span>
+          {!s.contact && (
+            <>
+              <span className="hidden truncate text-xs text-muted-foreground @sm:block">
+                <GroupedAddress address={s.address} />
+              </span>
+              <span className="flex @sm:hidden">
+                <ShortAddress address={s.address} />
+              </span>
+            </>
+          )}
+        </span>
+        {s.recent && (
+          <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
+            {s.recent.time ? ago(s.recent.time) : t("wallet.pending")}
+          </span>
+        )}
+      </button>
+    </motion.li>
+  );
+
+  if (toContact && !editing) {
+    return (
+      // As tall as the From field above it (h-11), the contact drawn as its account is
+      <div className="input flex h-11 items-center gap-1 pr-1.5">
+        <button
           id={id}
-          className="input flex-1 font-mono"
-          placeholder={(contacts?.length ?? 0) > 0 ? t("wallet.send.toPlaceholder") : "0x…"}
-          value={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-            setOpen(true);
-          }}
-          onKeyDown={(e) => {
-            if (!showing) return;
-            if (e.key === "ArrowDown") {
-              e.preventDefault();
-              setActive((i) => (i + 1) % matches.length);
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              setActive((i) => (i - 1 + matches.length) % matches.length);
-            } else if (e.key === "Enter") {
-              e.preventDefault();
-              pick(matches[active].address);
-            } else if (e.key === "Escape") {
-              setOpen(false);
-            }
-          }}
-          role="combobox"
-          aria-expanded={showing}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          spellCheck={false}
-          autoComplete="off"
-          autoFocus
-        />
-        {(contacts?.length ?? 0) > 0 && (
+          type="button"
+          onClick={() => setEditing(true)}
+          className="flex h-full min-w-0 flex-1 items-center gap-3 text-left"
+        >
+          <AddressAvatar address={toContact.address} size={28} />
+          <span className="truncate font-medium">{toContact.name}</span>
+          <ContactMark />
+        </button>
+        <Tooltip content={t("common.clear")}>
           <button
             type="button"
-            className="btn btn-secondary shrink-0"
-            onClick={() => setOpen((o) => !o || !!q)}
-            aria-label={t("contacts.pick")}
+            className="btn btn-ghost btn-sm btn-icon size-6"
+            onClick={() => {
+              onChange("");
+              setEditing(true);
+            }}
+            aria-label={t("common.clear")}
           >
-            <BookUser className="size-4" />
-            {t("nav.contacts")}
+            <X className="size-3.5" />
           </button>
-        )}
+        </Tooltip>
       </div>
-      <AnimatePresence>
-        {showing && (
-          <motion.ul
-            id={listId}
-            role="listbox"
-            aria-label={t("contacts.pick")}
-            className="menu absolute inset-x-0 top-full z-50 mt-1 flex max-h-80 flex-col gap-px overflow-y-auto p-1"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, transition: FADE_OUT }}
-            transition={GLIDE}
-          >
-            {matches.map((c, i) => (
-              <li key={c.id}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={i === active}
-                  data-active={i === active ? "" : undefined}
-                  onMouseEnter={() => setActive(i)}
-                  onClick={() => pick(c.address)}
-                  className="menu-item w-full gap-3 py-1.5 text-left"
-                >
-                  <AddressAvatar address={c.address} size={28} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{c.name}</span>
-                    <span className="block truncate font-mono text-xs text-muted-foreground">{shortHex(c.address, 10, 8)}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </motion.ul>
-        )}
-      </AnimatePresence>
-    </div>
+    );
+  }
+
+  return (
+    <>
+      <input
+        ref={field}
+        id={id}
+        className="input h-11 font-mono"
+        placeholder={(contacts?.length ?? 0) > 0 ? t("wallet.send.toPlaceholder") : "0x…"}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => ready.current && setOpen(true)}
+        onClick={() => setOpen(true)}
+        // Tabbing on closes it, and a contact's address shows as the contact again
+        onBlur={(e) => {
+          if (menu.current?.contains(e.relatedTarget as Node)) return;
+          setOpen(false);
+          setEditing(false);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            // Only the list closes, not what it sits in
+            if (showing) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+            setOpen(false);
+            return;
+          }
+          if (!showing) {
+            if (e.key === "ArrowDown" && recent.length + book.length > 0) {
+              e.preventDefault();
+              setOpen(true);
+            }
+            return;
+          }
+          // A tab with nothing on it has nothing to move through or pick
+          if (all.length === 0) return;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setActive((i) => (i + 1) % all.length);
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActive((i) => (i - 1 + all.length) % all.length);
+          } else if (e.key === "Enter") {
+            e.preventDefault();
+            pick(all[Math.min(active, all.length - 1)].address);
+          }
+        }}
+        role="combobox"
+        aria-expanded={showing}
+        aria-controls={showing ? listId : undefined}
+        aria-activedescendant={showing && all.length > 0 ? `${listId}-${active}` : undefined}
+        aria-autocomplete="list"
+        spellCheck={false}
+        autoComplete="off"
+        autoFocus
+      />
+      {/* Over the window, as the account picker's list is, so the panel can't cut it */}
+      {createPortal(
+        <AnimatePresence>
+          {showing && (
+            <motion.div
+              ref={menu}
+              className={`menu no-drag fixed z-[150] flex flex-col p-1.5 ${pos?.up ? "origin-bottom" : "origin-top"}`}
+              // Placed by left and top (or, above the field, bottom): motion owns the transform
+              style={{
+                left: pos?.x ?? 0,
+                ...(pos?.up ? { bottom: pos.bottom } : { top: pos?.y ?? 0 }),
+                // As wide as the field, measured so too before it is placed
+                width: pos?.width ?? field.current?.offsetWidth,
+                visibility: pos ? "visible" : "hidden",
+              }}
+              {...POPUP}
+              // The field keeps its focus as a tab is chosen, or the list scrolled
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <Segmented<SuggestionTab>
+                size="sm"
+                className="mb-1.5 self-start"
+                value={tab}
+                onChange={setChosen}
+                options={[
+                  { value: "recent", label: t("wallet.send.recent") },
+                  { value: "contacts", label: t("nav.contacts") },
+                ]}
+              />
+              <AnimatePresence mode="wait" initial={false}>
+                {all.length > 0 ? (
+                  <motion.ul
+                    key={tab}
+                    id={listId}
+                    role="listbox"
+                    aria-label={tab === "recent" ? t("wallet.send.recent") : t("nav.contacts")}
+                    className="flex max-h-72 flex-col gap-px overflow-y-auto"
+                    {...stagger}
+                    variants={POPUP_ROWS}
+                    exit={{ opacity: 0, transition: FADE_OUT }}
+                  >
+                    {all.map((s, i) => row(s, i))}
+                  </motion.ul>
+                ) : (
+                  <motion.p
+                    key={`${tab}:empty`}
+                    className="px-2 py-4 text-center text-sm text-muted-foreground"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, transition: FADE_IN }}
+                    exit={{ opacity: 0, transition: FADE_OUT }}
+                  >
+                    {tab === "recent"
+                      ? t(q ? "wallet.send.noRecentMatch" : "wallet.send.noRecent")
+                      : t(q ? "wallet.send.noContactMatch" : "wallet.send.noContacts")}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
+    </>
+  );
+}
+
+/** ContactMark marks a name as an address book contact's, with the address book's icon. */
+function ContactMark() {
+  const t = useT();
+  return (
+    <Tooltip content={t("contacts.inBook")}>
+      <BookUser className="size-3.5 shrink-0 text-muted-foreground" aria-label={t("contacts.inBook")} />
+    </Tooltip>
   );
 }
 

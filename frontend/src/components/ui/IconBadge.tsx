@@ -23,7 +23,11 @@ export const IconBadge = forwardRef<
 >(function IconBadge({ icon: Icon, tone = "neutral", size = "md", className = "", ...rest }, ref) {
   const s = SIZE[size];
   return (
-    <span ref={ref} className={`grid shrink-0 place-items-center rounded-full ${s.box} ${TONE_WASH[tone]} ${className}`} {...rest}>
+    <span
+      ref={ref}
+      className={`grid shrink-0 place-items-center rounded-full ${s.box} ${TONE_WASH[tone]} ${className}`}
+      {...rest}
+    >
       <Icon className={s.icon} />
     </span>
   );

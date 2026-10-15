@@ -1,21 +1,31 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, BookUser, ChevronsUpDown, FileCheck, FileSignature, PenLine, Radio, ShieldCheck, Sparkles, Wallet } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  BookUser,
+  ChevronsUpDown,
+  FileCheck,
+  FileSignature,
+  PenLine,
+  Radio,
+  ShieldCheck,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 import { useOfflineMode } from "../../lib/offline";
 import { SIDEBAR_RAIL, SIDEBAR_RAIL_MAC, SIDEBAR_WIDTH, useSidebar } from "../../lib/sidebar";
 import { api } from "../../lib/api";
-import { formatLax } from "../../lib/format";
-import { FADE_IN, FADE_OUT, GLIDE, SPRING, useStagger } from "../../lib/motion";
+import { FADE_IN, FADE_OUT, GLIDE, ROW_IN, SPRING, useStagger } from "../../lib/motion";
 import { accountLabel, useBalances, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import logo from "../../assets/logo.svg";
 import { NODE_BAR_ROOM } from "./NodeBar";
 import { SettingsButton, useSettingsSheet } from "./SettingsSheet";
 import { AddressAvatar } from "../ui/AddressAvatar";
+import { Balance, ShortAddress, WatchOnlyBadge } from "../ui/AccountParts";
 import { CopyButton } from "../ui/bits";
-import { Counter } from "../ui/Counter";
-import { Pill } from "../ui/Pill";
 import { Tooltip } from "../ui/Tooltip";
 
 /** macOS keeps its traffic lights over the sidebar's top left (public/boot.js marks the platform). */
@@ -26,7 +36,10 @@ const RAIL_ITEM = 40;
 /** The account card's width open: the sidebar's, less the items' padding. */
 const CARD_WIDTH = SIDEBAR_WIDTH - 24;
 /** What fades as the sidebar collapses goes quickly; what comes back waits for the room. */
-const fade = (shown: boolean) => ({ opacity: shown ? 1 : 0, transition: shown ? { ...FADE_IN, delay: 0.08 } : FADE_OUT });
+const fade = (shown: boolean) => ({
+  opacity: shown ? 1 : 0,
+  transition: shown ? { ...FADE_IN, delay: 0.08 } : FADE_OUT,
+});
 
 /**
  * Sidebar is the window's source list: the account the wallet shows and
@@ -128,16 +141,6 @@ export default function Sidebar() {
     </motion.aside>
   );
 }
-
-/**
- * ROW_IN is STAGGER's arrival for the switcher's rows, settling down from
- * above instead of rising: in the list's scroll box a row still below its
- * place would overflow the bottom and flash a scrollbar, the top doesn't.
- */
-const ROW_IN = {
-  hidden: { opacity: 0, y: -6 },
-  visible: { opacity: 1, y: 0, transition: SPRING },
-};
 
 /**
  * AccountSwitcher shows the account the wallet pages are about, and opens
@@ -303,8 +306,20 @@ function AccountSwitcher() {
               style={{ width: CARD_WIDTH - 24 }}
             >
               <span className="text-muted-foreground">{t("wallet.balance")}</span>
-              <span className="truncate tabular-nums">
-                <Balance wei={balances[account.address]} counted />
+              {/* Another account's balance slides in quickly in place of the last, rather
+                  than counting over from it; the same account's still glides to a new amount */}
+              <span className="relative truncate tabular-nums">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.span
+                    key={account.address}
+                    className="inline-block"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0, transition: FADE_IN }}
+                    exit={{ opacity: 0, y: -6, transition: FADE_OUT }}
+                  >
+                    <Balance wei={balances[account.address]} counted />
+                  </motion.span>
+                </AnimatePresence>
               </span>
             </div>
           </motion.div>
@@ -352,7 +367,9 @@ function AccountSwitcher() {
                     <span className="relative min-w-0 flex-1">
                       <span className="flex min-w-0 items-baseline gap-2">
                         <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                          <span className={`truncate ${here ? "font-medium" : ""}`}>{accountLabel(a, accounts, t)}</span>
+                          <span className={`truncate ${here ? "font-medium" : ""}`}>
+                            {accountLabel(a, accounts, t)}
+                          </span>
                           {a.watchOnly && <WatchOnlyBadge />}
                         </span>
                         {!offline && (
@@ -398,51 +415,15 @@ function ProfileBadge() {
   }, []);
   if (!profile) return null;
   return (
-    <span className="truncate rounded-full bg-brand/15 px-2 py-0.5 font-mono text-xs font-medium text-brand">{profile}</span>
+    <span className="truncate rounded-full bg-brand/15 px-2 py-0.5 font-mono text-xs font-medium text-brand">
+      {profile}
+    </span>
   );
 }
 
 /** GroupSeparator parts one group of the sidebar's items from the next. */
 function GroupSeparator() {
   return <div role="separator" className="mx-2.5 my-2.5 border-t border-border" />;
-}
-
-/** ShortAddress is an address's first and last four digits, the gap between them a dimmed midline ellipsis. */
-function ShortAddress({ address }: { address: string }) {
-  return (
-    <span className="truncate font-mono text-xs text-muted-foreground">
-      {address.slice(0, 6)}
-      <span className="mx-0.5 text-muted-foreground/50">⋯</span>
-      {address.slice(-4)}
-    </span>
-  );
-}
-
-/** WatchOnlyBadge marks an account whose key is on an offline signer. */
-function WatchOnlyBadge() {
-  const t = useT();
-  return (
-    <Tooltip content={t("offline.watchOnly.desc")}>
-      <Pill className="shrink-0">{t("offline.watchOnly")}</Pill>
-    </Tooltip>
-  );
-}
-
-/** Balance is an amount of LAX, or a dash until it is known. Counted, it glides to each new amount. */
-function Balance({ wei, counted }: { wei?: string; counted?: boolean }) {
-  if (wei === undefined) return <span className="text-muted-foreground">—</span>;
-  const amount = formatLax(wei, 4);
-  return (
-    <>
-      {counted ? <Counter value={Number(amount)} format={formatAmount} /> : amount}{" "}
-      <span className="text-muted-foreground">LAX</span>
-    </>
-  );
-}
-
-/** Up to four decimals, without trailing zeros, as formatLax shows a balance. */
-function formatAmount(v: number): string {
-  return v.toLocaleString("en-US", { maximumFractionDigits: 4, useGrouping: false });
 }
 
 function NavItem({

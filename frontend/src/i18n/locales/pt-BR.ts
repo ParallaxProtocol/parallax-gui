@@ -19,10 +19,12 @@ const ptBR: Dict = {
   "hello.sync.doneDesc": "Ele alcançou a rede e se mantém atualizado enquanto o app estiver aberto.",
   "hello.sync.background": "Continuar enquanto sincroniza",
   "hello.offer.title": "Configure sua frase de recuperação",
-  "hello.offer.desc": "A senha da sua carteira está definida. Agora crie uma frase de recuperação para fazer o backup das suas contas, ou importe uma que você já tem.",
+  "hello.offer.desc":
+    "A senha da sua carteira está definida. Agora crie uma frase de recuperação para fazer o backup das suas contas, ou importe uma que você já tem.",
   "hello.offer.import": "Importar frase de recuperação",
   "hello.password.title": "Crie uma senha da carteira",
-  "hello.password.desc": "Ela protege cada conta que você criar ou trouxer para cá. Ninguém pode redefini-la para você, então escolha uma de que vá se lembrar.",
+  "hello.password.desc":
+    "Ela protege cada conta que você criar ou trouxer para cá. Ninguém pode redefini-la para você, então escolha uma de que vá se lembrar.",
   "hello.confirm.title": "Digite de novo",
   "hello.confirm.desc": "Só para garantir que não há erro de digitação.",
   "hello.confirm.cta": "Definir senha",
@@ -65,12 +67,15 @@ const ptBR: Dict = {
 
   // Onboarding
   "onboarding.language.title": "Escolha seu idioma",
-  "onboarding.language.desc": "Escolha o idioma que você quer usar no aplicativo. Dá para mudar depois nas Configurações.",
+  "onboarding.language.desc":
+    "Escolha o idioma que você quer usar no aplicativo. Dá para mudar depois nas Configurações.",
   "onboarding.welcome.cta": "Começar",
   "onboarding.datadir.title": "Onde guardar seus dados?",
-  "onboarding.datadir.desc": "A sincronização da blockchain ocupa vários gigabytes.\nEscolha um local com bastante espaço livre.",
+  "onboarding.datadir.desc":
+    "A sincronização da blockchain ocupa vários gigabytes.\nEscolha um local com bastante espaço livre.",
   "onboarding.networking.title": "Ajude a rede",
-  "onboarding.networking.desc": "Permita que outros peers da rede Parallax se conectem ao seu nó.\nIsso deixa a rede mais saudável e acelera a propagação de blocos.",
+  "onboarding.networking.desc":
+    "Permita que outros peers da rede Parallax se conectem ao seu nó.\nIsso deixa a rede mais saudável e acelera a propagação de blocos.",
   "onboarding.networking.desc2": "Com isso ativado, seu IP fica visível para outros peers.",
   "onboarding.networking.toggle": "Permitir conexões de entrada",
   "onboarding.networking.recommended": "Recomendado",
@@ -94,7 +99,8 @@ const ptBR: Dict = {
   "settings.rpc.port": "Porta",
   "settings.smartFee": "Estimador Smart Fee",
   "settings.stats.toggle": "Reportar à página de status",
-  "settings.diagnostics.desc": "Veja os logs do nó e da GUI em tempo real. Útil para depurar problemas de sincronização, descoberta de peers ou abrir relatórios de bug.",
+  "settings.diagnostics.desc":
+    "Veja os logs do nó e da GUI em tempo real. Útil para depurar problemas de sincronização, descoberta de peers ou abrir relatórios de bug.",
   "settings.dbCache": "Cache do banco de dados (MB)",
   "settings.trieClean": "Cache trie limpo (MB)",
   "settings.trieDirty": "Cache trie sujo (MB)",
@@ -128,7 +134,8 @@ const ptBR: Dict = {
   "peers.add": "Adicionar par",
   "peers.addPlaceholder": "enode://… ou ip:port",
   "peers.addCta": "Conectar",
-  "peers.addHint": "Uma URL enode é rediscada sempre que cair, mesmo após reiniciar. Um ip:port fica no catálogo de endereços do nó e é discado primeiro.",
+  "peers.addHint":
+    "Uma URL enode é rediscada sempre que cair, mesmo após reiniciar. Um ip:port fica no catálogo de endereços do nó e é discado primeiro.",
   "peers.disconnect": "Desconectar",
   "peers.trust": "Confiar",
   "peers.untrust": "Deixar de confiar",
@@ -197,7 +204,8 @@ const ptBR: Dict = {
   "updater.retry": "Tentar de novo",
   "notifications.title": "Notificações",
   "notifications.clear": "Limpar",
-  "notifications.empty": "Nada de novo. Sincronizações concluídas, atualizações e tudo o que precisar da sua atenção aparecem aqui.",
+  "notifications.empty":
+    "Nada de novo. Sincronizações concluídas, atualizações e tudo o que precisar da sua atenção aparecem aqui.",
 
   // Redesign
   "nav.label": "Principal",
@@ -226,7 +234,8 @@ const ptBR: Dict = {
   "node.peers": "{n} pares",
   "node.offlineHint": "Parado. Inicie-o para sincronizar e usar a carteira.",
   "overview.stopped.title": "Seu nó está offline.",
-  "overview.stopped.desc": "Inicie-o para sincronizar com a rede Parallax, verificar cada bloco por conta própria e atender sua carteira sem terceiros.",
+  "overview.stopped.desc":
+    "Inicie-o para sincronizar com a rede Parallax, verificar cada bloco por conta própria e atender sua carteira sem terceiros.",
   "overview.sync.searching": "Procurando pares",
   "overview.sync.searchingDesc": "Conectando à rede. A sincronização começa assim que um par responder.",
   "overview.sync.desc": "Baixando e verificando a blockchain. O nó fica pronto quando alcançar o topo da rede.",
@@ -334,36 +343,47 @@ const ptBR: Dict = {
 
   // Wallet: first run
   "wallet.welcome.title": "Sua carteira Parallax",
-  "wallet.welcome.desc": "Guarde, envie e receba LAX pelo seu próprio nó. Nenhum terceiro vê seu saldo ou retransmite suas transações.",
+  "wallet.welcome.desc":
+    "Guarde, envie e receba LAX pelo seu próprio nó. Nenhum terceiro vê seu saldo ou retransmite suas transações.",
   "wallet.welcome.create": "Criar uma conta",
   "wallet.welcome.createDesc": "Uma nova frase de recuperação e uma conta, criadas neste computador.",
   "wallet.welcome.import": "Importar uma conta",
   "wallet.welcome.importDesc": "De uma frase de recuperação, um arquivo keystore ou uma chave privada.",
-  "wallet.welcome.local": "As chaves ficam armazenadas criptografadas somente neste computador e nunca são enviadas a lugar nenhum. Sua frase de recuperação é o backup: ninguém pode recuperá-la para você.",
+  "wallet.welcome.local":
+    "As chaves ficam armazenadas criptografadas somente neste computador e nunca são enviadas a lugar nenhum. Sua frase de recuperação é o backup: ninguém pode recuperá-la para você.",
   "wallet.welcome.cta": "Configurar a carteira",
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Senha da carteira",
   "wallet.walletPasswordHint": "A senha que protege todas as contas desta carteira.",
   "wallet.locked.title": "Bem-vindo ao Parallax",
-  "wallet.locked.desc": "Um nó Parallax completo e uma carteira em um só app. Guarde, envie e receba LAX pelo seu próprio nó, sem intermediários.",
-  "wallet.locked.existing": "Esta carteira já tem chaves de uma versão anterior. Defina a senha dela para continuar usando-as: precisa ser a senha com que foram criadas.",
+  "wallet.locked.desc":
+    "Um nó Parallax completo e uma carteira em um só app. Guarde, envie e receba LAX pelo seu próprio nó, sem intermediários.",
+  "wallet.locked.existing":
+    "Esta carteira já tem chaves de uma versão anterior. Defina a senha dela para continuar usando-as: precisa ser a senha com que foram criadas.",
   "wallet.locked.node": "Seu próprio nó",
-  "wallet.locked.nodeDesc": "Ele verifica cada bloco por conta própria e repassa suas transações, para que ninguém mais veja seu saldo.",
+  "wallet.locked.nodeDesc":
+    "Ele verifica cada bloco por conta própria e repassa suas transações, para que ninguém mais veja seu saldo.",
   "wallet.locked.keys": "As chaves ficam aqui",
-  "wallet.locked.keysDesc": "As contas são criadas e guardadas criptografadas neste computador e nunca são enviadas a lugar nenhum.",
+  "wallet.locked.keysDesc":
+    "As contas são criadas e guardadas criptografadas neste computador e nunca são enviadas a lugar nenhum.",
   "wallet.locked.password": "Uma senha",
-  "wallet.locked.passwordDesc": "Uma única senha da carteira protege todas as contas. Ninguém pode redefini-la para você.",
+  "wallet.locked.passwordDesc":
+    "Uma única senha da carteira protege todas as contas. Ninguém pode redefini-la para você.",
   "wallet.locked.cta": "Começar",
   "wallet.locked.ctaHint": "Primeiro, você vai definir a senha da carteira.",
   "wallet.setup.title": "Defina a senha da carteira",
-  "wallet.setup.desc": "Uma única senha protege todas as contas e frases de recuperação desta carteira. Você vai digitá-la sempre que enviar, fizer backup ou adicionar uma conta.",
-  "wallet.setup.existingDesc": "Esta carteira já tem chaves. Digite a senha com que elas foram criadas: ela passa a ser a senha da carteira.",
-  "wallet.setup.noRecovery": "Esta senha criptografa suas chaves neste computador e não pode ser redefinida nem recuperada. Se você a perder, só suas frases de recuperação e seus arquivos de backup poderão trazer suas contas de volta.",
+  "wallet.setup.desc":
+    "Uma única senha protege todas as contas e frases de recuperação desta carteira. Você vai digitá-la sempre que enviar, fizer backup ou adicionar uma conta.",
+  "wallet.setup.existingDesc":
+    "Esta carteira já tem chaves. Digite a senha com que elas foram criadas: ela passa a ser a senha da carteira.",
+  "wallet.setup.noRecovery":
+    "Esta senha criptografa suas chaves neste computador e não pode ser redefinida nem recuperada. Se você a perder, só suas frases de recuperação e seus arquivos de backup poderão trazer suas contas de volta.",
   "wallet.setup.cta": "Definir senha",
   "wallet.setup.step": "Senha",
   "wallet.offer.title": "Crie sua frase de recuperação",
-  "wallet.offer.desc": "A senha da sua carteira está definida. Agora crie uma frase de recuperação: 12 palavras que fazem o backup de cada conta criada a partir delas.",
+  "wallet.offer.desc":
+    "A senha da sua carteira está definida. Agora crie uma frase de recuperação: 12 palavras que fazem o backup de cada conta criada a partir delas.",
   "wallet.offer.later": "Você também pode fazer isso depois, em Contas.",
   "wallet.offer.cta": "Criar frase de recuperação",
   "wallet.security": "Segurança",
@@ -389,22 +409,27 @@ const ptBR: Dict = {
   "wallet.create.kind.derive": "Outra conta de uma frase de recuperação",
   "wallet.create.kind.deriveDesc": "De uma frase que já está nesta carteira e que já serve de backup para ela.",
   "wallet.create.kind.phrase": "Nova frase de recuperação",
-  "wallet.create.kind.phraseDesc": "12 palavras que fazem o backup desta conta e de todas que você adicionar depois. Funcionam no MetaMask e na maioria das outras carteiras.",
+  "wallet.create.kind.phraseDesc":
+    "12 palavras que fazem o backup desta conta e de todas que você adicionar depois. Funcionam no MetaMask e na maioria das outras carteiras.",
   "wallet.create.kind.key": "Chave única",
   "wallet.create.kind.keyDesc": "Uma conta com chave própria, com backup em um arquivo keystore criptografado.",
   "wallet.create.recommended": "Recomendado",
   "wallet.create.keyFact1": "Uma nova chave",
-  "wallet.create.keyFact1Desc": "Gerada aqui a partir da fonte aleatória segura do seu sistema. É ela que permite gastar.",
+  "wallet.create.keyFact1Desc":
+    "Gerada aqui a partir da fonte aleatória segura do seu sistema. É ela que permite gastar.",
   "wallet.create.keyFact2Desc": "A chave é criptografada com a senha que você escolher na próxima página.",
   "wallet.create.keyNext": "Em seguida, você vai salvar um arquivo de backup da chave.",
-  "wallet.create.keyBackupWhy": "Com o arquivo e a senha dele, qualquer carteira compatível pode restaurar a conta. Sem eles, ela não pode ser recuperada.",
+  "wallet.create.keyBackupWhy":
+    "Com o arquivo e a senha dele, qualquer carteira compatível pode restaurar a conta. Sem eles, ela não pode ser recuperada.",
   "wallet.create.done": "Conta criada",
   "wallet.create.step.backup": "Backup",
   "wallet.create.lead": "Uma nova conta é criada neste computador, em três etapas que acontecem juntas:",
   "wallet.create.fact1": "Uma frase de recuperação",
-  "wallet.create.fact1Desc": "12 palavras, geradas aqui a partir da fonte aleatória segura do seu sistema. Elas restauram suas contas nesta ou em qualquer carteira compatível.",
+  "wallet.create.fact1Desc":
+    "12 palavras, geradas aqui a partir da fonte aleatória segura do seu sistema. Elas restauram suas contas nesta ou em qualquer carteira compatível.",
   "wallet.create.fact2": "Protegida pela sua senha",
-  "wallet.create.fact2Desc": "A frase e a chave da sua conta são criptografadas com a senha que você escolher na próxima página.",
+  "wallet.create.fact2Desc":
+    "A frase e a chave da sua conta são criptografadas com a senha que você escolher na próxima página.",
   "wallet.create.fact3": "Guardada neste computador",
   "wallet.create.fact3Desc": "Só a chave criptografada é armazenada, aqui. Nada é enviado a lugar nenhum.",
   "wallet.create.optional": "Opcional",
@@ -420,7 +445,8 @@ const ptBR: Dict = {
   "wallet.derive.title": "Nova conta",
   "wallet.derive.cta": "Adicionar conta",
   "wallet.derive.which": "Frase de recuperação",
-  "wallet.derive.desc": "Ela vem da frase de recuperação, que já serve de backup para ela: não é preciso um backup separado.",
+  "wallet.derive.desc":
+    "Ela vem da frase de recuperação, que já serve de backup para ela: não é preciso um backup separado.",
   "wallet.create.busy": "Criando…",
   "wallet.created.later": "Fazer depois",
   "wallet.created.savedDesc": "Guarde o arquivo e a senha em segurança, e separados.",
@@ -439,27 +465,32 @@ const ptBR: Dict = {
   "wallet.import.choose.desc": "De onde vem a conta que você quer importar?",
   "wallet.import.phrase": "Frase de recuperação",
   "wallet.import.phraseDesc": "12 a 24 palavras do MetaMask ou de outra carteira. Restaura as mesmas contas.",
-  "wallet.import.phraseLead": "Digite ou cole as palavras em ordem, separadas por espaços. As mesmas palavras geram as mesmas contas da carteira de onde vieram.",
+  "wallet.import.phraseLead":
+    "Digite ou cole as palavras em ordem, separadas por espaços. As mesmas palavras geram as mesmas contas da carteira de onde vieram.",
   "wallet.import.phraseLabel": "Frase de recuperação",
   "wallet.import.step.accounts": "Contas",
   "wallet.import.chooseTitle": "Escolher contas",
-  "wallet.import.chooseDesc": "Uma frase pode conter muitas contas, e as carteiras as colocam em caminhos diferentes. Escolha as que quer trazer: as já usadas vêm marcadas.",
+  "wallet.import.chooseDesc":
+    "Uma frase pode conter muitas contas, e as carteiras as colocam em caminhos diferentes. Escolha as que quer trazer: as já usadas vêm marcadas.",
   "wallet.import.scheme.standard": "Padrão",
   "wallet.import.scheme.ledgerlive": "Ledger Live",
   "wallet.import.scheme.legacy": "Legado",
   "wallet.import.schemePath.standard": "m/44'/60'/0'/0/n · MetaMask, Trezor",
   "wallet.import.schemePath.ledgerlive": "m/44'/60'/n'/0/0",
   "wallet.import.schemePath.legacy": "m/44'/60'/0'/n · MyEtherWallet",
-  "wallet.import.noBalances": "Inicie o nó e deixe-o sincronizar para ver o saldo de cada conta e quais já foram usadas.",
+  "wallet.import.noBalances":
+    "Inicie o nó e deixe-o sincronizar para ver o saldo de cada conta e quais já foram usadas.",
   "wallet.import.used": "Usada",
   "wallet.import.inWallet": "Já na carteira",
   "wallet.import.more": "Mostrar mais",
   "wallet.import.picked": "{n} selecionada(s)",
-  "wallet.import.passwordLead": "A frase de recuperação e as {n} contas escolhidas serão criptografadas com esta senha neste computador. O nome vai para a primeira conta.",
+  "wallet.import.passwordLead":
+    "A frase de recuperação e as {n} contas escolhidas serão criptografadas com esta senha neste computador. O nome vai para a primeira conta.",
   "wallet.import.keyDesc": "A chave bruta da conta: 64 caracteres hexadecimais.",
   "wallet.import.keyfile": "Arquivo keystore",
   "wallet.import.key": "Chave privada",
-  "wallet.import.keyfileDesc": "Um arquivo keystore JSON, como os exportados pelo parallaxd, pelo parallax-wallet e pela maioria das carteiras no estilo Ethereum.",
+  "wallet.import.keyfileDesc":
+    "Um arquivo keystore JSON, como os exportados pelo parallaxd, pelo parallax-wallet e pela maioria das carteiras no estilo Ethereum.",
   "wallet.import.file": "Arquivo",
   "wallet.import.choose": "Escolher arquivo…",
   "wallet.import.noFile": "Nenhum arquivo escolhido",
@@ -468,12 +499,14 @@ const ptBR: Dict = {
   "wallet.import.keyLabel": "Chave privada",
   "wallet.import.keyHint": "64 caracteres hexadecimais, com ou sem 0x.",
   "wallet.import.reencrypt": "A chave é criptografada de novo com a senha da carteira.",
-  "wallet.import.keyWarn": "Qualquer pessoa que tenha visto esta chave pode gastar os fundos da conta. Só importe uma chave que tenha sido mantida em sigilo.",
+  "wallet.import.keyWarn":
+    "Qualquer pessoa que tenha visto esta chave pode gastar os fundos da conta. Só importe uma chave que tenha sido mantida em sigilo.",
 
   // Wallet: backup
   "wallet.backup.title": "Fazer backup da conta",
   "wallet.backup.cta": "Salvar backup",
-  "wallet.backup.what": "Salva o arquivo de chave desta conta, criptografado com a senha dela, no lugar que você escolher, como um pendrive.",
+  "wallet.backup.what":
+    "Salva o arquivo de chave desta conta, criptografado com a senha dela, no lugar que você escolher, como um pendrive.",
   "wallet.backup.restore": "Para restaurar a conta, você vai precisar do {file} e da {password}.",
   "wallet.backup.restore.file": "arquivo de backup",
   "wallet.backup.restore.password": "senha",
@@ -481,20 +514,25 @@ const ptBR: Dict = {
   "wallet.backup.passwordHint": "Verificada antes de salvar, para você saber que o backup vai abrir.",
   "wallet.backup.saved": "Backup salvo",
   "wallet.backup.missingTitle": "Esta conta não tem backup",
-  "wallet.backup.missingDesc": "Se este computador for perdido ou o disco falhar, os fundos também se perdem. Salve o arquivo keystore em um lugar seguro.",
+  "wallet.backup.missingDesc":
+    "Se este computador for perdido ou o disco falhar, os fundos também se perdem. Salve o arquivo keystore em um lugar seguro.",
 
   // Wallet: change password
   "wallet.changePassword.title": "Alterar senha",
-  "wallet.changePassword.desc": "Todas as chaves e frases de recuperação da carteira ({n} contas) são criptografadas de novo com a nova senha. Isso leva alguns segundos por conta.",
+  "wallet.changePassword.desc":
+    "Todas as chaves e frases de recuperação da carteira ({n} contas) são criptografadas de novo com a nova senha. Isso leva alguns segundos por conta.",
   "wallet.changePassword.cta": "Alterar senha",
   "wallet.changePassword.busy": "Criptografando de novo…",
-  "wallet.changePassword.oldBackups": "Os arquivos de backup que você salvou antes continuam abrindo apenas com a senha antiga.",
+  "wallet.changePassword.oldBackups":
+    "Os arquivos de backup que você salvou antes continuam abrindo apenas com a senha antiga.",
 
   // Wallet: remove
   "wallet.remove.title": "Remover conta",
   "wallet.remove.cta": "Remover deste computador",
-  "wallet.remove.warn": "A chave da conta é apagada deste computador. Você vai precisar do seu backup e da senha dele para usar a conta de novo.",
-  "wallet.remove.warnNoBackup": "Esta conta nunca teve backup. Depois que a chave for apagada, os fundos dela nunca mais poderão ser gastos.",
+  "wallet.remove.warn":
+    "A chave da conta é apagada deste computador. Você vai precisar do seu backup e da senha dele para usar a conta de novo.",
+  "wallet.remove.warnNoBackup":
+    "Esta conta nunca teve backup. Depois que a chave for apagada, os fundos dela nunca mais poderão ser gastos.",
   "wallet.remove.confirm": "Entendo e tenho um backup, ou a conta não tem nada.",
 
   // Wallet: accounts
@@ -506,7 +544,8 @@ const ptBR: Dict = {
   "wallet.accounts.noBackup": "Sem backup",
   "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "Armazenamento",
-  "wallet.accounts.storageDesc": "As chaves ficam nesta pasta, todas criptografadas com a senha da sua carteira. O nó nunca as vê, e nada que se conecte ao RPC dele pode usá-las.",
+  "wallet.accounts.storageDesc":
+    "As chaves ficam nesta pasta, todas criptografadas com a senha da sua carteira. O nó nunca as vê, e nada que se conecte ao RPC dele pode usá-las.",
 
   // Wallet: send
   "wallet.send.title": "Enviar LAX",
@@ -520,7 +559,8 @@ const ptBR: Dict = {
   "wallet.send.feeAuto": "Sugerida",
   "wallet.send.feeManual": "Personalizada",
   "wallet.send.feeSuggested": "Seu nó sugere um preço com base nos blocos recentes e no pool dele.",
-  "wallet.send.feeCustom": "Pague mais do que seu nó sugere para entrar em um bloco mais cedo. Não dá para pagar menos: uma transação parada bloqueia todas as posteriores da conta.",
+  "wallet.send.feeCustom":
+    "Pague mais do que seu nó sugere para entrar em um bloco mais cedo. Não dá para pagar menos: uma transação parada bloqueia todas as posteriores da conta.",
   "wallet.send.gasPrice": "Preço do gas",
   "wallet.send.review": "Revisar",
   "wallet.review.title": "Revisar e assinar",
@@ -529,14 +569,16 @@ const ptBR: Dict = {
   "wallet.review.feeDetail": "{gas} de gas a {price}",
   "wallet.review.total": "Total",
   "wallet.review.toSelf": "Isto envia para a mesma conta: só a taxa é gasta.",
-  "wallet.review.toContract": "O destinatário é um contrato. Ele executa código ao receber LAX; confirme que ele foi feito para isso.",
+  "wallet.review.toContract":
+    "O destinatário é um contrato. Ele executa código ao receber LAX; confirme que ele foi feito para isso.",
   "wallet.review.dear": "Este preço é mais de três vezes os {price} que seu nó sugere.",
   "wallet.review.passwordHint": "Descriptografa a chave só para esta assinatura.",
   "wallet.review.cta": "Assinar e enviar",
   "wallet.review.signing": "Assinando…",
   "wallet.sent.title": "Enviado",
   "wallet.sent.desc": "{amount} LAX a caminho",
-  "wallet.sent.wait": "Seu nó está retransmitindo a transação para a rede. Ela é confirmada quando um bloco a inclui, mais ou menos a cada dez minutos.",
+  "wallet.sent.wait":
+    "Seu nó está retransmitindo a transação para a rede. Ela é confirmada quando um bloco a inclui, mais ou menos a cada dez minutos.",
   "wallet.sent.hash": "Transação",
   "wallet.sent.nonce": "Nonce",
   "wallet.sent.again": "Enviar outra",
@@ -550,15 +592,20 @@ const ptBR: Dict = {
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Adicionar uma frase secreta (avançado)",
-  "wallet.passphrase.toggleDesc": "Uma palavra extra que muda todas as contas geradas pela frase, como na Ledger e na Trezor. O MetaMask não oferece suporte a ela.",
-  "wallet.passphrase.warning": "Anote também a frase secreta. A restauração exige tanto as palavras quanto a frase secreta exata, e uma frase secreta errada gera uma carteira diferente e vazia, sem nenhum erro.",
+  "wallet.passphrase.toggleDesc":
+    "Uma palavra extra que muda todas as contas geradas pela frase, como na Ledger e na Trezor. O MetaMask não oferece suporte a ela.",
+  "wallet.passphrase.warning":
+    "Anote também a frase secreta. A restauração exige tanto as palavras quanto a frase secreta exata, e uma frase secreta errada gera uma carteira diferente e vazia, sem nenhum erro.",
   "wallet.passphrase.label": "Frase secreta",
   "wallet.passphrase.confirm": "Confirmar frase secreta",
   "wallet.passphrase.mismatch": "As frases secretas não coincidem",
-  "wallet.passphrase.remember": "Esta frase de recuperação tem uma frase secreta: você vai precisar dela, exatamente como foi digitada, para restaurar estas contas.",
+  "wallet.passphrase.remember":
+    "Esta frase de recuperação tem uma frase secreta: você vai precisar dela, exatamente como foi digitada, para restaurar estas contas.",
   "wallet.passphrase.importToggle": "Ela tem uma frase secreta (avançado)",
-  "wallet.passphrase.importToggleDesc": "Se você definiu uma palavra extra na Ledger ou na Trezor, digite-a para chegar às mesmas contas.",
-  "wallet.passphrase.importHint": "Exatamente como foi definida: maiúsculas e espaços contam. Se a próxima etapa não mostrar contas conhecidas, confira-a.",
+  "wallet.passphrase.importToggleDesc":
+    "Se você definiu uma palavra extra na Ledger ou na Trezor, digite-a para chegar às mesmas contas.",
+  "wallet.passphrase.importHint":
+    "Exatamente como foi definida: maiúsculas e espaços contam. Se a próxima etapa não mostrar contas conhecidas, confira-a.",
   "wallet.passphrase.show": "Mostrar a frase secreta",
   "wallet.passphrase.badge": "Frase secreta",
 
@@ -566,17 +613,21 @@ const ptBR: Dict = {
   "wallet.phrase.section": "Frase de recuperação",
   "wallet.phrase.title": "Frase de recuperação",
   "wallet.phrase.yours": "Sua frase de recuperação",
-  "wallet.phrase.writeDown": "Anote estas palavras em papel, nesta ordem, e guarde-as em um lugar seguro. Elas são o backup de todas as contas criadas a partir delas.",
+  "wallet.phrase.writeDown":
+    "Anote estas palavras em papel, nesta ordem, e guarde-as em um lugar seguro. Elas são o backup de todas as contas criadas a partir delas.",
   "wallet.phrase.reveal": "Clique para revelar",
-  "wallet.phrase.warning": "Qualquer pessoa com estas palavras pode levar seus LAX. Nunca as digite em um site, não as compartilhe e não as guarde em uma captura de tela ou em uma nota neste computador.",
+  "wallet.phrase.warning":
+    "Qualquer pessoa com estas palavras pode levar seus LAX. Nunca as digite em um site, não as compartilhe e não as guarde em uma captura de tela ou em uma nota neste computador.",
   "wallet.phrase.laterWarn": "Até você confirmá-la, a frase não conta como backup feito.",
   "wallet.phrase.written": "Já anotei",
   "wallet.phrase.quizTitle": "Confirme sua frase de recuperação",
-  "wallet.phrase.quizDesc": "Digite estas palavras da sua frase de recuperação para garantir que ela foi anotada corretamente.",
+  "wallet.phrase.quizDesc":
+    "Digite estas palavras da sua frase de recuperação para garantir que ela foi anotada corretamente.",
   "wallet.phrase.word": "Palavra #{n}",
   "wallet.phrase.confirm": "Confirmar",
   "wallet.phrase.ready": "Sua carteira está pronta",
-  "wallet.phrase.readyDesc": "Guarde a frase de recuperação em segurança e offline. Com ela, você pode restaurar suas contas nesta ou em qualquer carteira compatível.",
+  "wallet.phrase.readyDesc":
+    "Guarde a frase de recuperação em segurança e offline. Com ela, você pode restaurar suas contas nesta ou em qualquer carteira compatível.",
   "wallet.phrase.open": "Mostrar",
   "wallet.phrase.openDesc": "Digite a senha que você escolheu para a frase de recuperação para mostrá-la.",
   "wallet.phrase.confirmed": "Frase de recuperação confirmada",
@@ -592,11 +643,14 @@ const ptBR: Dict = {
   "wallet.phrase.account": "1 conta",
   "wallet.removeSeed.title": "Remover frase de recuperação",
   "wallet.removeSeed.cta": "Remover frase e contas",
-  "wallet.removeSeed.warn": "A frase e suas {n} contas são apagadas deste computador. Você vai precisar das palavras anotadas (e da frase secreta, se houver) para usá-las de novo.",
-  "wallet.removeSeed.warnUnconfirmed": "Esta frase nunca foi confirmada. Se você não a anotou, as {n} contas dela e os fundos delas estão perdidos para sempre.",
+  "wallet.removeSeed.warn":
+    "A frase e suas {n} contas são apagadas deste computador. Você vai precisar das palavras anotadas (e da frase secreta, se houver) para usá-las de novo.",
+  "wallet.removeSeed.warnUnconfirmed":
+    "Esta frase nunca foi confirmada. Se você não a anotou, as {n} contas dela e os fundos delas estão perdidos para sempre.",
   "wallet.removeSeed.confirm": "Entendo e tenho a frase anotada, ou as contas dela não têm nada.",
   "wallet.phrase.missingTitle": "Sua frase de recuperação não está confirmada",
-  "wallet.phrase.missingDesc": "Se este computador for perdido ou o disco falhar, a frase é o único jeito de voltar a esta conta. Anote e confirme a frase.",
+  "wallet.phrase.missingDesc":
+    "Se este computador for perdido ou o disco falhar, a frase é o único jeito de voltar a esta conta. Anote e confirme a frase.",
 
   // Wallet: errors
   "wallet.err.wrongPassword": "Senha incorreta.",
@@ -621,8 +675,10 @@ const ptBR: Dict = {
   "wallet.err.unknownSeed": "Esta frase de recuperação não está mais na carteira.",
   "wallet.err.noPassword": "Defina primeiro a senha da carteira.",
   "wallet.err.needsSetup": "Defina primeiro a senha da carteira, na página de boas-vindas.",
-  "wallet.err.keyMismatch": "A chave desta conta está protegida por uma senha diferente da senha da carteira. Remova a conta e importe-a de novo.",
-  "wallet.err.setupMismatch": "Esta senha não abre todas as chaves que já estão na carteira. Use a senha com que elas foram criadas.",
+  "wallet.err.keyMismatch":
+    "A chave desta conta está protegida por uma senha diferente da senha da carteira. Remova a conta e importe-a de novo.",
+  "wallet.err.setupMismatch":
+    "Esta senha não abre todas as chaves que já estão na carteira. Use a senha com que elas foram criadas.",
   "wallet.err.wrongFilePassword": "Senha incorreta para o arquivo keystore.",
   "settings.navGroup.app": "Aplicativo",
   "settings.navGroup.support": "Suporte",
@@ -640,7 +696,8 @@ const ptBR: Dict = {
   "settings.theme.light": "Claro",
   "settings.theme.dark": "Escuro",
   "settings.avatars": "Avatares das contas",
-  "settings.avatars.desc": "A imagem gerada a partir de cada endereço. Jazzicon é o padrão do MetaMask; Blockies é o que o Etherscan mostra.",
+  "settings.avatars.desc":
+    "A imagem gerada a partir de cada endereço. Jazzicon é o padrão do MetaMask; Blockies é o que o Etherscan mostra.",
   "settings.dataDir.desc": "Onde a blockchain é armazenada. Um novo local começa uma sincronização do zero.",
   "settings.syncMode.desc": "Snap é a mais rápida; Completa reexecuta cada bloco.",
   "settings.maxPeers.desc": "O máximo de pares que o nó mantém conectados.",
@@ -675,37 +732,65 @@ const ptBR: Dict = {
   "settings.group.logs": "Logs",
   "settings.txpool.desc": "As regras do nó para quais transações pendentes ele guarda e repassa.",
   "settings.limits.desc": "Limites que protegem o nó de requisições RPC caras ou arriscadas.",
-  "settings.preventSleep.more": "A sincronização pausa sempre que o computador entra em suspensão, então uma sincronização deixada sozinha durante a noite pode perder horas.\n\nCom esta opção ligada, o app impede a suspensão do sistema apenas enquanto o nó está sincronizando, e libera assim que ele fica em dia. A tela ainda pode desligar e bloquear normalmente.",
-  "settings.notifications.more": "O app envia uma notificação na área de trabalho quando:\n\n• uma sincronização que levou mais de alguns minutos termina, para você saber que o nó está em dia;\n\n• o nó para sozinho porque o disco está quase cheio, para você liberar espaço antes de reiniciá-lo.\n\nAs notificações só aparecem enquanto o app está em execução.",
-  "settings.ancientDir.more": "O nó mantém os dados recentes da chain em um banco de dados chave-valor rápido e move blocos, cabeçalhos e recibos mais antigos para um armazenamento \"ancient\" somente de acréscimo. Esse armazenamento é a maior parte do diretório de dados e raramente é lido.\n\nAponte-o para um disco maior e mais lento para manter só os dados recentes no seu SSD. Deixe vazio para manter tudo dentro do diretório de dados.\n\nAlterá-lo não move os dados existentes: mova a pasta ancient você mesmo com o nó parado, ou o nó começará o armazenamento ancient do zero.",
-  "settings.minFreeDisk.more": "Um banco de dados que fica sem espaço em disco no meio de uma gravação pode ser corrompido e exigir uma ressincronização completa. Para evitar isso, o nó verifica o espaço livre do seu disco de dados a cada 30 segundos e para de forma limpa quando ele cai abaixo deste valor, avisando antes quando chega a menos do dobro.\n\nVazio usa o dobro do cache trie sujo, o mesmo padrão do cliente de linha de comando. 0 desativa a proteção.",
-  "settings.syncMode.more": "A sincronização Snap baixa o estado recente de cada conta diretamente dos peers, verifica-o contra a chain e depois acompanha os novos blocos normalmente. Ela entrega um nó utilizável em horas em vez de dias.\n\nA sincronização completa baixa cada bloco desde o gênesis e executa cada transação para reconstruir o estado por conta própria. É mais lenta, mas não confia em nada que não tenha calculado.\n\nDe qualquer forma, o nó acaba validando completamente cada novo bloco. Mudar o modo não ressincroniza uma chain que já foi baixada.",
-  "settings.archive.more": "Normalmente o nó poda o estado antigo e guarda só o necessário para validar novos blocos, além do histórico recente. Um nó arquivo guarda o estado de cada bloco, para que você possa consultar saldos ou executar traces em qualquer ponto do passado — o que exploradores de blocos e indexadores precisam.\n\nEle usa muito mais espaço em disco e cresce rapidamente. Os estados passados só são preenchidos por uma sincronização completa desde o gênesis, então mude o modo de sincronização para Completa e use um diretório de dados vazio. O modo arquivo também guarda as preimages e o índice de transações inteiro.",
-  "settings.txLookupLimit.more": "Consultar uma transação pelo hash (eth_getTransactionByHash, recibos) exige uma entrada de índice para ela. O nó mantém essas entradas para esta quantidade de blocos recentes e descarta as mais antigas para economizar espaço.\n\nVazio mantém cerca de um ano de blocos. 0 indexa a chain inteira, o que carteiras e exploradores que consultam transações antigas precisam. O modo arquivo sempre indexa tudo.",
-  "settings.snapshot.more": "O snapshot é uma cópia plana de cada conta e slot de armazenamento ao lado da trie de estado. Ler dele é muito mais rápido do que percorrer a trie, o que acelera a importação de blocos e as chamadas RPC.\n\nA sincronização Snap precisa dele, então ele fica ligado na sincronização Snap. Na sincronização completa você pode desligá-lo para economizar espaço em disco; sua memória passa então para o cache trie.",
-  "settings.prefetch.more": "Enquanto um bloco é importado, o nó executa suas transações antecipadamente em threads livres para carregar na memória o estado que elas vão acessar. A importação real então encontra a maior parte do que precisa já em cache.\n\nDesligar economiza CPU e leituras de disco, ao custo de importações mais lentas. Isso importa sobretudo em discos lentos ou máquinas ocupadas.",
-  "settings.preimages.more": "A trie de estado guarda contas e slots de armazenamento sob o hash da sua chave. As preimages são as chaves originais, que algumas ferramentas de depuração e de dump de estado precisam para mostrar endereços e slots legíveis.\n\nRegistrá-las custa espaço extra em disco. O modo arquivo sempre as registra.",
+  "settings.preventSleep.more":
+    "A sincronização pausa sempre que o computador entra em suspensão, então uma sincronização deixada sozinha durante a noite pode perder horas.\n\nCom esta opção ligada, o app impede a suspensão do sistema apenas enquanto o nó está sincronizando, e libera assim que ele fica em dia. A tela ainda pode desligar e bloquear normalmente.",
+  "settings.notifications.more":
+    "O app envia uma notificação na área de trabalho quando:\n\n• uma sincronização que levou mais de alguns minutos termina, para você saber que o nó está em dia;\n\n• o nó para sozinho porque o disco está quase cheio, para você liberar espaço antes de reiniciá-lo.\n\nAs notificações só aparecem enquanto o app está em execução.",
+  "settings.ancientDir.more":
+    'O nó mantém os dados recentes da chain em um banco de dados chave-valor rápido e move blocos, cabeçalhos e recibos mais antigos para um armazenamento "ancient" somente de acréscimo. Esse armazenamento é a maior parte do diretório de dados e raramente é lido.\n\nAponte-o para um disco maior e mais lento para manter só os dados recentes no seu SSD. Deixe vazio para manter tudo dentro do diretório de dados.\n\nAlterá-lo não move os dados existentes: mova a pasta ancient você mesmo com o nó parado, ou o nó começará o armazenamento ancient do zero.',
+  "settings.minFreeDisk.more":
+    "Um banco de dados que fica sem espaço em disco no meio de uma gravação pode ser corrompido e exigir uma ressincronização completa. Para evitar isso, o nó verifica o espaço livre do seu disco de dados a cada 30 segundos e para de forma limpa quando ele cai abaixo deste valor, avisando antes quando chega a menos do dobro.\n\nVazio usa o dobro do cache trie sujo, o mesmo padrão do cliente de linha de comando. 0 desativa a proteção.",
+  "settings.syncMode.more":
+    "A sincronização Snap baixa o estado recente de cada conta diretamente dos peers, verifica-o contra a chain e depois acompanha os novos blocos normalmente. Ela entrega um nó utilizável em horas em vez de dias.\n\nA sincronização completa baixa cada bloco desde o gênesis e executa cada transação para reconstruir o estado por conta própria. É mais lenta, mas não confia em nada que não tenha calculado.\n\nDe qualquer forma, o nó acaba validando completamente cada novo bloco. Mudar o modo não ressincroniza uma chain que já foi baixada.",
+  "settings.archive.more":
+    "Normalmente o nó poda o estado antigo e guarda só o necessário para validar novos blocos, além do histórico recente. Um nó arquivo guarda o estado de cada bloco, para que você possa consultar saldos ou executar traces em qualquer ponto do passado — o que exploradores de blocos e indexadores precisam.\n\nEle usa muito mais espaço em disco e cresce rapidamente. Os estados passados só são preenchidos por uma sincronização completa desde o gênesis, então mude o modo de sincronização para Completa e use um diretório de dados vazio. O modo arquivo também guarda as preimages e o índice de transações inteiro.",
+  "settings.txLookupLimit.more":
+    "Consultar uma transação pelo hash (eth_getTransactionByHash, recibos) exige uma entrada de índice para ela. O nó mantém essas entradas para esta quantidade de blocos recentes e descarta as mais antigas para economizar espaço.\n\nVazio mantém cerca de um ano de blocos. 0 indexa a chain inteira, o que carteiras e exploradores que consultam transações antigas precisam. O modo arquivo sempre indexa tudo.",
+  "settings.snapshot.more":
+    "O snapshot é uma cópia plana de cada conta e slot de armazenamento ao lado da trie de estado. Ler dele é muito mais rápido do que percorrer a trie, o que acelera a importação de blocos e as chamadas RPC.\n\nA sincronização Snap precisa dele, então ele fica ligado na sincronização Snap. Na sincronização completa você pode desligá-lo para economizar espaço em disco; sua memória passa então para o cache trie.",
+  "settings.prefetch.more":
+    "Enquanto um bloco é importado, o nó executa suas transações antecipadamente em threads livres para carregar na memória o estado que elas vão acessar. A importação real então encontra a maior parte do que precisa já em cache.\n\nDesligar economiza CPU e leituras de disco, ao custo de importações mais lentas. Isso importa sobretudo em discos lentos ou máquinas ocupadas.",
+  "settings.preimages.more":
+    "A trie de estado guarda contas e slots de armazenamento sob o hash da sua chave. As preimages são as chaves originais, que algumas ferramentas de depuração e de dump de estado precisam para mostrar endereços e slots legíveis.\n\nRegistrá-las custa espaço extra em disco. O modo arquivo sempre as registra.",
   "settings.smartFee.desc": "Estimativa de taxas no estilo do Bitcoin Core.",
-  "settings.smartFee.more": "O oráculo de preço do gas tem dois algoritmos. O padrão usa um percentil das gorjetas dos blocos recentes — rápido e bem testado. A opção Smart Fee porta o algoritmo estimateSmartFee do Bitcoin Core, que agrupa as confirmações observadas e calcula de trás para frente uma taxa que atinja uma profundidade de confirmação alvo.\n\nO Smart Fee precisa de uma janela longa e contínua de confirmações observadas para produzir estimativas precisas. O Parallax Wallet costuma ser iniciado e parado sob demanda em vez de ficar rodando 24/7, então o oráculo pode não acumular dados suficientes e recorrer ao mínimo padrão. Nós sempre ligados tiram o máximo proveito dele.",
+  "settings.smartFee.more":
+    "O oráculo de preço do gas tem dois algoritmos. O padrão usa um percentil das gorjetas dos blocos recentes — rápido e bem testado. A opção Smart Fee porta o algoritmo estimateSmartFee do Bitcoin Core, que agrupa as confirmações observadas e calcula de trás para frente uma taxa que atinja uma profundidade de confirmação alvo.\n\nO Smart Fee precisa de uma janela longa e contínua de confirmações observadas para produzir estimativas precisas. O Parallax Wallet costuma ser iniciado e parado sob demanda em vez de ficar rodando 24/7, então o oráculo pode não acumular dados suficientes e recorrer ao mínimo padrão. Nós sempre ligados tiram o máximo proveito dele.",
   "settings.allowInbound.desc": "Permite que outros peers se conectem ao seu nó.",
-  "settings.allowInbound.more": "Quando ativado, o nó pede ao seu roteador para encaminhar a porta de escuta (via UPnP ou NAT-PMP) para que peers na internet possam se conectar a você. Aceitar peers de entrada deixa a rede mais saudável e dá a você uma propagação de blocos mais rápida.\n\nEm troca, seu endereço IP passa a ser descobrível por outros peers. Desligue se você estiver atrás de um firewall rígido ou quiser ficar só com conexões de saída: o nó continua se conectando a peers.",
-  "settings.nat.more": "Automático tenta UPnP e NAT-PMP e usa o que o seu roteador responder. Escolha um para pular o outro.\n\nIP público fixo é para quando você mesmo encaminhou a porta no roteador, ou a máquina tem um endereço público: o nó então anuncia esse IP sem consultar o roteador.\n\nSó é usado enquanto conexões de entrada estão permitidas.",
-  "settings.discovery.more": "Com a descoberta ligada, o nó conhece peers por meio de outros peers, de seeds DNS e da árvore de descoberta DNS, e os guarda no seu catálogo de endereços.\n\nDesligada, ele só se conecta aos peers que você adicionar pela lista de peers e aos nós de bootstrap. Isso é útil em configurações privadas, mas um nó com poucos peers é mais fácil de isolar.",
-  "settings.legacyDiscovery.more": "Os nós Parallax v2 se conectam com o handshake v2 e guardam os peers em um catálogo de endereços. O transporte v1.x (descoberta UDP e o handshake legado) é mantido para compatibilidade com nós mais antigos.\n\nAuto responde a peers v1 que entram em contato e aceita conexões legadas, mas não procura peers v1. Este é o padrão.\n\nLigado também usa a descoberta v1 para encontrar peers a discar.\n\nDesligado fecha completamente a superfície v1: sem socket UDP, sem handshake legado. O nó passa a ser apenas v2 e sua URL enode é só informativa.",
-  "settings.bootnodes.more": "Os nós de bootstrap são onde um nó com o catálogo de endereços vazio começa a procurar peers. Uma entrada por linha:\n\n• URLs enode:// alimentam a descoberta v1;\n\n• entradas ip:port ou <address>.onion:port são discadas com o handshake v2.\n\nEntradas personalizadas substituem as embutidas. As seeds DNS continuam funcionando junto com elas, a menos que a descoberta de peers esteja desligada.",
-  "settings.proxy.more": "Toda conexão de saída com peers passa por este proxy SOCKS5, incluindo endereços onion. Aponte-o para um Tor local (normalmente 127.0.0.1:9050) para esconder seu endereço IP dos peers que você disca.\n\nOs nomes das seeds DNS também passam a ser resolvidos pelo proxy, então nenhuma consulta vaza para o seu resolvedor local. As conexões de entrada não são afetadas: desligue também as conexões de entrada para deixar de aceitar peers no seu próprio endereço.",
-  "settings.listenOnion.more": "Se o Tor estiver rodando neste computador com a porta de controle aberta, o nó pede a ele um serviço onion que encaminha para a porta de escuta, para que peers possam alcançá-lo pelo Tor sem conhecer seu endereço IP. A chave do serviço fica no diretório de dados, então o endereço permanece o mesmo entre reinicializações.\n\nSe o Tor não estiver acessível, isso não faz nada além de uma nova tentativa silenciosa de vez em quando. A menos que um proxy onion esteja definido, o nó também usa a porta SOCKS do Tor para discar peers onion.",
-  "settings.onlyNet.more": "O nó só disca peers nas redes escolhidas. Escolha apenas Onion, junto com um proxy ou o serviço onion, para fazer todas as conexões de saída pelo Tor.\n\nNenhuma escolhida permite todas as redes. Conexões de entrada e peers que você adiciona manualmente não são afetados.",
-  "settings.onionProxy.more": "Os endereços onion passam por este proxy SOCKS5 em vez do principal. Deixe vazio para usar o proxy principal, ou a porta SOCKS do Tor quando o serviço onion estiver rodando.\n\nDefina como 0 para não fazer nenhuma conexão onion, mesmo com um proxy definido.",
-  "settings.proxyRandomize.more": "O Tor dá circuitos separados a conexões que usam credenciais SOCKS diferentes. Com esta opção ligada, o nó usa credenciais novas a cada conexão, para que dois peers nunca compartilhem um circuito e não possam ser associados entre si pela saída.\n\nDesligue para compartilhar um circuito entre os peers, o que usa menos recursos do Tor.",
+  "settings.allowInbound.more":
+    "Quando ativado, o nó pede ao seu roteador para encaminhar a porta de escuta (via UPnP ou NAT-PMP) para que peers na internet possam se conectar a você. Aceitar peers de entrada deixa a rede mais saudável e dá a você uma propagação de blocos mais rápida.\n\nEm troca, seu endereço IP passa a ser descobrível por outros peers. Desligue se você estiver atrás de um firewall rígido ou quiser ficar só com conexões de saída: o nó continua se conectando a peers.",
+  "settings.nat.more":
+    "Automático tenta UPnP e NAT-PMP e usa o que o seu roteador responder. Escolha um para pular o outro.\n\nIP público fixo é para quando você mesmo encaminhou a porta no roteador, ou a máquina tem um endereço público: o nó então anuncia esse IP sem consultar o roteador.\n\nSó é usado enquanto conexões de entrada estão permitidas.",
+  "settings.discovery.more":
+    "Com a descoberta ligada, o nó conhece peers por meio de outros peers, de seeds DNS e da árvore de descoberta DNS, e os guarda no seu catálogo de endereços.\n\nDesligada, ele só se conecta aos peers que você adicionar pela lista de peers e aos nós de bootstrap. Isso é útil em configurações privadas, mas um nó com poucos peers é mais fácil de isolar.",
+  "settings.legacyDiscovery.more":
+    "Os nós Parallax v2 se conectam com o handshake v2 e guardam os peers em um catálogo de endereços. O transporte v1.x (descoberta UDP e o handshake legado) é mantido para compatibilidade com nós mais antigos.\n\nAuto responde a peers v1 que entram em contato e aceita conexões legadas, mas não procura peers v1. Este é o padrão.\n\nLigado também usa a descoberta v1 para encontrar peers a discar.\n\nDesligado fecha completamente a superfície v1: sem socket UDP, sem handshake legado. O nó passa a ser apenas v2 e sua URL enode é só informativa.",
+  "settings.bootnodes.more":
+    "Os nós de bootstrap são onde um nó com o catálogo de endereços vazio começa a procurar peers. Uma entrada por linha:\n\n• URLs enode:// alimentam a descoberta v1;\n\n• entradas ip:port ou <address>.onion:port são discadas com o handshake v2.\n\nEntradas personalizadas substituem as embutidas. As seeds DNS continuam funcionando junto com elas, a menos que a descoberta de peers esteja desligada.",
+  "settings.proxy.more":
+    "Toda conexão de saída com peers passa por este proxy SOCKS5, incluindo endereços onion. Aponte-o para um Tor local (normalmente 127.0.0.1:9050) para esconder seu endereço IP dos peers que você disca.\n\nOs nomes das seeds DNS também passam a ser resolvidos pelo proxy, então nenhuma consulta vaza para o seu resolvedor local. As conexões de entrada não são afetadas: desligue também as conexões de entrada para deixar de aceitar peers no seu próprio endereço.",
+  "settings.listenOnion.more":
+    "Se o Tor estiver rodando neste computador com a porta de controle aberta, o nó pede a ele um serviço onion que encaminha para a porta de escuta, para que peers possam alcançá-lo pelo Tor sem conhecer seu endereço IP. A chave do serviço fica no diretório de dados, então o endereço permanece o mesmo entre reinicializações.\n\nSe o Tor não estiver acessível, isso não faz nada além de uma nova tentativa silenciosa de vez em quando. A menos que um proxy onion esteja definido, o nó também usa a porta SOCKS do Tor para discar peers onion.",
+  "settings.onlyNet.more":
+    "O nó só disca peers nas redes escolhidas. Escolha apenas Onion, junto com um proxy ou o serviço onion, para fazer todas as conexões de saída pelo Tor.\n\nNenhuma escolhida permite todas as redes. Conexões de entrada e peers que você adiciona manualmente não são afetados.",
+  "settings.onionProxy.more":
+    "Os endereços onion passam por este proxy SOCKS5 em vez do principal. Deixe vazio para usar o proxy principal, ou a porta SOCKS do Tor quando o serviço onion estiver rodando.\n\nDefina como 0 para não fazer nenhuma conexão onion, mesmo com um proxy definido.",
+  "settings.proxyRandomize.more":
+    "O Tor dá circuitos separados a conexões que usam credenciais SOCKS diferentes. Com esta opção ligada, o nó usa credenciais novas a cada conexão, para que dois peers nunca compartilhem um circuito e não possam ser associados entre si pela saída.\n\nDesligue para compartilhar um circuito entre os peers, o que usa menos recursos do Tor.",
   "settings.stats.desc": "Mostra este nó em status.parallaxprotocol.org.",
-  "settings.stats.toggle.more": "O nó se reporta ao painel público em status.parallaxprotocol.org com um nome aleatório guardado no seu diretório de dados.\n\nEle compartilha a altura do bloco, o número de peers, o estado de sincronização e mineração, a latência dos peers, a versão do cliente e o sistema operacional. Nenhum dado de carteira, conta ou transação é enviado, embora o servidor de estatísticas veja seu endereço IP.",
-  "settings.rpc.enable.more": "Inicia um servidor JSON-RPC que carteiras como o MetaMask, dapps e ferramentas de desenvolvimento usam para ler a chain e enviar transações pelo seu próprio nó em vez de um provedor terceiro.\n\nPor padrão ele escuta apenas em 127.0.0.1, então só programas neste computador conseguem acessá-lo. Você pode mudar o endereço em Avançado — nunca o exponha à internet pública.",
-  "settings.rpc.host.more": "127.0.0.1 aceita conexões apenas deste computador. Um endereço da LAN ou 0.0.0.0 (todas as interfaces) permite que outras máquinas também se conectem, por exemplo uma carteira no seu celular ou em outro computador.\n\nQualquer um que alcance o servidor pode ler a chain pelo seu nó e enviar transações, então só faça isso em uma rede confiável, atrás de um firewall. Adicione os nomes que as outras máquinas usam em Hostnames permitidos.",
-  "settings.rpc.vhosts.more": "Cada requisição HTTP indica o host ao qual se destina. O nó recusa requisições endereçadas a qualquer nome fora desta lista, o que impede uma página web maliciosa de alcançar seu nó por DNS rebinding — fazendo seu navegador falar com 127.0.0.1 sob o próprio nome de domínio dela.\n\nRequisições a um endereço IP são sempre aceitas. Adicione um nome aqui quando acessar o nó por ele, e use * para aceitar qualquer um apenas se entender o risco.",
-  "settings.rpc.unprotected.more": "Transações assinadas com um chain ID (EIP-155) só são válidas nesta chain. As desprotegidas, assinadas sem ele, são válidas em todas as chains que compartilham o formato de endereço, então qualquer um pode reproduzi-las em outro lugar.\n\nSó ative isto se uma ferramenta em que você confia não conseguir assinar com um chain ID, como alguns scripts de deploy para endereços de contrato determinísticos.",
-  "settings.metrics.more": "O nó sempre mantém contadores leves do banco de dados, da rede, da sincronização e do pool de transações, e o app mostra alguns deles, como o tráfego de rede. Ative isto para servi-los em um endpoint de métricas, em /debug/metrics (JSON) e /debug/metrics/prometheus para Prometheus ou Grafana, e para permitir métricas detalhadas.\n\nO daemon configura suas métricas ao iniciar, então isto passa a valer depois de reiniciar o app.",
-  "settings.group.performance.more": "O nó divide a memória de cache em quatro partes:\n\n• o cache do banco de dados guarda dados da chain lidos e gravados recentemente;\n\n• o cache trie limpo guarda nós da trie de estado lidos do disco;\n\n• o cache trie sujo guarda alterações de estado ainda não gravadas no disco — maior significa gravações menos frequentes e maiores;\n\n• o cache de snapshot guarda entradas do snapshot plano de estado.\n\nOs padrões somam 4 GB, como o cliente de linha de comando na mainnet. Se o total passar de um terço da sua RAM, o nó os reduz para que o sistema não fique sem memória.",
+  "settings.stats.toggle.more":
+    "O nó se reporta ao painel público em status.parallaxprotocol.org com um nome aleatório guardado no seu diretório de dados.\n\nEle compartilha a altura do bloco, o número de peers, o estado de sincronização e mineração, a latência dos peers, a versão do cliente e o sistema operacional. Nenhum dado de carteira, conta ou transação é enviado, embora o servidor de estatísticas veja seu endereço IP.",
+  "settings.rpc.enable.more":
+    "Inicia um servidor JSON-RPC que carteiras como o MetaMask, dapps e ferramentas de desenvolvimento usam para ler a chain e enviar transações pelo seu próprio nó em vez de um provedor terceiro.\n\nPor padrão ele escuta apenas em 127.0.0.1, então só programas neste computador conseguem acessá-lo. Você pode mudar o endereço em Avançado — nunca o exponha à internet pública.",
+  "settings.rpc.host.more":
+    "127.0.0.1 aceita conexões apenas deste computador. Um endereço da LAN ou 0.0.0.0 (todas as interfaces) permite que outras máquinas também se conectem, por exemplo uma carteira no seu celular ou em outro computador.\n\nQualquer um que alcance o servidor pode ler a chain pelo seu nó e enviar transações, então só faça isso em uma rede confiável, atrás de um firewall. Adicione os nomes que as outras máquinas usam em Hostnames permitidos.",
+  "settings.rpc.vhosts.more":
+    "Cada requisição HTTP indica o host ao qual se destina. O nó recusa requisições endereçadas a qualquer nome fora desta lista, o que impede uma página web maliciosa de alcançar seu nó por DNS rebinding — fazendo seu navegador falar com 127.0.0.1 sob o próprio nome de domínio dela.\n\nRequisições a um endereço IP são sempre aceitas. Adicione um nome aqui quando acessar o nó por ele, e use * para aceitar qualquer um apenas se entender o risco.",
+  "settings.rpc.unprotected.more":
+    "Transações assinadas com um chain ID (EIP-155) só são válidas nesta chain. As desprotegidas, assinadas sem ele, são válidas em todas as chains que compartilham o formato de endereço, então qualquer um pode reproduzi-las em outro lugar.\n\nSó ative isto se uma ferramenta em que você confia não conseguir assinar com um chain ID, como alguns scripts de deploy para endereços de contrato determinísticos.",
+  "settings.metrics.more":
+    "O nó sempre mantém contadores leves do banco de dados, da rede, da sincronização e do pool de transações, e o app mostra alguns deles, como o tráfego de rede. Ative isto para servi-los em um endpoint de métricas, em /debug/metrics (JSON) e /debug/metrics/prometheus para Prometheus ou Grafana, e para permitir métricas detalhadas.\n\nO daemon configura suas métricas ao iniciar, então isto passa a valer depois de reiniciar o app.",
+  "settings.group.performance.more":
+    "O nó divide a memória de cache em quatro partes:\n\n• o cache do banco de dados guarda dados da chain lidos e gravados recentemente;\n\n• o cache trie limpo guarda nós da trie de estado lidos do disco;\n\n• o cache trie sujo guarda alterações de estado ainda não gravadas no disco — maior significa gravações menos frequentes e maiores;\n\n• o cache de snapshot guarda entradas do snapshot plano de estado.\n\nOs padrões somam 4 GB, como o cliente de linha de comando na mainnet. Se o total passar de um terço da sua RAM, o nó os reduz para que o sistema não fique sem memória.",
   "settings.readMore": "Saiba mais",
   "settings.cliFlag": "Equivalente na linha de comando",
   "settings.advanced": "Avançado",
@@ -762,7 +847,8 @@ const ptBR: Dict = {
   "settings.bootnodes.desc": "Os primeiros peers que um nó novo consulta. Vazio usa a lista embutida.",
   "settings.bootnodes.placeholder": "Lista embutida",
 
-  "settings.privacy.desc": "Roteie as conexões do nó com peers pelo Tor ou outro proxy SOCKS5, e alcance peers em endereços onion.",
+  "settings.privacy.desc":
+    "Roteie as conexões do nó com peers pelo Tor ou outro proxy SOCKS5, e alcance peers em endereços onion.",
   "settings.proxy": "Proxy SOCKS5",
   "settings.proxy.desc": "Roteia as conexões de saída com peers por SOCKS5.",
   "settings.listenOnion": "Serviço onion",
@@ -783,7 +869,8 @@ const ptBR: Dict = {
   "settings.torPassword.desc": "Só para autenticação por senha. Salva sem criptografia.",
   "settings.torPassword.placeholder": "Autenticação por cookie",
 
-  "settings.rpc.exposed": "O servidor RPC escuta além deste computador. Qualquer um que o alcance pode ler a chain pelo seu nó e enviar transações. Faça isso só em uma rede confiável, atrás de um firewall.",
+  "settings.rpc.exposed":
+    "O servidor RPC escuta além deste computador. Qualquer um que o alcance pode ler a chain pelo seu nó e enviar transações. Faça isso só em uma rede confiável, atrás de um firewall.",
   "settings.rpc.host": "Endereço de escuta",
   "settings.rpc.host.desc": "A interface em que o servidor escuta.",
   "settings.rpc.apis": "APIs",
@@ -801,15 +888,18 @@ const ptBR: Dict = {
   "settings.graphql": "GraphQL",
   "settings.graphql.desc": "Disponibiliza um endpoint GraphQL em /graphql no servidor HTTP-RPC.",
   "settings.ipc": "Endpoint IPC",
-  "settings.ipc.desc": "Um socket local no diretório de dados, para o console parallax-cli e outras ferramentas neste computador.",
+  "settings.ipc.desc":
+    "Um socket local no diretório de dados, para o console parallax-cli e outras ferramentas neste computador.",
   "settings.rpc.gasCap": "Limite de gas para chamadas",
   "settings.rpc.gasCap.desc": "O máximo de gas que eth_call e eth_estimateGas podem usar. 0 significa sem limite.",
   "settings.rpc.txFeeCap": "Limite de taxa por transação",
-  "settings.rpc.txFeeCap.desc": "Recusa transações enviadas via RPC que paguem mais do que isso em taxas. 0 significa sem limite.",
+  "settings.rpc.txFeeCap.desc":
+    "Recusa transações enviadas via RPC que paguem mais do que isso em taxas. 0 significa sem limite.",
   "settings.rpc.pvmTimeout": "Tempo limite de chamada",
   "settings.rpc.pvmTimeout.desc": "Por quanto tempo eth_call pode rodar. 0 significa sem limite.",
   "settings.rpc.logQueryLimit": "Limite do filtro de logs",
-  "settings.rpc.logQueryLimit.desc": "O máximo de endereços ou tópicos que um filtro eth_getLogs pode listar por posição. 0 significa sem limite.",
+  "settings.rpc.logQueryLimit.desc":
+    "O máximo de endereços ou tópicos que um filtro eth_getLogs pode listar por posição. 0 significa sem limite.",
   "settings.rpc.batchLimit": "Limite de tamanho do lote",
   "settings.rpc.batchLimit.desc": "O máximo de requisições que um lote JSON-RPC pode conter.",
   "settings.rpc.unprotected": "Permitir transações desprotegidas",
@@ -830,7 +920,8 @@ const ptBR: Dict = {
   "settings.txpool.priceLimit": "Preço mínimo de gas",
   "settings.txpool.priceLimit.desc": "O menor preço de gas que uma transação precisa para entrar no pool.",
   "settings.txpool.priceBump": "Aumento para substituição",
-  "settings.txpool.priceBump.desc": "Quanto a mais uma transação precisa pagar para substituir outra com o mesmo nonce.",
+  "settings.txpool.priceBump.desc":
+    "Quanto a mais uma transação precisa pagar para substituir outra com o mesmo nonce.",
   "settings.txpool.accountSlots": "Slots executáveis por conta",
   "settings.txpool.accountSlots.desc": "Espaço garantido para transações prontas de cada conta.",
   "settings.txpool.globalSlots": "Slots executáveis no total",
@@ -840,7 +931,8 @@ const ptBR: Dict = {
   "settings.txpool.globalQueue": "Slots na fila no total",
   "settings.txpool.globalQueue.desc": "O máximo de transações ainda não executáveis que o pool comporta.",
   "settings.txpool.lifetime": "Tempo de vida na fila",
-  "settings.txpool.lifetime.desc": "Quanto tempo uma transação ainda não executável pode esperar antes de ser descartada.",
+  "settings.txpool.lifetime.desc":
+    "Quanto tempo uma transação ainda não executável pode esperar antes de ser descartada.",
 
   "settings.prefetch": "Pré-carregamento de estado",
   "settings.prefetch.desc": "Lê o estado antecipadamente ao importar blocos.",
@@ -850,7 +942,8 @@ const ptBR: Dict = {
   "settings.logLevel": "Nível de log",
   "settings.logLevel.desc": "Quanto detalhe o nó e o app gravam no log.",
   "settings.clearLogs": "Limpar logs ao iniciar",
-  "settings.clearLogs.desc": "Começa cada abertura com um log vazio. Caso contrário, os logs mais recentes são mantidos entre reinícios, o que ajuda a investigar uma falha.",
+  "settings.clearLogs.desc":
+    "Começa cada abertura com um log vazio. Caso contrário, os logs mais recentes são mantidos entre reinícios, o que ajuda a investigar uma falha.",
   "settings.logLevel.1": "Erros",
   "settings.logLevel.2": "Avisos",
   "settings.logLevel.3": "Info",
@@ -867,7 +960,8 @@ const ptBR: Dict = {
   "notify.synced": "Sincronização concluída",
   "notify.synced.body": "Seu nó alcançou a rede no bloco {block}.",
   "notify.lowDisk": "Nó parado",
-  "notify.lowDisk.body": "O disco está quase cheio, então o nó parou para proteger o banco de dados. Libere espaço e inicie-o novamente.",
+  "notify.lowDisk.body":
+    "O disco está quase cheio, então o nó parou para proteger o banco de dados. Libere espaço e inicie-o novamente.",
 };
 
 export default ptBR;

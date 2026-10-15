@@ -115,7 +115,12 @@ export function Modal({
                 <h2 className="truncate text-[15px] font-semibold">{title}</h2>
                 {subtitle && <span className="truncate text-sm text-muted-foreground">{subtitle}</span>}
               </div>
-              <button type="button" onClick={onClose} aria-label={t("common.close")} className="btn btn-ghost btn-icon -mr-2">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={t("common.close")}
+                className="btn btn-ghost btn-icon -mr-2"
+              >
                 <X className="size-4" />
               </button>
             </header>

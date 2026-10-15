@@ -178,7 +178,10 @@ export function QRScanner({
             aria-label={t("offline.scan.camera")}
             value={deviceId || cameras[0]?.deviceId || ""}
             onChange={setDeviceId}
-            options={cameras.map((c, i) => ({ value: c.deviceId, label: c.label || t("offline.scan.cameraN", { n: i + 1 }) }))}
+            options={cameras.map((c, i) => ({
+              value: c.deviceId,
+              label: c.label || t("offline.scan.cameraN", { n: i + 1 }),
+            }))}
           />
         )}
         <input

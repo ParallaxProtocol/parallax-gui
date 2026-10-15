@@ -1,12 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import { Dict, en, Lang, LANG_NAMES, loadDict } from "./translations";
 
 const STORAGE_KEY = "parallax-lang";
@@ -44,12 +36,7 @@ function detectInitial(): Lang {
     return "zh-TW";
   }
   // Simplified Chinese locales map to zh-SG.
-  if (
-    lower === "zh" ||
-    lower.startsWith("zh-cn") ||
-    lower.startsWith("zh-sg") ||
-    lower.startsWith("zh-hans")
-  ) {
+  if (lower === "zh" || lower.startsWith("zh-cn") || lower.startsWith("zh-sg") || lower.startsWith("zh-hans")) {
     return "zh-SG";
   }
   return "en";
@@ -107,11 +94,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({ lang, setLang, t }), [lang, setLang, t]);
 
-  return (
-    <LanguageContext.Provider value={value}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
 export function useLang() {

@@ -17,9 +17,12 @@ export const REQUEST_ICON: Record<AssistantRequest["kind"], LucideIcon> = {
 
 /** requestTitle asks what a request asks, as its title: "Send 1.5 LAX?" */
 export function requestTitle(r: AssistantRequest, t: T): string {
-  if (r.kind === "transaction") return t("assistant.transaction.title", { amount: formatUnits(r.transaction?.valueWei ?? "0", 18) });
+  if (r.kind === "transaction")
+    return t("assistant.transaction.title", { amount: formatUnits(r.transaction?.valueWei ?? "0", 18) });
   if (r.kind === "permission")
-    return t(r.permission?.nodeStopped ? "assistant.permission.startStopped" : `assistant.permission.${r.permission?.feature}`);
+    return t(
+      r.permission?.nodeStopped ? "assistant.permission.startStopped" : `assistant.permission.${r.permission?.feature}`,
+    );
   if (r.kind === "contact") return t(r.contact?.previous ? "assistant.contact.change" : "assistant.contact.add");
   return t(`assistant.${r.kind}.title`);
 }

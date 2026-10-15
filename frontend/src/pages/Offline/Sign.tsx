@@ -157,7 +157,11 @@ function SignReview({
   return (
     <div className="flex flex-col gap-5">
       <TxSummary tx={review.tx} />
-      {review.conflict && <Notice tone="warn" title={t("offline.sign.conflictTitle")}>{t("offline.sign.conflict")}</Notice>}
+      {review.conflict && (
+        <Notice tone="warn" title={t("offline.sign.conflictTitle")}>
+          {t("offline.sign.conflict")}
+        </Notice>
+      )}
       {review.signed && <Notice tone="info">{t("offline.sign.already")}</Notice>}
       <Notice tone="info">{t("offline.sign.compare")}</Notice>
       <form
@@ -237,7 +241,7 @@ function MessageReview({
               {t("message.bytes", { n: messageBytes(request.message), max: 1024 })}
             </span>
           </div>
-          <p className="selectable max-h-80 overflow-y-auto text-xl leading-relaxed whitespace-pre-wrap break-words">
+          <p className="selectable max-h-80 overflow-y-auto text-xl leading-relaxed break-words whitespace-pre-wrap">
             {request.message}
           </p>
         </div>
@@ -245,7 +249,9 @@ function MessageReview({
       <Rows as="dl">
         <Property label={t("message.signingAs")}>
           <AddressAvatar address={request.from} size={20} />
-          <span className="truncate">{acc && info ? accountLabel(acc, info.accounts, t) : shortHex(request.from, 8, 6)}</span>
+          <span className="truncate">
+            {acc && info ? accountLabel(acc, info.accounts, t) : shortHex(request.from, 8, 6)}
+          </span>
         </Property>
         <Property label={t("offline.fingerprint")}>
           <Fingerprint value={request.fingerprint} />

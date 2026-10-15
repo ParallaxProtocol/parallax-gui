@@ -19,7 +19,14 @@ export default function ReceivePage() {
   if (!account) {
     return (
       <div className={`p-5 ${PAGE_WIDE}`}>
-        <Notice tone="info" action={<Link to="/" className="btn btn-secondary">{t("wallet.welcome.cta")}</Link>}>
+        <Notice
+          tone="info"
+          action={
+            <Link to="/" className="btn btn-secondary">
+              {t("wallet.welcome.cta")}
+            </Link>
+          }
+        >
           {t("wallet.noAccount")}
         </Notice>
       </div>

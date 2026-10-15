@@ -131,7 +131,12 @@ function PermissionForm({ req }: { req: AssistantRequest }) {
       onSubmit={() => allow(false)}
       footer={
         <>
-          <button type="button" className="btn btn-ghost mr-auto" disabled={!!busy} onClick={() => api.assistantReject(req.id)}>
+          <button
+            type="button"
+            className="btn btn-ghost mr-auto"
+            disabled={!!busy}
+            onClick={() => api.assistantReject(req.id)}
+          >
             {t("assistant.dontAllow")}
           </button>
           <button type="button" className="btn btn-secondary" disabled={!!busy} onClick={() => allow(true)}>
@@ -222,7 +227,12 @@ function RequestForm({ req }: { req: AssistantRequest }) {
       onSubmit={approve}
       footer={
         <>
-          <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => api.assistantReject(req.id)}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={busy}
+            onClick={() => api.assistantReject(req.id)}
+          >
             {t("assistant.dontAllow")}
           </button>
           <button type="submit" className="btn btn-primary" disabled={busy || (needsPassword && !password)}>
@@ -244,7 +254,10 @@ function RequestForm({ req }: { req: AssistantRequest }) {
         </Item>
         {needsPassword && (
           <Item>
-            <Field label={t("assistant.password")} hint={t(send ? "assistant.password.send" : "assistant.password.hint")}>
+            <Field
+              label={t("assistant.password")}
+              hint={t(send ? "assistant.password.send" : "assistant.password.hint")}
+            >
               {(id) => <PasswordInput id={id} value={password} onChange={setPassword} />}
             </Field>
           </Item>
@@ -342,7 +355,9 @@ function Details({ req }: { req: AssistantRequest }) {
                     <span>{shown(c.to, t)}</span>
                   </span>
                   {c.sensitive && <span className="text-sm text-warn-ink">{t("assistant.sensitive.desc")}</span>}
-                  {c.applies !== "now" && <span className="text-sm text-muted-foreground">{t(`assistant.applies.${c.applies}`)}</span>}
+                  {c.applies !== "now" && (
+                    <span className="text-sm text-muted-foreground">{t(`assistant.applies.${c.applies}`)}</span>
+                  )}
                 </InsetRow>
               ))}
             </Inset>
@@ -355,9 +370,13 @@ function Details({ req }: { req: AssistantRequest }) {
           {lead(t("assistant.newAccount.lead"))}
           <Item>
             <Inset>
-              <InsetProperty label={t("assistant.newAccount.name")}>{req.account?.name || t("assistant.newAccount.unnamed")}</InsetProperty>
+              <InsetProperty label={t("assistant.newAccount.name")}>
+                {req.account?.name || t("assistant.newAccount.unnamed")}
+              </InsetProperty>
               <InsetProperty label={t("assistant.newAccount.key")}>
-                {req.account?.seedId ? t("assistant.newAccount.fromSeed", { seed: req.account.seedName || "" }) : t("assistant.newAccount.newKey")}
+                {req.account?.seedId
+                  ? t("assistant.newAccount.fromSeed", { seed: req.account.seedName || "" })
+                  : t("assistant.newAccount.newKey")}
               </InsetProperty>
             </Inset>
           </Item>
@@ -368,7 +387,12 @@ function Details({ req }: { req: AssistantRequest }) {
         <>
           {lead(t("assistant.watchOnly.lead"))}
           <Item>
-            <Party address={req.watch?.address ?? ""} fallbackName={req.watch?.name} fallbackKind="new" proposedName={req.watch?.name} />
+            <Party
+              address={req.watch?.address ?? ""}
+              fallbackName={req.watch?.name}
+              fallbackKind="new"
+              proposedName={req.watch?.name}
+            />
           </Item>
         </>
       );
@@ -397,7 +421,9 @@ function Details({ req }: { req: AssistantRequest }) {
           {was && c.previous && (
             <Item>
               <Inset>
-                {c.previous.name !== c.name && <InsetProperty label={t("assistant.contact.wasName")}>{c.previous.name}</InsetProperty>}
+                {c.previous.name !== c.name && (
+                  <InsetProperty label={t("assistant.contact.wasName")}>{c.previous.name}</InsetProperty>
+                )}
                 {moved && (
                   <InsetProperty label={t("assistant.contact.wasAddress")} mono>
                     {shortHex(c.previous.address, 10, 8)}
@@ -543,7 +569,9 @@ function TxDetails({ tx }: { tx: NonNullable<AssistantRequest["transaction"]> })
         <Rows as="dl">
           <Property label={t("wallet.send.from")}>
             <AddressAvatar address={tx.from} size={20} />
-            <span className="truncate">{fromAcc ? accountLabel(fromAcc, accounts, t) : tx.fromName || shortHex(tx.from, 8, 6)}</span>
+            <span className="truncate">
+              {fromAcc ? accountLabel(fromAcc, accounts, t) : tx.fromName || shortHex(tx.from, 8, 6)}
+            </span>
             <span className="font-mono text-sm">{shortHex(tx.from, 6, 4)}</span>
           </Property>
           <Property label={t("wallet.review.fee")}>

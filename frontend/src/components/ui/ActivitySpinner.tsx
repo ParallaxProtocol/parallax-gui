@@ -32,7 +32,10 @@ export function ActivitySpinner({
         <span
           aria-hidden
           className="breathe pointer-events-none absolute -inset-1/5 rounded-full blur-md"
-          style={{ background: "radial-gradient(closest-side, color-mix(in oklab, currentColor 22%, transparent), transparent)" }}
+          style={{
+            background:
+              "radial-gradient(closest-side, color-mix(in oklab, currentColor 22%, transparent), transparent)",
+          }}
         />
       )}
       <svg
@@ -41,7 +44,9 @@ export function ActivitySpinner({
         height={size}
         className="relative"
         aria-hidden
-        style={glow ? { filter: "drop-shadow(0 0 1.5px color-mix(in oklab, currentColor 40%, transparent))" } : undefined}
+        style={
+          glow ? { filter: "drop-shadow(0 0 1.5px color-mix(in oklab, currentColor 40%, transparent))" } : undefined
+        }
       >
         {Array.from({ length: SPOKES }, (_, i) => (
           <rect
@@ -55,7 +60,10 @@ export function ActivitySpinner({
             fill="currentColor"
             transform={`rotate(${(i * 360) / SPOKES} 12 12)`}
             // The spoke ahead of the light is the faintest: delays lead the ring clockwise
-            style={{ animationDelay: `${((i - SPOKES) * PERIOD) / SPOKES}s`, opacity: 0.15 + (0.85 * (i + 1)) / SPOKES }}
+            style={{
+              animationDelay: `${((i - SPOKES) * PERIOD) / SPOKES}s`,
+              opacity: 0.15 + (0.85 * (i + 1)) / SPOKES,
+            }}
           />
         ))}
       </svg>

@@ -1,14 +1,7 @@
 // Flat i18n dictionaries. Keys use dot-notation for organization only —
 // lookups are direct string indexes against the flat object.
 
-export type Lang =
-  | "en"
-  | "de"
-  | "fr"
-  | "pt-BR"
-  | "ru"
-  | "zh-SG"
-  | "zh-TW";
+export type Lang = "en" | "de" | "fr" | "pt-BR" | "ru" | "zh-SG" | "zh-TW";
 
 export const LANG_NAMES: Record<Lang, string> = {
   en: "English",
@@ -44,10 +37,12 @@ export const en: Dict = {
   "hello.sync.doneDesc": "It has caught up with the network and keeps itself up to date while the app is open.",
   "hello.sync.background": "Continue while it syncs",
   "hello.offer.title": "Set up your recovery phrase",
-  "hello.offer.desc": "Your wallet password is set. Now create a recovery phrase to back up your accounts, or import one you already have.",
+  "hello.offer.desc":
+    "Your wallet password is set. Now create a recovery phrase to back up your accounts, or import one you already have.",
   "hello.offer.import": "Import recovery phrase",
   "hello.password.title": "Create a wallet password",
-  "hello.password.desc": "It protects every account you make or bring here. Nobody can reset it for you, so choose one you'll remember.",
+  "hello.password.desc":
+    "It protects every account you make or bring here. Nobody can reset it for you, so choose one you'll remember.",
   "hello.confirm.title": "Type it again",
   "hello.confirm.desc": "Just to make sure there's no typo.",
   "hello.confirm.cta": "Set password",
@@ -90,12 +85,14 @@ export const en: Dict = {
 
   // Onboarding
   "onboarding.language.title": "Choose your language",
-  "onboarding.language.desc": "Select the language you'd like to use throughout the app. You can change this later in Settings.",
+  "onboarding.language.desc":
+    "Select the language you'd like to use throughout the app. You can change this later in Settings.",
   "onboarding.welcome.cta": "Get started",
   "onboarding.datadir.title": "Where should we keep your data?",
   "onboarding.datadir.desc": "Syncing the chain takes several gigabytes.\nPick a location with plenty of free space.",
   "onboarding.networking.title": "Help the network",
-  "onboarding.networking.desc": "Allow other peers on the Parallax network to dial your node.\nThis makes the network healthier and gives you faster block propagation.",
+  "onboarding.networking.desc":
+    "Allow other peers on the Parallax network to dial your node.\nThis makes the network healthier and gives you faster block propagation.",
   "onboarding.networking.desc2": "Your IP becomes discoverable by other peers when this is on.",
   "onboarding.networking.toggle": "Allow inbound connections",
   "onboarding.networking.recommended": "Recommended",
@@ -119,7 +116,8 @@ export const en: Dict = {
   "settings.rpc.port": "Port",
   "settings.smartFee": "Smart fee estimator",
   "settings.stats.toggle": "Report to status page",
-  "settings.diagnostics.desc": "View the live tail of node and GUI logs. Useful for debugging sync issues, peer discovery, or filing bug reports.",
+  "settings.diagnostics.desc":
+    "View the live tail of node and GUI logs. Useful for debugging sync issues, peer discovery, or filing bug reports.",
   "settings.dbCache": "Database cache (MB)",
   "settings.trieClean": "Trie clean cache (MB)",
   "settings.trieDirty": "Trie dirty cache (MB)",
@@ -153,7 +151,8 @@ export const en: Dict = {
   "peers.add": "Add peer",
   "peers.addPlaceholder": "enode://… or ip:port",
   "peers.addCta": "Connect",
-  "peers.addHint": "An enode URL is redialed whenever it drops, even after a restart. An ip:port is kept in the node's address book and dialed first.",
+  "peers.addHint":
+    "An enode URL is redialed whenever it drops, even after a restart. An ip:port is kept in the node's address book and dialed first.",
   "peers.disconnect": "Disconnect",
   "peers.trust": "Trust",
   "peers.untrust": "Stop trusting",
@@ -254,7 +253,8 @@ export const en: Dict = {
   "node.peers": "{n} peers",
   "node.offlineHint": "Not running. Start it to sync and use the wallet.",
   "overview.stopped.title": "Your node is offline.",
-  "overview.stopped.desc": "Start it to sync with the Parallax network, verify every block yourself and serve your wallet without any third party.",
+  "overview.stopped.desc":
+    "Start it to sync with the Parallax network, verify every block yourself and serve your wallet without any third party.",
   "overview.sync.searching": "Looking for peers",
   "overview.sync.searchingDesc": "Connecting to the network. Syncing starts as soon as a peer answers.",
   "overview.sync.desc": "Downloading and verifying the chain. The node is ready once it reaches the network's head.",
@@ -371,25 +371,30 @@ export const en: Dict = {
   "message.bytes": "{n} / {max} bytes",
   "message.signingAs": "Signing as",
   "message.passwordHint": "The wallet password unlocks the key for this one signature.",
-  "message.caution": "Only sign text you wrote or fully understand. Anyone you share the signature with can show it as proof that this address signed it. Signing a message never moves funds.",
+  "message.caution":
+    "Only sign text you wrote or fully understand. Anyone you share the signature with can show it as proof that this address signed it. Signing a message never moves funds.",
   "message.signCta": "Sign message",
   "message.createRequest": "Create signing request",
   "message.requestTitle": "Sign this message on your offline signer",
-  "message.requestDesc": "On the offline signer, choose Sign and scan this code, or carry the file over. Check the fingerprint matches.",
+  "message.requestDesc":
+    "On the offline signer, choose Sign and scan this code, or carry the file over. Check the fingerprint matches.",
   "message.scanSigned": "Scan signed message",
   "message.scanSignedDesc": "Hold the QR code the offline signer shows up to this camera, or open the file it saved.",
   "message.scan.notSigned": "That isn't a signed message.",
   "message.signed": "Message signed",
-  "message.signedDesc": "Share the address, message and signature together: anyone can check them in any wallet that verifies messages.",
+  "message.signedDesc":
+    "Share the address, message and signature together: anyone can check them in any wallet that verifies messages.",
   "message.another": "Sign another",
   "message.share.address": "Address",
   "message.share.message": "Message",
   "message.share.signature": "Signature",
-  "message.offline.compare": "Read the whole message and check the fingerprint matches the one your online wallet shows. Every character shown is what will be signed.",
+  "message.offline.compare":
+    "Read the whole message and check the fingerprint matches the one your online wallet shows. Every character shown is what will be signed.",
   "message.offline.doneDesc": "Scan this with your online wallet. It holds the message and its signature.",
   "message.verify.scan": "Scan or open",
   "message.verify.scanTitle": "Scan a signed message",
-  "message.verify.scanDesc": "Hold a signed message's QR code up to the camera, or open its file, to fill in the fields.",
+  "message.verify.scanDesc":
+    "Hold a signed message's QR code up to the camera, or open its file, to fill in the fields.",
   "message.verify.known": "This is {name}.",
   "message.verify.cta": "Verify",
   "message.verify.valid": "Valid signature",
@@ -402,7 +407,8 @@ export const en: Dict = {
   "message.err.request": "That isn't a message signing request.",
   "message.err.signed": "That isn't a signed message.",
   "message.err.tampered": "The message doesn't match its fingerprint. It was damaged or changed.",
-  "message.err.otherRequest": "That message was signed for another request ({fingerprint}). Scan the one for this request.",
+  "message.err.otherRequest":
+    "That message was signed for another request ({fingerprint}). Scan the one for this request.",
   "message.err.invalid": "The signature isn't from this account.",
   "offline.mode": "Offline signer",
   "offline.mode.bar": "This app never goes online: no node, no update checks.",
@@ -433,7 +439,8 @@ export const en: Dict = {
   "offline.scan.notSigned": "That isn't a signed transaction. Scan the code your offline signer shows.",
   "offline.scan.notAddress": "That isn't an address. Scan the address QR code on the signer.",
   "offline.home.title": "This computer signs offline",
-  "offline.home.desc": "It keeps your keys and never connects to the network. Your wallet online prepares each transfer as a signing request; scan it here, check it, sign it, and scan the result back.",
+  "offline.home.desc":
+    "It keeps your keys and never connects to the network. Your wallet online prepares each transfer as a signing request; scan it here, check it, sign it, and scan the result back.",
   "offline.home.cta": "Scan a signing request",
   "offline.home.accounts": "Accounts",
   "offline.home.showAddress": "Show for watch-only",
@@ -442,15 +449,19 @@ export const en: Dict = {
   "offline.sign.step.review": "Review",
   "offline.sign.step.return": "Return",
   "offline.sign.scanTitle": "Scan a signing request",
-  "offline.sign.scanDesc": "On your online computer, send from a watch-only account and hold its QR code up to this camera.",
-  "offline.sign.compare": "Check that the fingerprint matches the one your online wallet shows, and that the amount and recipient are what you meant to send.",
+  "offline.sign.scanDesc":
+    "On your online computer, send from a watch-only account and hold its QR code up to this camera.",
+  "offline.sign.compare":
+    "Check that the fingerprint matches the one your online wallet shows, and that the amount and recipient are what you meant to send.",
   "offline.sign.conflictTitle": "Another transfer was signed for this nonce",
-  "offline.sign.conflict": "This computer already signed a different transfer from this account with the same nonce. Only one of them can go through. Sign this one only if it replaces the other.",
+  "offline.sign.conflict":
+    "This computer already signed a different transfer from this account with the same nonce. Only one of them can go through. Sign this one only if it replaces the other.",
   "offline.sign.already": "This request was signed here before. Signing it again gives the same transaction.",
   "offline.sign.passwordHint": "The wallet password unlocks the key for this one signature.",
   "offline.sign.cta": "Sign",
   "offline.sign.done": "Signed",
-  "offline.sign.doneDesc": "Scan this with your online wallet to broadcast it. It can't be changed: any edit breaks the signature.",
+  "offline.sign.doneDesc":
+    "Scan this with your online wallet to broadcast it. It can't be changed: any edit breaks the signature.",
   "offline.sign.another": "Sign another",
   "offline.send.step.sign": "Sign offline",
   "offline.send.step.broadcast": "Broadcast",
@@ -458,17 +469,23 @@ export const en: Dict = {
   "offline.send.memoHint": "Optional. Shown on the signer and kept with the request; it isn't part of the transaction.",
   "offline.send.memoPlaceholder": "What this payment is for",
   "offline.send.requestTitle": "Sign this on your offline signer",
-  "offline.send.requestDesc": "On the offline signer, choose Sign and scan this code, or carry the file over. Check the fingerprint matches.",
+  "offline.send.requestDesc":
+    "On the offline signer, choose Sign and scan this code, or carry the file over. Check the fingerprint matches.",
   "offline.send.scanSigned": "Scan signed transaction",
   "offline.send.later": "You can leave this page: the request waits on the Overview until you scan its signature.",
   "offline.broadcast.scanTitle": "Scan the signed transaction",
-  "offline.broadcast.scanDesc": "Hold the QR code the offline signer shows up to this camera, or open the file it saved. A raw transaction from parallax-wallet works too.",
-  "offline.broadcast.otherRequest": "That transaction was signed for another request ({fingerprint}). Scan the one for this request.",
+  "offline.broadcast.scanDesc":
+    "Hold the QR code the offline signer shows up to this camera, or open the file it saved. A raw transaction from parallax-wallet works too.",
+  "offline.broadcast.otherRequest":
+    "That transaction was signed for another request ({fingerprint}). Scan the one for this request.",
   "offline.broadcast.matched": "This answers your signing request",
-  "offline.broadcast.unmatched": "This wasn't made from one of this wallet's signing requests. Check every detail before you broadcast it.",
+  "offline.broadcast.unmatched":
+    "This wasn't made from one of this wallet's signing requests. Check every detail before you broadcast it.",
   "offline.broadcast.warn.priceLow": "Its fee is below what the node now suggests, so it may take a while to confirm.",
-  "offline.broadcast.warn.nonceGap": "An earlier transaction from this account hasn't gone out yet. This one waits until it does.",
-  "offline.broadcast.warn.balanceLow": "The account's balance doesn't cover the amount and the fee right now. The node will refuse it.",
+  "offline.broadcast.warn.nonceGap":
+    "An earlier transaction from this account hasn't gone out yet. This one waits until it does.",
+  "offline.broadcast.warn.balanceLow":
+    "The account's balance doesn't cover the amount and the fee right now. The node will refuse it.",
   "offline.broadcast.cta": "Broadcast",
   "offline.broadcast.done": "Broadcast",
   "offline.pending.title": "Waiting for signature",
@@ -482,18 +499,23 @@ export const en: Dict = {
   "offline.pending.show": "Show QR code",
   "offline.pending.replace": "Cancel with a replacement",
   "offline.pending.replaceTitle": "Cancel this transfer",
-  "offline.pending.replaceDesc": "This makes a new signing request for the same nonce: 0 LAX to the account itself, paying a little more fee so the network takes it instead. Sign and broadcast it like any other.",
+  "offline.pending.replaceDesc":
+    "This makes a new signing request for the same nonce: 0 LAX to the account itself, paying a little more fee so the network takes it instead. Sign and broadcast it like any other.",
   "offline.pending.replaceCta": "Create replacement",
   "offline.pending.discard": "Discard",
   "offline.pending.discardTitle": "Discard this request",
-  "offline.pending.discardDesc": "The wallet stops following it. If it was already signed elsewhere, that signature still works.",
-  "offline.pending.discardBlocks": "A later request from this account waits on this one's nonce. Cancel this one with a replacement instead, or the later one will never confirm.",
+  "offline.pending.discardDesc":
+    "The wallet stops following it. If it was already signed elsewhere, that signature still works.",
+  "offline.pending.discardBlocks":
+    "A later request from this account waits on this one's nonce. Cancel this one with a replacement instead, or the later one will never confirm.",
   "offline.pending.discardCta": "Discard",
   "offline.watch.title": "Add a watch-only account",
   "offline.watch.add": "Add a watch-only account",
   "offline.watch.welcome": "Or follow an account kept on an offline signer",
-  "offline.watch.desc": "Follow an account whose key is on an offline signer. This wallet shows its balance and activity, and sends from it by signing request.",
-  "offline.watch.addressHint": "On the signer, open Signer › Show for watch-only and scan the code, or type the address.",
+  "offline.watch.desc":
+    "Follow an account whose key is on an offline signer. This wallet shows its balance and activity, and sends from it by signing request.",
+  "offline.watch.addressHint":
+    "On the signer, open Signer › Show for watch-only and scan the code, or type the address.",
   "offline.watch.scan": "Scan",
   "offline.watch.scanHint": "Hold the signer's address QR code up to the camera.",
   "offline.watch.cta": "Add account",
@@ -522,12 +544,16 @@ export const en: Dict = {
   "onboarding.mode.online": "Wallet with my own node",
   "onboarding.mode.onlineDesc": "Sync the chain, send and receive. For keys kept elsewhere, add them as watch-only.",
   "onboarding.mode.offline": "Offline signer",
-  "onboarding.mode.offlineDesc": "Keep keys on a computer that never goes online, and sign transfers prepared by a watch-only wallet.",
+  "onboarding.mode.offlineDesc":
+    "Keep keys on a computer that never goes online, and sign transfers prepared by a watch-only wallet.",
   "settings.group.offline": "Offline signing",
   "settings.offlineSigner": "Offline signer",
-  "settings.offlineSigner.desc": "Make this app an air-gapped signer: the node stops and never starts, and nothing is checked online.",
-  "settings.offlineSigner.more": "An offline signer keeps keys on a computer that never connects to the network.\n\nYour wallet on another computer follows the same accounts as watch-only. To send, it prepares a signing request, shown as a QR code. This computer scans it, shows exactly what would be signed, and signs it with the wallet password. The signed transaction goes back the same way and is broadcast online.\n\nFor the best protection, also keep this computer's network turned off.",
-  "settings.about.offlineUpdates": "An offline signer never checks for updates. Install new versions by hand, from a release you've verified.",
+  "settings.offlineSigner.desc":
+    "Make this app an air-gapped signer: the node stops and never starts, and nothing is checked online.",
+  "settings.offlineSigner.more":
+    "An offline signer keeps keys on a computer that never connects to the network.\n\nYour wallet on another computer follows the same accounts as watch-only. To send, it prepares a signing request, shown as a QR code. This computer scans it, shows exactly what would be signed, and signs it with the wallet password. The signed transaction goes back the same way and is broadcast online.\n\nFor the best protection, also keep this computer's network turned off.",
+  "settings.about.offlineUpdates":
+    "An offline signer never checks for updates. Install new versions by hand, from a release you've verified.",
   "settings.feeCap": "Fee cap",
   "settings.feeCap.desc": "The most fee a signed transfer may pay. A request above it is refused.",
   "contacts.add.title": "Add contact",
@@ -554,7 +580,8 @@ export const en: Dict = {
   "contacts.count.one": "1 contact",
   "contacts.countOf": "{n} of {total} contacts",
   "contacts.empty.title": "No contacts yet",
-  "contacts.empty.desc": "Save the addresses you send to under a name, so you can pick them when sending and recognise them in your activity.",
+  "contacts.empty.desc":
+    "Save the addresses you send to under a name, so you can pick them when sending and recognise them in your activity.",
   "contacts.more": "More",
   "contacts.import": "Import contacts…",
   "contacts.export.json": "Export as JSON…",
@@ -566,7 +593,13 @@ export const en: Dict = {
   "contacts.imported.invalid": "{n} not valid",
   "contacts.imported.line": "Entry {detail}",
   "contacts.pick": "Choose a contact",
+  "contacts.inBook": "In your address book",
   "wallet.send.toPlaceholder": "0x… or a contact's name",
+  "wallet.send.recent": "Recent",
+  "wallet.send.noRecent": "No recent addresses yet",
+  "wallet.send.noRecentMatch": "No recent address matches",
+  "wallet.send.noContacts": "No contacts yet",
+  "wallet.send.noContactMatch": "No contact matches",
   "contacts.recipient": "Sending to {name}",
   "contacts.saveRecipient": "Save to address book",
   "contacts.savedRecipient": "Saved as {name}",
@@ -596,22 +629,27 @@ export const en: Dict = {
 
   // Wallet: first run
   "wallet.welcome.title": "Your Parallax wallet",
-  "wallet.welcome.desc": "Hold, send and receive LAX through your own node. No third party sees your balance or relays your transactions.",
+  "wallet.welcome.desc":
+    "Hold, send and receive LAX through your own node. No third party sees your balance or relays your transactions.",
   "wallet.welcome.create": "Create an account",
   "wallet.welcome.createDesc": "A new recovery phrase and account, made on this computer.",
   "wallet.welcome.import": "Import an account",
   "wallet.welcome.importDesc": "From a recovery phrase, a keystore file or a private key.",
-  "wallet.welcome.local": "Keys are stored encrypted on this computer only and are never sent anywhere. Your recovery phrase is the backup: nobody can recover it for you.",
+  "wallet.welcome.local":
+    "Keys are stored encrypted on this computer only and are never sent anywhere. Your recovery phrase is the backup: nobody can recover it for you.",
   "wallet.welcome.cta": "Set up the wallet",
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Wallet password",
   "wallet.walletPasswordHint": "The password that protects every account in this wallet.",
   "wallet.locked.title": "Welcome to Parallax",
-  "wallet.locked.desc": "A full Parallax node and a wallet in one app. Hold, send and receive LAX through your own node, with no third party in between.",
-  "wallet.locked.existing": "This wallet already has keys from an earlier version. Set its password to keep using them: it must be the one they were made with.",
+  "wallet.locked.desc":
+    "A full Parallax node and a wallet in one app. Hold, send and receive LAX through your own node, with no third party in between.",
+  "wallet.locked.existing":
+    "This wallet already has keys from an earlier version. Set its password to keep using them: it must be the one they were made with.",
   "wallet.locked.node": "Your own node",
-  "wallet.locked.nodeDesc": "It verifies every block itself and relays your transactions, so nobody else sees your balance.",
+  "wallet.locked.nodeDesc":
+    "It verifies every block itself and relays your transactions, so nobody else sees your balance.",
   "wallet.locked.keys": "Keys stay here",
   "wallet.locked.keysDesc": "Accounts are made and kept on this computer, encrypted, and never sent anywhere.",
   "wallet.locked.password": "One password",
@@ -619,13 +657,17 @@ export const en: Dict = {
   "wallet.locked.cta": "Get started",
   "wallet.locked.ctaHint": "First, you'll set your wallet password.",
   "wallet.setup.title": "Set your wallet password",
-  "wallet.setup.desc": "One password protects every account and recovery phrase in this wallet. You'll type it whenever you send, back up or add an account.",
-  "wallet.setup.existingDesc": "This wallet already has keys. Enter the password they were made with: it becomes the wallet password.",
-  "wallet.setup.noRecovery": "This password encrypts your keys on this computer and can't be reset or recovered. If you lose it, only your recovery phrases and backup files can bring your accounts back.",
+  "wallet.setup.desc":
+    "One password protects every account and recovery phrase in this wallet. You'll type it whenever you send, back up or add an account.",
+  "wallet.setup.existingDesc":
+    "This wallet already has keys. Enter the password they were made with: it becomes the wallet password.",
+  "wallet.setup.noRecovery":
+    "This password encrypts your keys on this computer and can't be reset or recovered. If you lose it, only your recovery phrases and backup files can bring your accounts back.",
   "wallet.setup.cta": "Set password",
   "wallet.setup.step": "Password",
   "wallet.offer.title": "Create your recovery phrase",
-  "wallet.offer.desc": "Your wallet password is set. Now make a recovery phrase: 12 words that back up every account made from them.",
+  "wallet.offer.desc":
+    "Your wallet password is set. Now make a recovery phrase: 12 words that back up every account made from them.",
   "wallet.offer.later": "You can also do this later, from Accounts.",
   "wallet.offer.cta": "Create recovery phrase",
   "wallet.security": "Security",
@@ -651,7 +693,8 @@ export const en: Dict = {
   "wallet.create.kind.derive": "Another account from a recovery phrase",
   "wallet.create.kind.deriveDesc": "From a phrase already in this wallet, which already backs it up.",
   "wallet.create.kind.phrase": "New recovery phrase",
-  "wallet.create.kind.phraseDesc": "12 words that back up this account and any you add later. They work in MetaMask and most other wallets.",
+  "wallet.create.kind.phraseDesc":
+    "12 words that back up this account and any you add later. They work in MetaMask and most other wallets.",
   "wallet.create.kind.key": "Single key",
   "wallet.create.kind.keyDesc": "One account with a key of its own, backed up as an encrypted keystore file.",
   "wallet.create.recommended": "Recommended",
@@ -659,14 +702,17 @@ export const en: Dict = {
   "wallet.create.keyFact1Desc": "Generated here from your system's secure random source. It's what lets you spend.",
   "wallet.create.keyFact2Desc": "The key is encrypted with the password you choose on the next page.",
   "wallet.create.keyNext": "Next, you'll save a backup file of the key.",
-  "wallet.create.keyBackupWhy": "With the file and its password, any compatible wallet can restore the account. Without them, it can't be recovered.",
+  "wallet.create.keyBackupWhy":
+    "With the file and its password, any compatible wallet can restore the account. Without them, it can't be recovered.",
   "wallet.create.done": "Account created",
   "wallet.create.step.backup": "Backup",
   "wallet.create.lead": "A new account is made on this computer, in three steps that happen at once:",
   "wallet.create.fact1": "A recovery phrase",
-  "wallet.create.fact1Desc": "12 words, generated here from your system's secure random source. They restore your accounts in this or any compatible wallet.",
+  "wallet.create.fact1Desc":
+    "12 words, generated here from your system's secure random source. They restore your accounts in this or any compatible wallet.",
   "wallet.create.fact2": "Locked with your password",
-  "wallet.create.fact2Desc": "The phrase and your account's key are encrypted with the password you choose on the next page.",
+  "wallet.create.fact2Desc":
+    "The phrase and your account's key are encrypted with the password you choose on the next page.",
   "wallet.create.fact3": "Kept on this computer",
   "wallet.create.fact3Desc": "Only the encrypted key is stored, here. Nothing is sent anywhere.",
   "wallet.create.optional": "Optional",
@@ -701,27 +747,32 @@ export const en: Dict = {
   "wallet.import.choose.desc": "Where is the account you want to bring in?",
   "wallet.import.phrase": "Recovery phrase",
   "wallet.import.phraseDesc": "12 to 24 words from MetaMask or another wallet. Restores the same accounts.",
-  "wallet.import.phraseLead": "Type or paste the words in order, separated by spaces. The same words give the same accounts as in the wallet they came from.",
+  "wallet.import.phraseLead":
+    "Type or paste the words in order, separated by spaces. The same words give the same accounts as in the wallet they came from.",
   "wallet.import.phraseLabel": "Recovery phrase",
   "wallet.import.step.accounts": "Accounts",
   "wallet.import.chooseTitle": "Choose accounts",
-  "wallet.import.chooseDesc": "A phrase can hold many accounts, and wallets put them at different paths. Pick the ones to bring in: those that have been used are already ticked.",
+  "wallet.import.chooseDesc":
+    "A phrase can hold many accounts, and wallets put them at different paths. Pick the ones to bring in: those that have been used are already ticked.",
   "wallet.import.scheme.standard": "Standard",
   "wallet.import.scheme.ledgerlive": "Ledger Live",
   "wallet.import.scheme.legacy": "Legacy",
   "wallet.import.schemePath.standard": "m/44'/60'/0'/0/n · MetaMask, Trezor",
   "wallet.import.schemePath.ledgerlive": "m/44'/60'/n'/0/0",
   "wallet.import.schemePath.legacy": "m/44'/60'/0'/n · MyEtherWallet",
-  "wallet.import.noBalances": "Start the node and let it sync to see each account's balance and which ones have been used.",
+  "wallet.import.noBalances":
+    "Start the node and let it sync to see each account's balance and which ones have been used.",
   "wallet.import.used": "Used",
   "wallet.import.inWallet": "Already in the wallet",
   "wallet.import.more": "Show more",
   "wallet.import.picked": "{n} selected",
-  "wallet.import.passwordLead": "The recovery phrase and the {n} accounts you picked will be encrypted with this password on this computer. Your name goes to the first account.",
+  "wallet.import.passwordLead":
+    "The recovery phrase and the {n} accounts you picked will be encrypted with this password on this computer. Your name goes to the first account.",
   "wallet.import.keyDesc": "The account's raw key: 64 hexadecimal characters.",
   "wallet.import.keyfile": "Keystore file",
   "wallet.import.key": "Private key",
-  "wallet.import.keyfileDesc": "A JSON keystore file, as parallaxd, parallax-wallet and most Ethereum-style wallets export them.",
+  "wallet.import.keyfileDesc":
+    "A JSON keystore file, as parallaxd, parallax-wallet and most Ethereum-style wallets export them.",
   "wallet.import.file": "File",
   "wallet.import.choose": "Choose file…",
   "wallet.import.noFile": "No file chosen",
@@ -730,12 +781,14 @@ export const en: Dict = {
   "wallet.import.keyLabel": "Private key",
   "wallet.import.keyHint": "64 hexadecimal characters, with or without 0x.",
   "wallet.import.reencrypt": "The key is encrypted again with your wallet password.",
-  "wallet.import.keyWarn": "Anyone who has seen this key can spend from the account. Only import a key that has been kept private.",
+  "wallet.import.keyWarn":
+    "Anyone who has seen this key can spend from the account. Only import a key that has been kept private.",
 
   // Wallet: backup
   "wallet.backup.title": "Back up account",
   "wallet.backup.cta": "Save backup",
-  "wallet.backup.what": "Saves this account's key file, encrypted with its password, to a place you choose, like a USB drive.",
+  "wallet.backup.what":
+    "Saves this account's key file, encrypted with its password, to a place you choose, like a USB drive.",
   "wallet.backup.restore": "To restore the account, you'll need both the {file} and the {password}.",
   "wallet.backup.restore.file": "backup file",
   "wallet.backup.restore.password": "password",
@@ -743,11 +796,13 @@ export const en: Dict = {
   "wallet.backup.passwordHint": "Checked before saving, so you know the backup will open.",
   "wallet.backup.saved": "Backup saved",
   "wallet.backup.missingTitle": "This account has no backup",
-  "wallet.backup.missingDesc": "If this computer is lost or its disk fails, so are the funds. Save the keystore file somewhere safe.",
+  "wallet.backup.missingDesc":
+    "If this computer is lost or its disk fails, so are the funds. Save the keystore file somewhere safe.",
 
   // Wallet: change password
   "wallet.changePassword.title": "Change password",
-  "wallet.changePassword.desc": "Every key and recovery phrase in the wallet ({n} accounts) is encrypted again with the new password. It takes a few seconds per account.",
+  "wallet.changePassword.desc":
+    "Every key and recovery phrase in the wallet ({n} accounts) is encrypted again with the new password. It takes a few seconds per account.",
   "wallet.changePassword.cta": "Change password",
   "wallet.changePassword.busy": "Re-encrypting…",
   "wallet.changePassword.oldBackups": "Backup files you saved before still open with the old password only.",
@@ -755,8 +810,10 @@ export const en: Dict = {
   // Wallet: remove
   "wallet.remove.title": "Remove account",
   "wallet.remove.cta": "Remove from this computer",
-  "wallet.remove.warn": "The account's key is deleted from this computer. You'll need your backup and its password to use the account again.",
-  "wallet.remove.warnNoBackup": "This account was never backed up. Once the key is deleted, its funds can never be spent again.",
+  "wallet.remove.warn":
+    "The account's key is deleted from this computer. You'll need your backup and its password to use the account again.",
+  "wallet.remove.warnNoBackup":
+    "This account was never backed up. Once the key is deleted, its funds can never be spent again.",
   "wallet.remove.confirm": "I understand and have a backup, or the account holds nothing.",
 
   // Wallet: accounts
@@ -768,7 +825,8 @@ export const en: Dict = {
   "wallet.accounts.noBackup": "No backup",
   "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "Storage",
-  "wallet.accounts.storageDesc": "The keys are kept in this folder, all encrypted with your wallet password. The node never sees them, and nothing that connects to its RPC can use them.",
+  "wallet.accounts.storageDesc":
+    "The keys are kept in this folder, all encrypted with your wallet password. The node never sees them, and nothing that connects to its RPC can use them.",
 
   // Wallet: send
   "wallet.send.title": "Send LAX",
@@ -782,7 +840,8 @@ export const en: Dict = {
   "wallet.send.feeAuto": "Suggested",
   "wallet.send.feeManual": "Custom",
   "wallet.send.feeSuggested": "Your node suggests a price from recent blocks and its pool.",
-  "wallet.send.feeCustom": "Pay more than your node suggests to get into a block sooner. It can't go lower: a transaction that waits blocks every later one from the account.",
+  "wallet.send.feeCustom":
+    "Pay more than your node suggests to get into a block sooner. It can't go lower: a transaction that waits blocks every later one from the account.",
   "wallet.send.gasPrice": "Gas price",
   "wallet.send.review": "Review",
   "wallet.review.title": "Review and sign",
@@ -791,14 +850,16 @@ export const en: Dict = {
   "wallet.review.feeDetail": "{gas} gas at {price}",
   "wallet.review.total": "Total",
   "wallet.review.toSelf": "This sends to the same account: only the fee is spent.",
-  "wallet.review.toContract": "The recipient is a contract. It runs code when it receives LAX; make sure it is meant to.",
+  "wallet.review.toContract":
+    "The recipient is a contract. It runs code when it receives LAX; make sure it is meant to.",
   "wallet.review.dear": "This price is more than three times the {price} your node suggests.",
   "wallet.review.passwordHint": "Decrypts the key for this one signature.",
   "wallet.review.cta": "Sign and send",
   "wallet.review.signing": "Signing…",
   "wallet.sent.title": "Sent",
   "wallet.sent.desc": "{amount} LAX is on its way",
-  "wallet.sent.wait": "Your node is relaying it to the network. It confirms once a block includes it, about every ten minutes.",
+  "wallet.sent.wait":
+    "Your node is relaying it to the network. It confirms once a block includes it, about every ten minutes.",
   "wallet.sent.hash": "Transaction",
   "wallet.sent.nonce": "Nonce",
   "wallet.sent.again": "Send another",
@@ -812,15 +873,20 @@ export const en: Dict = {
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Add a passphrase (advanced)",
-  "wallet.passphrase.toggleDesc": "An extra word that changes every account the phrase makes, as on Ledger and Trezor. MetaMask doesn't support it.",
-  "wallet.passphrase.warning": "Write the passphrase down too. Restoring needs both the words and the exact passphrase, and a wrong one gives a different, empty wallet with no error.",
+  "wallet.passphrase.toggleDesc":
+    "An extra word that changes every account the phrase makes, as on Ledger and Trezor. MetaMask doesn't support it.",
+  "wallet.passphrase.warning":
+    "Write the passphrase down too. Restoring needs both the words and the exact passphrase, and a wrong one gives a different, empty wallet with no error.",
   "wallet.passphrase.label": "Passphrase",
   "wallet.passphrase.confirm": "Confirm passphrase",
   "wallet.passphrase.mismatch": "The passphrases don't match",
-  "wallet.passphrase.remember": "This phrase has a passphrase: you'll need it, exactly as typed, to restore these accounts.",
+  "wallet.passphrase.remember":
+    "This phrase has a passphrase: you'll need it, exactly as typed, to restore these accounts.",
   "wallet.passphrase.importToggle": "It has a passphrase (advanced)",
-  "wallet.passphrase.importToggleDesc": "If you set an extra word on Ledger or Trezor, enter it to reach the same accounts.",
-  "wallet.passphrase.importHint": "Exactly as set: case and spaces count. If the next step shows no familiar accounts, check it.",
+  "wallet.passphrase.importToggleDesc":
+    "If you set an extra word on Ledger or Trezor, enter it to reach the same accounts.",
+  "wallet.passphrase.importHint":
+    "Exactly as set: case and spaces count. If the next step shows no familiar accounts, check it.",
   "wallet.passphrase.show": "Show the passphrase",
   "wallet.passphrase.badge": "Passphrase",
 
@@ -828,9 +894,11 @@ export const en: Dict = {
   "wallet.phrase.section": "Recovery phrase",
   "wallet.phrase.title": "Recovery phrase",
   "wallet.phrase.yours": "Your recovery phrase",
-  "wallet.phrase.writeDown": "Write these words down on paper, in this order, and keep them somewhere safe. They are the backup of every account made from them.",
+  "wallet.phrase.writeDown":
+    "Write these words down on paper, in this order, and keep them somewhere safe. They are the backup of every account made from them.",
   "wallet.phrase.reveal": "Click to reveal",
-  "wallet.phrase.warning": "Anyone with these words can take your LAX. Never type them into a website, share them, or store them in a screenshot or a note on this computer.",
+  "wallet.phrase.warning":
+    "Anyone with these words can take your LAX. Never type them into a website, share them, or store them in a screenshot or a note on this computer.",
   "wallet.phrase.laterWarn": "Until you confirm it, the phrase isn't counted as backed up.",
   "wallet.phrase.written": "I've written it down",
   "wallet.phrase.quizTitle": "Confirm your recovery phrase",
@@ -838,7 +906,8 @@ export const en: Dict = {
   "wallet.phrase.word": "Word #{n}",
   "wallet.phrase.confirm": "Confirm",
   "wallet.phrase.ready": "Your wallet is ready",
-  "wallet.phrase.readyDesc": "Keep the recovery phrase safe and offline. With it, you can restore your accounts in this or any compatible wallet.",
+  "wallet.phrase.readyDesc":
+    "Keep the recovery phrase safe and offline. With it, you can restore your accounts in this or any compatible wallet.",
   "wallet.phrase.open": "Show",
   "wallet.phrase.openDesc": "Enter the password you chose for the recovery phrase to show it.",
   "wallet.phrase.confirmed": "Recovery phrase confirmed",
@@ -854,11 +923,14 @@ export const en: Dict = {
   "wallet.phrase.account": "1 account",
   "wallet.removeSeed.title": "Remove recovery phrase",
   "wallet.removeSeed.cta": "Remove phrase and accounts",
-  "wallet.removeSeed.warn": "The phrase and its {n} accounts are deleted from this computer. You'll need the written words (and the passphrase, if it has one) to use them again.",
-  "wallet.removeSeed.warnUnconfirmed": "This phrase was never confirmed. If you haven't written it down, its {n} accounts and their funds are lost for good.",
+  "wallet.removeSeed.warn":
+    "The phrase and its {n} accounts are deleted from this computer. You'll need the written words (and the passphrase, if it has one) to use them again.",
+  "wallet.removeSeed.warnUnconfirmed":
+    "This phrase was never confirmed. If you haven't written it down, its {n} accounts and their funds are lost for good.",
   "wallet.removeSeed.confirm": "I understand and have the phrase written down, or its accounts hold nothing.",
   "wallet.phrase.missingTitle": "Your recovery phrase isn't confirmed",
-  "wallet.phrase.missingDesc": "If this computer is lost or its disk fails, the phrase is the only way back to this account. Write it down and confirm it.",
+  "wallet.phrase.missingDesc":
+    "If this computer is lost or its disk fails, the phrase is the only way back to this account. Write it down and confirm it.",
 
   // Wallet: errors
   "wallet.err.wrongPassword": "Wrong password.",
@@ -883,8 +955,10 @@ export const en: Dict = {
   "wallet.err.unknownSeed": "This recovery phrase is no longer in the wallet.",
   "wallet.err.noPassword": "Set the wallet password first.",
   "wallet.err.needsSetup": "Set the wallet password first, from the Welcome page.",
-  "wallet.err.keyMismatch": "This account's key is under a different password than the wallet's. Remove it and import it again.",
-  "wallet.err.setupMismatch": "This password doesn't open every key already in the wallet. Use the password they were made with.",
+  "wallet.err.keyMismatch":
+    "This account's key is under a different password than the wallet's. Remove it and import it again.",
+  "wallet.err.setupMismatch":
+    "This password doesn't open every key already in the wallet. Use the password they were made with.",
   "wallet.err.wrongFilePassword": "Wrong password for the keystore file.",
   "settings.navGroup.app": "App",
   "settings.navGroup.support": "Support",
@@ -903,7 +977,8 @@ export const en: Dict = {
   "settings.theme.light": "Light",
   "settings.theme.dark": "Dark",
   "settings.avatars": "Account avatars",
-  "settings.avatars.desc": "The picture made from each address. Jazzicon is MetaMask's default; Blockies is what Etherscan shows.",
+  "settings.avatars.desc":
+    "The picture made from each address. Jazzicon is MetaMask's default; Blockies is what Etherscan shows.",
   "settings.dataDir.desc": "Where the chain is stored. A new location starts a fresh sync.",
   "settings.syncMode.desc": "Snap is fastest; full replays every block.",
   "settings.maxPeers.desc": "The most peers the node keeps connected.",
@@ -914,11 +989,15 @@ export const en: Dict = {
   // Settings: sections and the daemon's flags
   "settings.section.rpc": "RPC",
   "settings.group.mcp": "AI assistants",
-  "settings.mcp.desc": "Let AI assistants like Claude Code read the chain through your node, and, as far as you allow, the app.",
-  "settings.mcp.more": "Starts an MCP server, the protocol AI assistants use to call tools. An assistant connected to it can look up blocks, transactions, balances, logs and contract state, simulate calls, estimate gas, watch the mempool, build unsigned transactions and search the Parallax docs.\n\nChain data comes from your own node, never a public RPC. Unless you allow the public block explorer or status page under Permissions, nothing the assistant looks up leaves your computer except to its own provider. It needs the node running, but not HTTP-RPC: it reaches the node inside the app, as the wallet does, so it works with Settings › RPC turned off.\n\nBeyond the chain, assistants see and do only what you allow under Permissions. What they may ask for waits on your approval in the app, and they can never sign or send transactions, see recovery phrases, keys or your password, or remove anything.\n\nIt listens on 127.0.0.1 only, and answers only programs that send its access token. Requests from web pages are refused.\n\nWhat a web page, a token name or a contract tells an assistant can steer it. Read what it suggests before you act on it.",
+  "settings.mcp.desc":
+    "Let AI assistants like Claude Code read the chain through your node, and, as far as you allow, the app.",
+  "settings.mcp.more":
+    "Starts an MCP server, the protocol AI assistants use to call tools. An assistant connected to it can look up blocks, transactions, balances, logs and contract state, simulate calls, estimate gas, watch the mempool, build unsigned transactions and search the Parallax docs.\n\nChain data comes from your own node, never a public RPC. Unless you allow the public block explorer or status page under Permissions, nothing the assistant looks up leaves your computer except to its own provider. It needs the node running, but not HTTP-RPC: it reaches the node inside the app, as the wallet does, so it works with Settings › RPC turned off.\n\nBeyond the chain, assistants see and do only what you allow under Permissions. What they may ask for waits on your approval in the app, and they can never sign or send transactions, see recovery phrases, keys or your password, or remove anything.\n\nIt listens on 127.0.0.1 only, and answers only programs that send its access token. Requests from web pages are refused.\n\nWhat a web page, a token name or a contract tells an assistant can steer it. Read what it suggests before you act on it.",
   "settings.mcp.enable": "Assistant access",
-  "settings.mcp.enable.desc": "Serve tools over MCP on this computer. It works without HTTP-RPC, answering from the node inside the app.",
-  "settings.mcp.nodeStopped": "The node isn't running. Assistants stay connected, but chain and node tools answer only once it starts.",
+  "settings.mcp.enable.desc":
+    "Serve tools over MCP on this computer. It works without HTTP-RPC, answering from the node inside the app.",
+  "settings.mcp.nodeStopped":
+    "The node isn't running. Assistants stay connected, but chain and node tools answer only once it starts.",
   "settings.mcp.startNode": "Start node",
   "settings.mcp.port": "Port",
   "settings.mcp.port.desc": "Where assistants connect, on 127.0.0.1.",
@@ -926,7 +1005,8 @@ export const en: Dict = {
   "settings.mcp.running": "Running",
   "settings.mcp.address": "Address",
   "settings.mcp.token": "Access token",
-  "settings.mcp.token.desc": "Assistants send it with every request. A new token disconnects every assistant set up with the old one.",
+  "settings.mcp.token.desc":
+    "Assistants send it with every request. A new token disconnects every assistant set up with the old one.",
   "settings.mcp.newToken": "New token",
   "settings.mcp.connect": "Connect an assistant",
   "settings.mcp.jsonConfig": "JSON config",
@@ -941,21 +1021,27 @@ export const en: Dict = {
   "settings.mcp.mode.ask": "Ask",
   "settings.mcp.mode.block": "Block",
   "settings.mcp.see": "What assistants can see",
-  "settings.mcp.see.desc": "Allow lets assistants use it without asking; Ask asks you the first time an assistant does; Block refuses. Everything an assistant reads goes to its provider, along with your conversation.",
+  "settings.mcp.see.desc":
+    "Allow lets assistants use it without asking; Ask asks you the first time an assistant does; Block refuses. Everything an assistant reads goes to its provider, along with your conversation.",
   "settings.mcp.do": "What assistants can do",
   "settings.mcp.do.desc": "Allowed, it's done at once; Ask asks you first.",
   "settings.mcp.ask": "What assistants can ask for",
-  "settings.mcp.ask.desc": "Each request waits for you to approve it in the app, showing exactly what would change. Block stops assistants asking.",
+  "settings.mcp.ask.desc":
+    "Each request waits for you to approve it in the app, showing exactly what would change. Block stops assistants asking.",
   "settings.mcp.never": "Never",
   "settings.mcp.never.desc": "No assistant can do these, whatever you allow above.",
   "settings.mcp.allow.chain": "Chain data",
-  "settings.mcp.allow.chain.desc": "Blocks, transactions, balances, contracts, the mempool, mining and the docs, from your node.",
+  "settings.mcp.allow.chain.desc":
+    "Blocks, transactions, balances, contracts, the mempool, mining and the docs, from your node.",
   "settings.mcp.public": "Public services",
-  "settings.mcp.public.desc": "Off, everything comes from your node. On, assistants can also ask these, and what they look up there leaves your computer. Changing them restarts the assistant server: connected assistants reconnect.",
+  "settings.mcp.public.desc":
+    "Off, everything comes from your node. On, assistants can also ask these, and what they look up there leaves your computer. Changing them restarts the assistant server: connected assistants reconnect.",
   "settings.mcp.allow.explorer": "Block explorer",
-  "settings.mcp.allow.explorer.desc": "Address histories, token balances and transfers, verified contract sources and search, from explorer.parallaxprotocol.org. Transactions and events are decoded with verified sources too.",
+  "settings.mcp.allow.explorer.desc":
+    "Address histories, token balances and transfers, verified contract sources and search, from explorer.parallaxprotocol.org. Transactions and events are decoded with verified sources too.",
   "settings.mcp.allow.statusPage": "Status page",
-  "settings.mcp.allow.statusPage.desc": "Network health and alerts, recommended confirmations, incidents and network-wide mining figures, from status.parallaxprotocol.org.",
+  "settings.mcp.allow.statusPage.desc":
+    "Network health and alerts, recommended confirmations, incidents and network-wide mining figures, from status.parallaxprotocol.org.",
   "settings.mcp.public.dev": "The development chain never uses them: they describe mainnet.",
   "settings.mcp.allow.nodeStatus": "Node status",
   "settings.mcp.allow.nodeStatus.desc": "Whether it runs and syncs, peers, uptime and version.",
@@ -970,7 +1056,8 @@ export const en: Dict = {
   "settings.mcp.allow.stopNode": "Stop the node",
   "settings.mcp.allow.stopNode.desc": "Ask to stop it.",
   "settings.mcp.allow.settings": "Settings",
-  "settings.mcp.allow.settings.desc": "See and ask to change appearance, sync, peer, cache, pool and fee settings. Those that could expose the node are off limits.",
+  "settings.mcp.allow.settings.desc":
+    "See and ask to change appearance, sync, peer, cache, pool and fee settings. Those that could expose the node are off limits.",
   "settings.mcp.allow.newAccounts": "Create accounts",
   "settings.mcp.allow.newAccounts.desc": "Ask to create one; you type the wallet password.",
   "settings.mcp.allow.watchOnly": "Watch-only accounts",
@@ -978,7 +1065,8 @@ export const en: Dict = {
   "settings.mcp.allow.editContacts": "Edit the address book",
   "settings.mcp.allow.editContacts.desc": "Ask to add or change a contact.",
   "settings.mcp.allow.sendTransactions": "Send transactions",
-  "settings.mcp.allow.sendTransactions.desc": "Ask to send LAX from your accounts. You review each one and approve it with the wallet password.",
+  "settings.mcp.allow.sendTransactions.desc":
+    "Ask to send LAX from your accounts. You review each one and approve it with the wallet password.",
   "settings.mcp.never.seeds": "See recovery phrases",
   "settings.mcp.never.keys": "Export, import or back up keys",
   "settings.mcp.never.remove": "Remove accounts, phrases or contacts",
@@ -1033,8 +1121,10 @@ export const en: Dict = {
   "assistant.permission.wants": "An AI assistant wants to use",
   "assistant.permission.startStopped": "Start the node for an assistant?",
   "assistant.permission.needsNode": "An AI assistant wants to use",
-  "assistant.permission.needsNodeRest": "which needs the node, and the node is stopped. Allowing starts it, and the assistant carries on.",
-  "assistant.permission.explain": "Allow once lets this assistant use it until it disconnects. Always allow sets it to Allow in Settings › AI assistants › Permissions, for every assistant.",
+  "assistant.permission.needsNodeRest":
+    "which needs the node, and the node is stopped. Allowing starts it, and the assistant carries on.",
+  "assistant.permission.explain":
+    "Allow once lets this assistant use it until it disconnects. Always allow sets it to Allow in Settings › AI assistants › Permissions, for every assistant.",
   "assistant.permission.always": "Always allow",
   "assistant.permission.once": "Allow once",
   "assistant.notify": "An AI assistant needs your approval",
@@ -1054,7 +1144,8 @@ export const en: Dict = {
   "assistant.stopNode.block": "Block",
   "assistant.stopNode.peers": "Peers",
   "assistant.stopNode.uptime": "Running for",
-  "assistant.stopNode.desc": "The node stops syncing and stops answering the wallet and assistants until it is started again.",
+  "assistant.stopNode.desc":
+    "The node stops syncing and stops answering the wallet and assistants until it is started again.",
   "assistant.settings.title": "Change settings?",
   "assistant.settings.lead": "These settings would change:",
   "assistant.settings.cta": "Change settings",
@@ -1072,17 +1163,20 @@ export const en: Dict = {
   "assistant.party.yours": "Your account",
   "assistant.party.watchOnly": "Your watch-only account",
   "assistant.party.contact": "Contact",
-  "assistant.transaction.new": "You have never sent to this address, and it isn't in your address book. Check it against where it came from: an assistant can be misled into asking for the wrong one.",
+  "assistant.transaction.new":
+    "You have never sent to this address, and it isn't in your address book. Check it against where it came from: an assistant can be misled into asking for the wrong one.",
   "assistant.transaction.makeRequest": "Make signing request",
   "assistant.sent.closing": "Closing",
   "assistant.sent.requestTitle": "Signing request made",
   "assistant.sent.requestDesc": "A request to send {amount} LAX",
   "assistant.sent.requestWait": "Sign it on your offline signer, then broadcast it here.",
   "assistant.transaction.after": "Balance after",
-  "assistant.transaction.watchOnly": "This account's key is on your offline signer. Approving makes a signing request: sign it there, then broadcast it here.",
+  "assistant.transaction.watchOnly":
+    "This account's key is on your offline signer. Approving makes a signing request: sign it there, then broadcast it here.",
   "assistant.watchOnly.title": "Follow an address?",
   "assistant.watchOnly.cta": "Follow address",
-  "assistant.watchOnly.lead": "A watch-only account, following this address's balance and activity. Its key stays elsewhere.",
+  "assistant.watchOnly.lead":
+    "A watch-only account, following this address's balance and activity. Its key stays elsewhere.",
   "assistant.contact.add": "Add a contact?",
   "assistant.contact.change": "Change a contact?",
   "assistant.contact.saveCta": "Save contact",
@@ -1092,7 +1186,8 @@ export const en: Dict = {
   "assistant.contact.wasName": "Was named",
   "assistant.contact.wasAddress": "Was at",
   "assistant.contact.wasNote": "Note was",
-  "assistant.contact.moved": "This changes the contact's address. Sends to this contact will go to the new one: check it.",
+  "assistant.contact.moved":
+    "This changes the contact's address. Sends to this contact will go to the new one: check it.",
   "settings.restartAppBadge": "Restart app",
   "settings.save.appRestartRequired": "Restart the app to apply changes",
   "settings.save.restartApp": "Restart app",
@@ -1118,37 +1213,65 @@ export const en: Dict = {
   "settings.group.logs": "Logs",
   "settings.txpool.desc": "The node's rules for which pending transactions it keeps and relays.",
   "settings.limits.desc": "Caps that protect the node from expensive or risky RPC requests.",
-  "settings.preventSleep.more": "Syncing pauses whenever the computer goes to sleep, so a sync left alone overnight can lose hours.\n\nWith this on, the app holds off system sleep only while the node is syncing, and lets go as soon as it has caught up. The display can still turn off and lock as usual.",
-  "settings.notifications.more": "The app sends a desktop notification when:\n\n• one of your accounts receives LAX;\n\n• a transaction you sent is confirmed in a block, or fails;\n\n• a sync that took more than a couple of minutes finishes, so you know the node has caught up;\n\n• the node stops itself because the disk is nearly full, so you can free space before restarting it.\n\nNotifications only appear while the app is running.",
-  "settings.ancientDir.more": "The node keeps recent chain data in a fast key-value database and moves older blocks, headers and receipts into an append-only \"ancient\" store. That store is the bulk of the data directory and is read rarely.\n\nPoint it at a larger, slower disk to keep only recent data on your SSD. Leave it empty to keep everything inside the data directory.\n\nChanging it doesn't move existing data: move the ancient folder yourself while the node is stopped, or the node will start the ancient store afresh.",
-  "settings.minFreeDisk.more": "A database that runs out of disk space mid-write can be corrupted and need a full resync. To prevent that, the node checks the free space on its data disk every 30 seconds and stops itself cleanly once it falls below this amount, warning first when it gets within twice that.\n\nEmpty uses twice the trie dirty cache, the same default as the command-line client. 0 turns the guard off.",
-  "settings.syncMode.more": "Snap sync downloads the recent state of every account directly from peers, verifies it against the chain, and then follows new blocks normally. It gets a usable node in hours instead of days.\n\nFull sync downloads every block from genesis and executes each transaction to rebuild the state itself. It is slower but trusts nothing it hasn't computed.\n\nEither way the node ends up fully validating every new block. Changing the mode doesn't resync a chain that is already downloaded.",
-  "settings.archive.more": "Normally the node prunes old state and keeps only what is needed to validate new blocks, plus recent history. An archive node keeps the state at every block, so you can query balances or run traces at any point in the past — what block explorers and indexers need.\n\nIt uses far more disk space and grows quickly. Past states are only filled in by a full sync from genesis, so switch the sync mode to Full and use an empty data directory. Archive mode also keeps preimages and the whole transaction index.",
-  "settings.txLookupLimit.more": "Looking a transaction up by its hash (eth_getTransactionByHash, receipts) needs an index entry for it. The node keeps those entries for this many recent blocks and drops older ones to save space.\n\nEmpty keeps about a year of blocks. 0 indexes the whole chain, which wallets and explorers that look up old transactions need. Archive mode always indexes everything.",
-  "settings.snapshot.more": "The snapshot is a flat copy of every account and storage slot alongside the state trie. Reading from it is much faster than walking the trie, which speeds up block import and RPC calls.\n\nSnap sync needs it, so it stays on under snap sync. Under full sync you can turn it off to save disk space; its memory then goes to the trie cache instead.",
-  "settings.prefetch.more": "While a block is being imported, the node runs its transactions ahead on spare threads to load the state they will touch into memory. The real import then finds most of what it needs already cached.\n\nTurning it off saves CPU and disk reads at the cost of slower imports. It mostly matters on slow disks or busy machines.",
-  "settings.preimages.more": "The state trie stores accounts and storage slots under the hash of their key. Preimages are the original keys, which some debugging and state-dump tools need to show readable addresses and slots.\n\nRecording them costs extra disk space. Archive mode always records them.",
+  "settings.preventSleep.more":
+    "Syncing pauses whenever the computer goes to sleep, so a sync left alone overnight can lose hours.\n\nWith this on, the app holds off system sleep only while the node is syncing, and lets go as soon as it has caught up. The display can still turn off and lock as usual.",
+  "settings.notifications.more":
+    "The app sends a desktop notification when:\n\n• one of your accounts receives LAX;\n\n• a transaction you sent is confirmed in a block, or fails;\n\n• a sync that took more than a couple of minutes finishes, so you know the node has caught up;\n\n• the node stops itself because the disk is nearly full, so you can free space before restarting it.\n\nNotifications only appear while the app is running.",
+  "settings.ancientDir.more":
+    'The node keeps recent chain data in a fast key-value database and moves older blocks, headers and receipts into an append-only "ancient" store. That store is the bulk of the data directory and is read rarely.\n\nPoint it at a larger, slower disk to keep only recent data on your SSD. Leave it empty to keep everything inside the data directory.\n\nChanging it doesn\'t move existing data: move the ancient folder yourself while the node is stopped, or the node will start the ancient store afresh.',
+  "settings.minFreeDisk.more":
+    "A database that runs out of disk space mid-write can be corrupted and need a full resync. To prevent that, the node checks the free space on its data disk every 30 seconds and stops itself cleanly once it falls below this amount, warning first when it gets within twice that.\n\nEmpty uses twice the trie dirty cache, the same default as the command-line client. 0 turns the guard off.",
+  "settings.syncMode.more":
+    "Snap sync downloads the recent state of every account directly from peers, verifies it against the chain, and then follows new blocks normally. It gets a usable node in hours instead of days.\n\nFull sync downloads every block from genesis and executes each transaction to rebuild the state itself. It is slower but trusts nothing it hasn't computed.\n\nEither way the node ends up fully validating every new block. Changing the mode doesn't resync a chain that is already downloaded.",
+  "settings.archive.more":
+    "Normally the node prunes old state and keeps only what is needed to validate new blocks, plus recent history. An archive node keeps the state at every block, so you can query balances or run traces at any point in the past — what block explorers and indexers need.\n\nIt uses far more disk space and grows quickly. Past states are only filled in by a full sync from genesis, so switch the sync mode to Full and use an empty data directory. Archive mode also keeps preimages and the whole transaction index.",
+  "settings.txLookupLimit.more":
+    "Looking a transaction up by its hash (eth_getTransactionByHash, receipts) needs an index entry for it. The node keeps those entries for this many recent blocks and drops older ones to save space.\n\nEmpty keeps about a year of blocks. 0 indexes the whole chain, which wallets and explorers that look up old transactions need. Archive mode always indexes everything.",
+  "settings.snapshot.more":
+    "The snapshot is a flat copy of every account and storage slot alongside the state trie. Reading from it is much faster than walking the trie, which speeds up block import and RPC calls.\n\nSnap sync needs it, so it stays on under snap sync. Under full sync you can turn it off to save disk space; its memory then goes to the trie cache instead.",
+  "settings.prefetch.more":
+    "While a block is being imported, the node runs its transactions ahead on spare threads to load the state they will touch into memory. The real import then finds most of what it needs already cached.\n\nTurning it off saves CPU and disk reads at the cost of slower imports. It mostly matters on slow disks or busy machines.",
+  "settings.preimages.more":
+    "The state trie stores accounts and storage slots under the hash of their key. Preimages are the original keys, which some debugging and state-dump tools need to show readable addresses and slots.\n\nRecording them costs extra disk space. Archive mode always records them.",
   "settings.smartFee.desc": "Bitcoin Core-style fee estimation.",
-  "settings.smartFee.more": "The gas price oracle has two algorithms. The default uses a percentile of recent block tips — fast and well-trodden. The Smart Fee option ports Bitcoin Core's estimateSmartFee algorithm, which buckets observed confirmations and back-solves for a fee that hits a target confirmation depth.\n\nSmart Fee needs a long, continuous window of observed confirmations to produce accurate estimates. Parallax Wallet is usually started and stopped on demand rather than left running 24/7, so the oracle may not accumulate enough data and then falls back to the default minimum. Always-on nodes get the most out of it.",
+  "settings.smartFee.more":
+    "The gas price oracle has two algorithms. The default uses a percentile of recent block tips — fast and well-trodden. The Smart Fee option ports Bitcoin Core's estimateSmartFee algorithm, which buckets observed confirmations and back-solves for a fee that hits a target confirmation depth.\n\nSmart Fee needs a long, continuous window of observed confirmations to produce accurate estimates. Parallax Wallet is usually started and stopped on demand rather than left running 24/7, so the oracle may not accumulate enough data and then falls back to the default minimum. Always-on nodes get the most out of it.",
   "settings.allowInbound.desc": "Let other peers connect to your node.",
-  "settings.allowInbound.more": "When enabled, the node asks your router to forward its listening port (through UPnP or NAT-PMP) so peers on the internet can dial you. Accepting inbound peers makes the network healthier and gives you faster block propagation.\n\nIn exchange, your IP address becomes discoverable by other peers. Turn it off if you're behind a strict firewall or want to stay outbound-only: the node still connects out to peers.",
-  "settings.nat.more": "Automatic tries UPnP and NAT-PMP and uses whichever your router answers. Pick one to skip the other.\n\nFixed public IP is for when you've forwarded the port on your router yourself, or the machine has a public address: the node then announces that IP without asking the router.\n\nOnly used while inbound connections are allowed.",
-  "settings.discovery.more": "With discovery on, the node learns about peers from other peers, from DNS seeds and from the DNS discovery tree, and keeps them in its address book.\n\nTurned off, it only connects to the peers you add from the peer list and the bootstrap nodes. That's useful for private setups, but a node with few peers is easier to isolate.",
-  "settings.legacyDiscovery.more": "Parallax v2 nodes connect with the v2 handshake and keep peers in an address book. The v1.x transport (UDP discovery and the legacy handshake) is kept for compatibility with older nodes.\n\nAuto answers v1 peers that reach out and accepts legacy connections, but doesn't seek v1 peers out. This is the default.\n\nOn also uses v1 discovery to find peers to dial.\n\nOff closes the v1 surface completely: no UDP socket, no legacy handshake. The node becomes v2-only and its enode URL is only informational.",
-  "settings.bootnodes.more": "Bootstrap nodes are where a node with an empty address book starts looking for peers. One entry per line:\n\n• enode:// URLs seed v1 discovery;\n\n• ip:port or <address>.onion:port entries are dialed with the v2 handshake.\n\nCustom entries replace the built-in ones. DNS seeds still work alongside them unless peer discovery is off.",
-  "settings.proxy.more": "Every outbound peer connection goes through this SOCKS5 proxy, onion addresses included. Set it to a local Tor (usually 127.0.0.1:9050) to hide your IP address from the peers you dial.\n\nDNS seed names are then resolved through the proxy too, so no lookups leak to your local resolver. Inbound connections are unaffected: turn off inbound connections as well to stop accepting peers on your own address.",
-  "settings.listenOnion.more": "If Tor is running on this computer with its control port open, the node asks it for an onion service that forwards to the listening port, so peers can reach you over Tor without learning your IP address. The service key is kept in the data directory, so the address stays the same across restarts.\n\nIf Tor isn't reachable this does nothing beyond a quiet retry now and then. Unless an onion proxy is set, the node also uses Tor's SOCKS port to dial onion peers.",
-  "settings.onlyNet.more": "The node only dials peers on the networks chosen. Choose only Onion, together with a proxy or the onion service, to make every outbound connection over Tor.\n\nNone chosen allows all networks. Inbound connections and peers you add by hand are unaffected.",
-  "settings.onionProxy.more": "Onion addresses go through this SOCKS5 proxy instead of the main one. Leave it empty to use the main proxy, or Tor's SOCKS port when the onion service is running.\n\nSet it to 0 to make no onion connections at all, even with a proxy set.",
-  "settings.proxyRandomize.more": "Tor gives connections that use different SOCKS credentials separate circuits. With this on, the node uses fresh credentials for every connection, so no two peers share a circuit and they can't be linked to each other by their exit.\n\nTurn it off to share one circuit across peers, which uses fewer Tor resources.",
+  "settings.allowInbound.more":
+    "When enabled, the node asks your router to forward its listening port (through UPnP or NAT-PMP) so peers on the internet can dial you. Accepting inbound peers makes the network healthier and gives you faster block propagation.\n\nIn exchange, your IP address becomes discoverable by other peers. Turn it off if you're behind a strict firewall or want to stay outbound-only: the node still connects out to peers.",
+  "settings.nat.more":
+    "Automatic tries UPnP and NAT-PMP and uses whichever your router answers. Pick one to skip the other.\n\nFixed public IP is for when you've forwarded the port on your router yourself, or the machine has a public address: the node then announces that IP without asking the router.\n\nOnly used while inbound connections are allowed.",
+  "settings.discovery.more":
+    "With discovery on, the node learns about peers from other peers, from DNS seeds and from the DNS discovery tree, and keeps them in its address book.\n\nTurned off, it only connects to the peers you add from the peer list and the bootstrap nodes. That's useful for private setups, but a node with few peers is easier to isolate.",
+  "settings.legacyDiscovery.more":
+    "Parallax v2 nodes connect with the v2 handshake and keep peers in an address book. The v1.x transport (UDP discovery and the legacy handshake) is kept for compatibility with older nodes.\n\nAuto answers v1 peers that reach out and accepts legacy connections, but doesn't seek v1 peers out. This is the default.\n\nOn also uses v1 discovery to find peers to dial.\n\nOff closes the v1 surface completely: no UDP socket, no legacy handshake. The node becomes v2-only and its enode URL is only informational.",
+  "settings.bootnodes.more":
+    "Bootstrap nodes are where a node with an empty address book starts looking for peers. One entry per line:\n\n• enode:// URLs seed v1 discovery;\n\n• ip:port or <address>.onion:port entries are dialed with the v2 handshake.\n\nCustom entries replace the built-in ones. DNS seeds still work alongside them unless peer discovery is off.",
+  "settings.proxy.more":
+    "Every outbound peer connection goes through this SOCKS5 proxy, onion addresses included. Set it to a local Tor (usually 127.0.0.1:9050) to hide your IP address from the peers you dial.\n\nDNS seed names are then resolved through the proxy too, so no lookups leak to your local resolver. Inbound connections are unaffected: turn off inbound connections as well to stop accepting peers on your own address.",
+  "settings.listenOnion.more":
+    "If Tor is running on this computer with its control port open, the node asks it for an onion service that forwards to the listening port, so peers can reach you over Tor without learning your IP address. The service key is kept in the data directory, so the address stays the same across restarts.\n\nIf Tor isn't reachable this does nothing beyond a quiet retry now and then. Unless an onion proxy is set, the node also uses Tor's SOCKS port to dial onion peers.",
+  "settings.onlyNet.more":
+    "The node only dials peers on the networks chosen. Choose only Onion, together with a proxy or the onion service, to make every outbound connection over Tor.\n\nNone chosen allows all networks. Inbound connections and peers you add by hand are unaffected.",
+  "settings.onionProxy.more":
+    "Onion addresses go through this SOCKS5 proxy instead of the main one. Leave it empty to use the main proxy, or Tor's SOCKS port when the onion service is running.\n\nSet it to 0 to make no onion connections at all, even with a proxy set.",
+  "settings.proxyRandomize.more":
+    "Tor gives connections that use different SOCKS credentials separate circuits. With this on, the node uses fresh credentials for every connection, so no two peers share a circuit and they can't be linked to each other by their exit.\n\nTurn it off to share one circuit across peers, which uses fewer Tor resources.",
   "settings.stats.desc": "Show this node on status.parallaxprotocol.org.",
-  "settings.stats.toggle.more": "The node reports itself to the public dashboard at status.parallaxprotocol.org under a random name kept in your data directory.\n\nIt shares block height, peer count, sync and mining state, peer latency, client version and operating system. No wallet, account or transaction data is sent, though the stats server sees your IP address.",
-  "settings.rpc.enable.more": "Starts a JSON-RPC server that wallets like MetaMask, dapps and developer tools use to read the chain and send transactions through your own node instead of a third-party provider.\n\nBy default it listens on 127.0.0.1 only, so only programs on this computer can reach it. You can change the address under Advanced — never expose it to the public internet.",
-  "settings.rpc.host.more": "127.0.0.1 accepts connections from this computer only. A LAN address or 0.0.0.0 (every interface) lets other machines connect too, for example a wallet on your phone or another computer.\n\nAnyone who can reach the server can read the chain through your node and submit transactions, so only do this on a network you trust, behind a firewall. Add the names other machines use under Allowed hostnames.",
-  "settings.rpc.vhosts.more": "Each HTTP request names the host it was meant for. The node refuses requests addressed to any name not on this list, which stops a malicious web page from reaching your node through DNS rebinding — making your browser talk to 127.0.0.1 under its own domain name.\n\nRequests to an IP address are always accepted. Add a name here when you reach the node by one, and use * to accept any only if you understand the risk.",
-  "settings.rpc.unprotected.more": "Transactions signed with a chain ID (EIP-155) are only valid on this chain. Unprotected ones, signed without it, are valid on every chain that shares the address format, so anyone can replay them elsewhere.\n\nOnly turn this on if a tool you trust can't sign with a chain ID, such as some deployment scripts for deterministic contract addresses.",
-  "settings.metrics.more": "The node always keeps light counters for its database, network, sync and transaction pool, and the app shows some of them, such as the network traffic. Turn this on to serve them at a metrics endpoint, at /debug/metrics (JSON) and /debug/metrics/prometheus for Prometheus or Grafana, and to allow detailed metrics.\n\nThe daemon sets up its metrics as it starts, so this takes effect after restarting the app.",
-  "settings.group.performance.more": "The node splits its cache memory four ways:\n\n• the database cache holds recently read and written chain data;\n\n• the trie clean cache holds state trie nodes read from disk;\n\n• the trie dirty cache holds state changes not yet written to disk — larger means fewer, bigger writes;\n\n• the snapshot cache holds entries of the flat state snapshot.\n\nThe defaults total 4 GB, like the command-line client on mainnet. If the total exceeds a third of your RAM, the node scales them down so the system doesn't run out of memory.",
+  "settings.stats.toggle.more":
+    "The node reports itself to the public dashboard at status.parallaxprotocol.org under a random name kept in your data directory.\n\nIt shares block height, peer count, sync and mining state, peer latency, client version and operating system. No wallet, account or transaction data is sent, though the stats server sees your IP address.",
+  "settings.rpc.enable.more":
+    "Starts a JSON-RPC server that wallets like MetaMask, dapps and developer tools use to read the chain and send transactions through your own node instead of a third-party provider.\n\nBy default it listens on 127.0.0.1 only, so only programs on this computer can reach it. You can change the address under Advanced — never expose it to the public internet.",
+  "settings.rpc.host.more":
+    "127.0.0.1 accepts connections from this computer only. A LAN address or 0.0.0.0 (every interface) lets other machines connect too, for example a wallet on your phone or another computer.\n\nAnyone who can reach the server can read the chain through your node and submit transactions, so only do this on a network you trust, behind a firewall. Add the names other machines use under Allowed hostnames.",
+  "settings.rpc.vhosts.more":
+    "Each HTTP request names the host it was meant for. The node refuses requests addressed to any name not on this list, which stops a malicious web page from reaching your node through DNS rebinding — making your browser talk to 127.0.0.1 under its own domain name.\n\nRequests to an IP address are always accepted. Add a name here when you reach the node by one, and use * to accept any only if you understand the risk.",
+  "settings.rpc.unprotected.more":
+    "Transactions signed with a chain ID (EIP-155) are only valid on this chain. Unprotected ones, signed without it, are valid on every chain that shares the address format, so anyone can replay them elsewhere.\n\nOnly turn this on if a tool you trust can't sign with a chain ID, such as some deployment scripts for deterministic contract addresses.",
+  "settings.metrics.more":
+    "The node always keeps light counters for its database, network, sync and transaction pool, and the app shows some of them, such as the network traffic. Turn this on to serve them at a metrics endpoint, at /debug/metrics (JSON) and /debug/metrics/prometheus for Prometheus or Grafana, and to allow detailed metrics.\n\nThe daemon sets up its metrics as it starts, so this takes effect after restarting the app.",
+  "settings.group.performance.more":
+    "The node splits its cache memory four ways:\n\n• the database cache holds recently read and written chain data;\n\n• the trie clean cache holds state trie nodes read from disk;\n\n• the trie dirty cache holds state changes not yet written to disk — larger means fewer, bigger writes;\n\n• the snapshot cache holds entries of the flat state snapshot.\n\nThe defaults total 4 GB, like the command-line client on mainnet. If the total exceeds a third of your RAM, the node scales them down so the system doesn't run out of memory.",
   "settings.readMore": "Read more",
   "settings.cliFlag": "Command-line equivalent",
   "settings.advanced": "Advanced",
@@ -1205,7 +1328,8 @@ export const en: Dict = {
   "settings.bootnodes.desc": "The first peers a new node asks. Empty uses the built-in list.",
   "settings.bootnodes.placeholder": "Built-in list",
 
-  "settings.privacy.desc": "Route the node's peer connections through Tor or another SOCKS5 proxy, and reach peers on onion addresses.",
+  "settings.privacy.desc":
+    "Route the node's peer connections through Tor or another SOCKS5 proxy, and reach peers on onion addresses.",
   "settings.proxy": "SOCKS5 proxy",
   "settings.proxy.desc": "Route outbound peer connections through SOCKS5.",
   "settings.listenOnion": "Onion service",
@@ -1226,7 +1350,8 @@ export const en: Dict = {
   "settings.torPassword.desc": "Only for password authentication. Stored unencrypted.",
   "settings.torPassword.placeholder": "Cookie authentication",
 
-  "settings.rpc.exposed": "The RPC server listens beyond this computer. Anyone who can reach it can read the chain through your node and submit transactions. Only do this on a network you trust, behind a firewall.",
+  "settings.rpc.exposed":
+    "The RPC server listens beyond this computer. Anyone who can reach it can read the chain through your node and submit transactions. Only do this on a network you trust, behind a firewall.",
   "settings.rpc.host": "Listen address",
   "settings.rpc.host.desc": "The interface the server listens on.",
   "settings.rpc.apis": "APIs",
@@ -1244,7 +1369,8 @@ export const en: Dict = {
   "settings.graphql": "GraphQL",
   "settings.graphql.desc": "Serve a GraphQL endpoint at /graphql on the HTTP-RPC server.",
   "settings.ipc": "IPC endpoint",
-  "settings.ipc.desc": "A local socket in the data directory, for the parallax-cli console and other tools on this computer.",
+  "settings.ipc.desc":
+    "A local socket in the data directory, for the parallax-cli console and other tools on this computer.",
   "settings.rpc.gasCap": "Gas cap for calls",
   "settings.rpc.gasCap.desc": "The most gas eth_call and eth_estimateGas may use. 0 means no cap.",
   "settings.rpc.txFeeCap": "Transaction fee cap",
@@ -1252,7 +1378,8 @@ export const en: Dict = {
   "settings.rpc.pvmTimeout": "Call timeout",
   "settings.rpc.pvmTimeout.desc": "How long eth_call may run. 0 means no limit.",
   "settings.rpc.logQueryLimit": "Log filter limit",
-  "settings.rpc.logQueryLimit.desc": "The most addresses or topics an eth_getLogs filter may list per position. 0 means no limit.",
+  "settings.rpc.logQueryLimit.desc":
+    "The most addresses or topics an eth_getLogs filter may list per position. 0 means no limit.",
   "settings.rpc.batchLimit": "Batch size limit",
   "settings.rpc.batchLimit.desc": "The most requests one JSON-RPC batch may contain.",
   "settings.rpc.unprotected": "Allow unprotected transactions",
@@ -1293,13 +1420,16 @@ export const en: Dict = {
   "settings.logLevel": "Log level",
   "settings.logLevel.desc": "How much detail the node and app write to the log.",
   "settings.clearLogs": "Clear logs on startup",
-  "settings.clearLogs.desc": "Start each launch with an empty log. Otherwise the latest logs are kept across restarts, which helps when looking into a crash.",
+  "settings.clearLogs.desc":
+    "Start each launch with an empty log. Otherwise the latest logs are kept across restarts, which helps when looking into a crash.",
   "settings.group.devChain": "Development chain",
   "settings.devChain.notice": "Only in development builds (make dev).",
   "settings.devChain": "Run a local dev chain",
-  "settings.devChain.desc": "Run a private chain instead of mainnet, like parallaxd --dev: no peers, and a block sealed for every transaction. Kept apart from your mainnet data.",
+  "settings.devChain.desc":
+    "Run a private chain instead of mainnet, like parallaxd --dev: no peers, and a block sealed for every transaction. Kept apart from your mainnet data.",
   "settings.devFund": "Funded address",
-  "settings.devFund.desc": "Starts with 1,000,000 LAX. Each address gets its own chain, so changing it starts a fresh one.",
+  "settings.devFund.desc":
+    "Starts with 1,000,000 LAX. Each address gets its own chain, so changing it starts a fresh one.",
   "settings.logLevel.1": "Errors",
   "settings.logLevel.2": "Warnings",
   "settings.logLevel.3": "Info",
@@ -1321,7 +1451,8 @@ export const en: Dict = {
   "notify.txFailed": "Transaction failed: {amount}",
   "notify.sent.body": "From {account} to {to}, confirmed in block {block}.",
   "notify.lowDisk": "Node stopped",
-  "notify.lowDisk.body": "The disk is nearly full, so the node stopped to protect its database. Free up space, then start it again.",
+  "notify.lowDisk.body":
+    "The disk is nearly full, so the node stopped to protect its database. Free up space, then start it again.",
 };
 
 const LOADERS: Record<Exclude<Lang, "en">, () => Promise<{ default: Dict }>> = {

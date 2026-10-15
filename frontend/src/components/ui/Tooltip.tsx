@@ -24,8 +24,9 @@ const MARGIN = 8;
  * spanning x..x+w would meet them, or 0 where it wouldn't.
  */
 function controlsFloor(x: number, w: number): number {
-  const wco = (navigator as Navigator & { windowControlsOverlay?: { visible: boolean; getTitlebarAreaRect: () => DOMRect } })
-    .windowControlsOverlay;
+  const wco = (
+    navigator as Navigator & { windowControlsOverlay?: { visible: boolean; getTitlebarAreaRect: () => DOMRect } }
+  ).windowControlsOverlay;
   if (!wco?.visible) return 0;
   const area = wco.getTitlebarAreaRect();
   // The controls are what the title bar area leaves: on its right, or its left

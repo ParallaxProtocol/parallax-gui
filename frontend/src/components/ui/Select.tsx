@@ -1,14 +1,11 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { FADE_OUT, GLIDE } from "../../lib/motion";
+import { usePopup } from "./popup";
 
 export type SelectOption<T> = { value: T; label: string };
-
-/** How far the menu keeps from the window's edges, and from its button. */
-const MARGIN = 8;
-const GAP = 4;
 
 /**
  * Select is a pop-up button, as on a Mac: a tinted rounded button naming
@@ -40,12 +37,16 @@ export function Select<T extends string | number>({
   const menu = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const [pos, setPos] = useState<{ x: number; y: number; width: number; up: boolean } | null>(null);
   const chosen = options.find((o) => o.value === value);
 
   const show = () => {
     if (disabled) return;
-    setActive(Math.max(0, options.findIndex((o) => o.value === value)));
+    setActive(
+      Math.max(
+        0,
+        options.findIndex((o) => o.value === value),
+      ),
+    );
     setOpen(true);
   };
   const pick = (i: number) => {
@@ -55,43 +56,7 @@ export function Select<T extends string | number>({
     if (o && o.value !== value) onChange(o.value);
   };
 
-  // Placed once it has rendered and has a size: under the button, or above
-  // it where the window has no room below
-  useLayoutEffect(() => {
-    if (!open) {
-      setPos(null);
-      return;
-    }
-    const b = button.current?.getBoundingClientRect();
-    const m = menu.current;
-    if (!b || !m) return;
-    const h = m.offsetHeight;
-    const width = Math.max(b.width, m.offsetWidth);
-    const up = b.bottom + GAP + h > window.innerHeight - MARGIN && b.top - GAP - h > MARGIN;
-    const x = Math.min(Math.max(b.left, MARGIN), window.innerWidth - width - MARGIN);
-    setPos({ x, y: up ? b.top - GAP - h : b.bottom + GAP, width, up });
-  }, [open]);
-
-  // Closed by a click elsewhere, by scrolling or resizing, or by Escape
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (!menu.current?.contains(t) && !button.current?.contains(t)) setOpen(false);
-    };
-    const onScroll = (e: Event) => {
-      if (!menu.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onResize = () => setOpen(false);
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [open]);
+  const pos = usePopup(open, setOpen, button, menu);
 
   const onKey = (e: React.KeyboardEvent) => {
     if (!open) {
@@ -148,7 +113,12 @@ export function Select<T extends string | number>({
               aria-activedescendant={`${id}-${active}`}
               className="menu no-drag fixed z-[150] flex max-h-80 flex-col gap-px overflow-y-auto p-1"
               // Placed by left/top: motion owns the transform, for the scale
-              style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, minWidth: pos?.width, visibility: pos ? "visible" : "hidden" }}
+              style={{
+                left: pos?.x ?? 0,
+                top: pos?.y ?? 0,
+                minWidth: pos?.width,
+                visibility: pos ? "visible" : "hidden",
+              }}
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, transition: FADE_OUT }}

@@ -8,7 +8,8 @@ import { useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Notice } from "../../components/ui/bits";
 import { DrawnCheck, Field, PasswordInput } from "./common";
-import { backUp, NameField, useBusy } from "./AccountForms";
+import { NameField } from "./AccountForms";
+import { backUp, useBusy } from "./accountActions";
 import { CreateIntro, DetailsStep, SetupPasswordStep } from "./CreateStep";
 import { FlowPage, Part, StepFooter, StepPanel } from "./flow";
 import { PhraseGrid, PhraseQuiz, PhraseWarning } from "./Phrase";
@@ -62,7 +63,16 @@ export function SetupPasswordPage() {
   };
 
   if (phrase) {
-    return <PhraseSteps seedId={phrase.seedId} words={phrase.words} hasPassphrase={false} steps={steps} at={1} onDone={done} />;
+    return (
+      <PhraseSteps
+        seedId={phrase.seedId}
+        words={phrase.words}
+        hasPassphrase={false}
+        steps={steps}
+        at={1}
+        onDone={done}
+      />
+    );
   }
 
   if (offered) {
@@ -339,7 +349,11 @@ function PhraseSteps({
                 </div>
               </motion.div>
             ) : (
-              <motion.div key="quiz" className="flex flex-col gap-4" exit={{ opacity: 0, transition: { duration: 0.12 } }}>
+              <motion.div
+                key="quiz"
+                className="flex flex-col gap-4"
+                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+              >
                 <p>{t("wallet.phrase.quizDesc")}</p>
                 <PhraseQuiz words={words} onValid={setValid} />
                 {error && <Notice tone="critical">{error}</Notice>}
@@ -348,7 +362,12 @@ function PhraseSteps({
           </AnimatePresence>
         </Part>
         <StepFooter onBack={confirmed ? undefined : () => setStage("phrase")}>
-          <button type="submit" className="btn btn-primary" disabled={busy || (!confirmed && !valid)} autoFocus={confirmed}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={busy || (!confirmed && !valid)}
+            autoFocus={confirmed}
+          >
             {busy && <Loader2 className="size-3.5 animate-spin" />}
             {confirmed ? t("wallet.created.open") : t("wallet.phrase.confirm")}
             {confirmed && <ArrowRight className="size-3.5" />}
@@ -493,12 +512,22 @@ function CreateKey({ onBack }: { onBack: () => void }) {
         <Part className="gap-3">
           <AnimatePresence mode="wait" initial={false}>
             {saved ? (
-              <motion.div key="saved" className="flex flex-col gap-1" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
+              <motion.div
+                key="saved"
+                className="flex flex-col gap-1"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={SPRING}
+              >
                 <span className="font-semibold text-good-ink">{t("wallet.backup.saved")}</span>
                 <span className="text-muted-foreground">{t("wallet.created.savedDesc")}</span>
               </motion.div>
             ) : (
-              <motion.div key="save" className="flex flex-col gap-2 leading-relaxed" exit={{ opacity: 0, transition: { duration: 0.12 } }}>
+              <motion.div
+                key="save"
+                className="flex flex-col gap-2 leading-relaxed"
+                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+              >
                 <p>{t("wallet.backup.what")}</p>
                 <p className="text-muted-foreground">{t("wallet.create.keyBackupWhy")}</p>
               </motion.div>

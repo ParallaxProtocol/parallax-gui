@@ -25,7 +25,11 @@ export const WalletContext = createContext<WalletState>({
 export const useWallet = () => useContext(WalletContext);
 
 /** accountLabel names an account: its label, or "Account N" by its place in the wallet. */
-export function accountLabel(a: WalletAccount, accounts: WalletAccount[], t: (k: string, v?: Record<string, string | number>) => string): string {
+export function accountLabel(
+  a: WalletAccount,
+  accounts: WalletAccount[],
+  t: (k: string, v?: Record<string, string | number>) => string,
+): string {
   if (a.name) return a.name;
   const i = accounts.findIndex((x) => x.address === a.address);
   return t("wallet.account.default", { n: i + 1 });

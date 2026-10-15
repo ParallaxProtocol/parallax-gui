@@ -27,6 +27,31 @@ export const STAGGER = {
 };
 
 /**
+ * ROW_IN is STAGGER's arrival for a pop-up list's rows, settling down from
+ * above instead of rising: in the list's scroll box a row still below its
+ * place would overflow the bottom and flash a scrollbar, the top doesn't.
+ */
+export const ROW_IN = {
+  hidden: { opacity: 0, y: -6 },
+  visible: { opacity: 1, y: 0, transition: SPRING },
+};
+
+/**
+ * A field's pop-up (a picker's list under its field) opens quicker than a
+ * menu off the shell, and its rows follow closer on one another: it is
+ * part of the form, not a panel of its own. POPUP is the list itself,
+ * POPUP_ROWS and POPUP_ROW its rows' arrival.
+ */
+const POP: Transition = { type: "spring", bounce: 0, visualDuration: 0.22 };
+export const POPUP = {
+  initial: { opacity: 0, scale: 0.96, y: -4 },
+  animate: { opacity: 1, scale: 1, y: 0, transition: POP },
+  exit: { opacity: 0, scale: 0.98, transition: FADE_OUT },
+};
+export const POPUP_ROWS = { hidden: {}, visible: { transition: { staggerChildren: 0.02 } } };
+export const POPUP_ROW = { hidden: { opacity: 0, y: -4 }, visible: { opacity: 1, y: 0, transition: POP } };
+
+/**
  * The props for a STAGGER container. With animations off it starts
  * visible: otherwise Motion commits the hidden state for one frame before
  * snapping, which reads as a flicker.

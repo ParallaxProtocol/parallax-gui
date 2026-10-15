@@ -136,7 +136,11 @@ export default function Overview() {
               )}
               {open === null && (
                 <Collapsing key="uptime">
-                  <Stat label={t("overview.uptime")} value={formatDuration(node.uptimeSeconds)} detail={t("overview.uptimeDesc")} />
+                  <Stat
+                    label={t("overview.uptime")}
+                    value={formatDuration(node.uptimeSeconds)}
+                    detail={t("overview.uptimeDesc")}
+                  />
                 </Collapsing>
               )}
             </AnimatePresence>
@@ -152,7 +156,13 @@ export default function Overview() {
                 exit={{ height: 0, opacity: 0 }}
                 transition={SPRING}
               >
-                {open === "peers" ? <PeerList peers={peerList} error={peerErr} onChanged={() => setPeerTick((n) => n + 1)} /> : <MempoolList known={details?.running ? { pending: details.txPending, queued: details.txQueued } : undefined} />}
+                {open === "peers" ? (
+                  <PeerList peers={peerList} error={peerErr} onChanged={() => setPeerTick((n) => n + 1)} />
+                ) : (
+                  <MempoolList
+                    known={details?.running ? { pending: details.txPending, queued: details.txQueued } : undefined}
+                  />
+                )}
               </motion.div>
             )}
           </AnimatePresence>

@@ -52,10 +52,7 @@ export function Stopped() {
   };
 
   return (
-    <motion.div
-      className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center"
-      {...stagger}
-    >
+    <motion.div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center" {...stagger}>
       <motion.div variants={STAGGER.item} className="mb-2">
         <BrandMark size={64} />
       </motion.div>
@@ -69,7 +66,11 @@ export function Stopped() {
           {busy ? t("node.starting") : t("node.start")}
         </button>
       </motion.div>
-      {err && <Notice tone="critical" className="max-w-md text-left">{err}</Notice>}
+      {err && (
+        <Notice tone="critical" className="max-w-md text-left">
+          {err}
+        </Notice>
+      )}
     </motion.div>
   );
 }
@@ -95,8 +96,8 @@ function Syncing({ node }: { node: NodeStatus }) {
           </div>
           <div className="flex flex-col items-end gap-1 text-sm text-muted-foreground tabular-nums">
             <span>
-              <Counter value={node.currentBlock} format={(v) => formatInt(Math.round(v))} className="text-foreground" /> /{" "}
-              {node.highestBlock > 0 ? formatInt(node.highestBlock) : "—"}
+              <Counter value={node.currentBlock} format={(v) => formatInt(Math.round(v))} className="text-foreground" />{" "}
+              / {node.highestBlock > 0 ? formatInt(node.highestBlock) : "—"}
             </span>
             {!searching && left > 0 && <span>{t("overview.sync.left", { n: formatInt(left) })}</span>}
           </div>
@@ -150,7 +151,9 @@ function Clock({ node, blocks }: { node: NodeStatus; blocks: BlockView[] }) {
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
           <div className="flex flex-col gap-0.5">
-            <Label as="h2" className="font-medium">{t("clock.bestBlock")}</Label>
+            <Label as="h2" className="font-medium">
+              {t("clock.bestBlock")}
+            </Label>
             <span className="selectable bg-gradient-to-br from-foreground via-foreground to-[var(--app-brand)] bg-clip-text text-6xl font-semibold tracking-tight text-transparent tabular-nums">
               <Counter value={node.currentBlock} format={(v) => formatInt(Math.round(v))} />
             </span>

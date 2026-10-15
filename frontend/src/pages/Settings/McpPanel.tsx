@@ -42,7 +42,11 @@ export default function McpPanel() {
   const refreshNode = useRefresh();
 
   useEffect(() => {
-    const refresh = () => api.mcpStatus().then(setSt).catch(() => {});
+    const refresh = () =>
+      api
+        .mcpStatus()
+        .then(setSt)
+        .catch(() => {});
     refresh();
     // Saving the settings starts, stops or moves the server
     window.addEventListener(CONFIG_UPDATED_EVENT, refresh);
@@ -55,7 +59,11 @@ export default function McpPanel() {
 
   if (!st?.enabled) return null;
   if (!st.running) {
-    return <Notice tone="critical" title={t("settings.mcp.failed")}>{st.error}</Notice>;
+    return (
+      <Notice tone="critical" title={t("settings.mcp.failed")}>
+        {st.error}
+      </Notice>
+    );
   }
 
   const resetToken = async () => {
@@ -131,14 +139,12 @@ export default function McpPanel() {
         </p>
         <div className="flex items-start gap-2 rounded-lg bg-segment-well p-3">
           {/* The token is shown by its ends; the copy is whole */}
-          <pre className="selectable min-w-0 flex-1 overflow-x-auto font-mono text-xs leading-relaxed whitespace-pre-wrap break-all">
+          <pre className="selectable min-w-0 flex-1 overflow-x-auto font-mono text-xs leading-relaxed break-all whitespace-pre-wrap">
             {snippet(client, st.url, masked(st.token))}
           </pre>
           <CopyButton value={code} />
         </div>
-        <p className="text-sm text-muted-foreground">
-          {t("settings.mcp.tools", { n: st.tools?.length ?? 0 })}
-        </p>
+        <p className="text-sm text-muted-foreground">{t("settings.mcp.tools", { n: st.tools?.length ?? 0 })}</p>
       </Panel>
     </>
   );

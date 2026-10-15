@@ -33,7 +33,19 @@ type Ctx = {
   showSent: (s: SentInfo | null) => void;
 };
 
-export const AssistantContext = createContext<Ctx>({ status: null, pending: [], width: 0, activity: null, restWidth: 0, hovered: false, setHovered: () => {}, shown: null, hold: () => {}, sent: null, showSent: () => {} });
+export const AssistantContext = createContext<Ctx>({
+  status: null,
+  pending: [],
+  width: 0,
+  activity: null,
+  restWidth: 0,
+  hovered: false,
+  setHovered: () => {},
+  shown: null,
+  hold: () => {},
+  sent: null,
+  showSent: () => {},
+});
 
 /** useAssistant reads the AI assistant server's state, its pending requests, and the assistant bar's width. */
 export const useAssistant = () => useContext(AssistantContext);

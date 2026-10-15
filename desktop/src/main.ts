@@ -129,7 +129,14 @@ function setOpenAtLogin(on: boolean) {
   fs.mkdirSync(path.dirname(AUTOSTART_FILE), { recursive: true });
   fs.writeFileSync(
     AUTOSTART_FILE,
-    ["[Desktop Entry]", "Type=Application", "Name=Parallax Wallet", `Exec=${exec}`, "X-GNOME-Autostart-enabled=true", ""].join("\n"),
+    [
+      "[Desktop Entry]",
+      "Type=Application",
+      "Name=Parallax Wallet",
+      `Exec=${exec}`,
+      "X-GNOME-Autostart-enabled=true",
+      "",
+    ].join("\n"),
   );
 }
 
@@ -232,7 +239,12 @@ async function saveSigningDoc(fileName: string, contents: string): Promise<boole
   if (contents.length > 8 * 1024) return false;
   try {
     const t = (JSON.parse(contents) as { type?: unknown }).type;
-    const kinds = ["parallax-sign-request", "parallax-signed-tx", "parallax-sign-message-request", "parallax-signed-message"];
+    const kinds = [
+      "parallax-sign-request",
+      "parallax-signed-tx",
+      "parallax-sign-message-request",
+      "parallax-signed-message",
+    ];
     if (typeof t !== "string" || !kinds.includes(t)) return false;
   } catch {
     return false;
@@ -478,9 +490,7 @@ async function boot() {
   if (!DEV_URL) serveFrontend(paths.frontend);
 
   Menu.setApplicationMenu(
-    isMac
-      ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }])
-      : null,
+    isMac ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]) : null,
   );
 
   wireIpc();

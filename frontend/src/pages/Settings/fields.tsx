@@ -36,7 +36,7 @@ function Explainer({ lead, more, flag }: { lead?: ReactNode; more: string; flag?
   return (
     <motion.div {...stagger} className="flex flex-col gap-4 px-5 pt-1 pb-5">
       {lead && (
-        <motion.p variants={STAGGER.item} className="text-[15px] font-medium leading-snug text-foreground">
+        <motion.p variants={STAGGER.item} className="text-[15px] leading-snug font-medium text-foreground">
           {lead}
         </motion.p>
       )}
@@ -84,7 +84,7 @@ function useReadMore(title: string, more?: string, flag?: string, lead?: ReactNo
       type="button"
       onClick={() => setOpen(true)}
       aria-haspopup="dialog"
-      className="group ml-1.5 inline-flex items-center gap-0.5 whitespace-nowrap font-medium text-brand"
+      className="group ml-1.5 inline-flex items-center gap-0.5 font-medium whitespace-nowrap text-brand"
     >
       {t("settings.readMore")}
       <ChevronRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -226,12 +226,7 @@ export function Advanced({ id, changed, children }: { id: string; changed: numbe
   };
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        className="btn btn-secondary btn-sm self-start"
-      >
+      <button type="button" onClick={toggle} aria-expanded={open} className="btn btn-secondary btn-sm self-start">
         <motion.span animate={{ rotate: open ? 90 : 0 }} transition={SPRING} className="flex">
           <ChevronRight className="size-3.5" />
         </motion.span>
@@ -259,7 +254,9 @@ export function Advanced({ id, changed, children }: { id: string; changed: numbe
 
 /** Count is how many of a config's values differ from their defaults (null, "", false, 0, []). */
 export function countSet(values: unknown[]): number {
-  return values.filter((v) => !(v == null || v === "" || v === false || v === 0 || (Array.isArray(v) && v.length === 0))).length;
+  return values.filter(
+    (v) => !(v == null || v === "" || v === false || v === 0 || (Array.isArray(v) && v.length === 0)),
+  ).length;
 }
 
 /**

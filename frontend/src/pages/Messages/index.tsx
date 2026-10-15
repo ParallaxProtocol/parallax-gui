@@ -207,15 +207,26 @@ export function SignMessagePage() {
  * MessageInput is the message as the card's subject: a label over it, the
  * text, and its size as it is signed, or why it can't be.
  */
-function MessageInput({ value, onChange, autoFocus }: { value: string; onChange: (v: string) => void; autoFocus?: boolean }) {
+function MessageInput({
+  value,
+  onChange,
+  autoFocus,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  autoFocus?: boolean;
+}) {
   const t = useT();
   const bytes = messageBytes(value);
-  const error = bytes > MAX_MESSAGE_BYTES ? t("message.err.tooLong") : hasControl(value) ? t("message.err.control") : null;
+  const error =
+    bytes > MAX_MESSAGE_BYTES ? t("message.err.tooLong") : hasControl(value) ? t("message.err.control") : null;
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-sm font-medium text-muted-foreground">{t("message.text")}</span>
-        <span className={`text-xs tabular-nums ${bytes > MAX_MESSAGE_BYTES ? "text-critical-ink" : "text-muted-foreground"}`}>
+        <span
+          className={`text-xs tabular-nums ${bytes > MAX_MESSAGE_BYTES ? "text-critical-ink" : "text-muted-foreground"}`}
+        >
           {t("message.bytes", { n: bytes, max: MAX_MESSAGE_BYTES })}
         </span>
       </div>
@@ -262,7 +273,7 @@ function Signed({ signed, onAgain }: { signed: SignedMessage; onAgain: () => voi
         </Property>
         <div className="flex flex-col gap-1.5 px-5 py-3">
           <dt>{t("message.share.message")}</dt>
-          <dd className="selectable rounded-xl bg-muted/60 p-3 whitespace-pre-wrap break-words text-muted-foreground">
+          <dd className="selectable rounded-xl bg-muted/60 p-3 break-words whitespace-pre-wrap text-muted-foreground">
             {signed.message}
           </dd>
         </div>
@@ -487,7 +498,9 @@ function VerifyResult({
               {check.valid ? t("message.verify.valid") : t("message.verify.invalid")}
             </h2>
             <p className="max-w-md text-muted-foreground">
-              {check.valid ? t("message.verify.validLead") : t("message.verify.invalidLead", { address: shortHex(check.address, 8, 6) })}
+              {check.valid
+                ? t("message.verify.validLead")
+                : t("message.verify.invalidLead", { address: shortHex(check.address, 8, 6) })}
             </p>
           </div>
           <span className="flex items-center gap-3.5 rounded-2xl bg-muted px-5 py-3.5">
@@ -506,7 +519,7 @@ function VerifyResult({
       <Rows as="dl">
         <div className="flex flex-col gap-1.5 px-5 py-3">
           <dt>{t("message.share.message")}</dt>
-          <dd className="selectable rounded-xl bg-muted/60 p-3 whitespace-pre-wrap break-words text-muted-foreground">
+          <dd className="selectable rounded-xl bg-muted/60 p-3 break-words whitespace-pre-wrap text-muted-foreground">
             {check.message}
           </dd>
         </div>

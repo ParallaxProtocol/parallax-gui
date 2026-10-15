@@ -110,7 +110,9 @@ export function Notice({
       <IconBadge icon={Icon} tone={tone} className="self-start" />
       <div className="selectable flex min-w-0 flex-1 flex-col gap-0.5 self-center">
         {title && <div className="font-semibold">{title}</div>}
-        {children && <div className={`break-words ${title ? "text-muted-foreground" : "text-foreground/90"}`}>{children}</div>}
+        {children && (
+          <div className={`break-words ${title ? "text-muted-foreground" : "text-foreground/90"}`}>{children}</div>
+        )}
       </div>
       {action && <div className="shrink-0 self-center">{action}</div>}
     </div>

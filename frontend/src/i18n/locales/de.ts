@@ -19,10 +19,12 @@ const de: Dict = {
   "hello.sync.doneDesc": "Sie hat zum Netzwerk aufgeschlossen und hält sich aktuell, solange die App geöffnet ist.",
   "hello.sync.background": "Während der Synchronisierung fortfahren",
   "hello.offer.title": "Wiederherstellungsphrase einrichten",
-  "hello.offer.desc": "Ihr Wallet-Passwort ist festgelegt. Erstellen Sie jetzt eine Wiederherstellungsphrase zur Sicherung Ihrer Konten, oder importieren Sie eine vorhandene.",
+  "hello.offer.desc":
+    "Ihr Wallet-Passwort ist festgelegt. Erstellen Sie jetzt eine Wiederherstellungsphrase zur Sicherung Ihrer Konten, oder importieren Sie eine vorhandene.",
   "hello.offer.import": "Wiederherstellungsphrase importieren",
   "hello.password.title": "Wallet-Passwort erstellen",
-  "hello.password.desc": "Es schützt jedes Konto, das Sie hier erstellen oder hinzufügen. Niemand kann es für Sie zurücksetzen, wählen Sie also eines, das Sie sich merken.",
+  "hello.password.desc":
+    "Es schützt jedes Konto, das Sie hier erstellen oder hinzufügen. Niemand kann es für Sie zurücksetzen, wählen Sie also eines, das Sie sich merken.",
   "hello.confirm.title": "Noch einmal eingeben",
   "hello.confirm.desc": "Nur um sicherzugehen, dass kein Tippfehler drin ist.",
   "hello.confirm.cta": "Passwort festlegen",
@@ -65,12 +67,15 @@ const de: Dict = {
 
   // Onboarding
   "onboarding.language.title": "Sprache wählen",
-  "onboarding.language.desc": "Wählen Sie die Sprache, in der die App angezeigt werden soll. Sie können sie später in den Einstellungen ändern.",
+  "onboarding.language.desc":
+    "Wählen Sie die Sprache, in der die App angezeigt werden soll. Sie können sie später in den Einstellungen ändern.",
   "onboarding.welcome.cta": "Los geht's",
   "onboarding.datadir.title": "Wo sollen Ihre Daten gespeichert werden?",
-  "onboarding.datadir.desc": "Die Synchronisierung der Blockchain benötigt mehrere Gigabyte.\nWählen Sie einen Ort mit ausreichend freiem Speicherplatz.",
+  "onboarding.datadir.desc":
+    "Die Synchronisierung der Blockchain benötigt mehrere Gigabyte.\nWählen Sie einen Ort mit ausreichend freiem Speicherplatz.",
   "onboarding.networking.title": "Unterstützen Sie das Netzwerk",
-  "onboarding.networking.desc": "Lassen Sie andere Peers im Parallax-Netzwerk Ihre Node kontaktieren.\nDas macht das Netzwerk robuster und bringt Ihnen neue Blöcke schneller.",
+  "onboarding.networking.desc":
+    "Lassen Sie andere Peers im Parallax-Netzwerk Ihre Node kontaktieren.\nDas macht das Netzwerk robuster und bringt Ihnen neue Blöcke schneller.",
   "onboarding.networking.desc2": "Bei aktivierter Option wird Ihre IP für andere Peers sichtbar.",
   "onboarding.networking.toggle": "Eingehende Verbindungen erlauben",
   "onboarding.networking.recommended": "Empfohlen",
@@ -94,7 +99,8 @@ const de: Dict = {
   "settings.rpc.port": "Port",
   "settings.smartFee": "Smart-Fee-Schätzer",
   "settings.stats.toggle": "An Statusseite melden",
-  "settings.diagnostics.desc": "Live-Ansicht der Node- und GUI-Logs. Nützlich zum Debuggen von Sync-Problemen, Peer-Discovery oder für Bug-Reports.",
+  "settings.diagnostics.desc":
+    "Live-Ansicht der Node- und GUI-Logs. Nützlich zum Debuggen von Sync-Problemen, Peer-Discovery oder für Bug-Reports.",
   "settings.dbCache": "Datenbank-Cache (MB)",
   "settings.trieClean": "Trie-Clean-Cache (MB)",
   "settings.trieDirty": "Trie-Dirty-Cache (MB)",
@@ -128,7 +134,8 @@ const de: Dict = {
   "peers.add": "Peer hinzufügen",
   "peers.addPlaceholder": "enode://… oder ip:port",
   "peers.addCta": "Verbinden",
-  "peers.addHint": "Eine Enode-URL wird bei Abbruch neu gewählt, auch nach einem Neustart. Eine ip:port wird im Adressbuch des Nodes gespeichert und zuerst gewählt.",
+  "peers.addHint":
+    "Eine Enode-URL wird bei Abbruch neu gewählt, auch nach einem Neustart. Eine ip:port wird im Adressbuch des Nodes gespeichert und zuerst gewählt.",
   "peers.disconnect": "Trennen",
   "peers.trust": "Vertrauen",
   "peers.untrust": "Nicht mehr vertrauen",
@@ -197,7 +204,8 @@ const de: Dict = {
   "updater.retry": "Erneut versuchen",
   "notifications.title": "Mitteilungen",
   "notifications.clear": "Löschen",
-  "notifications.empty": "Nichts Neues. Abgeschlossene Synchronisierungen, Updates und alles, was Ihre Aufmerksamkeit braucht, erscheinen hier.",
+  "notifications.empty":
+    "Nichts Neues. Abgeschlossene Synchronisierungen, Updates und alles, was Ihre Aufmerksamkeit braucht, erscheinen hier.",
 
   // Redesign
   "nav.label": "Hauptmenü",
@@ -226,10 +234,13 @@ const de: Dict = {
   "node.peers": "{n} Peers",
   "node.offlineHint": "Läuft nicht. Starten Sie ihn, um zu synchronisieren und die Wallet zu nutzen.",
   "overview.stopped.title": "Ihr Node ist offline.",
-  "overview.stopped.desc": "Starten Sie ihn, um sich mit dem Parallax-Netzwerk zu synchronisieren, jeden Block selbst zu prüfen und Ihre Wallet ohne Dritte zu bedienen.",
+  "overview.stopped.desc":
+    "Starten Sie ihn, um sich mit dem Parallax-Netzwerk zu synchronisieren, jeden Block selbst zu prüfen und Ihre Wallet ohne Dritte zu bedienen.",
   "overview.sync.searching": "Suche nach Peers",
-  "overview.sync.searchingDesc": "Verbindung zum Netzwerk wird aufgebaut. Die Synchronisierung beginnt, sobald ein Peer antwortet.",
-  "overview.sync.desc": "Die Chain wird heruntergeladen und geprüft. Der Node ist bereit, sobald er die Spitze des Netzwerks erreicht.",
+  "overview.sync.searchingDesc":
+    "Verbindung zum Netzwerk wird aufgebaut. Die Synchronisierung beginnt, sobald ein Peer antwortet.",
+  "overview.sync.desc":
+    "Die Chain wird heruntergeladen und geprüft. Der Node ist bereit, sobald er die Spitze des Netzwerks erreicht.",
   "overview.sync.left": "noch {n} Blöcke",
   "clock.bestBlock": "Bester Block",
   "clock.onSchedule": "Im Plan",
@@ -310,7 +321,8 @@ const de: Dict = {
 
   // Wallet: overview
   "wallet.account.default": "Konto {n}",
-  "wallet.nodeOff": "Starten Sie den Node, um das Guthaben abzurufen und zu senden. Ihre Schlüssel und Adressen funktionieren auch ohne ihn.",
+  "wallet.nodeOff":
+    "Starten Sie den Node, um das Guthaben abzurufen und zu senden. Ihre Schlüssel und Adressen funktionieren auch ohne ihn.",
   "wallet.balance": "Guthaben",
   "wallet.balanceAt": "Bei Block #{block}",
   "wallet.balanceOffline": "Wird vom Node gelesen, sobald er läuft",
@@ -334,36 +346,48 @@ const de: Dict = {
 
   // Wallet: first run
   "wallet.welcome.title": "Ihre Parallax-Wallet",
-  "wallet.welcome.desc": "Verwahren, senden und empfangen Sie LAX über Ihren eigenen Node. Kein Dritter sieht Ihr Guthaben oder leitet Ihre Transaktionen weiter.",
+  "wallet.welcome.desc":
+    "Verwahren, senden und empfangen Sie LAX über Ihren eigenen Node. Kein Dritter sieht Ihr Guthaben oder leitet Ihre Transaktionen weiter.",
   "wallet.welcome.create": "Konto erstellen",
   "wallet.welcome.createDesc": "Eine neue Wiederherstellungsphrase und ein Konto, auf diesem Computer erstellt.",
   "wallet.welcome.import": "Konto importieren",
-  "wallet.welcome.importDesc": "Aus einer Wiederherstellungsphrase, einer Keystore-Datei oder einem privaten Schlüssel.",
-  "wallet.welcome.local": "Schlüssel werden nur verschlüsselt auf diesem Computer gespeichert und niemals irgendwohin gesendet. Ihre Wiederherstellungsphrase ist die Sicherung: Niemand kann sie für Sie wiederherstellen.",
+  "wallet.welcome.importDesc":
+    "Aus einer Wiederherstellungsphrase, einer Keystore-Datei oder einem privaten Schlüssel.",
+  "wallet.welcome.local":
+    "Schlüssel werden nur verschlüsselt auf diesem Computer gespeichert und niemals irgendwohin gesendet. Ihre Wiederherstellungsphrase ist die Sicherung: Niemand kann sie für Sie wiederherstellen.",
   "wallet.welcome.cta": "Wallet einrichten",
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Wallet-Passwort",
   "wallet.walletPasswordHint": "Das Passwort, das jedes Konto in dieser Wallet schützt.",
   "wallet.locked.title": "Willkommen bei Parallax",
-  "wallet.locked.desc": "Ein vollständiger Parallax-Node und eine Wallet in einer App. Halten, senden und empfangen Sie LAX über Ihren eigenen Node, ohne Dritte dazwischen.",
-  "wallet.locked.existing": "Diese Wallet hat bereits Schlüssel aus einer früheren Version. Legen Sie ihr Passwort fest, um sie weiter zu nutzen: Es muss das sein, mit dem sie erstellt wurden.",
+  "wallet.locked.desc":
+    "Ein vollständiger Parallax-Node und eine Wallet in einer App. Halten, senden und empfangen Sie LAX über Ihren eigenen Node, ohne Dritte dazwischen.",
+  "wallet.locked.existing":
+    "Diese Wallet hat bereits Schlüssel aus einer früheren Version. Legen Sie ihr Passwort fest, um sie weiter zu nutzen: Es muss das sein, mit dem sie erstellt wurden.",
   "wallet.locked.node": "Ihr eigener Node",
-  "wallet.locked.nodeDesc": "Er prüft jeden Block selbst und leitet Ihre Transaktionen weiter, sodass niemand sonst Ihr Guthaben sieht.",
+  "wallet.locked.nodeDesc":
+    "Er prüft jeden Block selbst und leitet Ihre Transaktionen weiter, sodass niemand sonst Ihr Guthaben sieht.",
   "wallet.locked.keys": "Schlüssel bleiben hier",
-  "wallet.locked.keysDesc": "Konten werden auf diesem Computer erstellt und verschlüsselt aufbewahrt und nirgendwohin gesendet.",
+  "wallet.locked.keysDesc":
+    "Konten werden auf diesem Computer erstellt und verschlüsselt aufbewahrt und nirgendwohin gesendet.",
   "wallet.locked.password": "Ein Passwort",
-  "wallet.locked.passwordDesc": "Ein einziges Wallet-Passwort schützt alle Konten. Niemand kann es für Sie zurücksetzen.",
+  "wallet.locked.passwordDesc":
+    "Ein einziges Wallet-Passwort schützt alle Konten. Niemand kann es für Sie zurücksetzen.",
   "wallet.locked.cta": "Loslegen",
   "wallet.locked.ctaHint": "Zuerst legen Sie Ihr Wallet-Passwort fest.",
   "wallet.setup.title": "Wallet-Passwort festlegen",
-  "wallet.setup.desc": "Ein einziges Passwort schützt jedes Konto und jede Wiederherstellungsphrase in dieser Wallet. Sie geben es ein, wann immer Sie senden, eine Sicherung erstellen oder ein Konto hinzufügen.",
-  "wallet.setup.existingDesc": "Diese Wallet enthält bereits Schlüssel. Geben Sie das Passwort ein, mit dem sie erstellt wurden: Es wird zum Wallet-Passwort.",
-  "wallet.setup.noRecovery": "Dieses Passwort verschlüsselt Ihre Schlüssel auf diesem Computer und kann weder zurückgesetzt noch wiederhergestellt werden. Wenn Sie es verlieren, können nur Ihre Wiederherstellungsphrasen und Sicherungsdateien Ihre Konten zurückholen.",
+  "wallet.setup.desc":
+    "Ein einziges Passwort schützt jedes Konto und jede Wiederherstellungsphrase in dieser Wallet. Sie geben es ein, wann immer Sie senden, eine Sicherung erstellen oder ein Konto hinzufügen.",
+  "wallet.setup.existingDesc":
+    "Diese Wallet enthält bereits Schlüssel. Geben Sie das Passwort ein, mit dem sie erstellt wurden: Es wird zum Wallet-Passwort.",
+  "wallet.setup.noRecovery":
+    "Dieses Passwort verschlüsselt Ihre Schlüssel auf diesem Computer und kann weder zurückgesetzt noch wiederhergestellt werden. Wenn Sie es verlieren, können nur Ihre Wiederherstellungsphrasen und Sicherungsdateien Ihre Konten zurückholen.",
   "wallet.setup.cta": "Passwort festlegen",
   "wallet.setup.step": "Passwort",
   "wallet.offer.title": "Wiederherstellungsphrase erstellen",
-  "wallet.offer.desc": "Ihr Wallet-Passwort ist festgelegt. Erstellen Sie jetzt eine Wiederherstellungsphrase: 12 Wörter, die jedes daraus erstellte Konto sichern.",
+  "wallet.offer.desc":
+    "Ihr Wallet-Passwort ist festgelegt. Erstellen Sie jetzt eine Wiederherstellungsphrase: 12 Wörter, die jedes daraus erstellte Konto sichern.",
   "wallet.offer.later": "Sie können das auch später unter Konten erledigen.",
   "wallet.offer.cta": "Wiederherstellungsphrase erstellen",
   "wallet.security": "Sicherheit",
@@ -389,24 +413,31 @@ const de: Dict = {
   "wallet.create.kind.derive": "Weiteres Konto aus einer Wiederherstellungsphrase",
   "wallet.create.kind.deriveDesc": "Aus einer Phrase, die bereits in dieser Wallet ist und es bereits sichert.",
   "wallet.create.kind.phrase": "Neue Wiederherstellungsphrase",
-  "wallet.create.kind.phraseDesc": "12 Wörter, die dieses Konto und alle später hinzugefügten sichern. Sie funktionieren in MetaMask und den meisten anderen Wallets.",
+  "wallet.create.kind.phraseDesc":
+    "12 Wörter, die dieses Konto und alle später hinzugefügten sichern. Sie funktionieren in MetaMask und den meisten anderen Wallets.",
   "wallet.create.kind.key": "Einzelner Schlüssel",
   "wallet.create.kind.keyDesc": "Ein Konto mit eigenem Schlüssel, gesichert als verschlüsselte Keystore-Datei.",
   "wallet.create.recommended": "Empfohlen",
   "wallet.create.keyFact1": "Ein neuer Schlüssel",
-  "wallet.create.keyFact1Desc": "Hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihm können Sie ausgeben.",
-  "wallet.create.keyFact2Desc": "Der Schlüssel wird mit dem Passwort verschlüsselt, das Sie auf der nächsten Seite wählen.",
+  "wallet.create.keyFact1Desc":
+    "Hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihm können Sie ausgeben.",
+  "wallet.create.keyFact2Desc":
+    "Der Schlüssel wird mit dem Passwort verschlüsselt, das Sie auf der nächsten Seite wählen.",
   "wallet.create.keyNext": "Als Nächstes speichern Sie eine Sicherungsdatei des Schlüssels.",
-  "wallet.create.keyBackupWhy": "Mit der Datei und ihrem Passwort kann jede kompatible Wallet das Konto wiederherstellen. Ohne sie ist es nicht wiederherstellbar.",
+  "wallet.create.keyBackupWhy":
+    "Mit der Datei und ihrem Passwort kann jede kompatible Wallet das Konto wiederherstellen. Ohne sie ist es nicht wiederherstellbar.",
   "wallet.create.done": "Konto erstellt",
   "wallet.create.step.backup": "Sicherung",
   "wallet.create.lead": "Ein neues Konto wird auf diesem Computer erstellt, in drei Schritten, die zugleich geschehen:",
   "wallet.create.fact1": "Eine Wiederherstellungsphrase",
-  "wallet.create.fact1Desc": "12 Wörter, hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihnen stellen Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wieder her.",
+  "wallet.create.fact1Desc":
+    "12 Wörter, hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihnen stellen Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wieder her.",
   "wallet.create.fact2": "Mit Ihrem Passwort gesperrt",
-  "wallet.create.fact2Desc": "Die Phrase und der Schlüssel Ihres Kontos werden mit dem Passwort verschlüsselt, das Sie auf der nächsten Seite wählen.",
+  "wallet.create.fact2Desc":
+    "Die Phrase und der Schlüssel Ihres Kontos werden mit dem Passwort verschlüsselt, das Sie auf der nächsten Seite wählen.",
   "wallet.create.fact3": "Auf diesem Computer aufbewahrt",
-  "wallet.create.fact3Desc": "Nur der verschlüsselte Schlüssel wird gespeichert, hier. Nichts wird irgendwohin gesendet.",
+  "wallet.create.fact3Desc":
+    "Nur der verschlüsselte Schlüssel wird gespeichert, hier. Nichts wird irgendwohin gesendet.",
   "wallet.create.optional": "Optional",
   "wallet.create.req.length": "Mindestens {n} Zeichen",
   "wallet.create.req.match": "Beide Passwörter stimmen überein",
@@ -420,7 +451,8 @@ const de: Dict = {
   "wallet.derive.title": "Neues Konto",
   "wallet.derive.cta": "Konto hinzufügen",
   "wallet.derive.which": "Wiederherstellungsphrase",
-  "wallet.derive.desc": "Es wird aus der Wiederherstellungsphrase abgeleitet, die es bereits sichert: Eine separate Sicherung ist nicht nötig.",
+  "wallet.derive.desc":
+    "Es wird aus der Wiederherstellungsphrase abgeleitet, die es bereits sichert: Eine separate Sicherung ist nicht nötig.",
   "wallet.create.busy": "Wird erstellt…",
   "wallet.created.later": "Später erledigen",
   "wallet.created.savedDesc": "Bewahren Sie Datei und Passwort sicher und getrennt auf.",
@@ -438,28 +470,34 @@ const de: Dict = {
   "wallet.import.step.details": "Details",
   "wallet.import.choose.desc": "Woher stammt das Konto, das Sie importieren möchten?",
   "wallet.import.phrase": "Wiederherstellungsphrase",
-  "wallet.import.phraseDesc": "12 bis 24 Wörter aus MetaMask oder einer anderen Wallet. Stellt dieselben Konten wieder her.",
-  "wallet.import.phraseLead": "Geben Sie die Wörter der Reihe nach ein oder fügen Sie sie ein, getrennt durch Leerzeichen. Dieselben Wörter ergeben dieselben Konten wie in der Wallet, aus der sie stammen.",
+  "wallet.import.phraseDesc":
+    "12 bis 24 Wörter aus MetaMask oder einer anderen Wallet. Stellt dieselben Konten wieder her.",
+  "wallet.import.phraseLead":
+    "Geben Sie die Wörter der Reihe nach ein oder fügen Sie sie ein, getrennt durch Leerzeichen. Dieselben Wörter ergeben dieselben Konten wie in der Wallet, aus der sie stammen.",
   "wallet.import.phraseLabel": "Wiederherstellungsphrase",
   "wallet.import.step.accounts": "Konten",
   "wallet.import.chooseTitle": "Konten auswählen",
-  "wallet.import.chooseDesc": "Eine Phrase kann viele Konten enthalten, und Wallets legen sie unter verschiedenen Pfaden ab. Wählen Sie die zu übernehmenden aus: bereits genutzte sind schon markiert.",
+  "wallet.import.chooseDesc":
+    "Eine Phrase kann viele Konten enthalten, und Wallets legen sie unter verschiedenen Pfaden ab. Wählen Sie die zu übernehmenden aus: bereits genutzte sind schon markiert.",
   "wallet.import.scheme.standard": "Standard",
   "wallet.import.scheme.ledgerlive": "Ledger Live",
   "wallet.import.scheme.legacy": "Legacy",
   "wallet.import.schemePath.standard": "m/44'/60'/0'/0/n · MetaMask, Trezor",
   "wallet.import.schemePath.ledgerlive": "m/44'/60'/n'/0/0",
   "wallet.import.schemePath.legacy": "m/44'/60'/0'/n · MyEtherWallet",
-  "wallet.import.noBalances": "Starten Sie den Node und lassen Sie ihn synchronisieren, um das Guthaben jedes Kontos zu sehen und welche genutzt wurden.",
+  "wallet.import.noBalances":
+    "Starten Sie den Node und lassen Sie ihn synchronisieren, um das Guthaben jedes Kontos zu sehen und welche genutzt wurden.",
   "wallet.import.used": "Genutzt",
   "wallet.import.inWallet": "Bereits in der Wallet",
   "wallet.import.more": "Mehr anzeigen",
   "wallet.import.picked": "{n} ausgewählt",
-  "wallet.import.passwordLead": "Die Wiederherstellungsphrase und die {n} ausgewählten Konten werden auf diesem Computer mit diesem Passwort verschlüsselt. Ihr Name gilt für das erste Konto.",
+  "wallet.import.passwordLead":
+    "Die Wiederherstellungsphrase und die {n} ausgewählten Konten werden auf diesem Computer mit diesem Passwort verschlüsselt. Ihr Name gilt für das erste Konto.",
   "wallet.import.keyDesc": "Der Rohschlüssel des Kontos: 64 Hexadezimalzeichen.",
   "wallet.import.keyfile": "Keystore-Datei",
   "wallet.import.key": "Privater Schlüssel",
-  "wallet.import.keyfileDesc": "Eine JSON-Keystore-Datei, wie sie parallaxd, parallax-wallet und die meisten Wallets im Ethereum-Stil exportieren.",
+  "wallet.import.keyfileDesc":
+    "Eine JSON-Keystore-Datei, wie sie parallaxd, parallax-wallet und die meisten Wallets im Ethereum-Stil exportieren.",
   "wallet.import.file": "Datei",
   "wallet.import.choose": "Datei auswählen…",
   "wallet.import.noFile": "Keine Datei ausgewählt",
@@ -468,33 +506,41 @@ const de: Dict = {
   "wallet.import.keyLabel": "Privater Schlüssel",
   "wallet.import.keyHint": "64 Hexadezimalzeichen, mit oder ohne 0x.",
   "wallet.import.reencrypt": "Der Schlüssel wird mit Ihrem Wallet-Passwort neu verschlüsselt.",
-  "wallet.import.keyWarn": "Jeder, der diesen Schlüssel gesehen hat, kann Gelder von dem Konto ausgeben. Importieren Sie nur einen Schlüssel, der stets geheim gehalten wurde.",
+  "wallet.import.keyWarn":
+    "Jeder, der diesen Schlüssel gesehen hat, kann Gelder von dem Konto ausgeben. Importieren Sie nur einen Schlüssel, der stets geheim gehalten wurde.",
 
   // Wallet: backup
   "wallet.backup.title": "Konto sichern",
   "wallet.backup.cta": "Sicherung speichern",
-  "wallet.backup.what": "Speichert die Schlüsseldatei dieses Kontos, verschlüsselt mit seinem Passwort, an einem Ort Ihrer Wahl, etwa auf einem USB-Stick.",
+  "wallet.backup.what":
+    "Speichert die Schlüsseldatei dieses Kontos, verschlüsselt mit seinem Passwort, an einem Ort Ihrer Wahl, etwa auf einem USB-Stick.",
   "wallet.backup.restore": "Zum Wiederherstellen des Kontos brauchen Sie die {file} und das {password}.",
   "wallet.backup.restore.file": "Sicherungsdatei",
   "wallet.backup.restore.password": "Passwort",
   "wallet.backup.passwordLabel": "Passwort des Kontos",
-  "wallet.backup.passwordHint": "Wird vor dem Speichern geprüft, damit Sie wissen, dass sich die Sicherung öffnen lässt.",
+  "wallet.backup.passwordHint":
+    "Wird vor dem Speichern geprüft, damit Sie wissen, dass sich die Sicherung öffnen lässt.",
   "wallet.backup.saved": "Sicherung gespeichert",
   "wallet.backup.missingTitle": "Dieses Konto hat keine Sicherung",
-  "wallet.backup.missingDesc": "Geht dieser Computer verloren oder fällt seine Festplatte aus, sind auch die Gelder verloren. Speichern Sie die Keystore-Datei an einem sicheren Ort.",
+  "wallet.backup.missingDesc":
+    "Geht dieser Computer verloren oder fällt seine Festplatte aus, sind auch die Gelder verloren. Speichern Sie die Keystore-Datei an einem sicheren Ort.",
 
   // Wallet: change password
   "wallet.changePassword.title": "Passwort ändern",
-  "wallet.changePassword.desc": "Jeder Schlüssel und jede Wiederherstellungsphrase in der Wallet ({n} Konten) wird mit dem neuen Passwort neu verschlüsselt. Das dauert einige Sekunden pro Konto.",
+  "wallet.changePassword.desc":
+    "Jeder Schlüssel und jede Wiederherstellungsphrase in der Wallet ({n} Konten) wird mit dem neuen Passwort neu verschlüsselt. Das dauert einige Sekunden pro Konto.",
   "wallet.changePassword.cta": "Passwort ändern",
   "wallet.changePassword.busy": "Wird neu verschlüsselt…",
-  "wallet.changePassword.oldBackups": "Zuvor gespeicherte Sicherungsdateien lassen sich weiterhin nur mit dem alten Passwort öffnen.",
+  "wallet.changePassword.oldBackups":
+    "Zuvor gespeicherte Sicherungsdateien lassen sich weiterhin nur mit dem alten Passwort öffnen.",
 
   // Wallet: remove
   "wallet.remove.title": "Konto entfernen",
   "wallet.remove.cta": "Von diesem Computer entfernen",
-  "wallet.remove.warn": "Der Schlüssel des Kontos wird von diesem Computer gelöscht. Um das Konto wieder zu verwenden, benötigen Sie Ihre Sicherung und deren Passwort.",
-  "wallet.remove.warnNoBackup": "Dieses Konto wurde nie gesichert. Sobald der Schlüssel gelöscht ist, können seine Gelder nie wieder ausgegeben werden.",
+  "wallet.remove.warn":
+    "Der Schlüssel des Kontos wird von diesem Computer gelöscht. Um das Konto wieder zu verwenden, benötigen Sie Ihre Sicherung und deren Passwort.",
+  "wallet.remove.warnNoBackup":
+    "Dieses Konto wurde nie gesichert. Sobald der Schlüssel gelöscht ist, können seine Gelder nie wieder ausgegeben werden.",
   "wallet.remove.confirm": "Ich habe verstanden und besitze eine Sicherung, oder das Konto enthält nichts.",
 
   // Wallet: accounts
@@ -506,7 +552,8 @@ const de: Dict = {
   "wallet.accounts.noBackup": "Keine Sicherung",
   "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "Speicherort",
-  "wallet.accounts.storageDesc": "Die Schlüssel liegen in diesem Ordner, alle mit Ihrem Wallet-Passwort verschlüsselt. Der Node sieht sie nie, und nichts, was sich mit seinem RPC verbindet, kann sie verwenden.",
+  "wallet.accounts.storageDesc":
+    "Die Schlüssel liegen in diesem Ordner, alle mit Ihrem Wallet-Passwort verschlüsselt. Der Node sieht sie nie, und nichts, was sich mit seinem RPC verbindet, kann sie verwenden.",
 
   // Wallet: send
   "wallet.send.title": "LAX senden",
@@ -520,7 +567,8 @@ const de: Dict = {
   "wallet.send.feeAuto": "Empfohlen",
   "wallet.send.feeManual": "Benutzerdefiniert",
   "wallet.send.feeSuggested": "Ihr Node schlägt einen Preis anhand der letzten Blöcke und seines Pools vor.",
-  "wallet.send.feeCustom": "Zahlen Sie mehr, als Ihr Node vorschlägt, um schneller in einen Block zu kommen. Weniger ist nicht möglich: Eine wartende Transaktion blockiert jede spätere von diesem Konto.",
+  "wallet.send.feeCustom":
+    "Zahlen Sie mehr, als Ihr Node vorschlägt, um schneller in einen Block zu kommen. Weniger ist nicht möglich: Eine wartende Transaktion blockiert jede spätere von diesem Konto.",
   "wallet.send.gasPrice": "Gaspreis",
   "wallet.send.review": "Prüfen",
   "wallet.review.title": "Prüfen und signieren",
@@ -529,14 +577,16 @@ const de: Dict = {
   "wallet.review.feeDetail": "{gas} Gas zu je {price}",
   "wallet.review.total": "Gesamt",
   "wallet.review.toSelf": "Dies sendet an dasselbe Konto: Nur die Gebühr wird ausgegeben.",
-  "wallet.review.toContract": "Der Empfänger ist ein Vertrag. Er führt Code aus, wenn er LAX erhält; stellen Sie sicher, dass er dafür vorgesehen ist.",
+  "wallet.review.toContract":
+    "Der Empfänger ist ein Vertrag. Er führt Code aus, wenn er LAX erhält; stellen Sie sicher, dass er dafür vorgesehen ist.",
   "wallet.review.dear": "Dieser Preis ist mehr als dreimal so hoch wie die {price}, die Ihr Node vorschlägt.",
   "wallet.review.passwordHint": "Entschlüsselt den Schlüssel nur für diese eine Signatur.",
   "wallet.review.cta": "Signieren und senden",
   "wallet.review.signing": "Wird signiert…",
   "wallet.sent.title": "Gesendet",
   "wallet.sent.desc": "{amount} LAX sind unterwegs",
-  "wallet.sent.wait": "Ihr Node leitet die Transaktion an das Netzwerk weiter. Sie ist bestätigt, sobald ein Block sie aufnimmt — etwa alle zehn Minuten.",
+  "wallet.sent.wait":
+    "Ihr Node leitet die Transaktion an das Netzwerk weiter. Sie ist bestätigt, sobald ein Block sie aufnimmt — etwa alle zehn Minuten.",
   "wallet.sent.hash": "Transaktion",
   "wallet.sent.nonce": "Nonce",
   "wallet.sent.again": "Weitere senden",
@@ -550,15 +600,20 @@ const de: Dict = {
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Passphrase hinzufügen (erweitert)",
-  "wallet.passphrase.toggleDesc": "Ein zusätzliches Wort, das jedes aus der Phrase erzeugte Konto verändert, wie bei Ledger und Trezor. MetaMask unterstützt es nicht.",
-  "wallet.passphrase.warning": "Schreiben Sie auch die Passphrase auf. Zur Wiederherstellung brauchen Sie sowohl die Wörter als auch die exakte Passphrase, und eine falsche Passphrase ergibt ohne jede Fehlermeldung eine andere, leere Wallet.",
+  "wallet.passphrase.toggleDesc":
+    "Ein zusätzliches Wort, das jedes aus der Phrase erzeugte Konto verändert, wie bei Ledger und Trezor. MetaMask unterstützt es nicht.",
+  "wallet.passphrase.warning":
+    "Schreiben Sie auch die Passphrase auf. Zur Wiederherstellung brauchen Sie sowohl die Wörter als auch die exakte Passphrase, und eine falsche Passphrase ergibt ohne jede Fehlermeldung eine andere, leere Wallet.",
   "wallet.passphrase.label": "Passphrase",
   "wallet.passphrase.confirm": "Passphrase bestätigen",
   "wallet.passphrase.mismatch": "Die Passphrasen stimmen nicht überein",
-  "wallet.passphrase.remember": "Diese Wiederherstellungsphrase hat eine Passphrase: Sie benötigen sie genau so, wie sie eingegeben wurde, um diese Konten wiederherzustellen.",
+  "wallet.passphrase.remember":
+    "Diese Wiederherstellungsphrase hat eine Passphrase: Sie benötigen sie genau so, wie sie eingegeben wurde, um diese Konten wiederherzustellen.",
   "wallet.passphrase.importToggle": "Sie hat eine Passphrase (erweitert)",
-  "wallet.passphrase.importToggleDesc": "Wenn Sie bei Ledger oder Trezor ein zusätzliches Wort festgelegt haben, geben Sie es ein, um zu denselben Konten zu gelangen.",
-  "wallet.passphrase.importHint": "Genau wie festgelegt: Groß-/Kleinschreibung und Leerzeichen zählen. Wenn der nächste Schritt keine bekannten Konten zeigt, prüfen Sie die Passphrase.",
+  "wallet.passphrase.importToggleDesc":
+    "Wenn Sie bei Ledger oder Trezor ein zusätzliches Wort festgelegt haben, geben Sie es ein, um zu denselben Konten zu gelangen.",
+  "wallet.passphrase.importHint":
+    "Genau wie festgelegt: Groß-/Kleinschreibung und Leerzeichen zählen. Wenn der nächste Schritt keine bekannten Konten zeigt, prüfen Sie die Passphrase.",
   "wallet.passphrase.show": "Passphrase anzeigen",
   "wallet.passphrase.badge": "Passphrase",
 
@@ -566,19 +621,24 @@ const de: Dict = {
   "wallet.phrase.section": "Wiederherstellungsphrase",
   "wallet.phrase.title": "Wiederherstellungsphrase",
   "wallet.phrase.yours": "Ihre Wiederherstellungsphrase",
-  "wallet.phrase.writeDown": "Schreiben Sie diese Wörter in dieser Reihenfolge auf Papier und bewahren Sie sie an einem sicheren Ort auf. Sie sind die Sicherung aller Konten, die daraus erstellt wurden.",
+  "wallet.phrase.writeDown":
+    "Schreiben Sie diese Wörter in dieser Reihenfolge auf Papier und bewahren Sie sie an einem sicheren Ort auf. Sie sind die Sicherung aller Konten, die daraus erstellt wurden.",
   "wallet.phrase.reveal": "Zum Anzeigen klicken",
-  "wallet.phrase.warning": "Jeder, der diese Wörter hat, kann Ihre LAX an sich bringen. Geben Sie sie niemals auf einer Website ein, teilen Sie sie nicht und speichern Sie sie nicht in einem Screenshot oder einer Notiz auf diesem Computer.",
+  "wallet.phrase.warning":
+    "Jeder, der diese Wörter hat, kann Ihre LAX an sich bringen. Geben Sie sie niemals auf einer Website ein, teilen Sie sie nicht und speichern Sie sie nicht in einem Screenshot oder einer Notiz auf diesem Computer.",
   "wallet.phrase.laterWarn": "Bis Sie sie bestätigen, gilt die Phrase nicht als gesichert.",
   "wallet.phrase.written": "Ich habe sie aufgeschrieben",
   "wallet.phrase.quizTitle": "Wiederherstellungsphrase bestätigen",
-  "wallet.phrase.quizDesc": "Geben Sie diese Wörter aus Ihrer Wiederherstellungsphrase ein, um sicherzustellen, dass sie richtig aufgeschrieben ist.",
+  "wallet.phrase.quizDesc":
+    "Geben Sie diese Wörter aus Ihrer Wiederherstellungsphrase ein, um sicherzustellen, dass sie richtig aufgeschrieben ist.",
   "wallet.phrase.word": "Wort #{n}",
   "wallet.phrase.confirm": "Bestätigen",
   "wallet.phrase.ready": "Ihre Wallet ist bereit",
-  "wallet.phrase.readyDesc": "Bewahren Sie die Wiederherstellungsphrase sicher und offline auf. Mit ihr können Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wiederherstellen.",
+  "wallet.phrase.readyDesc":
+    "Bewahren Sie die Wiederherstellungsphrase sicher und offline auf. Mit ihr können Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wiederherstellen.",
   "wallet.phrase.open": "Anzeigen",
-  "wallet.phrase.openDesc": "Geben Sie das Passwort ein, das Sie für die Wiederherstellungsphrase gewählt haben, um sie anzuzeigen.",
+  "wallet.phrase.openDesc":
+    "Geben Sie das Passwort ein, das Sie für die Wiederherstellungsphrase gewählt haben, um sie anzuzeigen.",
   "wallet.phrase.confirmed": "Wiederherstellungsphrase bestätigt",
   "wallet.phrase.confirmedDesc": "Daraus erstellte Konten sind jetzt gesichert.",
   "wallet.phrase.show": "Wiederherstellungsphrase anzeigen",
@@ -592,11 +652,14 @@ const de: Dict = {
   "wallet.phrase.account": "1 Konto",
   "wallet.removeSeed.title": "Wiederherstellungsphrase entfernen",
   "wallet.removeSeed.cta": "Phrase und Konten entfernen",
-  "wallet.removeSeed.warn": "Die Phrase und ihre {n} Konten werden von diesem Computer gelöscht. Um sie wieder zu verwenden, benötigen Sie die aufgeschriebenen Wörter (und die Passphrase, falls sie eine hat).",
-  "wallet.removeSeed.warnUnconfirmed": "Diese Phrase wurde nie bestätigt. Wenn Sie sie nicht aufgeschrieben haben, sind ihre {n} Konten und deren Gelder endgültig verloren.",
+  "wallet.removeSeed.warn":
+    "Die Phrase und ihre {n} Konten werden von diesem Computer gelöscht. Um sie wieder zu verwenden, benötigen Sie die aufgeschriebenen Wörter (und die Passphrase, falls sie eine hat).",
+  "wallet.removeSeed.warnUnconfirmed":
+    "Diese Phrase wurde nie bestätigt. Wenn Sie sie nicht aufgeschrieben haben, sind ihre {n} Konten und deren Gelder endgültig verloren.",
   "wallet.removeSeed.confirm": "Ich habe verstanden und die Phrase aufgeschrieben, oder ihre Konten enthalten nichts.",
   "wallet.phrase.missingTitle": "Ihre Wiederherstellungsphrase ist nicht bestätigt",
-  "wallet.phrase.missingDesc": "Geht dieser Computer verloren oder fällt seine Festplatte aus, ist die Phrase der einzige Weg zurück zu diesem Konto. Schreiben Sie sie auf und bestätigen Sie sie.",
+  "wallet.phrase.missingDesc":
+    "Geht dieser Computer verloren oder fällt seine Festplatte aus, ist die Phrase der einzige Weg zurück zu diesem Konto. Schreiben Sie sie auf und bestätigen Sie sie.",
 
   // Wallet: errors
   "wallet.err.wrongPassword": "Falsches Passwort.",
@@ -610,7 +673,8 @@ const de: Dict = {
   "wallet.err.badChecksum": "Die Prüfsumme dieser Adresse stimmt nicht: Wahrscheinlich ist ein Zeichen falsch.",
   "wallet.err.badAmount": "Kein gültiger Betrag.",
   "wallet.err.badFee": "Keine gültige Gebühr.",
-  "wallet.err.feeTooLow": "Die Gebühr liegt unter dem, was Ihr Node derzeit vorschlägt. Verwenden Sie die empfohlene Gebühr oder eine höhere.",
+  "wallet.err.feeTooLow":
+    "Die Gebühr liegt unter dem, was Ihr Node derzeit vorschlägt. Verwenden Sie die empfohlene Gebühr oder eine höhere.",
   "wallet.err.nodeStopped": "Starten Sie den Node, um zu senden.",
   "wallet.err.syncing": "Warten Sie vor dem Senden, bis der Node die Synchronisierung abgeschlossen hat.",
   "wallet.err.noPeers": "Der Node hat noch keine Peers, an die er eine Transaktion weiterleiten kann.",
@@ -621,8 +685,10 @@ const de: Dict = {
   "wallet.err.unknownSeed": "Diese Wiederherstellungsphrase ist nicht mehr in der Wallet.",
   "wallet.err.noPassword": "Legen Sie zuerst das Wallet-Passwort fest.",
   "wallet.err.needsSetup": "Legen Sie zuerst das Wallet-Passwort fest, auf der Willkommensseite.",
-  "wallet.err.keyMismatch": "Der Schlüssel dieses Kontos ist mit einem anderen Passwort geschützt als die Wallet. Entfernen Sie das Konto und importieren Sie es erneut.",
-  "wallet.err.setupMismatch": "Dieses Passwort öffnet nicht alle Schlüssel, die bereits in der Wallet sind. Verwenden Sie das Passwort, mit dem sie erstellt wurden.",
+  "wallet.err.keyMismatch":
+    "Der Schlüssel dieses Kontos ist mit einem anderen Passwort geschützt als die Wallet. Entfernen Sie das Konto und importieren Sie es erneut.",
+  "wallet.err.setupMismatch":
+    "Dieses Passwort öffnet nicht alle Schlüssel, die bereits in der Wallet sind. Verwenden Sie das Passwort, mit dem sie erstellt wurden.",
   "wallet.err.wrongFilePassword": "Falsches Passwort für die Keystore-Datei.",
   "settings.navGroup.app": "App",
   "settings.navGroup.support": "Support",
@@ -640,7 +706,8 @@ const de: Dict = {
   "settings.theme.light": "Hell",
   "settings.theme.dark": "Dunkel",
   "settings.avatars": "Konto-Avatare",
-  "settings.avatars.desc": "Das aus jeder Adresse erzeugte Bild. Jazzicon ist der Standard von MetaMask, Blockies zeigt Etherscan.",
+  "settings.avatars.desc":
+    "Das aus jeder Adresse erzeugte Bild. Jazzicon ist der Standard von MetaMask, Blockies zeigt Etherscan.",
   "settings.dataDir.desc": "Wo die Chain gespeichert wird. Ein neuer Ort startet eine neue Synchronisierung.",
   "settings.syncMode.desc": "Snap ist am schnellsten; Vollständig spielt jeden Block nach.",
   "settings.maxPeers.desc": "Die maximale Anzahl an Peers, die der Node verbunden hält.",
@@ -675,37 +742,65 @@ const de: Dict = {
   "settings.group.logs": "Protokolle",
   "settings.txpool.desc": "Die Regeln, nach denen der Node ausstehende Transaktionen behält und weiterleitet.",
   "settings.limits.desc": "Grenzen, die den Node vor aufwendigen oder riskanten RPC-Anfragen schützen.",
-  "settings.preventSleep.more": "Die Synchronisierung pausiert, sobald der Computer in den Ruhezustand geht – eine über Nacht unbeaufsichtigte Synchronisierung kann so Stunden verlieren.\n\nIst dies aktiviert, hält die App den Ruhezustand nur zurück, solange der Node synchronisiert, und gibt ihn frei, sobald er aufgeholt hat. Der Bildschirm kann sich weiterhin wie gewohnt abschalten und sperren.",
-  "settings.notifications.more": "Die App sendet eine Desktop-Benachrichtigung, wenn:\n\n• eine Synchronisierung endet, die länger als ein paar Minuten gedauert hat, damit Sie wissen, dass der Node aufgeholt hat;\n\n• der Node sich selbst stoppt, weil die Festplatte fast voll ist, damit Sie Speicher freigeben können, bevor Sie ihn neu starten.\n\nBenachrichtigungen erscheinen nur, solange die App läuft.",
-  "settings.ancientDir.more": "Der Node hält aktuelle Chain-Daten in einer schnellen Key-Value-Datenbank und verschiebt ältere Blöcke, Header und Belege in einen nur anhängbaren „Ancient“-Speicher. Dieser macht den Großteil des Datenverzeichnisses aus und wird selten gelesen.\n\nLegen Sie ihn auf eine größere, langsamere Festplatte, damit nur aktuelle Daten auf Ihrer SSD bleiben. Leer lassen, um alles im Datenverzeichnis zu behalten.\n\nEine Änderung verschiebt keine vorhandenen Daten: Verschieben Sie den Ancient-Ordner selbst, während der Node gestoppt ist, sonst legt der Node den Ancient-Speicher neu an.",
-  "settings.minFreeDisk.more": "Eine Datenbank, der mitten im Schreiben der Speicherplatz ausgeht, kann beschädigt werden und eine vollständige Neusynchronisierung erfordern. Um das zu verhindern, prüft der Node alle 30 Sekunden den freien Speicher auf seiner Datenfestplatte und stoppt sich sauber, sobald er unter diesen Wert fällt; ab dem Doppelten warnt er vorher.\n\nLeer nutzt das Doppelte des Trie-Dirty-Caches, wie der Kommandozeilen-Client standardmäßig. 0 schaltet den Schutz ab.",
-  "settings.syncMode.more": "Snap-Sync lädt den aktuellen Zustand aller Konten direkt von Peers, prüft ihn gegen die Chain und folgt danach normal neuen Blöcken. So ist der Node in Stunden statt Tagen nutzbar.\n\nFull-Sync lädt jeden Block ab Genesis und führt jede Transaktion aus, um den Zustand selbst aufzubauen. Das ist langsamer, vertraut aber nichts, was er nicht selbst berechnet hat.\n\nIn beiden Fällen validiert der Node am Ende jeden neuen Block vollständig. Eine Änderung des Modus synchronisiert eine bereits heruntergeladene Chain nicht neu.",
-  "settings.archive.more": "Normalerweise verwirft der Node alten Zustand und behält nur, was zur Validierung neuer Blöcke nötig ist, plus jüngere Historie. Ein Archiv-Node behält den Zustand zu jedem Block, sodass Sie Guthaben abfragen oder Traces zu jedem beliebigen Zeitpunkt der Vergangenheit ausführen können – das, was Block-Explorer und Indexer brauchen.\n\nEr braucht deutlich mehr Speicherplatz und wächst schnell. Vergangene Zustände werden nur durch einen Full-Sync ab Genesis aufgefüllt; stellen Sie den Sync-Modus daher auf Vollständig und verwenden Sie ein leeres Datenverzeichnis. Der Archivmodus behält außerdem Preimages und den gesamten Transaktionsindex.",
-  "settings.txLookupLimit.more": "Um eine Transaktion über ihren Hash nachzuschlagen (eth_getTransactionByHash, Belege), braucht es einen Indexeintrag für sie. Der Node behält diese Einträge für so viele aktuelle Blöcke und verwirft ältere, um Platz zu sparen.\n\nLeer behält etwa ein Jahr an Blöcken. 0 indiziert die gesamte Chain, was Wallets und Explorer brauchen, die alte Transaktionen nachschlagen. Der Archivmodus indiziert immer alles.",
-  "settings.snapshot.more": "Der Snapshot ist eine flache Kopie jedes Kontos und jedes Speicherslots neben dem Zustands-Trie. Daraus zu lesen ist viel schneller, als den Trie zu durchlaufen, was Blockimport und RPC-Aufrufe beschleunigt.\n\nSnap-Sync benötigt ihn, daher bleibt er bei Snap-Sync aktiv. Bei Full-Sync können Sie ihn abschalten, um Speicherplatz zu sparen; sein Arbeitsspeicher geht dann an den Trie-Cache.",
-  "settings.prefetch.more": "Während ein Block importiert wird, führt der Node dessen Transaktionen auf freien Threads vorab aus, um den Zustand, den sie berühren werden, in den Arbeitsspeicher zu laden. Der eigentliche Import findet dann das meiste bereits im Cache.\n\nAbschalten spart CPU und Lesezugriffe, verlangsamt aber den Import. Es macht vor allem auf langsamen Festplatten oder ausgelasteten Rechnern einen Unterschied.",
-  "settings.preimages.more": "Der Zustands-Trie speichert Konten und Speicherslots unter dem Hash ihres Schlüssels. Preimages sind die ursprünglichen Schlüssel, die manche Debugging- und State-Dump-Tools brauchen, um lesbare Adressen und Slots anzuzeigen.\n\nIhre Aufzeichnung kostet zusätzlichen Speicherplatz. Der Archivmodus zeichnet sie immer auf.",
+  "settings.preventSleep.more":
+    "Die Synchronisierung pausiert, sobald der Computer in den Ruhezustand geht – eine über Nacht unbeaufsichtigte Synchronisierung kann so Stunden verlieren.\n\nIst dies aktiviert, hält die App den Ruhezustand nur zurück, solange der Node synchronisiert, und gibt ihn frei, sobald er aufgeholt hat. Der Bildschirm kann sich weiterhin wie gewohnt abschalten und sperren.",
+  "settings.notifications.more":
+    "Die App sendet eine Desktop-Benachrichtigung, wenn:\n\n• eine Synchronisierung endet, die länger als ein paar Minuten gedauert hat, damit Sie wissen, dass der Node aufgeholt hat;\n\n• der Node sich selbst stoppt, weil die Festplatte fast voll ist, damit Sie Speicher freigeben können, bevor Sie ihn neu starten.\n\nBenachrichtigungen erscheinen nur, solange die App läuft.",
+  "settings.ancientDir.more":
+    "Der Node hält aktuelle Chain-Daten in einer schnellen Key-Value-Datenbank und verschiebt ältere Blöcke, Header und Belege in einen nur anhängbaren „Ancient“-Speicher. Dieser macht den Großteil des Datenverzeichnisses aus und wird selten gelesen.\n\nLegen Sie ihn auf eine größere, langsamere Festplatte, damit nur aktuelle Daten auf Ihrer SSD bleiben. Leer lassen, um alles im Datenverzeichnis zu behalten.\n\nEine Änderung verschiebt keine vorhandenen Daten: Verschieben Sie den Ancient-Ordner selbst, während der Node gestoppt ist, sonst legt der Node den Ancient-Speicher neu an.",
+  "settings.minFreeDisk.more":
+    "Eine Datenbank, der mitten im Schreiben der Speicherplatz ausgeht, kann beschädigt werden und eine vollständige Neusynchronisierung erfordern. Um das zu verhindern, prüft der Node alle 30 Sekunden den freien Speicher auf seiner Datenfestplatte und stoppt sich sauber, sobald er unter diesen Wert fällt; ab dem Doppelten warnt er vorher.\n\nLeer nutzt das Doppelte des Trie-Dirty-Caches, wie der Kommandozeilen-Client standardmäßig. 0 schaltet den Schutz ab.",
+  "settings.syncMode.more":
+    "Snap-Sync lädt den aktuellen Zustand aller Konten direkt von Peers, prüft ihn gegen die Chain und folgt danach normal neuen Blöcken. So ist der Node in Stunden statt Tagen nutzbar.\n\nFull-Sync lädt jeden Block ab Genesis und führt jede Transaktion aus, um den Zustand selbst aufzubauen. Das ist langsamer, vertraut aber nichts, was er nicht selbst berechnet hat.\n\nIn beiden Fällen validiert der Node am Ende jeden neuen Block vollständig. Eine Änderung des Modus synchronisiert eine bereits heruntergeladene Chain nicht neu.",
+  "settings.archive.more":
+    "Normalerweise verwirft der Node alten Zustand und behält nur, was zur Validierung neuer Blöcke nötig ist, plus jüngere Historie. Ein Archiv-Node behält den Zustand zu jedem Block, sodass Sie Guthaben abfragen oder Traces zu jedem beliebigen Zeitpunkt der Vergangenheit ausführen können – das, was Block-Explorer und Indexer brauchen.\n\nEr braucht deutlich mehr Speicherplatz und wächst schnell. Vergangene Zustände werden nur durch einen Full-Sync ab Genesis aufgefüllt; stellen Sie den Sync-Modus daher auf Vollständig und verwenden Sie ein leeres Datenverzeichnis. Der Archivmodus behält außerdem Preimages und den gesamten Transaktionsindex.",
+  "settings.txLookupLimit.more":
+    "Um eine Transaktion über ihren Hash nachzuschlagen (eth_getTransactionByHash, Belege), braucht es einen Indexeintrag für sie. Der Node behält diese Einträge für so viele aktuelle Blöcke und verwirft ältere, um Platz zu sparen.\n\nLeer behält etwa ein Jahr an Blöcken. 0 indiziert die gesamte Chain, was Wallets und Explorer brauchen, die alte Transaktionen nachschlagen. Der Archivmodus indiziert immer alles.",
+  "settings.snapshot.more":
+    "Der Snapshot ist eine flache Kopie jedes Kontos und jedes Speicherslots neben dem Zustands-Trie. Daraus zu lesen ist viel schneller, als den Trie zu durchlaufen, was Blockimport und RPC-Aufrufe beschleunigt.\n\nSnap-Sync benötigt ihn, daher bleibt er bei Snap-Sync aktiv. Bei Full-Sync können Sie ihn abschalten, um Speicherplatz zu sparen; sein Arbeitsspeicher geht dann an den Trie-Cache.",
+  "settings.prefetch.more":
+    "Während ein Block importiert wird, führt der Node dessen Transaktionen auf freien Threads vorab aus, um den Zustand, den sie berühren werden, in den Arbeitsspeicher zu laden. Der eigentliche Import findet dann das meiste bereits im Cache.\n\nAbschalten spart CPU und Lesezugriffe, verlangsamt aber den Import. Es macht vor allem auf langsamen Festplatten oder ausgelasteten Rechnern einen Unterschied.",
+  "settings.preimages.more":
+    "Der Zustands-Trie speichert Konten und Speicherslots unter dem Hash ihres Schlüssels. Preimages sind die ursprünglichen Schlüssel, die manche Debugging- und State-Dump-Tools brauchen, um lesbare Adressen und Slots anzuzeigen.\n\nIhre Aufzeichnung kostet zusätzlichen Speicherplatz. Der Archivmodus zeichnet sie immer auf.",
   "settings.smartFee.desc": "Gebührenschätzung im Stil von Bitcoin Core.",
-  "settings.smartFee.more": "Das Gaspreis-Orakel hat zwei Algorithmen. Der Standard nutzt ein Perzentil der Trinkgelder aktueller Blöcke – schnell und bewährt. Die Smart-Fee-Option portiert den estimateSmartFee-Algorithmus von Bitcoin Core, der beobachtete Bestätigungen in Buckets einteilt und daraus eine Gebühr zurückrechnet, die eine Ziel-Bestätigungstiefe erreicht.\n\nSmart Fee braucht ein langes, durchgehendes Fenster beobachteter Bestätigungen, um genaue Schätzungen zu liefern. Parallax Wallet wird meist bei Bedarf gestartet und gestoppt, statt rund um die Uhr zu laufen, daher sammelt das Orakel womöglich nicht genug Daten und fällt dann auf das Standardminimum zurück. Dauerhaft laufende Nodes profitieren am meisten davon.",
+  "settings.smartFee.more":
+    "Das Gaspreis-Orakel hat zwei Algorithmen. Der Standard nutzt ein Perzentil der Trinkgelder aktueller Blöcke – schnell und bewährt. Die Smart-Fee-Option portiert den estimateSmartFee-Algorithmus von Bitcoin Core, der beobachtete Bestätigungen in Buckets einteilt und daraus eine Gebühr zurückrechnet, die eine Ziel-Bestätigungstiefe erreicht.\n\nSmart Fee braucht ein langes, durchgehendes Fenster beobachteter Bestätigungen, um genaue Schätzungen zu liefern. Parallax Wallet wird meist bei Bedarf gestartet und gestoppt, statt rund um die Uhr zu laufen, daher sammelt das Orakel womöglich nicht genug Daten und fällt dann auf das Standardminimum zurück. Dauerhaft laufende Nodes profitieren am meisten davon.",
   "settings.allowInbound.desc": "Anderen Peers erlauben, sich mit Ihrem Node zu verbinden.",
-  "settings.allowInbound.more": "Ist dies aktiviert, bittet der Node Ihren Router (per UPnP oder NAT-PMP), seinen Port weiterzuleiten, damit Peers im Internet Sie anwählen können. Eingehende Peers anzunehmen stärkt das Netzwerk und beschleunigt bei Ihnen die Blockverbreitung.\n\nIm Gegenzug wird Ihre IP-Adresse für andere Peers auffindbar. Schalten Sie es ab, wenn Sie hinter einer strikten Firewall sind oder nur ausgehend verbunden sein möchten: Der Node verbindet sich weiterhin selbst mit Peers.",
-  "settings.nat.more": "Automatisch probiert UPnP und NAT-PMP und nutzt das, worauf Ihr Router antwortet. Wählen Sie eines, um das andere zu überspringen.\n\nFeste öffentliche IP ist für den Fall, dass Sie den Port auf Ihrem Router selbst weitergeleitet haben oder der Rechner eine öffentliche Adresse hat: Der Node kündigt dann diese IP an, ohne den Router zu fragen.\n\nWird nur verwendet, solange eingehende Verbindungen erlaubt sind.",
-  "settings.discovery.more": "Mit aktivierter Discovery erfährt der Node von Peers über andere Peers, über DNS-Seeds und über den DNS-Discovery-Baum und speichert sie in seinem Adressbuch.\n\nDeaktiviert verbindet er sich nur mit den Peers, die Sie in der Peer-Liste hinzufügen, und den Bootstrap-Nodes. Das ist für private Setups nützlich, aber ein Node mit wenigen Peers lässt sich leichter isolieren.",
-  "settings.legacyDiscovery.more": "Parallax-v2-Nodes verbinden sich mit dem v2-Handshake und führen Peers in einem Adressbuch. Das v1.x-Transportprotokoll (UDP-Discovery und der Legacy-Handshake) bleibt für die Kompatibilität mit älteren Nodes erhalten.\n\nAuto antwortet v1-Peers, die sich melden, und nimmt Legacy-Verbindungen an, sucht aber selbst keine v1-Peers. Das ist die Standardeinstellung.\n\nAn nutzt zusätzlich v1-Discovery, um Peers zum Anwählen zu finden.\n\nAus schließt die v1-Schnittstelle vollständig: kein UDP-Socket, kein Legacy-Handshake. Der Node wird rein v2, und seine enode-URL ist nur noch informativ.",
-  "settings.bootnodes.more": "Bootstrap-Nodes sind der Ausgangspunkt, an dem ein Node mit leerem Adressbuch nach Peers sucht. Ein Eintrag pro Zeile:\n\n• enode://-URLs speisen die v1-Discovery;\n\n• Einträge als ip:port oder <address>.onion:port werden mit dem v2-Handshake angewählt.\n\nEigene Einträge ersetzen die integrierten. DNS-Seeds funktionieren weiterhin daneben, sofern die Peer-Discovery nicht abgeschaltet ist.",
-  "settings.proxy.more": "Jede ausgehende Peer-Verbindung läuft über diesen SOCKS5-Proxy, Onion-Adressen eingeschlossen. Stellen Sie ihn auf ein lokales Tor (meist 127.0.0.1:9050), um Ihre IP-Adresse vor den Peers zu verbergen, die Sie anwählen.\n\nDNS-Seed-Namen werden dann ebenfalls über den Proxy aufgelöst, sodass keine Anfragen an Ihren lokalen Resolver durchsickern. Eingehende Verbindungen sind nicht betroffen: Schalten Sie auch eingehende Verbindungen ab, um keine Peers mehr unter Ihrer eigenen Adresse anzunehmen.",
-  "settings.listenOnion.more": "Läuft Tor auf diesem Computer mit offenem Control-Port, bittet der Node es um einen Onion-Dienst, der auf den Lauschport weiterleitet, sodass Peers Sie über Tor erreichen, ohne Ihre IP-Adresse zu erfahren. Der Dienstschlüssel liegt im Datenverzeichnis, daher bleibt die Adresse über Neustarts hinweg gleich.\n\nIst Tor nicht erreichbar, passiert nichts außer einem gelegentlichen stillen Neuversuch. Sofern kein Onion-Proxy gesetzt ist, nutzt der Node auch den SOCKS-Port von Tor, um Onion-Peers anzuwählen.",
-  "settings.onlyNet.more": "Der Node wählt nur Peers in den gewählten Netzwerken an. Wählen Sie nur Onion, zusammen mit einem Proxy oder dem Onion-Dienst, damit jede ausgehende Verbindung über Tor läuft.\n\nOhne Auswahl sind alle Netzwerke erlaubt. Eingehende Verbindungen und von Hand hinzugefügte Peers sind nicht betroffen.",
-  "settings.onionProxy.more": "Onion-Adressen laufen über diesen SOCKS5-Proxy statt über den Hauptproxy. Leer lassen, um den Hauptproxy zu nutzen bzw. den SOCKS-Port von Tor, wenn der Onion-Dienst läuft.\n\nAuf 0 setzen, um überhaupt keine Onion-Verbindungen herzustellen, selbst wenn ein Proxy gesetzt ist.",
-  "settings.proxyRandomize.more": "Tor gibt Verbindungen mit unterschiedlichen SOCKS-Zugangsdaten getrennte Circuits. Ist dies aktiviert, nutzt der Node für jede Verbindung neue Zugangsdaten, sodass sich keine zwei Peers einen Circuit teilen und sie nicht über ihren Exit miteinander verknüpft werden können.\n\nSchalten Sie es ab, um einen Circuit für alle Peers zu teilen, was weniger Tor-Ressourcen verbraucht.",
+  "settings.allowInbound.more":
+    "Ist dies aktiviert, bittet der Node Ihren Router (per UPnP oder NAT-PMP), seinen Port weiterzuleiten, damit Peers im Internet Sie anwählen können. Eingehende Peers anzunehmen stärkt das Netzwerk und beschleunigt bei Ihnen die Blockverbreitung.\n\nIm Gegenzug wird Ihre IP-Adresse für andere Peers auffindbar. Schalten Sie es ab, wenn Sie hinter einer strikten Firewall sind oder nur ausgehend verbunden sein möchten: Der Node verbindet sich weiterhin selbst mit Peers.",
+  "settings.nat.more":
+    "Automatisch probiert UPnP und NAT-PMP und nutzt das, worauf Ihr Router antwortet. Wählen Sie eines, um das andere zu überspringen.\n\nFeste öffentliche IP ist für den Fall, dass Sie den Port auf Ihrem Router selbst weitergeleitet haben oder der Rechner eine öffentliche Adresse hat: Der Node kündigt dann diese IP an, ohne den Router zu fragen.\n\nWird nur verwendet, solange eingehende Verbindungen erlaubt sind.",
+  "settings.discovery.more":
+    "Mit aktivierter Discovery erfährt der Node von Peers über andere Peers, über DNS-Seeds und über den DNS-Discovery-Baum und speichert sie in seinem Adressbuch.\n\nDeaktiviert verbindet er sich nur mit den Peers, die Sie in der Peer-Liste hinzufügen, und den Bootstrap-Nodes. Das ist für private Setups nützlich, aber ein Node mit wenigen Peers lässt sich leichter isolieren.",
+  "settings.legacyDiscovery.more":
+    "Parallax-v2-Nodes verbinden sich mit dem v2-Handshake und führen Peers in einem Adressbuch. Das v1.x-Transportprotokoll (UDP-Discovery und der Legacy-Handshake) bleibt für die Kompatibilität mit älteren Nodes erhalten.\n\nAuto antwortet v1-Peers, die sich melden, und nimmt Legacy-Verbindungen an, sucht aber selbst keine v1-Peers. Das ist die Standardeinstellung.\n\nAn nutzt zusätzlich v1-Discovery, um Peers zum Anwählen zu finden.\n\nAus schließt die v1-Schnittstelle vollständig: kein UDP-Socket, kein Legacy-Handshake. Der Node wird rein v2, und seine enode-URL ist nur noch informativ.",
+  "settings.bootnodes.more":
+    "Bootstrap-Nodes sind der Ausgangspunkt, an dem ein Node mit leerem Adressbuch nach Peers sucht. Ein Eintrag pro Zeile:\n\n• enode://-URLs speisen die v1-Discovery;\n\n• Einträge als ip:port oder <address>.onion:port werden mit dem v2-Handshake angewählt.\n\nEigene Einträge ersetzen die integrierten. DNS-Seeds funktionieren weiterhin daneben, sofern die Peer-Discovery nicht abgeschaltet ist.",
+  "settings.proxy.more":
+    "Jede ausgehende Peer-Verbindung läuft über diesen SOCKS5-Proxy, Onion-Adressen eingeschlossen. Stellen Sie ihn auf ein lokales Tor (meist 127.0.0.1:9050), um Ihre IP-Adresse vor den Peers zu verbergen, die Sie anwählen.\n\nDNS-Seed-Namen werden dann ebenfalls über den Proxy aufgelöst, sodass keine Anfragen an Ihren lokalen Resolver durchsickern. Eingehende Verbindungen sind nicht betroffen: Schalten Sie auch eingehende Verbindungen ab, um keine Peers mehr unter Ihrer eigenen Adresse anzunehmen.",
+  "settings.listenOnion.more":
+    "Läuft Tor auf diesem Computer mit offenem Control-Port, bittet der Node es um einen Onion-Dienst, der auf den Lauschport weiterleitet, sodass Peers Sie über Tor erreichen, ohne Ihre IP-Adresse zu erfahren. Der Dienstschlüssel liegt im Datenverzeichnis, daher bleibt die Adresse über Neustarts hinweg gleich.\n\nIst Tor nicht erreichbar, passiert nichts außer einem gelegentlichen stillen Neuversuch. Sofern kein Onion-Proxy gesetzt ist, nutzt der Node auch den SOCKS-Port von Tor, um Onion-Peers anzuwählen.",
+  "settings.onlyNet.more":
+    "Der Node wählt nur Peers in den gewählten Netzwerken an. Wählen Sie nur Onion, zusammen mit einem Proxy oder dem Onion-Dienst, damit jede ausgehende Verbindung über Tor läuft.\n\nOhne Auswahl sind alle Netzwerke erlaubt. Eingehende Verbindungen und von Hand hinzugefügte Peers sind nicht betroffen.",
+  "settings.onionProxy.more":
+    "Onion-Adressen laufen über diesen SOCKS5-Proxy statt über den Hauptproxy. Leer lassen, um den Hauptproxy zu nutzen bzw. den SOCKS-Port von Tor, wenn der Onion-Dienst läuft.\n\nAuf 0 setzen, um überhaupt keine Onion-Verbindungen herzustellen, selbst wenn ein Proxy gesetzt ist.",
+  "settings.proxyRandomize.more":
+    "Tor gibt Verbindungen mit unterschiedlichen SOCKS-Zugangsdaten getrennte Circuits. Ist dies aktiviert, nutzt der Node für jede Verbindung neue Zugangsdaten, sodass sich keine zwei Peers einen Circuit teilen und sie nicht über ihren Exit miteinander verknüpft werden können.\n\nSchalten Sie es ab, um einen Circuit für alle Peers zu teilen, was weniger Tor-Ressourcen verbraucht.",
   "settings.stats.desc": "Diesen Node auf status.parallaxprotocol.org anzeigen.",
-  "settings.stats.toggle.more": "Der Node meldet sich beim öffentlichen Dashboard unter status.parallaxprotocol.org unter einem zufälligen Namen, der in Ihrem Datenverzeichnis gespeichert ist.\n\nEr teilt Blockhöhe, Peer-Anzahl, Sync- und Mining-Status, Peer-Latenz, Client-Version und Betriebssystem. Es werden keine Wallet-, Konto- oder Transaktionsdaten gesendet, allerdings sieht der Statistikserver Ihre IP-Adresse.",
-  "settings.rpc.enable.more": "Startet einen JSON-RPC-Server, über den Wallets wie MetaMask, Dapps und Entwicklertools die Chain lesen und Transaktionen über Ihren eigenen Node statt über einen Drittanbieter senden.\n\nStandardmäßig lauscht er nur auf 127.0.0.1, sodass nur Programme auf diesem Computer ihn erreichen. Sie können die Adresse unter Erweitert ändern – setzen Sie ihn nie dem öffentlichen Internet aus.",
-  "settings.rpc.host.more": "127.0.0.1 nimmt nur Verbindungen von diesem Computer an. Eine LAN-Adresse oder 0.0.0.0 (alle Schnittstellen) lässt auch andere Rechner verbinden, etwa eine Wallet auf Ihrem Smartphone oder einem anderen Computer.\n\nWer den Server erreicht, kann über Ihren Node die Chain lesen und Transaktionen einreichen; tun Sie das daher nur in einem vertrauenswürdigen Netzwerk hinter einer Firewall. Tragen Sie die Namen, die andere Rechner verwenden, unter Erlaubte Hostnamen ein.",
-  "settings.rpc.vhosts.more": "Jede HTTP-Anfrage nennt den Host, für den sie bestimmt ist. Der Node lehnt Anfragen an jeden Namen ab, der nicht auf dieser Liste steht. Das verhindert, dass eine bösartige Webseite Ihren Node per DNS-Rebinding erreicht – indem sie Ihren Browser unter ihrem eigenen Domainnamen mit 127.0.0.1 sprechen lässt.\n\nAnfragen an eine IP-Adresse werden immer angenommen. Fügen Sie hier einen Namen hinzu, wenn Sie den Node darüber erreichen, und verwenden Sie * zum Akzeptieren aller Namen nur, wenn Sie das Risiko verstehen.",
-  "settings.rpc.unprotected.more": "Mit einer Chain-ID (EIP-155) signierte Transaktionen sind nur auf dieser Chain gültig. Ungeschützte, ohne sie signierte Transaktionen sind auf jeder Chain mit demselben Adressformat gültig, sodass jeder sie anderswo wiederholen kann.\n\nAktivieren Sie dies nur, wenn ein Tool, dem Sie vertrauen, nicht mit Chain-ID signieren kann, etwa manche Deployment-Skripte für deterministische Vertragsadressen.",
-  "settings.metrics.more": "Der Node führt immer einfache Zähler für Datenbank, Netzwerk, Synchronisierung und Transaktionspool, und die App zeigt einige davon an, etwa den Netzwerkverkehr. Schalten Sie dies ein, um sie über einen Metrik-Endpunkt bereitzustellen, unter /debug/metrics (JSON) und /debug/metrics/prometheus für Prometheus oder Grafana, und um detaillierte Metriken zu erlauben.\n\nDer Daemon richtet seine Metriken beim Start ein, daher wirkt dies erst nach einem Neustart der App.",
-  "settings.group.performance.more": "Der Node teilt seinen Cache-Speicher in vier Teile:\n\n• der Datenbank-Cache hält kürzlich gelesene und geschriebene Chain-Daten;\n\n• der Trie-Clean-Cache hält von der Festplatte gelesene Knoten des Zustands-Tries;\n\n• der Trie-Dirty-Cache hält Zustandsänderungen, die noch nicht auf die Festplatte geschrieben wurden – größer bedeutet weniger, aber größere Schreibvorgänge;\n\n• der Snapshot-Cache hält Einträge des flachen Zustands-Snapshots.\n\nDie Standardwerte ergeben zusammen 4 GB, wie beim Kommandozeilen-Client im Mainnet. Übersteigt die Summe ein Drittel Ihres RAM, verkleinert der Node sie, damit dem System nicht der Arbeitsspeicher ausgeht.",
+  "settings.stats.toggle.more":
+    "Der Node meldet sich beim öffentlichen Dashboard unter status.parallaxprotocol.org unter einem zufälligen Namen, der in Ihrem Datenverzeichnis gespeichert ist.\n\nEr teilt Blockhöhe, Peer-Anzahl, Sync- und Mining-Status, Peer-Latenz, Client-Version und Betriebssystem. Es werden keine Wallet-, Konto- oder Transaktionsdaten gesendet, allerdings sieht der Statistikserver Ihre IP-Adresse.",
+  "settings.rpc.enable.more":
+    "Startet einen JSON-RPC-Server, über den Wallets wie MetaMask, Dapps und Entwicklertools die Chain lesen und Transaktionen über Ihren eigenen Node statt über einen Drittanbieter senden.\n\nStandardmäßig lauscht er nur auf 127.0.0.1, sodass nur Programme auf diesem Computer ihn erreichen. Sie können die Adresse unter Erweitert ändern – setzen Sie ihn nie dem öffentlichen Internet aus.",
+  "settings.rpc.host.more":
+    "127.0.0.1 nimmt nur Verbindungen von diesem Computer an. Eine LAN-Adresse oder 0.0.0.0 (alle Schnittstellen) lässt auch andere Rechner verbinden, etwa eine Wallet auf Ihrem Smartphone oder einem anderen Computer.\n\nWer den Server erreicht, kann über Ihren Node die Chain lesen und Transaktionen einreichen; tun Sie das daher nur in einem vertrauenswürdigen Netzwerk hinter einer Firewall. Tragen Sie die Namen, die andere Rechner verwenden, unter Erlaubte Hostnamen ein.",
+  "settings.rpc.vhosts.more":
+    "Jede HTTP-Anfrage nennt den Host, für den sie bestimmt ist. Der Node lehnt Anfragen an jeden Namen ab, der nicht auf dieser Liste steht. Das verhindert, dass eine bösartige Webseite Ihren Node per DNS-Rebinding erreicht – indem sie Ihren Browser unter ihrem eigenen Domainnamen mit 127.0.0.1 sprechen lässt.\n\nAnfragen an eine IP-Adresse werden immer angenommen. Fügen Sie hier einen Namen hinzu, wenn Sie den Node darüber erreichen, und verwenden Sie * zum Akzeptieren aller Namen nur, wenn Sie das Risiko verstehen.",
+  "settings.rpc.unprotected.more":
+    "Mit einer Chain-ID (EIP-155) signierte Transaktionen sind nur auf dieser Chain gültig. Ungeschützte, ohne sie signierte Transaktionen sind auf jeder Chain mit demselben Adressformat gültig, sodass jeder sie anderswo wiederholen kann.\n\nAktivieren Sie dies nur, wenn ein Tool, dem Sie vertrauen, nicht mit Chain-ID signieren kann, etwa manche Deployment-Skripte für deterministische Vertragsadressen.",
+  "settings.metrics.more":
+    "Der Node führt immer einfache Zähler für Datenbank, Netzwerk, Synchronisierung und Transaktionspool, und die App zeigt einige davon an, etwa den Netzwerkverkehr. Schalten Sie dies ein, um sie über einen Metrik-Endpunkt bereitzustellen, unter /debug/metrics (JSON) und /debug/metrics/prometheus für Prometheus oder Grafana, und um detaillierte Metriken zu erlauben.\n\nDer Daemon richtet seine Metriken beim Start ein, daher wirkt dies erst nach einem Neustart der App.",
+  "settings.group.performance.more":
+    "Der Node teilt seinen Cache-Speicher in vier Teile:\n\n• der Datenbank-Cache hält kürzlich gelesene und geschriebene Chain-Daten;\n\n• der Trie-Clean-Cache hält von der Festplatte gelesene Knoten des Zustands-Tries;\n\n• der Trie-Dirty-Cache hält Zustandsänderungen, die noch nicht auf die Festplatte geschrieben wurden – größer bedeutet weniger, aber größere Schreibvorgänge;\n\n• der Snapshot-Cache hält Einträge des flachen Zustands-Snapshots.\n\nDie Standardwerte ergeben zusammen 4 GB, wie beim Kommandozeilen-Client im Mainnet. Übersteigt die Summe ein Drittel Ihres RAM, verkleinert der Node sie, damit dem System nicht der Arbeitsspeicher ausgeht.",
   "settings.readMore": "Mehr erfahren",
   "settings.cliFlag": "Entsprechung auf der Kommandozeile",
   "settings.advanced": "Erweitert",
@@ -762,7 +857,8 @@ const de: Dict = {
   "settings.bootnodes.desc": "Die ersten Peers, die ein neuer Node fragt. Leer nutzt die integrierte Liste.",
   "settings.bootnodes.placeholder": "Integrierte Liste",
 
-  "settings.privacy.desc": "Leitet die Peer-Verbindungen des Nodes über Tor oder einen anderen SOCKS5-Proxy und erreicht Peers unter Onion-Adressen.",
+  "settings.privacy.desc":
+    "Leitet die Peer-Verbindungen des Nodes über Tor oder einen anderen SOCKS5-Proxy und erreicht Peers unter Onion-Adressen.",
   "settings.proxy": "SOCKS5-Proxy",
   "settings.proxy.desc": "Ausgehende Peer-Verbindungen über SOCKS5 leiten.",
   "settings.listenOnion": "Onion-Dienst",
@@ -783,7 +879,8 @@ const de: Dict = {
   "settings.torPassword.desc": "Nur für Passwort-Authentifizierung. Unverschlüsselt gespeichert.",
   "settings.torPassword.placeholder": "Cookie-Authentifizierung",
 
-  "settings.rpc.exposed": "Der RPC-Server ist über diesen Computer hinaus erreichbar. Wer ihn erreicht, kann über Ihren Node die Chain lesen und Transaktionen senden. Nur in einem vertrauenswürdigen Netzwerk hinter einer Firewall verwenden.",
+  "settings.rpc.exposed":
+    "Der RPC-Server ist über diesen Computer hinaus erreichbar. Wer ihn erreicht, kann über Ihren Node die Chain lesen und Transaktionen senden. Nur in einem vertrauenswürdigen Netzwerk hinter einer Firewall verwenden.",
   "settings.rpc.host": "Lauschadresse",
   "settings.rpc.host.desc": "Die Schnittstelle, auf der der Server lauscht.",
   "settings.rpc.apis": "APIs",
@@ -801,15 +898,18 @@ const de: Dict = {
   "settings.graphql": "GraphQL",
   "settings.graphql.desc": "Stellt einen GraphQL-Endpunkt unter /graphql auf dem HTTP-RPC-Server bereit.",
   "settings.ipc": "IPC-Endpunkt",
-  "settings.ipc.desc": "Ein lokaler Socket im Datenverzeichnis, für die parallax-cli-Konsole und andere Tools auf diesem Computer.",
+  "settings.ipc.desc":
+    "Ein lokaler Socket im Datenverzeichnis, für die parallax-cli-Konsole und andere Tools auf diesem Computer.",
   "settings.rpc.gasCap": "Gas-Limit für Aufrufe",
   "settings.rpc.gasCap.desc": "Das maximale Gas für eth_call und eth_estimateGas. 0 bedeutet kein Limit.",
   "settings.rpc.txFeeCap": "Gebührenlimit für Transaktionen",
-  "settings.rpc.txFeeCap.desc": "Lehnt über RPC gesendete Transaktionen ab, die mehr Gebühren zahlen. 0 bedeutet kein Limit.",
+  "settings.rpc.txFeeCap.desc":
+    "Lehnt über RPC gesendete Transaktionen ab, die mehr Gebühren zahlen. 0 bedeutet kein Limit.",
   "settings.rpc.pvmTimeout": "Aufruf-Timeout",
   "settings.rpc.pvmTimeout.desc": "Wie lange eth_call laufen darf. 0 bedeutet kein Limit.",
   "settings.rpc.logQueryLimit": "Log-Filter-Limit",
-  "settings.rpc.logQueryLimit.desc": "Maximale Anzahl an Adressen oder Topics pro Position in einem eth_getLogs-Filter. 0 bedeutet kein Limit.",
+  "settings.rpc.logQueryLimit.desc":
+    "Maximale Anzahl an Adressen oder Topics pro Position in einem eth_getLogs-Filter. 0 bedeutet kein Limit.",
   "settings.rpc.batchLimit": "Batch-Größenlimit",
   "settings.rpc.batchLimit.desc": "Maximale Anzahl an Anfragen in einem JSON-RPC-Batch.",
   "settings.rpc.unprotected": "Ungeschützte Transaktionen erlauben",
@@ -826,11 +926,13 @@ const de: Dict = {
   "settings.txpool.locals": "Lokale Konten",
   "settings.txpool.locals.desc": "Adressen, deren Transaktionen immer behalten und bevorzugt werden, eine pro Zeile.",
   "settings.txpool.noLocals": "Lokale Transaktionen gleich behandeln",
-  "settings.txpool.noLocals.desc": "Entfernt die Preisausnahmen für Transaktionen, die über diesen Node gesendet werden.",
+  "settings.txpool.noLocals.desc":
+    "Entfernt die Preisausnahmen für Transaktionen, die über diesen Node gesendet werden.",
   "settings.txpool.priceLimit": "Minimaler Gaspreis",
   "settings.txpool.priceLimit.desc": "Der niedrigste Gaspreis, den eine Transaktion für den Pool braucht.",
   "settings.txpool.priceBump": "Aufschlag für Ersetzung",
-  "settings.txpool.priceBump.desc": "Wie viel mehr eine Transaktion zahlen muss, um eine mit derselben Nonce zu ersetzen.",
+  "settings.txpool.priceBump.desc":
+    "Wie viel mehr eine Transaktion zahlen muss, um eine mit derselben Nonce zu ersetzen.",
   "settings.txpool.accountSlots": "Ausführbare Slots pro Konto",
   "settings.txpool.accountSlots.desc": "Garantierter Platz für ausführbare Transaktionen je Konto.",
   "settings.txpool.globalSlots": "Ausführbare Slots gesamt",
@@ -840,7 +942,8 @@ const de: Dict = {
   "settings.txpool.globalQueue": "Wartende Slots gesamt",
   "settings.txpool.globalQueue.desc": "Die maximale Anzahl noch nicht ausführbarer Transaktionen im Pool.",
   "settings.txpool.lifetime": "Wartezeit in der Queue",
-  "settings.txpool.lifetime.desc": "Wie lange eine noch nicht ausführbare Transaktion warten darf, bevor sie verworfen wird.",
+  "settings.txpool.lifetime.desc":
+    "Wie lange eine noch nicht ausführbare Transaktion warten darf, bevor sie verworfen wird.",
 
   "settings.prefetch": "Zustands-Prefetching",
   "settings.prefetch.desc": "Zustand beim Blockimport vorab lesen.",
@@ -850,7 +953,8 @@ const de: Dict = {
   "settings.logLevel": "Log-Level",
   "settings.logLevel.desc": "Wie detailliert Node und App ins Log schreiben.",
   "settings.clearLogs": "Logs beim Start leeren",
-  "settings.clearLogs.desc": "Jeden Start mit einem leeren Log beginnen. Andernfalls bleiben die neuesten Logs über Neustarts erhalten, was bei der Analyse eines Absturzes hilft.",
+  "settings.clearLogs.desc":
+    "Jeden Start mit einem leeren Log beginnen. Andernfalls bleiben die neuesten Logs über Neustarts erhalten, was bei der Analyse eines Absturzes hilft.",
   "settings.logLevel.1": "Fehler",
   "settings.logLevel.2": "Warnungen",
   "settings.logLevel.3": "Info",
@@ -867,7 +971,8 @@ const de: Dict = {
   "notify.synced": "Synchronisierung abgeschlossen",
   "notify.synced.body": "Ihr Node hat das Netzwerk bei Block {block} eingeholt.",
   "notify.lowDisk": "Node gestoppt",
-  "notify.lowDisk.body": "Die Festplatte ist fast voll, daher hat der Node gestoppt, um seine Datenbank zu schützen. Geben Sie Speicher frei und starten Sie ihn erneut.",
+  "notify.lowDisk.body":
+    "Die Festplatte ist fast voll, daher hat der Node gestoppt, um seine Datenbank zu schützen. Geben Sie Speicher frei und starten Sie ihn erneut.",
 };
 
 export default de;

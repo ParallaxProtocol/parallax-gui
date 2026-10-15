@@ -12,7 +12,8 @@ import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { Notice } from "../../components/ui/bits";
 import { Segmented } from "../../components/ui/Segmented";
 import { Checkbox, Field, PasswordInput } from "./common";
-import { NameField, useBusy } from "./AccountForms";
+import { NameField } from "./AccountForms";
+import { useBusy } from "./accountActions";
 import { FlowPage, Part, StepFooter, StepPanel } from "./flow";
 import { PhraseInput } from "./Phrase";
 import { Pill } from "../../components/ui/Pill";
@@ -72,7 +73,12 @@ export function PhraseImport({ onBack }: { onBack: () => void }) {
     [],
   );
 
-  const steps = [t("wallet.import.step.source"), t("wallet.create.step.phrase"), t("wallet.import.step.accounts"), t("wallet.create.step.details")];
+  const steps = [
+    t("wallet.import.step.source"),
+    t("wallet.create.step.phrase"),
+    t("wallet.import.step.accounts"),
+    t("wallet.create.step.details"),
+  ];
   const pass = advanced ? passphrase : "";
   const count = words.trim() ? words.trim().split(/\s+/).length : 0;
 
@@ -107,7 +113,9 @@ export function PhraseImport({ onBack }: { onBack: () => void }) {
         >
           <Part className="gap-4">
             <p className="text-sm text-muted-foreground">{t("wallet.import.phraseLead")}</p>
-            <Field label={t("wallet.import.phraseLabel")}>{(id) => <PhraseInput id={id} value={words} onChange={setWords} />}</Field>
+            <Field label={t("wallet.import.phraseLabel")}>
+              {(id) => <PhraseInput id={id} value={words} onChange={setWords} />}
+            </Field>
           </Part>
           <Part className="gap-3">
             <Checkbox checked={advanced} onChange={setAdvanced}>
@@ -345,9 +353,7 @@ function Candidate({ c, picked, onToggle }: { c: SeedCandidate; picked: boolean;
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="flex items-center gap-2">
           <span className="font-mono text-sm">{shortHex(c.address, 10, 8)}</span>
-          {c.used && (
-            <Pill tone="brand">{t("wallet.import.used")}</Pill>
-          )}
+          {c.used && <Pill tone="brand">{t("wallet.import.used")}</Pill>}
           {c.inWallet && <span className="text-xs text-muted-foreground">{t("wallet.import.inWallet")}</span>}
         </span>
         <span className="font-mono text-xs text-muted-foreground">{c.path}</span>

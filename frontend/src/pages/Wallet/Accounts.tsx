@@ -72,7 +72,12 @@ export function AccountsSettings() {
           {/* Adding one, at the list's foot, as a settings list does */}
           <div className="flex flex-col divide-y divide-border border-t border-border">
             <AddRow to="/accounts/new" icon={Plus} label={t("wallet.accounts.create")} onGo={() => setOpen(false)} />
-            <AddRow to="/accounts/import" icon={KeyRound} label={t("wallet.accounts.import")} onGo={() => setOpen(false)} />
+            <AddRow
+              to="/accounts/import"
+              icon={KeyRound}
+              label={t("wallet.accounts.import")}
+              onGo={() => setOpen(false)}
+            />
             {/* An offline signer holds keys only; following one is for a wallet online */}
             {!offline && (
               <AddRow to="/accounts/watch" icon={Eye} label={t("offline.watch.add")} onGo={() => setOpen(false)} />

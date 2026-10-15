@@ -21,7 +21,12 @@ type Ctx = {
   retry: () => void;
 };
 
-const UpdateContext = createContext<Ctx>({ state: { kind: "hidden" }, update: () => {}, dismiss: () => {}, retry: () => {} });
+const UpdateContext = createContext<Ctx>({
+  state: { kind: "hidden" },
+  update: () => {},
+  dismiss: () => {},
+  retry: () => {},
+});
 
 /**
  * UpdateProvider follows the app's own updates: whether a new release is

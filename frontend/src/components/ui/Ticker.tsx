@@ -57,7 +57,12 @@ export function Ticker({ text, className = "" }: { text: string; className?: str
       // Starting at the first line, so the cycle runs from mount
       initial: { y: 0 },
       animate: { y },
-      transition: { duration: total, times: at.map((t) => t / total), ease: [0.16, 1, 0.3, 1] as const, repeat: Infinity },
+      transition: {
+        duration: total,
+        times: at.map((t) => t / total),
+        ease: [0.16, 1, 0.3, 1] as const,
+        repeat: Infinity,
+      },
     };
   }, [lines, height, off]);
 

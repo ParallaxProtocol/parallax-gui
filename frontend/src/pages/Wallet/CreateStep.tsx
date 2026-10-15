@@ -308,7 +308,7 @@ function Fact({ icon: Icon, title, desc, last }: { icon: typeof Lock; title: str
         )}
       </div>
       <div className={`flex min-w-0 flex-col gap-1 pt-1.5 ${last ? "" : "pb-6"}`}>
-        <span className="text-[15px] font-medium leading-tight">{title}</span>
+        <span className="text-[15px] leading-tight font-medium">{title}</span>
         <p className="text-sm text-muted-foreground">{desc}</p>
       </div>
     </motion.li>
@@ -318,7 +318,9 @@ function Fact({ icon: Icon, title, desc, last }: { icon: typeof Lock; title: str
 /** Requirement is one condition the password must meet, its mark filling in once met. */
 export function Requirement({ met, label }: { met: boolean; label: string }) {
   return (
-    <li className={`flex items-center gap-2 text-sm transition-colors duration-200 ${met ? "text-foreground" : "text-muted-foreground"}`}>
+    <li
+      className={`flex items-center gap-2 text-sm transition-colors duration-200 ${met ? "text-foreground" : "text-muted-foreground"}`}
+    >
       <span className="relative grid size-4 shrink-0 place-items-center">
         <motion.span
           className="absolute inset-0 rounded-full border"

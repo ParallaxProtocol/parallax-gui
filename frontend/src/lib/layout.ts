@@ -6,3 +6,6 @@
  */
 export const PAGE_WIDE = "mx-auto w-full max-w-6xl";
 export const PAGE_NARROW = "mx-auto w-full max-w-3xl";
+
+/** The page's title bar's height (Toolbar's h-14), which the page keeps clear when it scrolls to a field. */
+export const TOOLBAR_HEIGHT = 56;

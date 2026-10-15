@@ -70,7 +70,8 @@ const zhSG: Dict = {
   "onboarding.datadir.title": "数据存放在哪里？",
   "onboarding.datadir.desc": "同步区块链需要几个 GB 空间。\n请选一个有充足可用空间的位置。",
   "onboarding.networking.title": "为网络出一份力",
-  "onboarding.networking.desc": "允许 Parallax 网络上的其他节点连接到您的节点。\n这让网络更健康，也能让您更快收到新区块。",
+  "onboarding.networking.desc":
+    "允许 Parallax 网络上的其他节点连接到您的节点。\n这让网络更健康，也能让您更快收到新区块。",
   "onboarding.networking.desc2": "启用后，您的 IP 会对其他节点可见。",
   "onboarding.networking.toggle": "允许入站连接",
   "onboarding.networking.recommended": "推荐",
@@ -226,7 +227,8 @@ const zhSG: Dict = {
   "node.peers": "{n} 个节点",
   "node.offlineHint": "未运行。启动它以同步并使用钱包。",
   "overview.stopped.title": "您的节点处于离线状态。",
-  "overview.stopped.desc": "启动节点以与 Parallax 网络同步，亲自验证每个区块，并在无需任何第三方的情况下为您的钱包提供服务。",
+  "overview.stopped.desc":
+    "启动节点以与 Parallax 网络同步，亲自验证每个区块，并在无需任何第三方的情况下为您的钱包提供服务。",
   "overview.sync.searching": "正在寻找节点",
   "overview.sync.searchingDesc": "正在连接网络。一旦有节点响应，就会开始同步。",
   "overview.sync.desc": "正在下载并验证区块链。追上网络最新区块后，节点即可使用。",
@@ -339,14 +341,16 @@ const zhSG: Dict = {
   "wallet.welcome.createDesc": "在这台电脑上生成的新助记词和账户。",
   "wallet.welcome.import": "导入账户",
   "wallet.welcome.importDesc": "从助记词、keystore 文件或私钥导入。",
-  "wallet.welcome.local": "私钥仅以加密形式保存在这台电脑上，绝不会发送到任何地方。您的助记词就是备份：没有人能替您找回它。",
+  "wallet.welcome.local":
+    "私钥仅以加密形式保存在这台电脑上，绝不会发送到任何地方。您的助记词就是备份：没有人能替您找回它。",
   "wallet.welcome.cta": "设置钱包",
 
   // Wallet: the wallet password
   "wallet.walletPassword": "钱包密码",
   "wallet.walletPasswordHint": "保护此钱包中每个账户的密码。",
   "wallet.locked.title": "欢迎使用 Parallax",
-  "wallet.locked.desc": "一个应用中包含完整的 Parallax 节点和钱包。通过您自己的节点持有、发送和接收 LAX，无需任何第三方。",
+  "wallet.locked.desc":
+    "一个应用中包含完整的 Parallax 节点和钱包。通过您自己的节点持有、发送和接收 LAX，无需任何第三方。",
   "wallet.locked.existing": "此钱包中已有来自早期版本的密钥。请设置其密码以继续使用：必须是创建这些密钥时使用的密码。",
   "wallet.locked.node": "您自己的节点",
   "wallet.locked.nodeDesc": "它自行验证每个区块并转发您的交易，因此没有其他人能看到您的余额。",
@@ -359,7 +363,8 @@ const zhSG: Dict = {
   "wallet.setup.title": "设置钱包密码",
   "wallet.setup.desc": "一个密码即可保护此钱包中的每个账户和助记词。每次发送、备份或添加账户时，您都需要输入它。",
   "wallet.setup.existingDesc": "此钱包中已有私钥。请输入创建这些私钥时使用的密码：它将成为钱包密码。",
-  "wallet.setup.noRecovery": "此密码用于在这台电脑上加密您的私钥，无法重置，也无法找回。如果遗失，只有您的助记词和备份文件才能找回您的账户。",
+  "wallet.setup.noRecovery":
+    "此密码用于在这台电脑上加密您的私钥，无法重置，也无法找回。如果遗失，只有您的助记词和备份文件才能找回您的账户。",
   "wallet.setup.cta": "设置密码",
   "wallet.setup.step": "密码",
   "wallet.offer.title": "创建恢复短语",
@@ -389,7 +394,8 @@ const zhSG: Dict = {
   "wallet.create.kind.derive": "从助记词生成另一个账户",
   "wallet.create.kind.deriveDesc": "来自此钱包中已有的助记词，该助记词已为它提供备份。",
   "wallet.create.kind.phrase": "新助记词",
-  "wallet.create.kind.phraseDesc": "12 个单词，可备份此账户以及您之后添加的所有账户。适用于 MetaMask 和大多数其他钱包。",
+  "wallet.create.kind.phraseDesc":
+    "12 个单词，可备份此账户以及您之后添加的所有账户。适用于 MetaMask 和大多数其他钱包。",
   "wallet.create.kind.key": "单个密钥",
   "wallet.create.kind.keyDesc": "一个拥有独立密钥的账户，以加密的 keystore 文件备份。",
   "wallet.create.recommended": "推荐",
@@ -443,7 +449,8 @@ const zhSG: Dict = {
   "wallet.import.phraseLabel": "助记词",
   "wallet.import.step.accounts": "账户",
   "wallet.import.chooseTitle": "选择账户",
-  "wallet.import.chooseDesc": "一个助记词可以包含许多账户，不同钱包会把它们放在不同的路径下。请选择要导入的账户：已使用过的已勾选。",
+  "wallet.import.chooseDesc":
+    "一个助记词可以包含许多账户，不同钱包会把它们放在不同的路径下。请选择要导入的账户：已使用过的已勾选。",
   "wallet.import.scheme.standard": "标准",
   "wallet.import.scheme.ledgerlive": "Ledger Live",
   "wallet.import.scheme.legacy": "旧版",
@@ -459,7 +466,8 @@ const zhSG: Dict = {
   "wallet.import.keyDesc": "账户的原始私钥：64 个十六进制字符。",
   "wallet.import.keyfile": "Keystore 文件",
   "wallet.import.key": "私钥",
-  "wallet.import.keyfileDesc": "JSON 格式的 keystore 文件，即 parallaxd、parallax-wallet 以及大多数以太坊风格钱包导出的格式。",
+  "wallet.import.keyfileDesc":
+    "JSON 格式的 keystore 文件，即 parallaxd、parallax-wallet 以及大多数以太坊风格钱包导出的格式。",
   "wallet.import.file": "文件",
   "wallet.import.choose": "选择文件…",
   "wallet.import.noFile": "未选择文件",
@@ -506,7 +514,8 @@ const zhSG: Dict = {
   "wallet.accounts.noBackup": "无备份",
   "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "存储位置",
-  "wallet.accounts.storageDesc": "私钥保存在此文件夹中，全部用你的钱包密码加密。节点永远看不到它们，任何连接到节点 RPC 的程序也无法使用它们。",
+  "wallet.accounts.storageDesc":
+    "私钥保存在此文件夹中，全部用你的钱包密码加密。节点永远看不到它们，任何连接到节点 RPC 的程序也无法使用它们。",
 
   // Wallet: send
   "wallet.send.title": "发送 LAX",
@@ -520,7 +529,8 @@ const zhSG: Dict = {
   "wallet.send.feeAuto": "建议",
   "wallet.send.feeManual": "自定义",
   "wallet.send.feeSuggested": "您的节点会根据最近的区块和其交易池给出建议价格。",
-  "wallet.send.feeCustom": "支付高于节点建议的价格，可以更快被打包进区块。不能更低：一笔卡住的交易会阻塞此账户之后的所有交易。",
+  "wallet.send.feeCustom":
+    "支付高于节点建议的价格，可以更快被打包进区块。不能更低：一笔卡住的交易会阻塞此账户之后的所有交易。",
   "wallet.send.gasPrice": "Gas 价格",
   "wallet.send.review": "核对",
   "wallet.review.title": "核对并签名",
@@ -550,15 +560,18 @@ const zhSG: Dict = {
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "添加密码短语（高级）",
-  "wallet.passphrase.toggleDesc": "一个额外的词，会改变该助记词生成的每个账户，与 Ledger 和 Trezor 上的功能相同。MetaMask 不支持此功能。",
-  "wallet.passphrase.warning": "也请把密码短语抄写下来。恢复时既需要这些单词，也需要完全一致的密码短语；密码短语错误会得到另一个空钱包，且不会有任何错误提示。",
+  "wallet.passphrase.toggleDesc":
+    "一个额外的词，会改变该助记词生成的每个账户，与 Ledger 和 Trezor 上的功能相同。MetaMask 不支持此功能。",
+  "wallet.passphrase.warning":
+    "也请把密码短语抄写下来。恢复时既需要这些单词，也需要完全一致的密码短语；密码短语错误会得到另一个空钱包，且不会有任何错误提示。",
   "wallet.passphrase.label": "密码短语",
   "wallet.passphrase.confirm": "确认密码短语",
   "wallet.passphrase.mismatch": "两次输入的密码短语不一致",
   "wallet.passphrase.remember": "此助记词设有密码短语：要恢复这些账户，您需要与输入时完全一致的密码短语。",
   "wallet.passphrase.importToggle": "它设有密码短语（高级）",
   "wallet.passphrase.importToggleDesc": "如果您在 Ledger 或 Trezor 上设置过额外的词，请输入它以找到相同的账户。",
-  "wallet.passphrase.importHint": "须与设置时完全一致：大小写和空格都有区别。如果下一步没有显示熟悉的账户，请检查密码短语。",
+  "wallet.passphrase.importHint":
+    "须与设置时完全一致：大小写和空格都有区别。如果下一步没有显示熟悉的账户，请检查密码短语。",
   "wallet.passphrase.show": "显示密码短语",
   "wallet.passphrase.badge": "密码短语",
 
@@ -568,7 +581,8 @@ const zhSG: Dict = {
   "wallet.phrase.yours": "您的助记词",
   "wallet.phrase.writeDown": "请将这些单词按顺序抄写在纸上，并存放在安全的地方。它们是由其生成的所有账户的备份。",
   "wallet.phrase.reveal": "点击显示",
-  "wallet.phrase.warning": "任何拥有这些单词的人都能拿走您的 LAX。切勿在任何网站上输入它们，切勿分享，也切勿将其保存在截图或这台电脑上的笔记中。",
+  "wallet.phrase.warning":
+    "任何拥有这些单词的人都能拿走您的 LAX。切勿在任何网站上输入它们，切勿分享，也切勿将其保存在截图或这台电脑上的笔记中。",
   "wallet.phrase.laterWarn": "在您确认之前，助记词不算已备份。",
   "wallet.phrase.written": "我已抄写下来",
   "wallet.phrase.quizTitle": "确认您的助记词",
@@ -592,8 +606,10 @@ const zhSG: Dict = {
   "wallet.phrase.account": "1 个账户",
   "wallet.removeSeed.title": "移除助记词",
   "wallet.removeSeed.cta": "移除助记词和账户",
-  "wallet.removeSeed.warn": "该助记词及其 {n} 个账户将从这台电脑上删除。要再次使用它们，您需要抄写下来的单词（如果设有密码短语，还需要密码短语）。",
-  "wallet.removeSeed.warnUnconfirmed": "此助记词从未确认过。如果您没有把它抄写下来，其 {n} 个账户及其中的资金将永久丢失。",
+  "wallet.removeSeed.warn":
+    "该助记词及其 {n} 个账户将从这台电脑上删除。要再次使用它们，您需要抄写下来的单词（如果设有密码短语，还需要密码短语）。",
+  "wallet.removeSeed.warnUnconfirmed":
+    "此助记词从未确认过。如果您没有把它抄写下来，其 {n} 个账户及其中的资金将永久丢失。",
   "wallet.removeSeed.confirm": "我已了解，并且已抄写下助记词，或其账户中没有任何资产。",
   "wallet.phrase.missingTitle": "您的助记词尚未确认",
   "wallet.phrase.missingDesc": "如果这台电脑丢失或磁盘损坏，助记词是找回此账户的唯一途径。请抄写并确认它。",
@@ -640,7 +656,8 @@ const zhSG: Dict = {
   "settings.theme.light": "浅色",
   "settings.theme.dark": "深色",
   "settings.avatars": "账户头像",
-  "settings.avatars.desc": "根据每个地址生成的图案。Jazzicon 是 MetaMask 的默认样式；Blockies 是 Etherscan 使用的样式。",
+  "settings.avatars.desc":
+    "根据每个地址生成的图案。Jazzicon 是 MetaMask 的默认样式；Blockies 是 Etherscan 使用的样式。",
   "settings.dataDir.desc": "区块链的存储位置。更换位置将重新开始同步。",
   "settings.syncMode.desc": "Snap 最快；完整同步会重放每个区块。",
   "settings.maxPeers.desc": "节点保持连接的最大节点数。",
@@ -675,37 +692,65 @@ const zhSG: Dict = {
   "settings.group.logs": "日志",
   "settings.txpool.desc": "节点保留和转发待处理交易的规则。",
   "settings.limits.desc": "保护节点免受高开销或高风险 RPC 请求影响的上限。",
-  "settings.preventSleep.more": "电脑进入睡眠时，同步会暂停，因此整夜无人看管的同步可能会损失数小时。\n\n开启后，应用仅在节点同步期间阻止系统睡眠，节点追上进度后立即解除。显示器仍会照常关闭和锁定。",
-  "settings.notifications.more": "应用会在以下情况发送桌面通知：\n\n• 耗时超过几分钟的同步完成时，让您知道节点已追上最新进度；\n\n• 节点因磁盘将满而自行停止时，以便您在重启前释放空间。\n\n仅在应用运行时才会显示通知。",
-  "settings.ancientDir.more": "节点将近期链数据保存在快速的键值数据库中，并把较旧的区块、区块头和收据移入只追加的“ancient”存储。该存储占据数据目录的大部分空间，且很少被读取。\n\n将其指向更大、较慢的磁盘，即可让 SSD 只保存近期数据。留空则所有数据都保存在数据目录内。\n\n更改此项不会移动现有数据：请在节点停止时自行移动 ancient 文件夹，否则节点会重新创建 ancient 存储。",
-  "settings.minFreeDisk.more": "数据库在写入过程中耗尽磁盘空间可能会损坏，需要完整重新同步。为防止这种情况，节点每 30 秒检查一次数据磁盘的可用空间，低于此值时会干净地自行停止；在接近该值的两倍时会先发出警告。\n\n留空则使用 trie dirty 缓存的两倍，与命令行客户端的默认值相同。0 关闭此保护。",
-  "settings.syncMode.more": "Snap 同步直接从其他节点下载每个账户的近期状态，对照链进行验证，然后正常跟进新区块。只需数小时而非数天即可得到可用的节点。\n\n完整同步从创世区块开始下载每个区块，并执行每笔交易以自行重建状态。速度较慢，但不信任任何未经自己计算的数据。\n\n无论哪种方式，节点最终都会完整验证每个新区块。更改模式不会重新同步已下载的链。",
-  "settings.archive.more": "通常节点会修剪旧状态，只保留验证新区块所需的数据和近期历史。归档节点保留每个区块的状态，因此您可以查询过去任意时刻的余额或运行追踪——这正是区块浏览器和索引器所需要的。\n\n它占用的磁盘空间多得多，且增长很快。过去的状态只能通过从创世区块开始的完整同步补齐，因此请将同步模式切换为 完整 并使用空的数据目录。归档模式还会保留 preimage 和完整的交易索引。",
-  "settings.txLookupLimit.more": "按哈希查找交易（eth_getTransactionByHash、收据）需要该交易的索引条目。节点为这么多个近期区块保留这些条目，并删除更早的条目以节省空间。\n\n留空约保留一年的区块。0 索引整条链，查询旧交易的钱包和浏览器需要这样设置。归档模式始终索引全部内容。",
-  "settings.snapshot.more": "快照是与状态 trie 并存的、包含每个账户和存储槽的扁平副本。从中读取比遍历 trie 快得多，可加快区块导入和 RPC 调用。\n\nSnap 同步需要它，因此在 Snap 同步下始终开启。在完整同步下可以关闭以节省磁盘空间，其内存将转给 trie 缓存使用。",
-  "settings.prefetch.more": "导入区块时，节点会利用空闲线程预先执行其中的交易，把它们将要访问的状态加载到内存中。这样真正导入时，所需的大部分数据已经在缓存中。\n\n关闭它可节省 CPU 和磁盘读取，但导入会变慢。主要在慢速磁盘或繁忙的机器上有影响。",
-  "settings.preimages.more": "状态 trie 以键的哈希存储账户和存储槽。Preimage 就是原始键，某些调试和状态导出工具需要它们来显示可读的地址和存储槽。\n\n记录它们会占用额外的磁盘空间。归档模式始终会记录。",
+  "settings.preventSleep.more":
+    "电脑进入睡眠时，同步会暂停，因此整夜无人看管的同步可能会损失数小时。\n\n开启后，应用仅在节点同步期间阻止系统睡眠，节点追上进度后立即解除。显示器仍会照常关闭和锁定。",
+  "settings.notifications.more":
+    "应用会在以下情况发送桌面通知：\n\n• 耗时超过几分钟的同步完成时，让您知道节点已追上最新进度；\n\n• 节点因磁盘将满而自行停止时，以便您在重启前释放空间。\n\n仅在应用运行时才会显示通知。",
+  "settings.ancientDir.more":
+    "节点将近期链数据保存在快速的键值数据库中，并把较旧的区块、区块头和收据移入只追加的“ancient”存储。该存储占据数据目录的大部分空间，且很少被读取。\n\n将其指向更大、较慢的磁盘，即可让 SSD 只保存近期数据。留空则所有数据都保存在数据目录内。\n\n更改此项不会移动现有数据：请在节点停止时自行移动 ancient 文件夹，否则节点会重新创建 ancient 存储。",
+  "settings.minFreeDisk.more":
+    "数据库在写入过程中耗尽磁盘空间可能会损坏，需要完整重新同步。为防止这种情况，节点每 30 秒检查一次数据磁盘的可用空间，低于此值时会干净地自行停止；在接近该值的两倍时会先发出警告。\n\n留空则使用 trie dirty 缓存的两倍，与命令行客户端的默认值相同。0 关闭此保护。",
+  "settings.syncMode.more":
+    "Snap 同步直接从其他节点下载每个账户的近期状态，对照链进行验证，然后正常跟进新区块。只需数小时而非数天即可得到可用的节点。\n\n完整同步从创世区块开始下载每个区块，并执行每笔交易以自行重建状态。速度较慢，但不信任任何未经自己计算的数据。\n\n无论哪种方式，节点最终都会完整验证每个新区块。更改模式不会重新同步已下载的链。",
+  "settings.archive.more":
+    "通常节点会修剪旧状态，只保留验证新区块所需的数据和近期历史。归档节点保留每个区块的状态，因此您可以查询过去任意时刻的余额或运行追踪——这正是区块浏览器和索引器所需要的。\n\n它占用的磁盘空间多得多，且增长很快。过去的状态只能通过从创世区块开始的完整同步补齐，因此请将同步模式切换为 完整 并使用空的数据目录。归档模式还会保留 preimage 和完整的交易索引。",
+  "settings.txLookupLimit.more":
+    "按哈希查找交易（eth_getTransactionByHash、收据）需要该交易的索引条目。节点为这么多个近期区块保留这些条目，并删除更早的条目以节省空间。\n\n留空约保留一年的区块。0 索引整条链，查询旧交易的钱包和浏览器需要这样设置。归档模式始终索引全部内容。",
+  "settings.snapshot.more":
+    "快照是与状态 trie 并存的、包含每个账户和存储槽的扁平副本。从中读取比遍历 trie 快得多，可加快区块导入和 RPC 调用。\n\nSnap 同步需要它，因此在 Snap 同步下始终开启。在完整同步下可以关闭以节省磁盘空间，其内存将转给 trie 缓存使用。",
+  "settings.prefetch.more":
+    "导入区块时，节点会利用空闲线程预先执行其中的交易，把它们将要访问的状态加载到内存中。这样真正导入时，所需的大部分数据已经在缓存中。\n\n关闭它可节省 CPU 和磁盘读取，但导入会变慢。主要在慢速磁盘或繁忙的机器上有影响。",
+  "settings.preimages.more":
+    "状态 trie 以键的哈希存储账户和存储槽。Preimage 就是原始键，某些调试和状态导出工具需要它们来显示可读的地址和存储槽。\n\n记录它们会占用额外的磁盘空间。归档模式始终会记录。",
   "settings.smartFee.desc": "Bitcoin Core 风格的手续费估算。",
-  "settings.smartFee.more": "Gas 价格预言机有两种算法。默认算法使用近期区块小费的百分位数——快速且久经考验。Smart Fee 选项移植了 Bitcoin Core 的 estimateSmartFee 算法，它将观察到的确认分桶统计，并反推出能达到目标确认深度的手续费。\n\nSmart Fee 需要长时间、连续的确认观察窗口才能给出准确估算。Parallax Wallet 通常按需启动和停止，而不是全天候运行，因此预言机可能积累不到足够的数据，此时会回退到默认最低值。始终在线的节点能最大程度地发挥它的作用。",
+  "settings.smartFee.more":
+    "Gas 价格预言机有两种算法。默认算法使用近期区块小费的百分位数——快速且久经考验。Smart Fee 选项移植了 Bitcoin Core 的 estimateSmartFee 算法，它将观察到的确认分桶统计，并反推出能达到目标确认深度的手续费。\n\nSmart Fee 需要长时间、连续的确认观察窗口才能给出准确估算。Parallax Wallet 通常按需启动和停止，而不是全天候运行，因此预言机可能积累不到足够的数据，此时会回退到默认最低值。始终在线的节点能最大程度地发挥它的作用。",
   "settings.allowInbound.desc": "允许其他节点连接到您的节点。",
-  "settings.allowInbound.more": "启用后，节点会请求路由器转发其监听端口（通过 UPnP 或 NAT-PMP），让互联网上的节点可以连接您。接受入站节点有助于网络健康，也能让您更快收到区块。\n\n作为代价，您的 IP 地址会被其他节点发现。如果您处于严格的防火墙之后或只想保持出站连接，请关闭此项：节点仍会主动连接其他节点。",
-  "settings.nat.more": "自动 会尝试 UPnP 和 NAT-PMP，并使用路由器响应的那一种。选择其中一种可跳过另一种。\n\n固定公网 IP 适用于您已自行在路由器上转发端口，或本机拥有公网地址的情况：节点会直接公布该 IP，而不询问路由器。\n\n仅在允许入站连接时使用。",
-  "settings.discovery.more": "开启发现后，节点会从其他节点、DNS 种子和 DNS 发现树中了解节点，并将它们保存在地址簿中。\n\n关闭后，节点只连接您从节点列表中添加的节点和引导节点。这适用于私有部署，但节点较少的节点更容易被隔离。",
-  "settings.legacyDiscovery.more": "Parallax v2 节点使用 v2 握手连接，并将节点保存在地址簿中。v1.x 传输协议（UDP 发现和旧版握手）为兼容旧节点而保留。\n\n自动 会响应主动联系的 v1 节点并接受旧版连接，但不会主动寻找 v1 节点。这是默认设置。\n\n开 还会使用 v1 发现来寻找要连接的节点。\n\n关 会完全关闭 v1 接口：没有 UDP 套接字，也没有旧版握手。节点变为仅 v2，其 enode URL 仅供参考。",
-  "settings.bootnodes.more": "引导节点是地址簿为空的节点开始寻找其他节点的起点。每行一个条目：\n\n• enode:// URL 用于 v1 发现的初始节点；\n\n• ip:port 或 <address>.onion:port 条目使用 v2 握手连接。\n\n自定义条目会替换内置条目。除非关闭节点发现，DNS 种子仍会与它们一同使用。",
-  "settings.proxy.more": "所有出站对等连接都经由此 SOCKS5 代理，包括 onion 地址。将其设为本地 Tor（通常为 127.0.0.1:9050），即可向您连接的节点隐藏 IP 地址。\n\nDNS 种子名称也会通过代理解析，因此不会有查询泄露给本地解析器。入站连接不受影响：请同时关闭入站连接，以停止在您自己的地址上接受节点连接。",
-  "settings.listenOnion.more": "如果本机运行着 Tor 且控制端口开放，节点会请求它创建一个转发到监听端口的 onion 服务，让其他节点无需得知您的 IP 地址即可通过 Tor 连接您。服务密钥保存在数据目录中，因此重启后地址保持不变。\n\n如果无法连接 Tor，此项除了偶尔静默重试外不起作用。除非设置了 Onion 代理，节点还会使用 Tor 的 SOCKS 端口连接 onion 节点。",
-  "settings.onlyNet.more": "节点只连接所选网络上的节点。仅选择 Onion，并配合代理或 Onion 服务，即可让所有出站连接都经由 Tor。\n\n未选择则允许所有网络。入站连接和您手动添加的节点不受影响。",
-  "settings.onionProxy.more": "Onion 地址经由此 SOCKS5 代理而非主代理。留空则使用主代理；Onion 服务运行时则使用 Tor 的 SOCKS 端口。\n\n设为 0 则完全不建立 onion 连接，即使设置了代理也是如此。",
-  "settings.proxyRandomize.more": "Tor 会为使用不同 SOCKS 凭据的连接分配独立线路。开启后，节点为每个连接使用新的凭据，因此任意两个节点都不会共享线路，也无法通过出口节点将它们相互关联。\n\n关闭后所有节点共享一条线路，占用的 Tor 资源更少。",
+  "settings.allowInbound.more":
+    "启用后，节点会请求路由器转发其监听端口（通过 UPnP 或 NAT-PMP），让互联网上的节点可以连接您。接受入站节点有助于网络健康，也能让您更快收到区块。\n\n作为代价，您的 IP 地址会被其他节点发现。如果您处于严格的防火墙之后或只想保持出站连接，请关闭此项：节点仍会主动连接其他节点。",
+  "settings.nat.more":
+    "自动 会尝试 UPnP 和 NAT-PMP，并使用路由器响应的那一种。选择其中一种可跳过另一种。\n\n固定公网 IP 适用于您已自行在路由器上转发端口，或本机拥有公网地址的情况：节点会直接公布该 IP，而不询问路由器。\n\n仅在允许入站连接时使用。",
+  "settings.discovery.more":
+    "开启发现后，节点会从其他节点、DNS 种子和 DNS 发现树中了解节点，并将它们保存在地址簿中。\n\n关闭后，节点只连接您从节点列表中添加的节点和引导节点。这适用于私有部署，但节点较少的节点更容易被隔离。",
+  "settings.legacyDiscovery.more":
+    "Parallax v2 节点使用 v2 握手连接，并将节点保存在地址簿中。v1.x 传输协议（UDP 发现和旧版握手）为兼容旧节点而保留。\n\n自动 会响应主动联系的 v1 节点并接受旧版连接，但不会主动寻找 v1 节点。这是默认设置。\n\n开 还会使用 v1 发现来寻找要连接的节点。\n\n关 会完全关闭 v1 接口：没有 UDP 套接字，也没有旧版握手。节点变为仅 v2，其 enode URL 仅供参考。",
+  "settings.bootnodes.more":
+    "引导节点是地址簿为空的节点开始寻找其他节点的起点。每行一个条目：\n\n• enode:// URL 用于 v1 发现的初始节点；\n\n• ip:port 或 <address>.onion:port 条目使用 v2 握手连接。\n\n自定义条目会替换内置条目。除非关闭节点发现，DNS 种子仍会与它们一同使用。",
+  "settings.proxy.more":
+    "所有出站对等连接都经由此 SOCKS5 代理，包括 onion 地址。将其设为本地 Tor（通常为 127.0.0.1:9050），即可向您连接的节点隐藏 IP 地址。\n\nDNS 种子名称也会通过代理解析，因此不会有查询泄露给本地解析器。入站连接不受影响：请同时关闭入站连接，以停止在您自己的地址上接受节点连接。",
+  "settings.listenOnion.more":
+    "如果本机运行着 Tor 且控制端口开放，节点会请求它创建一个转发到监听端口的 onion 服务，让其他节点无需得知您的 IP 地址即可通过 Tor 连接您。服务密钥保存在数据目录中，因此重启后地址保持不变。\n\n如果无法连接 Tor，此项除了偶尔静默重试外不起作用。除非设置了 Onion 代理，节点还会使用 Tor 的 SOCKS 端口连接 onion 节点。",
+  "settings.onlyNet.more":
+    "节点只连接所选网络上的节点。仅选择 Onion，并配合代理或 Onion 服务，即可让所有出站连接都经由 Tor。\n\n未选择则允许所有网络。入站连接和您手动添加的节点不受影响。",
+  "settings.onionProxy.more":
+    "Onion 地址经由此 SOCKS5 代理而非主代理。留空则使用主代理；Onion 服务运行时则使用 Tor 的 SOCKS 端口。\n\n设为 0 则完全不建立 onion 连接，即使设置了代理也是如此。",
+  "settings.proxyRandomize.more":
+    "Tor 会为使用不同 SOCKS 凭据的连接分配独立线路。开启后，节点为每个连接使用新的凭据，因此任意两个节点都不会共享线路，也无法通过出口节点将它们相互关联。\n\n关闭后所有节点共享一条线路，占用的 Tor 资源更少。",
   "settings.stats.desc": "在 status.parallaxprotocol.org 上显示此节点。",
-  "settings.stats.toggle.more": "节点会以保存在数据目录中的随机名称，向 status.parallaxprotocol.org 上的公共仪表板报告自身状态。\n\n它会分享区块高度、节点数、同步和挖矿状态、节点延迟、客户端版本和操作系统。不会发送任何钱包、账户或交易数据，但统计服务器能看到您的 IP 地址。",
-  "settings.rpc.enable.more": "启动一个 JSON-RPC 服务器，供 MetaMask 等钱包、dapp 和开发者工具通过您自己的节点（而非第三方服务商）读取链上数据并发送交易。\n\n默认仅在 127.0.0.1 上监听，因此只有本机上的程序可以访问。您可以在 高级 中更改地址——切勿将其暴露在公共互联网上。",
-  "settings.rpc.host.more": "127.0.0.1 只接受来自本机的连接。局域网（LAN）地址或 0.0.0.0（所有接口）还允许其他机器连接，例如您手机或另一台电脑上的钱包。\n\n任何能访问服务器的人都可以通过您的节点读取链上数据并提交交易，因此请仅在受信任且有防火墙保护的网络中这样做。请在 允许的主机名 中添加其他机器使用的名称。",
-  "settings.rpc.vhosts.more": "每个 HTTP 请求都会注明其目标主机。节点会拒绝指向不在此列表中的名称的请求，从而防止恶意网页通过 DNS 重绑定访问您的节点——即让您的浏览器以该网页自己的域名与 127.0.0.1 通信。\n\n指向 IP 地址的请求始终被接受。如果您通过某个名称访问节点，请将其添加到此处；只有在了解风险的情况下才使用 * 接受任意名称。",
-  "settings.rpc.unprotected.more": "带链 ID（EIP-155）签名的交易只在本链上有效。未受保护的交易签名时不含链 ID，在所有使用相同地址格式的链上都有效，因此任何人都可以在其他链上重放它们。\n\n仅当您信任的某个工具无法使用链 ID 签名时才开启此项，例如某些用于确定性合约地址的部署脚本。",
-  "settings.metrics.more": "节点始终会为数据库、网络、同步和交易池保留轻量计数器，应用会显示其中一部分，例如网络流量。开启后，这些指标将通过指标端点提供，地址为 /debug/metrics（JSON）和 /debug/metrics/prometheus（供 Prometheus 或 Grafana 使用），并允许详细指标。\n\n守护进程在启动时设置指标，因此需重启应用后生效。",
-  "settings.group.performance.more": "节点将缓存内存分为四部分：\n\n• 数据库缓存保存最近读写的链数据；\n\n• trie clean 缓存保存从磁盘读取的状态 trie 节点；\n\n• trie dirty 缓存保存尚未写入磁盘的状态变更——越大意味着写入次数越少、每次写入越大；\n\n• 快照缓存保存扁平状态快照的条目。\n\n默认值合计 4 GB，与主网上的命令行客户端相同。如果总量超过 RAM 的三分之一，节点会按比例缩减，以免系统内存不足。",
+  "settings.stats.toggle.more":
+    "节点会以保存在数据目录中的随机名称，向 status.parallaxprotocol.org 上的公共仪表板报告自身状态。\n\n它会分享区块高度、节点数、同步和挖矿状态、节点延迟、客户端版本和操作系统。不会发送任何钱包、账户或交易数据，但统计服务器能看到您的 IP 地址。",
+  "settings.rpc.enable.more":
+    "启动一个 JSON-RPC 服务器，供 MetaMask 等钱包、dapp 和开发者工具通过您自己的节点（而非第三方服务商）读取链上数据并发送交易。\n\n默认仅在 127.0.0.1 上监听，因此只有本机上的程序可以访问。您可以在 高级 中更改地址——切勿将其暴露在公共互联网上。",
+  "settings.rpc.host.more":
+    "127.0.0.1 只接受来自本机的连接。局域网（LAN）地址或 0.0.0.0（所有接口）还允许其他机器连接，例如您手机或另一台电脑上的钱包。\n\n任何能访问服务器的人都可以通过您的节点读取链上数据并提交交易，因此请仅在受信任且有防火墙保护的网络中这样做。请在 允许的主机名 中添加其他机器使用的名称。",
+  "settings.rpc.vhosts.more":
+    "每个 HTTP 请求都会注明其目标主机。节点会拒绝指向不在此列表中的名称的请求，从而防止恶意网页通过 DNS 重绑定访问您的节点——即让您的浏览器以该网页自己的域名与 127.0.0.1 通信。\n\n指向 IP 地址的请求始终被接受。如果您通过某个名称访问节点，请将其添加到此处；只有在了解风险的情况下才使用 * 接受任意名称。",
+  "settings.rpc.unprotected.more":
+    "带链 ID（EIP-155）签名的交易只在本链上有效。未受保护的交易签名时不含链 ID，在所有使用相同地址格式的链上都有效，因此任何人都可以在其他链上重放它们。\n\n仅当您信任的某个工具无法使用链 ID 签名时才开启此项，例如某些用于确定性合约地址的部署脚本。",
+  "settings.metrics.more":
+    "节点始终会为数据库、网络、同步和交易池保留轻量计数器，应用会显示其中一部分，例如网络流量。开启后，这些指标将通过指标端点提供，地址为 /debug/metrics（JSON）和 /debug/metrics/prometheus（供 Prometheus 或 Grafana 使用），并允许详细指标。\n\n守护进程在启动时设置指标，因此需重启应用后生效。",
+  "settings.group.performance.more":
+    "节点将缓存内存分为四部分：\n\n• 数据库缓存保存最近读写的链数据；\n\n• trie clean 缓存保存从磁盘读取的状态 trie 节点；\n\n• trie dirty 缓存保存尚未写入磁盘的状态变更——越大意味着写入次数越少、每次写入越大；\n\n• 快照缓存保存扁平状态快照的条目。\n\n默认值合计 4 GB，与主网上的命令行客户端相同。如果总量超过 RAM 的三分之一，节点会按比例缩减，以免系统内存不足。",
   "settings.readMore": "了解更多",
   "settings.cliFlag": "等效命令行参数",
   "settings.advanced": "高级",
@@ -783,7 +828,8 @@ const zhSG: Dict = {
   "settings.torPassword.desc": "仅用于密码认证。以明文保存。",
   "settings.torPassword.placeholder": "Cookie 认证",
 
-  "settings.rpc.exposed": "RPC 服务器正在本机以外的网络上监听。任何能访问它的人都可以通过您的节点读取链上数据并提交交易。请仅在受信任且有防火墙保护的网络中这样做。",
+  "settings.rpc.exposed":
+    "RPC 服务器正在本机以外的网络上监听。任何能访问它的人都可以通过您的节点读取链上数据并提交交易。请仅在受信任且有防火墙保护的网络中这样做。",
   "settings.rpc.host": "监听地址",
   "settings.rpc.host.desc": "服务器监听的网络接口。",
   "settings.rpc.apis": "API",

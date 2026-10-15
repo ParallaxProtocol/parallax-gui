@@ -10,7 +10,8 @@ import { Notice } from "../../components/ui/bits";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { Modal, ModalForm } from "../../components/ui/Modal";
 import { QRScanner } from "../../components/offline/QRScanner";
-import { NameField, useBusy } from "./AccountForms";
+import { NameField } from "./AccountForms";
+import { useBusy } from "./accountActions";
 import { Field } from "./common";
 import { FlowPage, Part, StepFooter, StepPanel } from "./flow";
 

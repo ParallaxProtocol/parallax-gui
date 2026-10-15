@@ -297,11 +297,7 @@ export default function Hello({
               </div>
             </Screen>
           ) : stage === "quiz" && phrase ? (
-            <Quiz
-              key="quiz"
-              phrase={phrase}
-              onConfirmed={finish}
-            />
+            <Quiz key="quiz" phrase={phrase} onConfirmed={finish} />
           ) : stage === "done" ? (
             <Screen
               key="done"
@@ -538,7 +534,7 @@ function ChoosePassword({
           <Requirement met={longEnough} label={t("wallet.create.req.length", { n: MIN_PASSWORD })} />
         </ul>
         <p className="text-sm text-warn-ink">{t("wallet.setup.noRecovery")}</p>
-        <button type="submit" className="btn btn-primary btn-lg mt-2 self-center min-w-64" disabled={!longEnough}>
+        <button type="submit" className="btn btn-primary btn-lg mt-2 min-w-64 self-center" disabled={!longEnough}>
           {t("common.continue")}
           <ArrowRight className="size-4" />
         </button>
@@ -593,7 +589,7 @@ function ConfirmPassword({ password, onDone }: { password: string; onDone: () =>
           <Requirement met={matches} label={t("wallet.create.req.match")} />
         </ul>
         {error && <Notice tone="critical">{error}</Notice>}
-        <button type="submit" className="btn btn-primary btn-lg mt-2 self-center min-w-64" disabled={!matches || busy}>
+        <button type="submit" className="btn btn-primary btn-lg mt-2 min-w-64 self-center" disabled={!matches || busy}>
           {busy && <Loader2 className="size-4 animate-spin" />}
           {t("hello.confirm.cta")}
         </button>

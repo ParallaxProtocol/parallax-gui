@@ -20,7 +20,13 @@ type Ctx = {
   clear: () => void;
 };
 
-const NoticeContext = createContext<Ctx>({ notices: [], unread: 0, push: () => {}, markRead: () => {}, clear: () => {} });
+const NoticeContext = createContext<Ctx>({
+  notices: [],
+  unread: 0,
+  push: () => {},
+  markRead: () => {},
+  clear: () => {},
+});
 
 /** How many notifications are kept; the oldest go first. */
 const KEEP = 50;
@@ -36,7 +42,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const push = useCallback((kind: NoticeKind, title: string, body: string) => {
     setNotices((n) => [{ id: nextId++, kind, title, body, at: Date.now(), read: false }, ...n].slice(0, KEEP));
   }, []);
-  const markRead = useCallback(() => setNotices((n) => (n.some((x) => !x.read) ? n.map((x) => ({ ...x, read: true })) : n)), []);
+  const markRead = useCallback(
+    () => setNotices((n) => (n.some((x) => !x.read) ? n.map((x) => ({ ...x, read: true })) : n)),
+    [],
+  );
   const clear = useCallback(() => setNotices([]), []);
   const value = useMemo(
     () => ({ notices, unread: notices.filter((n) => !n.read).length, push, markRead, clear }),

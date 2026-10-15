@@ -2,7 +2,8 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { FileKey2, KeyRound, Loader2, Plus, Trash2 } from "lucide-react";
 import { SPRING } from "../../lib/motion";
-import { api, saveBackup, SeedInfo, walletError, WalletAccount } from "../../lib/api";
+import { api, SeedInfo, WalletAccount } from "../../lib/api";
+import { backUp, useBusy } from "./accountActions";
 import { useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Modal, ModalForm } from "../../components/ui/Modal";
@@ -17,37 +18,6 @@ import { AddressAvatar } from "../../components/ui/AddressAvatar";
  * Passwords stay in the form's own state, sent to the backend for the one
  * action they are typed for, and are gone when the form closes.
  */
-
-/** useBusy runs one action at a time, keeping its error in the user's language. */
-export function useBusy() {
-  const t = useT();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const run = async <T,>(fn: () => Promise<T>): Promise<T | undefined> => {
-    setBusy(true);
-    setError(null);
-    try {
-      return await fn();
-    } catch (e) {
-      setError(walletError(e, t));
-      return undefined;
-    } finally {
-      setBusy(false);
-    }
-  };
-  return { busy, error, setError, run };
-}
-
-/**
- * backUp saves an account's keystore file where the user picks, once the
- * password opens it, and records it as backed up. False if they cancelled.
- */
-export async function backUp(address: string, password: string): Promise<boolean> {
-  const b = await api.walletBackup(address, password);
-  const saved = await saveBackup(b.fileName, b.keyfile);
-  if (saved) await api.walletMarkBackedUp(address);
-  return saved;
-}
 
 export function NameField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const t = useT();
@@ -79,7 +49,13 @@ type AccountModalProps = { open: boolean; onClose: () => void; account: WalletAc
 export function BackupModal({ open, onClose, account, label }: AccountModalProps) {
   const t = useT();
   return (
-    <Modal open={open && !!account} onClose={onClose} title={t("wallet.backup.title")} subtitle={label} icon={<FileKey2 className="size-4" />}>
+    <Modal
+      open={open && !!account}
+      onClose={onClose}
+      title={t("wallet.backup.title")}
+      subtitle={label}
+      icon={<FileKey2 className="size-4" />}
+    >
       {account && <Backup account={account} onClose={onClose} />}
     </Modal>
   );
@@ -145,7 +121,9 @@ function Backup({ account, onClose }: { account: WalletAccount; onClose: () => v
               <p className="text-muted-foreground">
                 {rich(t("wallet.backup.restore"), {
                   file: <strong className="font-medium text-foreground">{t("wallet.backup.restore.file")}</strong>,
-                  password: <strong className="font-medium text-foreground">{t("wallet.backup.restore.password")}</strong>,
+                  password: (
+                    <strong className="font-medium text-foreground">{t("wallet.backup.restore.password")}</strong>
+                  ),
                 })}
               </p>
             </div>
@@ -168,7 +146,12 @@ function Backup({ account, onClose }: { account: WalletAccount; onClose: () => v
 export function PasswordModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT();
   return (
-    <Modal open={open} onClose={onClose} title={t("wallet.changePassword.title")} icon={<KeyRound className="size-4" />}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={t("wallet.changePassword.title")}
+      icon={<KeyRound className="size-4" />}
+    >
       <ChangePassword onClose={onClose} />
     </Modal>
   );
@@ -233,7 +216,13 @@ function ChangePassword({ onClose }: { onClose: () => void }) {
 export function RemoveModal({ open, onClose, account, label }: AccountModalProps) {
   const t = useT();
   return (
-    <Modal open={open && !!account} onClose={onClose} title={t("wallet.remove.title")} icon={<Trash2 className="size-4" />} tone="danger">
+    <Modal
+      open={open && !!account}
+      onClose={onClose}
+      title={t("wallet.remove.title")}
+      icon={<Trash2 className="size-4" />}
+      tone="danger"
+    >
       {account && <Remove account={account} label={label} onClose={onClose} />}
     </Modal>
   );
@@ -298,7 +287,13 @@ function Remove({ account, label, onClose }: { account: WalletAccount; label: st
       <div className={`transition-opacity duration-200 ${understood ? "" : "opacity-50"}`}>
         <Field label={t("wallet.walletPassword")}>
           {(id) => (
-            <PasswordInput id={id} value={password} onChange={setPassword} disabled={!understood} inputRef={passwordInput} />
+            <PasswordInput
+              id={id}
+              value={password}
+              onChange={setPassword}
+              disabled={!understood}
+              inputRef={passwordInput}
+            />
           )}
         </Field>
       </div>
@@ -322,7 +317,13 @@ function rich(template: string, parts: Record<string, ReactNode>): ReactNode[] {
 export function DeriveModal({ open, onClose, seed }: { open: boolean; onClose: () => void; seed: SeedInfo | null }) {
   const t = useT();
   return (
-    <Modal open={open && !!seed} onClose={onClose} title={t("wallet.derive.title")} subtitle={seed?.name} icon={<Plus className="size-4" />}>
+    <Modal
+      open={open && !!seed}
+      onClose={onClose}
+      title={t("wallet.derive.title")}
+      subtitle={seed?.name}
+      icon={<Plus className="size-4" />}
+    >
       {seed && <Derive seed={seed} onClose={onClose} />}
     </Modal>
   );
@@ -371,7 +372,15 @@ function Derive({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) {
  * RemoveSeedModal deletes a recovery phrase and every account made from it,
  * once the consequence is acknowledged and the wallet password given.
  */
-export function RemoveSeedModal({ open, onClose, seed }: { open: boolean; onClose: () => void; seed: SeedInfo | null }) {
+export function RemoveSeedModal({
+  open,
+  onClose,
+  seed,
+}: {
+  open: boolean;
+  onClose: () => void;
+  seed: SeedInfo | null;
+}) {
   const t = useT();
   return (
     <Modal
@@ -428,14 +437,24 @@ function RemoveSeed({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) 
       }
     >
       <p className="text-critical-ink">
-        {seed.confirmed ? t("wallet.removeSeed.warn", { n: seed.accounts }) : t("wallet.removeSeed.warnUnconfirmed", { n: seed.accounts })}
+        {seed.confirmed
+          ? t("wallet.removeSeed.warn", { n: seed.accounts })
+          : t("wallet.removeSeed.warnUnconfirmed", { n: seed.accounts })}
       </p>
       <Checkbox checked={understood} onChange={acknowledge}>
         {t("wallet.removeSeed.confirm")}
       </Checkbox>
       <div className={`transition-opacity duration-200 ${understood ? "" : "opacity-50"}`}>
         <Field label={t("wallet.walletPassword")}>
-          {(id) => <PasswordInput id={id} value={password} onChange={setPassword} disabled={!understood} inputRef={passwordInput} />}
+          {(id) => (
+            <PasswordInput
+              id={id}
+              value={password}
+              onChange={setPassword}
+              disabled={!understood}
+              inputRef={passwordInput}
+            />
+          )}
         </Field>
       </div>
       {error && <Notice tone="critical">{error}</Notice>}

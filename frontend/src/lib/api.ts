@@ -739,7 +739,11 @@ export type AssistantRequest = {
   contact?: { id?: string; name: string; address: string; note: string; previous?: Contact };
   transaction?: TxProposal;
   /** A permission prompt: the feature a tool needs, and the tool. */
-  permission?: { feature: keyof MCPAllow; tool: string; /** Asked to start the node a tool needs. */ nodeStopped?: boolean };
+  permission?: {
+    feature: keyof MCPAllow;
+    tool: string;
+    /** Asked to start the node a tool needs. */ nodeStopped?: boolean;
+  };
 };
 
 /** The AI assistant (MCP) server, and how to connect to it. */
@@ -851,7 +855,8 @@ export const api = {
     call<SignedMessage>("MessageSign", address, message, password),
   messageVerify: (address: string, message: string, signature: string) =>
     call<MessageCheck>("MessageVerify", address, message, signature),
-  messageBuildRequest: (address: string, message: string) => call<MessageRequest>("MessageBuildRequest", address, message),
+  messageBuildRequest: (address: string, message: string) =>
+    call<MessageRequest>("MessageBuildRequest", address, message),
   messageReviewRequest: (data: string) => call<MessageRequest>("MessageReviewRequest", data),
   messageSignRequest: (data: string, password: string) => call<SignedMessage>("MessageSignRequest", data, password),
   messageReviewSigned: (data: string) => call<SignedMessage & MessageCheck>("MessageReviewSigned", data),

@@ -19,10 +19,12 @@ const fr: Dict = {
   "hello.sync.doneDesc": "Il a rattrapé le réseau et reste à jour tant que l'app est ouverte.",
   "hello.sync.background": "Continuer pendant la synchronisation",
   "hello.offer.title": "Configurez votre phrase de récupération",
-  "hello.offer.desc": "Le mot de passe de votre portefeuille est défini. Créez maintenant une phrase de récupération pour sauvegarder vos comptes, ou importez celle que vous avez déjà.",
+  "hello.offer.desc":
+    "Le mot de passe de votre portefeuille est défini. Créez maintenant une phrase de récupération pour sauvegarder vos comptes, ou importez celle que vous avez déjà.",
   "hello.offer.import": "Importer une phrase de récupération",
   "hello.password.title": "Créer un mot de passe du portefeuille",
-  "hello.password.desc": "Il protège chaque compte que vous créez ou importez ici. Personne ne peut le réinitialiser pour vous : choisissez-en un dont vous vous souviendrez.",
+  "hello.password.desc":
+    "Il protège chaque compte que vous créez ou importez ici. Personne ne peut le réinitialiser pour vous : choisissez-en un dont vous vous souviendrez.",
   "hello.confirm.title": "Saisissez-le à nouveau",
   "hello.confirm.desc": "Juste pour s'assurer qu'il n'y a pas de faute de frappe.",
   "hello.confirm.cta": "Définir le mot de passe",
@@ -65,12 +67,15 @@ const fr: Dict = {
 
   // Onboarding
   "onboarding.language.title": "Choisissez votre langue",
-  "onboarding.language.desc": "Sélectionnez la langue que vous souhaitez utiliser dans l'application. Vous pourrez la changer plus tard dans les Paramètres.",
+  "onboarding.language.desc":
+    "Sélectionnez la langue que vous souhaitez utiliser dans l'application. Vous pourrez la changer plus tard dans les Paramètres.",
   "onboarding.welcome.cta": "Commencer",
   "onboarding.datadir.title": "Où conserver vos données ?",
-  "onboarding.datadir.desc": "La synchronisation de la blockchain prend plusieurs gigaoctets.\nChoisissez un emplacement avec suffisamment d'espace libre.",
+  "onboarding.datadir.desc":
+    "La synchronisation de la blockchain prend plusieurs gigaoctets.\nChoisissez un emplacement avec suffisamment d'espace libre.",
   "onboarding.networking.title": "Aidez le réseau",
-  "onboarding.networking.desc": "Autorisez d'autres peers du réseau Parallax à se connecter à votre nœud.\nCela rend le réseau plus sain et accélère la propagation des blocs.",
+  "onboarding.networking.desc":
+    "Autorisez d'autres peers du réseau Parallax à se connecter à votre nœud.\nCela rend le réseau plus sain et accélère la propagation des blocs.",
   "onboarding.networking.desc2": "Avec cette option activée, votre IP devient visible pour les autres peers.",
   "onboarding.networking.toggle": "Autoriser les connexions entrantes",
   "onboarding.networking.recommended": "Recommandé",
@@ -94,7 +99,8 @@ const fr: Dict = {
   "settings.rpc.port": "Port",
   "settings.smartFee": "Estimateur Smart Fee",
   "settings.stats.toggle": "Signaler à la page de statut",
-  "settings.diagnostics.desc": "Consultez les logs en direct du nœud et de l'interface. Utile pour déboguer les problèmes de synchro, la découverte de peers ou les rapports de bug.",
+  "settings.diagnostics.desc":
+    "Consultez les logs en direct du nœud et de l'interface. Utile pour déboguer les problèmes de synchro, la découverte de peers ou les rapports de bug.",
   "settings.dbCache": "Cache de base de données (MB)",
   "settings.trieClean": "Cache trie propre (MB)",
   "settings.trieDirty": "Cache trie sale (MB)",
@@ -128,7 +134,8 @@ const fr: Dict = {
   "peers.add": "Ajouter un pair",
   "peers.addPlaceholder": "enode://… ou ip:port",
   "peers.addCta": "Connecter",
-  "peers.addHint": "Une URL enode est recontactée dès qu’elle tombe, même après un redémarrage. Une ip:port est gardée dans le carnet d’adresses du nœud et contactée en premier.",
+  "peers.addHint":
+    "Une URL enode est recontactée dès qu’elle tombe, même après un redémarrage. Une ip:port est gardée dans le carnet d’adresses du nœud et contactée en premier.",
   "peers.disconnect": "Déconnecter",
   "peers.trust": "Faire confiance",
   "peers.untrust": "Ne plus faire confiance",
@@ -197,7 +204,8 @@ const fr: Dict = {
   "updater.retry": "Réessayer",
   "notifications.title": "Notifications",
   "notifications.clear": "Effacer",
-  "notifications.empty": "Rien de nouveau. Les synchronisations terminées, les mises à jour et tout ce qui demande votre attention s'affichent ici.",
+  "notifications.empty":
+    "Rien de nouveau. Les synchronisations terminées, les mises à jour et tout ce qui demande votre attention s'affichent ici.",
 
   // Redesign
   "nav.label": "Principal",
@@ -226,10 +234,12 @@ const fr: Dict = {
   "node.peers": "{n} pairs",
   "node.offlineHint": "Arrêté. Démarrez-le pour synchroniser et utiliser le portefeuille.",
   "overview.stopped.title": "Votre nœud est hors ligne.",
-  "overview.stopped.desc": "Démarrez-le pour vous synchroniser avec le réseau Parallax, vérifier vous-même chaque bloc et servir votre portefeuille sans aucun tiers.",
+  "overview.stopped.desc":
+    "Démarrez-le pour vous synchroniser avec le réseau Parallax, vérifier vous-même chaque bloc et servir votre portefeuille sans aucun tiers.",
   "overview.sync.searching": "Recherche de pairs",
   "overview.sync.searchingDesc": "Connexion au réseau. La synchronisation commence dès qu'un pair répond.",
-  "overview.sync.desc": "Téléchargement et vérification de la chaîne. Le nœud est prêt une fois la tête du réseau atteinte.",
+  "overview.sync.desc":
+    "Téléchargement et vérification de la chaîne. Le nœud est prêt une fois la tête du réseau atteinte.",
   "overview.sync.left": "encore {n} blocs",
   "clock.bestBlock": "Meilleur bloc",
   "clock.onSchedule": "Dans les temps",
@@ -334,36 +344,47 @@ const fr: Dict = {
 
   // Wallet: first run
   "wallet.welcome.title": "Votre portefeuille Parallax",
-  "wallet.welcome.desc": "Conservez, envoyez et recevez des LAX via votre propre nœud. Aucun tiers ne voit votre solde ni ne relaie vos transactions.",
+  "wallet.welcome.desc":
+    "Conservez, envoyez et recevez des LAX via votre propre nœud. Aucun tiers ne voit votre solde ni ne relaie vos transactions.",
   "wallet.welcome.create": "Créer un compte",
   "wallet.welcome.createDesc": "Une nouvelle phrase de récupération et un compte, créés sur cet ordinateur.",
   "wallet.welcome.import": "Importer un compte",
   "wallet.welcome.importDesc": "À partir d'une phrase de récupération, d'un fichier keystore ou d'une clé privée.",
-  "wallet.welcome.local": "Les clés sont stockées chiffrées uniquement sur cet ordinateur et ne sont jamais envoyées nulle part. Votre phrase de récupération est la sauvegarde : personne ne peut la récupérer à votre place.",
+  "wallet.welcome.local":
+    "Les clés sont stockées chiffrées uniquement sur cet ordinateur et ne sont jamais envoyées nulle part. Votre phrase de récupération est la sauvegarde : personne ne peut la récupérer à votre place.",
   "wallet.welcome.cta": "Configurer le portefeuille",
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Mot de passe du portefeuille",
   "wallet.walletPasswordHint": "Le mot de passe qui protège chaque compte de ce portefeuille.",
   "wallet.locked.title": "Bienvenue dans Parallax",
-  "wallet.locked.desc": "Un nœud Parallax complet et un portefeuille dans une seule application. Détenez, envoyez et recevez des LAX via votre propre nœud, sans intermédiaire.",
-  "wallet.locked.existing": "Ce portefeuille contient déjà des clés d'une version précédente. Définissez son mot de passe pour continuer à les utiliser : ce doit être celui avec lequel elles ont été créées.",
+  "wallet.locked.desc":
+    "Un nœud Parallax complet et un portefeuille dans une seule application. Détenez, envoyez et recevez des LAX via votre propre nœud, sans intermédiaire.",
+  "wallet.locked.existing":
+    "Ce portefeuille contient déjà des clés d'une version précédente. Définissez son mot de passe pour continuer à les utiliser : ce doit être celui avec lequel elles ont été créées.",
   "wallet.locked.node": "Votre propre nœud",
-  "wallet.locked.nodeDesc": "Il vérifie lui-même chaque bloc et relaie vos transactions : personne d'autre ne voit votre solde.",
+  "wallet.locked.nodeDesc":
+    "Il vérifie lui-même chaque bloc et relaie vos transactions : personne d'autre ne voit votre solde.",
   "wallet.locked.keys": "Les clés restent ici",
-  "wallet.locked.keysDesc": "Les comptes sont créés et conservés chiffrés sur cet ordinateur, et ne sont jamais envoyés nulle part.",
+  "wallet.locked.keysDesc":
+    "Les comptes sont créés et conservés chiffrés sur cet ordinateur, et ne sont jamais envoyés nulle part.",
   "wallet.locked.password": "Un seul mot de passe",
-  "wallet.locked.passwordDesc": "Un unique mot de passe du portefeuille protège tous les comptes. Personne ne peut le réinitialiser pour vous.",
+  "wallet.locked.passwordDesc":
+    "Un unique mot de passe du portefeuille protège tous les comptes. Personne ne peut le réinitialiser pour vous.",
   "wallet.locked.cta": "Commencer",
   "wallet.locked.ctaHint": "D'abord, vous définirez le mot de passe du portefeuille.",
   "wallet.setup.title": "Définissez le mot de passe du portefeuille",
-  "wallet.setup.desc": "Un seul mot de passe protège chaque compte et chaque phrase de récupération de ce portefeuille. Vous le saisirez à chaque envoi, sauvegarde ou ajout de compte.",
-  "wallet.setup.existingDesc": "Ce portefeuille contient déjà des clés. Saisissez le mot de passe avec lequel elles ont été créées : il devient le mot de passe du portefeuille.",
-  "wallet.setup.noRecovery": "Ce mot de passe chiffre vos clés sur cet ordinateur et ne peut être ni réinitialisé ni récupéré. Si vous le perdez, seuls vos phrases de récupération et vos fichiers de sauvegarde pourront restaurer vos comptes.",
+  "wallet.setup.desc":
+    "Un seul mot de passe protège chaque compte et chaque phrase de récupération de ce portefeuille. Vous le saisirez à chaque envoi, sauvegarde ou ajout de compte.",
+  "wallet.setup.existingDesc":
+    "Ce portefeuille contient déjà des clés. Saisissez le mot de passe avec lequel elles ont été créées : il devient le mot de passe du portefeuille.",
+  "wallet.setup.noRecovery":
+    "Ce mot de passe chiffre vos clés sur cet ordinateur et ne peut être ni réinitialisé ni récupéré. Si vous le perdez, seuls vos phrases de récupération et vos fichiers de sauvegarde pourront restaurer vos comptes.",
   "wallet.setup.cta": "Définir le mot de passe",
   "wallet.setup.step": "Mot de passe",
   "wallet.offer.title": "Créez votre phrase de récupération",
-  "wallet.offer.desc": "Le mot de passe de votre portefeuille est défini. Créez maintenant une phrase de récupération : 12 mots qui sauvegardent chaque compte créé à partir d'eux.",
+  "wallet.offer.desc":
+    "Le mot de passe de votre portefeuille est défini. Créez maintenant une phrase de récupération : 12 mots qui sauvegardent chaque compte créé à partir d'eux.",
   "wallet.offer.later": "Vous pouvez aussi le faire plus tard, depuis Comptes.",
   "wallet.offer.cta": "Créer la phrase de récupération",
   "wallet.security": "Sécurité",
@@ -389,22 +410,27 @@ const fr: Dict = {
   "wallet.create.kind.derive": "Un autre compte depuis une phrase de récupération",
   "wallet.create.kind.deriveDesc": "Depuis une phrase déjà présente dans ce portefeuille, qui le sauvegarde déjà.",
   "wallet.create.kind.phrase": "Nouvelle phrase de récupération",
-  "wallet.create.kind.phraseDesc": "12 mots qui sauvegardent ce compte et tous ceux ajoutés plus tard. Ils fonctionnent dans MetaMask et la plupart des autres portefeuilles.",
+  "wallet.create.kind.phraseDesc":
+    "12 mots qui sauvegardent ce compte et tous ceux ajoutés plus tard. Ils fonctionnent dans MetaMask et la plupart des autres portefeuilles.",
   "wallet.create.kind.key": "Clé unique",
   "wallet.create.kind.keyDesc": "Un compte avec sa propre clé, sauvegardée dans un fichier keystore chiffré.",
   "wallet.create.recommended": "Recommandé",
   "wallet.create.keyFact1": "Une nouvelle clé",
-  "wallet.create.keyFact1Desc": "Générée ici à partir de la source aléatoire sécurisée de votre système. C'est elle qui permet de dépenser.",
+  "wallet.create.keyFact1Desc":
+    "Générée ici à partir de la source aléatoire sécurisée de votre système. C'est elle qui permet de dépenser.",
   "wallet.create.keyFact2Desc": "La clé est chiffrée avec le mot de passe choisi à la page suivante.",
   "wallet.create.keyNext": "Ensuite, vous enregistrerez un fichier de sauvegarde de la clé.",
-  "wallet.create.keyBackupWhy": "Avec le fichier et son mot de passe, tout portefeuille compatible peut restaurer le compte. Sans eux, il est irrécupérable.",
+  "wallet.create.keyBackupWhy":
+    "Avec le fichier et son mot de passe, tout portefeuille compatible peut restaurer le compte. Sans eux, il est irrécupérable.",
   "wallet.create.done": "Compte créé",
   "wallet.create.step.backup": "Sauvegarde",
   "wallet.create.lead": "Un nouveau compte est créé sur cet ordinateur, en trois étapes simultanées :",
   "wallet.create.fact1": "Une phrase de récupération",
-  "wallet.create.fact1Desc": "12 mots, générés ici à partir de la source aléatoire sécurisée de votre système. Ils restaurent vos comptes dans ce portefeuille ou dans tout portefeuille compatible.",
+  "wallet.create.fact1Desc":
+    "12 mots, générés ici à partir de la source aléatoire sécurisée de votre système. Ils restaurent vos comptes dans ce portefeuille ou dans tout portefeuille compatible.",
   "wallet.create.fact2": "Verrouillée par votre mot de passe",
-  "wallet.create.fact2Desc": "La phrase et la clé de votre compte sont chiffrées avec le mot de passe choisi à la page suivante.",
+  "wallet.create.fact2Desc":
+    "La phrase et la clé de votre compte sont chiffrées avec le mot de passe choisi à la page suivante.",
   "wallet.create.fact3": "Conservée sur cet ordinateur",
   "wallet.create.fact3Desc": "Seule la clé chiffrée est stockée, ici. Rien n'est envoyé nulle part.",
   "wallet.create.optional": "Facultatif",
@@ -420,7 +446,8 @@ const fr: Dict = {
   "wallet.derive.title": "Nouveau compte",
   "wallet.derive.cta": "Ajouter le compte",
   "wallet.derive.which": "Phrase de récupération",
-  "wallet.derive.desc": "Il provient de la phrase de récupération, qui le sauvegarde déjà : aucune sauvegarde séparée n'est nécessaire.",
+  "wallet.derive.desc":
+    "Il provient de la phrase de récupération, qui le sauvegarde déjà : aucune sauvegarde séparée n'est nécessaire.",
   "wallet.create.busy": "Création…",
   "wallet.created.later": "Plus tard",
   "wallet.created.savedDesc": "Gardez le fichier et le mot de passe en lieu sûr, séparément.",
@@ -438,28 +465,34 @@ const fr: Dict = {
   "wallet.import.step.details": "Détails",
   "wallet.import.choose.desc": "D’où vient le compte que vous voulez importer ?",
   "wallet.import.phrase": "Phrase de récupération",
-  "wallet.import.phraseDesc": "12 à 24 mots provenant de MetaMask ou d'un autre portefeuille. Restaure les mêmes comptes.",
-  "wallet.import.phraseLead": "Saisissez ou collez les mots dans l'ordre, séparés par des espaces. Les mêmes mots donnent les mêmes comptes que dans le portefeuille d'origine.",
+  "wallet.import.phraseDesc":
+    "12 à 24 mots provenant de MetaMask ou d'un autre portefeuille. Restaure les mêmes comptes.",
+  "wallet.import.phraseLead":
+    "Saisissez ou collez les mots dans l'ordre, séparés par des espaces. Les mêmes mots donnent les mêmes comptes que dans le portefeuille d'origine.",
   "wallet.import.phraseLabel": "Phrase de récupération",
   "wallet.import.step.accounts": "Comptes",
   "wallet.import.chooseTitle": "Choisir les comptes",
-  "wallet.import.chooseDesc": "Une phrase peut contenir de nombreux comptes, que les portefeuilles placent à différents chemins. Choisissez ceux à importer : ceux déjà utilisés sont cochés.",
+  "wallet.import.chooseDesc":
+    "Une phrase peut contenir de nombreux comptes, que les portefeuilles placent à différents chemins. Choisissez ceux à importer : ceux déjà utilisés sont cochés.",
   "wallet.import.scheme.standard": "Standard",
   "wallet.import.scheme.ledgerlive": "Ledger Live",
   "wallet.import.scheme.legacy": "Ancien",
   "wallet.import.schemePath.standard": "m/44'/60'/0'/0/n · MetaMask, Trezor",
   "wallet.import.schemePath.ledgerlive": "m/44'/60'/n'/0/0",
   "wallet.import.schemePath.legacy": "m/44'/60'/0'/n · MyEtherWallet",
-  "wallet.import.noBalances": "Démarrez le nœud et laissez-le se synchroniser pour voir le solde de chaque compte et ceux qui ont été utilisés.",
+  "wallet.import.noBalances":
+    "Démarrez le nœud et laissez-le se synchroniser pour voir le solde de chaque compte et ceux qui ont été utilisés.",
   "wallet.import.used": "Utilisé",
   "wallet.import.inWallet": "Déjà dans le portefeuille",
   "wallet.import.more": "Afficher plus",
   "wallet.import.picked": "{n} sélectionné(s)",
-  "wallet.import.passwordLead": "La phrase de récupération et les {n} comptes choisis seront chiffrés avec ce mot de passe sur cet ordinateur. Le nom s'applique au premier compte.",
+  "wallet.import.passwordLead":
+    "La phrase de récupération et les {n} comptes choisis seront chiffrés avec ce mot de passe sur cet ordinateur. Le nom s'applique au premier compte.",
   "wallet.import.keyDesc": "La clé brute du compte : 64 caractères hexadécimaux.",
   "wallet.import.keyfile": "Fichier keystore",
   "wallet.import.key": "Clé privée",
-  "wallet.import.keyfileDesc": "Un fichier keystore JSON, tel que l'exportent parallaxd, parallax-wallet et la plupart des portefeuilles de type Ethereum.",
+  "wallet.import.keyfileDesc":
+    "Un fichier keystore JSON, tel que l'exportent parallaxd, parallax-wallet et la plupart des portefeuilles de type Ethereum.",
   "wallet.import.file": "Fichier",
   "wallet.import.choose": "Choisir un fichier…",
   "wallet.import.noFile": "Aucun fichier choisi",
@@ -468,12 +501,14 @@ const fr: Dict = {
   "wallet.import.keyLabel": "Clé privée",
   "wallet.import.keyHint": "64 caractères hexadécimaux, avec ou sans 0x.",
   "wallet.import.reencrypt": "La clé est de nouveau chiffrée avec le mot de passe du portefeuille.",
-  "wallet.import.keyWarn": "Toute personne ayant vu cette clé peut dépenser les fonds du compte. N'importez qu'une clé restée privée.",
+  "wallet.import.keyWarn":
+    "Toute personne ayant vu cette clé peut dépenser les fonds du compte. N'importez qu'une clé restée privée.",
 
   // Wallet: backup
   "wallet.backup.title": "Sauvegarder le compte",
   "wallet.backup.cta": "Enregistrer la sauvegarde",
-  "wallet.backup.what": "Enregistre le fichier de clé de ce compte, chiffré avec son mot de passe, à l'emplacement de votre choix, comme une clé USB.",
+  "wallet.backup.what":
+    "Enregistre le fichier de clé de ce compte, chiffré avec son mot de passe, à l'emplacement de votre choix, comme une clé USB.",
   "wallet.backup.restore": "Pour restaurer le compte, il vous faudra le {file} et le {password}.",
   "wallet.backup.restore.file": "fichier de sauvegarde",
   "wallet.backup.restore.password": "mot de passe",
@@ -481,20 +516,25 @@ const fr: Dict = {
   "wallet.backup.passwordHint": "Vérifié avant l'enregistrement, pour être sûr que la sauvegarde s'ouvrira.",
   "wallet.backup.saved": "Sauvegarde enregistrée",
   "wallet.backup.missingTitle": "Ce compte n'a pas de sauvegarde",
-  "wallet.backup.missingDesc": "Si cet ordinateur est perdu ou si son disque tombe en panne, les fonds le sont aussi. Enregistrez le fichier keystore en lieu sûr.",
+  "wallet.backup.missingDesc":
+    "Si cet ordinateur est perdu ou si son disque tombe en panne, les fonds le sont aussi. Enregistrez le fichier keystore en lieu sûr.",
 
   // Wallet: change password
   "wallet.changePassword.title": "Changer le mot de passe",
-  "wallet.changePassword.desc": "Chaque clé et chaque phrase de récupération du portefeuille ({n} comptes) est de nouveau chiffrée avec le nouveau mot de passe. Cela prend quelques secondes par compte.",
+  "wallet.changePassword.desc":
+    "Chaque clé et chaque phrase de récupération du portefeuille ({n} comptes) est de nouveau chiffrée avec le nouveau mot de passe. Cela prend quelques secondes par compte.",
   "wallet.changePassword.cta": "Changer le mot de passe",
   "wallet.changePassword.busy": "Rechiffrement…",
-  "wallet.changePassword.oldBackups": "Les fichiers de sauvegarde enregistrés auparavant ne s'ouvrent toujours qu'avec l'ancien mot de passe.",
+  "wallet.changePassword.oldBackups":
+    "Les fichiers de sauvegarde enregistrés auparavant ne s'ouvrent toujours qu'avec l'ancien mot de passe.",
 
   // Wallet: remove
   "wallet.remove.title": "Supprimer le compte",
   "wallet.remove.cta": "Supprimer de cet ordinateur",
-  "wallet.remove.warn": "La clé du compte est effacée de cet ordinateur. Vous aurez besoin de votre sauvegarde et de son mot de passe pour utiliser à nouveau le compte.",
-  "wallet.remove.warnNoBackup": "Ce compte n'a jamais été sauvegardé. Une fois la clé effacée, ses fonds ne pourront plus jamais être dépensés.",
+  "wallet.remove.warn":
+    "La clé du compte est effacée de cet ordinateur. Vous aurez besoin de votre sauvegarde et de son mot de passe pour utiliser à nouveau le compte.",
+  "wallet.remove.warnNoBackup":
+    "Ce compte n'a jamais été sauvegardé. Une fois la clé effacée, ses fonds ne pourront plus jamais être dépensés.",
   "wallet.remove.confirm": "Je comprends et j'ai une sauvegarde, ou le compte ne contient rien.",
 
   // Wallet: accounts
@@ -506,7 +546,8 @@ const fr: Dict = {
   "wallet.accounts.noBackup": "Pas de sauvegarde",
   "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "Stockage",
-  "wallet.accounts.storageDesc": "Les clés sont conservées dans ce dossier, toutes chiffrées avec le mot de passe de votre portefeuille. Le nœud ne les voit jamais, et rien de ce qui se connecte à son RPC ne peut les utiliser.",
+  "wallet.accounts.storageDesc":
+    "Les clés sont conservées dans ce dossier, toutes chiffrées avec le mot de passe de votre portefeuille. Le nœud ne les voit jamais, et rien de ce qui se connecte à son RPC ne peut les utiliser.",
 
   // Wallet: send
   "wallet.send.title": "Envoyer des LAX",
@@ -520,7 +561,8 @@ const fr: Dict = {
   "wallet.send.feeAuto": "Suggérés",
   "wallet.send.feeManual": "Personnalisés",
   "wallet.send.feeSuggested": "Votre nœud suggère un prix d'après les blocs récents et son pool.",
-  "wallet.send.feeCustom": "Payez plus que ce que suggère votre nœud pour entrer plus tôt dans un bloc. Impossible de descendre en dessous : une transaction en attente bloque toutes les suivantes du compte.",
+  "wallet.send.feeCustom":
+    "Payez plus que ce que suggère votre nœud pour entrer plus tôt dans un bloc. Impossible de descendre en dessous : une transaction en attente bloque toutes les suivantes du compte.",
   "wallet.send.gasPrice": "Prix du gas",
   "wallet.send.review": "Vérifier",
   "wallet.review.title": "Vérifier et signer",
@@ -529,14 +571,16 @@ const fr: Dict = {
   "wallet.review.feeDetail": "{gas} gas à {price}",
   "wallet.review.total": "Total",
   "wallet.review.toSelf": "Cet envoi est destiné au même compte : seuls les frais sont dépensés.",
-  "wallet.review.toContract": "Le destinataire est un contrat. Il exécute du code lorsqu'il reçoit des LAX ; assurez-vous qu'il est prévu pour cela.",
+  "wallet.review.toContract":
+    "Le destinataire est un contrat. Il exécute du code lorsqu'il reçoit des LAX ; assurez-vous qu'il est prévu pour cela.",
   "wallet.review.dear": "Ce prix est plus de trois fois supérieur aux {price} suggérés par votre nœud.",
   "wallet.review.passwordHint": "Déchiffre la clé pour cette seule signature.",
   "wallet.review.cta": "Signer et envoyer",
   "wallet.review.signing": "Signature…",
   "wallet.sent.title": "Envoyé",
   "wallet.sent.desc": "{amount} LAX sont en route",
-  "wallet.sent.wait": "Votre nœud relaie la transaction au réseau. Elle sera confirmée dès qu'un bloc l'inclura, environ toutes les dix minutes.",
+  "wallet.sent.wait":
+    "Votre nœud relaie la transaction au réseau. Elle sera confirmée dès qu'un bloc l'inclura, environ toutes les dix minutes.",
   "wallet.sent.hash": "Transaction",
   "wallet.sent.nonce": "Nonce",
   "wallet.sent.again": "Envoyer à nouveau",
@@ -544,21 +588,27 @@ const fr: Dict = {
 
   // Wallet: receive
   "wallet.receive.title": "Votre adresse",
-  "wallet.receive.desc": "Partagez cette adresse pour recevoir des LAX. Vous pouvez l'utiliser autant de fois que vous le souhaitez.",
+  "wallet.receive.desc":
+    "Partagez cette adresse pour recevoir des LAX. Vous pouvez l'utiliser autant de fois que vous le souhaitez.",
   "wallet.receive.qr": "QR code de l'adresse",
   "wallet.receive.network": "N'envoyez à cette adresse que des LAX sur le réseau Parallax (chaîne 2110).",
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Ajouter une phrase secrète (avancé)",
-  "wallet.passphrase.toggleDesc": "Un mot supplémentaire qui change chaque compte créé par la phrase, comme sur Ledger et Trezor. MetaMask ne la prend pas en charge.",
-  "wallet.passphrase.warning": "Notez aussi la phrase secrète. La restauration exige à la fois les mots et la phrase secrète exacte, et une phrase secrète erronée donne un autre portefeuille, vide, sans aucune erreur.",
+  "wallet.passphrase.toggleDesc":
+    "Un mot supplémentaire qui change chaque compte créé par la phrase, comme sur Ledger et Trezor. MetaMask ne la prend pas en charge.",
+  "wallet.passphrase.warning":
+    "Notez aussi la phrase secrète. La restauration exige à la fois les mots et la phrase secrète exacte, et une phrase secrète erronée donne un autre portefeuille, vide, sans aucune erreur.",
   "wallet.passphrase.label": "Phrase secrète",
   "wallet.passphrase.confirm": "Confirmer la phrase secrète",
   "wallet.passphrase.mismatch": "Les phrases secrètes ne correspondent pas",
-  "wallet.passphrase.remember": "Cette phrase de récupération a une phrase secrète : vous en aurez besoin, exactement telle que saisie, pour restaurer ces comptes.",
+  "wallet.passphrase.remember":
+    "Cette phrase de récupération a une phrase secrète : vous en aurez besoin, exactement telle que saisie, pour restaurer ces comptes.",
   "wallet.passphrase.importToggle": "Elle a une phrase secrète (avancé)",
-  "wallet.passphrase.importToggleDesc": "Si vous avez défini un mot supplémentaire sur Ledger ou Trezor, saisissez-le pour retrouver les mêmes comptes.",
-  "wallet.passphrase.importHint": "Exactement telle que définie : les majuscules et les espaces comptent. Si l'étape suivante n'affiche aucun compte connu, vérifiez-la.",
+  "wallet.passphrase.importToggleDesc":
+    "Si vous avez défini un mot supplémentaire sur Ledger ou Trezor, saisissez-le pour retrouver les mêmes comptes.",
+  "wallet.passphrase.importHint":
+    "Exactement telle que définie : les majuscules et les espaces comptent. Si l'étape suivante n'affiche aucun compte connu, vérifiez-la.",
   "wallet.passphrase.show": "Afficher la phrase secrète",
   "wallet.passphrase.badge": "Phrase secrète",
 
@@ -566,17 +616,21 @@ const fr: Dict = {
   "wallet.phrase.section": "Phrase de récupération",
   "wallet.phrase.title": "Phrase de récupération",
   "wallet.phrase.yours": "Votre phrase de récupération",
-  "wallet.phrase.writeDown": "Notez ces mots sur papier, dans cet ordre, et conservez-les en lieu sûr. Ils sont la sauvegarde de tous les comptes créés à partir d'eux.",
+  "wallet.phrase.writeDown":
+    "Notez ces mots sur papier, dans cet ordre, et conservez-les en lieu sûr. Ils sont la sauvegarde de tous les comptes créés à partir d'eux.",
   "wallet.phrase.reveal": "Cliquez pour afficher",
-  "wallet.phrase.warning": "Toute personne qui possède ces mots peut prendre vos LAX. Ne les saisissez jamais sur un site web, ne les partagez pas et ne les enregistrez pas dans une capture d'écran ou une note sur cet ordinateur.",
+  "wallet.phrase.warning":
+    "Toute personne qui possède ces mots peut prendre vos LAX. Ne les saisissez jamais sur un site web, ne les partagez pas et ne les enregistrez pas dans une capture d'écran ou une note sur cet ordinateur.",
   "wallet.phrase.laterWarn": "Tant que vous ne l'avez pas confirmée, la phrase n'est pas considérée comme sauvegardée.",
   "wallet.phrase.written": "Je l'ai notée",
   "wallet.phrase.quizTitle": "Confirmez votre phrase de récupération",
-  "wallet.phrase.quizDesc": "Saisissez ces mots de votre phrase de récupération, pour vérifier qu'elle est correctement notée.",
+  "wallet.phrase.quizDesc":
+    "Saisissez ces mots de votre phrase de récupération, pour vérifier qu'elle est correctement notée.",
   "wallet.phrase.word": "Mot #{n}",
   "wallet.phrase.confirm": "Confirmer",
   "wallet.phrase.ready": "Votre portefeuille est prêt",
-  "wallet.phrase.readyDesc": "Conservez la phrase de récupération en lieu sûr et hors ligne. Avec elle, vous pouvez restaurer vos comptes dans ce portefeuille ou dans tout portefeuille compatible.",
+  "wallet.phrase.readyDesc":
+    "Conservez la phrase de récupération en lieu sûr et hors ligne. Avec elle, vous pouvez restaurer vos comptes dans ce portefeuille ou dans tout portefeuille compatible.",
   "wallet.phrase.open": "Afficher",
   "wallet.phrase.openDesc": "Saisissez le mot de passe choisi pour la phrase de récupération afin de l'afficher.",
   "wallet.phrase.confirmed": "Phrase de récupération confirmée",
@@ -592,11 +646,14 @@ const fr: Dict = {
   "wallet.phrase.account": "1 compte",
   "wallet.removeSeed.title": "Supprimer la phrase de récupération",
   "wallet.removeSeed.cta": "Supprimer la phrase et les comptes",
-  "wallet.removeSeed.warn": "La phrase et ses {n} comptes sont effacés de cet ordinateur. Vous aurez besoin des mots notés (et de la phrase secrète, s'il y en a une) pour les utiliser à nouveau.",
-  "wallet.removeSeed.warnUnconfirmed": "Cette phrase n'a jamais été confirmée. Si vous ne l'avez pas notée, ses {n} comptes et leurs fonds sont perdus définitivement.",
+  "wallet.removeSeed.warn":
+    "La phrase et ses {n} comptes sont effacés de cet ordinateur. Vous aurez besoin des mots notés (et de la phrase secrète, s'il y en a une) pour les utiliser à nouveau.",
+  "wallet.removeSeed.warnUnconfirmed":
+    "Cette phrase n'a jamais été confirmée. Si vous ne l'avez pas notée, ses {n} comptes et leurs fonds sont perdus définitivement.",
   "wallet.removeSeed.confirm": "Je comprends et j'ai noté la phrase, ou ses comptes ne contiennent rien.",
   "wallet.phrase.missingTitle": "Votre phrase de récupération n'est pas confirmée",
-  "wallet.phrase.missingDesc": "Si cet ordinateur est perdu ou si son disque tombe en panne, la phrase est le seul moyen de retrouver ce compte. Notez-la et confirmez-la.",
+  "wallet.phrase.missingDesc":
+    "Si cet ordinateur est perdu ou si son disque tombe en panne, la phrase est le seul moyen de retrouver ce compte. Notez-la et confirmez-la.",
 
   // Wallet: errors
   "wallet.err.wrongPassword": "Mot de passe incorrect.",
@@ -607,10 +664,12 @@ const fr: Dict = {
   "wallet.err.badKey": "Clé privée non valide.",
   "wallet.err.badKeyfile": "Fichier keystore non valide.",
   "wallet.err.badRecipient": "Adresse non valide.",
-  "wallet.err.badChecksum": "La somme de contrôle de cette adresse est incorrecte : un caractère est probablement erroné.",
+  "wallet.err.badChecksum":
+    "La somme de contrôle de cette adresse est incorrecte : un caractère est probablement erroné.",
   "wallet.err.badAmount": "Montant non valide.",
   "wallet.err.badFee": "Frais non valides.",
-  "wallet.err.feeTooLow": "Les frais sont inférieurs à ce que suggère actuellement votre nœud. Utilisez les frais suggérés, ou des frais plus élevés.",
+  "wallet.err.feeTooLow":
+    "Les frais sont inférieurs à ce que suggère actuellement votre nœud. Utilisez les frais suggérés, ou des frais plus élevés.",
   "wallet.err.nodeStopped": "Démarrez le nœud pour envoyer.",
   "wallet.err.syncing": "Attendez que le nœud ait fini de se synchroniser avant d'envoyer.",
   "wallet.err.noPeers": "Le nœud n'a encore aucun pair auquel relayer une transaction.",
@@ -621,8 +680,10 @@ const fr: Dict = {
   "wallet.err.unknownSeed": "Cette phrase de récupération n'est plus dans le portefeuille.",
   "wallet.err.noPassword": "Définissez d'abord le mot de passe du portefeuille.",
   "wallet.err.needsSetup": "Définissez d'abord le mot de passe du portefeuille, depuis la page d'accueil.",
-  "wallet.err.keyMismatch": "La clé de ce compte est protégée par un autre mot de passe que celui du portefeuille. Supprimez le compte et importez-le à nouveau.",
-  "wallet.err.setupMismatch": "Ce mot de passe n'ouvre pas toutes les clés déjà présentes dans le portefeuille. Utilisez le mot de passe avec lequel elles ont été créées.",
+  "wallet.err.keyMismatch":
+    "La clé de ce compte est protégée par un autre mot de passe que celui du portefeuille. Supprimez le compte et importez-le à nouveau.",
+  "wallet.err.setupMismatch":
+    "Ce mot de passe n'ouvre pas toutes les clés déjà présentes dans le portefeuille. Utilisez le mot de passe avec lequel elles ont été créées.",
   "wallet.err.wrongFilePassword": "Mot de passe incorrect pour le fichier keystore.",
   "settings.navGroup.app": "Application",
   "settings.navGroup.support": "Assistance",
@@ -640,7 +701,8 @@ const fr: Dict = {
   "settings.theme.light": "Clair",
   "settings.theme.dark": "Sombre",
   "settings.avatars": "Avatars des comptes",
-  "settings.avatars.desc": "L'image générée à partir de chaque adresse. Jazzicon est le style par défaut de MetaMask ; Blockies est celui d'Etherscan.",
+  "settings.avatars.desc":
+    "L'image générée à partir de chaque adresse. Jazzicon est le style par défaut de MetaMask ; Blockies est celui d'Etherscan.",
   "settings.dataDir.desc": "L'emplacement de la chaîne. Un nouvel emplacement démarre une synchronisation complète.",
   "settings.syncMode.desc": "Snap est le plus rapide ; Complète rejoue chaque bloc.",
   "settings.maxPeers.desc": "Le nombre maximal de pairs que le nœud garde connectés.",
@@ -675,37 +737,65 @@ const fr: Dict = {
   "settings.group.logs": "Journaux",
   "settings.txpool.desc": "Les règles selon lesquelles le nœud conserve et relaie les transactions en attente.",
   "settings.limits.desc": "Des plafonds qui protègent le nœud des requêtes RPC coûteuses ou risquées.",
-  "settings.preventSleep.more": "La synchronisation s'interrompt dès que l'ordinateur se met en veille : une synchronisation laissée seule la nuit peut ainsi perdre des heures.\n\nAvec cette option, l'app empêche la mise en veille du système uniquement pendant la synchronisation du nœud, et la relâche dès qu'il a rattrapé le réseau. L'écran peut toujours s'éteindre et se verrouiller normalement.",
-  "settings.notifications.more": "L'app envoie une notification de bureau quand :\n\n• une synchronisation de plus de quelques minutes se termine, pour vous indiquer que le nœud a rattrapé le réseau ;\n\n• le nœud s'arrête de lui-même parce que le disque est presque plein, pour que vous puissiez libérer de l'espace avant de le redémarrer.\n\nLes notifications n'apparaissent que lorsque l'app est en cours d'exécution.",
-  "settings.ancientDir.more": "Le nœud garde les données récentes de la chaîne dans une base clé-valeur rapide et déplace les anciens blocs, en-têtes et reçus vers un stockage « ancien » en ajout seul. Ce stockage représente l'essentiel du répertoire de données et n'est que rarement lu.\n\nPointez-le vers un disque plus grand et plus lent pour ne garder que les données récentes sur votre SSD. Laissez-le vide pour tout conserver dans le répertoire de données.\n\nLe modifier ne déplace pas les données existantes : déplacez vous-même le dossier ancien pendant que le nœud est arrêté, sinon le nœud recommencera le stockage ancien de zéro.",
-  "settings.minFreeDisk.more": "Une base de données qui manque d'espace disque en pleine écriture peut être corrompue et nécessiter une resynchronisation complète. Pour l'éviter, le nœud vérifie l'espace libre de son disque de données toutes les 30 secondes et s'arrête proprement dès qu'il passe sous ce seuil, en avertissant d'abord lorsqu'il approche du double.\n\nVide utilise le double du cache trie sale, la même valeur par défaut que le client en ligne de commande. 0 désactive cette protection.",
-  "settings.syncMode.more": "La synchro Snap télécharge l'état récent de chaque compte directement auprès des pairs, le vérifie par rapport à la chaîne, puis suit normalement les nouveaux blocs. Elle donne un nœud utilisable en quelques heures au lieu de plusieurs jours.\n\nLa synchro complète télécharge chaque bloc depuis la genèse et exécute chaque transaction pour reconstruire l'état elle-même. Elle est plus lente mais ne fait confiance à rien qu'elle n'ait calculé.\n\nDans les deux cas, le nœud finit par valider entièrement chaque nouveau bloc. Changer de mode ne resynchronise pas une chaîne déjà téléchargée.",
-  "settings.archive.more": "Normalement, le nœud élague l'ancien état et ne garde que ce qui est nécessaire pour valider les nouveaux blocs, plus l'historique récent. Un nœud archive conserve l'état à chaque bloc, ce qui permet d'interroger des soldes ou d'exécuter des traces à n'importe quel moment du passé — ce dont ont besoin les explorateurs de blocs et les indexeurs.\n\nIl utilise beaucoup plus d'espace disque et grossit rapidement. Les états passés ne sont remplis que par une synchronisation complète depuis la genèse : passez donc le mode de synchronisation sur Complète et utilisez un répertoire de données vide. Le mode archive conserve aussi les préimages et l'index complet des transactions.",
-  "settings.txLookupLimit.more": "Rechercher une transaction par son hash (eth_getTransactionByHash, reçus) nécessite une entrée d'index. Le nœud conserve ces entrées pour ce nombre de blocs récents et supprime les plus anciennes pour gagner de la place.\n\nVide conserve environ un an de blocs. 0 indexe toute la chaîne, ce dont ont besoin les portefeuilles et explorateurs qui consultent d'anciennes transactions. Le mode archive indexe toujours tout.",
-  "settings.snapshot.more": "Le snapshot est une copie à plat de chaque compte et emplacement de stockage, à côté du trie d'état. Y lire est bien plus rapide que de parcourir le trie, ce qui accélère l'import des blocs et les appels RPC.\n\nLa synchro Snap en a besoin, il reste donc actif en synchro Snap. En synchro complète, vous pouvez le désactiver pour gagner de l'espace disque ; sa mémoire va alors au cache trie.",
-  "settings.prefetch.more": "Pendant l'import d'un bloc, le nœud exécute ses transactions à l'avance sur des threads libres pour charger en mémoire l'état qu'elles vont toucher. L'import réel trouve alors l'essentiel de ce dont il a besoin déjà en cache.\n\nLe désactiver économise du CPU et des lectures disque, au prix d'imports plus lents. Cela compte surtout sur des disques lents ou des machines chargées.",
-  "settings.preimages.more": "Le trie d'état stocke les comptes et emplacements de stockage sous le hash de leur clé. Les préimages sont les clés d'origine, dont certains outils de débogage et d'export d'état ont besoin pour afficher des adresses et emplacements lisibles.\n\nLes enregistrer consomme de l'espace disque supplémentaire. Le mode archive les enregistre toujours.",
+  "settings.preventSleep.more":
+    "La synchronisation s'interrompt dès que l'ordinateur se met en veille : une synchronisation laissée seule la nuit peut ainsi perdre des heures.\n\nAvec cette option, l'app empêche la mise en veille du système uniquement pendant la synchronisation du nœud, et la relâche dès qu'il a rattrapé le réseau. L'écran peut toujours s'éteindre et se verrouiller normalement.",
+  "settings.notifications.more":
+    "L'app envoie une notification de bureau quand :\n\n• une synchronisation de plus de quelques minutes se termine, pour vous indiquer que le nœud a rattrapé le réseau ;\n\n• le nœud s'arrête de lui-même parce que le disque est presque plein, pour que vous puissiez libérer de l'espace avant de le redémarrer.\n\nLes notifications n'apparaissent que lorsque l'app est en cours d'exécution.",
+  "settings.ancientDir.more":
+    "Le nœud garde les données récentes de la chaîne dans une base clé-valeur rapide et déplace les anciens blocs, en-têtes et reçus vers un stockage « ancien » en ajout seul. Ce stockage représente l'essentiel du répertoire de données et n'est que rarement lu.\n\nPointez-le vers un disque plus grand et plus lent pour ne garder que les données récentes sur votre SSD. Laissez-le vide pour tout conserver dans le répertoire de données.\n\nLe modifier ne déplace pas les données existantes : déplacez vous-même le dossier ancien pendant que le nœud est arrêté, sinon le nœud recommencera le stockage ancien de zéro.",
+  "settings.minFreeDisk.more":
+    "Une base de données qui manque d'espace disque en pleine écriture peut être corrompue et nécessiter une resynchronisation complète. Pour l'éviter, le nœud vérifie l'espace libre de son disque de données toutes les 30 secondes et s'arrête proprement dès qu'il passe sous ce seuil, en avertissant d'abord lorsqu'il approche du double.\n\nVide utilise le double du cache trie sale, la même valeur par défaut que le client en ligne de commande. 0 désactive cette protection.",
+  "settings.syncMode.more":
+    "La synchro Snap télécharge l'état récent de chaque compte directement auprès des pairs, le vérifie par rapport à la chaîne, puis suit normalement les nouveaux blocs. Elle donne un nœud utilisable en quelques heures au lieu de plusieurs jours.\n\nLa synchro complète télécharge chaque bloc depuis la genèse et exécute chaque transaction pour reconstruire l'état elle-même. Elle est plus lente mais ne fait confiance à rien qu'elle n'ait calculé.\n\nDans les deux cas, le nœud finit par valider entièrement chaque nouveau bloc. Changer de mode ne resynchronise pas une chaîne déjà téléchargée.",
+  "settings.archive.more":
+    "Normalement, le nœud élague l'ancien état et ne garde que ce qui est nécessaire pour valider les nouveaux blocs, plus l'historique récent. Un nœud archive conserve l'état à chaque bloc, ce qui permet d'interroger des soldes ou d'exécuter des traces à n'importe quel moment du passé — ce dont ont besoin les explorateurs de blocs et les indexeurs.\n\nIl utilise beaucoup plus d'espace disque et grossit rapidement. Les états passés ne sont remplis que par une synchronisation complète depuis la genèse : passez donc le mode de synchronisation sur Complète et utilisez un répertoire de données vide. Le mode archive conserve aussi les préimages et l'index complet des transactions.",
+  "settings.txLookupLimit.more":
+    "Rechercher une transaction par son hash (eth_getTransactionByHash, reçus) nécessite une entrée d'index. Le nœud conserve ces entrées pour ce nombre de blocs récents et supprime les plus anciennes pour gagner de la place.\n\nVide conserve environ un an de blocs. 0 indexe toute la chaîne, ce dont ont besoin les portefeuilles et explorateurs qui consultent d'anciennes transactions. Le mode archive indexe toujours tout.",
+  "settings.snapshot.more":
+    "Le snapshot est une copie à plat de chaque compte et emplacement de stockage, à côté du trie d'état. Y lire est bien plus rapide que de parcourir le trie, ce qui accélère l'import des blocs et les appels RPC.\n\nLa synchro Snap en a besoin, il reste donc actif en synchro Snap. En synchro complète, vous pouvez le désactiver pour gagner de l'espace disque ; sa mémoire va alors au cache trie.",
+  "settings.prefetch.more":
+    "Pendant l'import d'un bloc, le nœud exécute ses transactions à l'avance sur des threads libres pour charger en mémoire l'état qu'elles vont toucher. L'import réel trouve alors l'essentiel de ce dont il a besoin déjà en cache.\n\nLe désactiver économise du CPU et des lectures disque, au prix d'imports plus lents. Cela compte surtout sur des disques lents ou des machines chargées.",
+  "settings.preimages.more":
+    "Le trie d'état stocke les comptes et emplacements de stockage sous le hash de leur clé. Les préimages sont les clés d'origine, dont certains outils de débogage et d'export d'état ont besoin pour afficher des adresses et emplacements lisibles.\n\nLes enregistrer consomme de l'espace disque supplémentaire. Le mode archive les enregistre toujours.",
   "settings.smartFee.desc": "Estimation des frais à la Bitcoin Core.",
-  "settings.smartFee.more": "L'oracle de prix du gas dispose de deux algorithmes. Celui par défaut utilise un percentile des pourboires des blocs récents — rapide et éprouvé. L'option Smart Fee porte l'algorithme estimateSmartFee de Bitcoin Core, qui répartit les confirmations observées par tranches et en déduit des frais atteignant une profondeur de confirmation cible.\n\nSmart Fee a besoin d'une longue fenêtre continue de confirmations observées pour produire des estimations précises. Parallax Wallet est généralement lancé et arrêté à la demande plutôt que laissé en marche 24 h/24, si bien que l'oracle peut ne pas accumuler assez de données et revient alors au minimum par défaut. Ce sont les nœuds toujours allumés qui en tirent le meilleur parti.",
+  "settings.smartFee.more":
+    "L'oracle de prix du gas dispose de deux algorithmes. Celui par défaut utilise un percentile des pourboires des blocs récents — rapide et éprouvé. L'option Smart Fee porte l'algorithme estimateSmartFee de Bitcoin Core, qui répartit les confirmations observées par tranches et en déduit des frais atteignant une profondeur de confirmation cible.\n\nSmart Fee a besoin d'une longue fenêtre continue de confirmations observées pour produire des estimations précises. Parallax Wallet est généralement lancé et arrêté à la demande plutôt que laissé en marche 24 h/24, si bien que l'oracle peut ne pas accumuler assez de données et revient alors au minimum par défaut. Ce sont les nœuds toujours allumés qui en tirent le meilleur parti.",
   "settings.allowInbound.desc": "Permet à d'autres pairs de se connecter à votre nœud.",
-  "settings.allowInbound.more": "Lorsque c'est activé, le nœud demande à votre routeur de rediriger son port d'écoute (via UPnP ou NAT-PMP) pour que les pairs sur Internet puissent vous joindre. Accepter des pairs entrants rend le réseau plus robuste et accélère la propagation des blocs chez vous.\n\nEn contrepartie, votre adresse IP devient visible pour les autres pairs. Désactivez-le si vous êtes derrière un pare-feu strict ou souhaitez rester en sortant uniquement : le nœud continue de se connecter à des pairs.",
-  "settings.nat.more": "Automatique essaie UPnP et NAT-PMP et utilise celui auquel votre routeur répond. Choisissez-en un pour ignorer l'autre.\n\nIP publique fixe sert lorsque vous avez redirigé le port vous-même sur votre routeur, ou que la machine a une adresse publique : le nœud annonce alors cette IP sans interroger le routeur.\n\nUtilisé seulement si les connexions entrantes sont autorisées.",
-  "settings.discovery.more": "Avec la découverte activée, le nœud apprend l'existence de pairs auprès d'autres pairs, des seeds DNS et de l'arbre de découverte DNS, et les garde dans son carnet d'adresses.\n\nDésactivée, il ne se connecte qu'aux pairs que vous ajoutez depuis la liste des pairs et aux nœuds d'amorçage. C'est utile pour des configurations privées, mais un nœud avec peu de pairs est plus facile à isoler.",
-  "settings.legacyDiscovery.more": "Les nœuds Parallax v2 se connectent avec la poignée de main v2 et gardent les pairs dans un carnet d'adresses. Le transport v1.x (découverte UDP et ancienne poignée de main) est conservé pour la compatibilité avec les anciens nœuds.\n\nAuto répond aux pairs v1 qui le contactent et accepte les anciennes connexions, mais ne recherche pas de pairs v1. C'est la valeur par défaut.\n\nActivé utilise aussi la découverte v1 pour trouver des pairs à contacter.\n\nDésactivé ferme entièrement la surface v1 : pas de socket UDP, pas d'ancienne poignée de main. Le nœud devient v2 uniquement et son URL enode n'est plus qu'informative.",
-  "settings.bootnodes.more": "Les nœuds d'amorçage sont l'endroit où un nœud au carnet d'adresses vide commence à chercher des pairs. Une entrée par ligne :\n\n• les URL enode:// alimentent la découverte v1 ;\n\n• les entrées ip:port ou <address>.onion:port sont contactées avec la poignée de main v2.\n\nLes entrées personnalisées remplacent celles intégrées. Les seeds DNS continuent de fonctionner en parallèle, sauf si la découverte de pairs est désactivée.",
-  "settings.proxy.more": "Chaque connexion sortante vers un pair passe par ce proxy SOCKS5, adresses onion comprises. Réglez-le sur un Tor local (généralement 127.0.0.1:9050) pour masquer votre adresse IP aux pairs que vous contactez.\n\nLes noms des seeds DNS sont alors aussi résolus via le proxy, si bien qu'aucune requête ne fuit vers votre résolveur local. Les connexions entrantes ne sont pas concernées : désactivez aussi les connexions entrantes pour ne plus accepter de pairs sur votre propre adresse.",
-  "settings.listenOnion.more": "Si Tor tourne sur cet ordinateur avec son port de contrôle ouvert, le nœud lui demande un service onion redirigeant vers le port d'écoute, pour que les pairs puissent vous joindre via Tor sans connaître votre adresse IP. La clé du service est conservée dans le répertoire de données, l'adresse reste donc la même d'un redémarrage à l'autre.\n\nSi Tor n'est pas joignable, cela ne fait rien d'autre qu'une nouvelle tentative discrète de temps en temps. Sauf si un proxy onion est défini, le nœud utilise aussi le port SOCKS de Tor pour contacter les pairs onion.",
-  "settings.onlyNet.more": "Le nœud ne contacte que des pairs sur les réseaux choisis. Choisissez uniquement Onion, avec un proxy ou le service onion, pour que chaque connexion sortante passe par Tor.\n\nAucun choix autorise tous les réseaux. Les connexions entrantes et les pairs ajoutés à la main ne sont pas concernés.",
-  "settings.onionProxy.more": "Les adresses onion passent par ce proxy SOCKS5 au lieu du proxy principal. Laissez-le vide pour utiliser le proxy principal, ou le port SOCKS de Tor lorsque le service onion tourne.\n\nRéglez-le sur 0 pour n'établir aucune connexion onion, même avec un proxy défini.",
-  "settings.proxyRandomize.more": "Tor attribue des circuits distincts aux connexions utilisant des identifiants SOCKS différents. Avec cette option, le nœud utilise de nouveaux identifiants pour chaque connexion : deux pairs ne partagent jamais un circuit et ne peuvent pas être reliés entre eux par leur nœud de sortie.\n\nDésactivez-la pour partager un seul circuit entre les pairs, ce qui consomme moins de ressources Tor.",
+  "settings.allowInbound.more":
+    "Lorsque c'est activé, le nœud demande à votre routeur de rediriger son port d'écoute (via UPnP ou NAT-PMP) pour que les pairs sur Internet puissent vous joindre. Accepter des pairs entrants rend le réseau plus robuste et accélère la propagation des blocs chez vous.\n\nEn contrepartie, votre adresse IP devient visible pour les autres pairs. Désactivez-le si vous êtes derrière un pare-feu strict ou souhaitez rester en sortant uniquement : le nœud continue de se connecter à des pairs.",
+  "settings.nat.more":
+    "Automatique essaie UPnP et NAT-PMP et utilise celui auquel votre routeur répond. Choisissez-en un pour ignorer l'autre.\n\nIP publique fixe sert lorsque vous avez redirigé le port vous-même sur votre routeur, ou que la machine a une adresse publique : le nœud annonce alors cette IP sans interroger le routeur.\n\nUtilisé seulement si les connexions entrantes sont autorisées.",
+  "settings.discovery.more":
+    "Avec la découverte activée, le nœud apprend l'existence de pairs auprès d'autres pairs, des seeds DNS et de l'arbre de découverte DNS, et les garde dans son carnet d'adresses.\n\nDésactivée, il ne se connecte qu'aux pairs que vous ajoutez depuis la liste des pairs et aux nœuds d'amorçage. C'est utile pour des configurations privées, mais un nœud avec peu de pairs est plus facile à isoler.",
+  "settings.legacyDiscovery.more":
+    "Les nœuds Parallax v2 se connectent avec la poignée de main v2 et gardent les pairs dans un carnet d'adresses. Le transport v1.x (découverte UDP et ancienne poignée de main) est conservé pour la compatibilité avec les anciens nœuds.\n\nAuto répond aux pairs v1 qui le contactent et accepte les anciennes connexions, mais ne recherche pas de pairs v1. C'est la valeur par défaut.\n\nActivé utilise aussi la découverte v1 pour trouver des pairs à contacter.\n\nDésactivé ferme entièrement la surface v1 : pas de socket UDP, pas d'ancienne poignée de main. Le nœud devient v2 uniquement et son URL enode n'est plus qu'informative.",
+  "settings.bootnodes.more":
+    "Les nœuds d'amorçage sont l'endroit où un nœud au carnet d'adresses vide commence à chercher des pairs. Une entrée par ligne :\n\n• les URL enode:// alimentent la découverte v1 ;\n\n• les entrées ip:port ou <address>.onion:port sont contactées avec la poignée de main v2.\n\nLes entrées personnalisées remplacent celles intégrées. Les seeds DNS continuent de fonctionner en parallèle, sauf si la découverte de pairs est désactivée.",
+  "settings.proxy.more":
+    "Chaque connexion sortante vers un pair passe par ce proxy SOCKS5, adresses onion comprises. Réglez-le sur un Tor local (généralement 127.0.0.1:9050) pour masquer votre adresse IP aux pairs que vous contactez.\n\nLes noms des seeds DNS sont alors aussi résolus via le proxy, si bien qu'aucune requête ne fuit vers votre résolveur local. Les connexions entrantes ne sont pas concernées : désactivez aussi les connexions entrantes pour ne plus accepter de pairs sur votre propre adresse.",
+  "settings.listenOnion.more":
+    "Si Tor tourne sur cet ordinateur avec son port de contrôle ouvert, le nœud lui demande un service onion redirigeant vers le port d'écoute, pour que les pairs puissent vous joindre via Tor sans connaître votre adresse IP. La clé du service est conservée dans le répertoire de données, l'adresse reste donc la même d'un redémarrage à l'autre.\n\nSi Tor n'est pas joignable, cela ne fait rien d'autre qu'une nouvelle tentative discrète de temps en temps. Sauf si un proxy onion est défini, le nœud utilise aussi le port SOCKS de Tor pour contacter les pairs onion.",
+  "settings.onlyNet.more":
+    "Le nœud ne contacte que des pairs sur les réseaux choisis. Choisissez uniquement Onion, avec un proxy ou le service onion, pour que chaque connexion sortante passe par Tor.\n\nAucun choix autorise tous les réseaux. Les connexions entrantes et les pairs ajoutés à la main ne sont pas concernés.",
+  "settings.onionProxy.more":
+    "Les adresses onion passent par ce proxy SOCKS5 au lieu du proxy principal. Laissez-le vide pour utiliser le proxy principal, ou le port SOCKS de Tor lorsque le service onion tourne.\n\nRéglez-le sur 0 pour n'établir aucune connexion onion, même avec un proxy défini.",
+  "settings.proxyRandomize.more":
+    "Tor attribue des circuits distincts aux connexions utilisant des identifiants SOCKS différents. Avec cette option, le nœud utilise de nouveaux identifiants pour chaque connexion : deux pairs ne partagent jamais un circuit et ne peuvent pas être reliés entre eux par leur nœud de sortie.\n\nDésactivez-la pour partager un seul circuit entre les pairs, ce qui consomme moins de ressources Tor.",
   "settings.stats.desc": "Affiche ce nœud sur status.parallaxprotocol.org.",
-  "settings.stats.toggle.more": "Le nœud se signale au tableau de bord public status.parallaxprotocol.org sous un nom aléatoire conservé dans votre répertoire de données.\n\nIl partage la hauteur de bloc, le nombre de pairs, l'état de synchronisation et de minage, la latence des pairs, la version du client et le système d'exploitation. Aucune donnée de portefeuille, de compte ou de transaction n'est envoyée, mais le serveur de statistiques voit votre adresse IP.",
-  "settings.rpc.enable.more": "Démarre un serveur JSON-RPC que les portefeuilles comme MetaMask, les dapps et les outils de développement utilisent pour lire la chaîne et envoyer des transactions via votre propre nœud plutôt qu'un fournisseur tiers.\n\nPar défaut, il n'écoute que sur 127.0.0.1 : seuls les programmes de cet ordinateur peuvent l'atteindre. Vous pouvez changer l'adresse sous Avancé — ne l'exposez jamais sur l'Internet public.",
-  "settings.rpc.host.more": "127.0.0.1 n'accepte que les connexions de cet ordinateur. Une adresse LAN ou 0.0.0.0 (toutes les interfaces) permet aussi à d'autres machines de se connecter, par exemple un portefeuille sur votre téléphone ou un autre ordinateur.\n\nQuiconque peut atteindre le serveur peut lire la chaîne via votre nœud et soumettre des transactions : ne le faites que sur un réseau de confiance, derrière un pare-feu. Ajoutez les noms utilisés par les autres machines sous Noms d'hôte autorisés.",
-  "settings.rpc.vhosts.more": "Chaque requête HTTP indique l'hôte auquel elle est destinée. Le nœud refuse les requêtes adressées à un nom absent de cette liste, ce qui empêche une page web malveillante d'atteindre votre nœud par DNS rebinding — en faisant parler votre navigateur à 127.0.0.1 sous son propre nom de domaine.\n\nLes requêtes adressées à une adresse IP sont toujours acceptées. Ajoutez ici un nom si vous joignez le nœud par celui-ci, et n'utilisez * pour tout accepter que si vous en comprenez le risque.",
-  "settings.rpc.unprotected.more": "Les transactions signées avec un chain ID (EIP-155) ne sont valides que sur cette chaîne. Les transactions non protégées, signées sans, sont valides sur toutes les chaînes partageant le même format d'adresse, si bien que n'importe qui peut les rejouer ailleurs.\n\nN'activez ceci que si un outil de confiance ne sait pas signer avec un chain ID, comme certains scripts de déploiement pour des adresses de contrat déterministes.",
-  "settings.metrics.more": "Le nœud tient toujours des compteurs légers pour sa base de données, le réseau, la synchronisation et le pool de transactions, et l'app en affiche certains, comme le trafic réseau. Activez ceci pour les servir sur un point de terminaison de métriques, à /debug/metrics (JSON) et /debug/metrics/prometheus pour Prometheus ou Grafana, et pour permettre les métriques détaillées.\n\nLe daemon met en place ses métriques au démarrage : ce réglage prend effet après le redémarrage de l'app.",
-  "settings.group.performance.more": "Le nœud répartit sa mémoire de cache en quatre :\n\n• le cache de base de données contient les données de chaîne récemment lues et écrites ;\n\n• le cache trie propre contient les nœuds du trie d'état lus depuis le disque ;\n\n• le cache trie sale contient les changements d'état pas encore écrits sur disque — plus il est grand, moins les écritures sont nombreuses et plus elles sont volumineuses ;\n\n• le cache du snapshot contient les entrées du snapshot d'état à plat.\n\nLes valeurs par défaut totalisent 4 GB, comme le client en ligne de commande sur le mainnet. Si le total dépasse un tiers de votre RAM, le nœud les réduit pour que le système ne manque pas de mémoire.",
+  "settings.stats.toggle.more":
+    "Le nœud se signale au tableau de bord public status.parallaxprotocol.org sous un nom aléatoire conservé dans votre répertoire de données.\n\nIl partage la hauteur de bloc, le nombre de pairs, l'état de synchronisation et de minage, la latence des pairs, la version du client et le système d'exploitation. Aucune donnée de portefeuille, de compte ou de transaction n'est envoyée, mais le serveur de statistiques voit votre adresse IP.",
+  "settings.rpc.enable.more":
+    "Démarre un serveur JSON-RPC que les portefeuilles comme MetaMask, les dapps et les outils de développement utilisent pour lire la chaîne et envoyer des transactions via votre propre nœud plutôt qu'un fournisseur tiers.\n\nPar défaut, il n'écoute que sur 127.0.0.1 : seuls les programmes de cet ordinateur peuvent l'atteindre. Vous pouvez changer l'adresse sous Avancé — ne l'exposez jamais sur l'Internet public.",
+  "settings.rpc.host.more":
+    "127.0.0.1 n'accepte que les connexions de cet ordinateur. Une adresse LAN ou 0.0.0.0 (toutes les interfaces) permet aussi à d'autres machines de se connecter, par exemple un portefeuille sur votre téléphone ou un autre ordinateur.\n\nQuiconque peut atteindre le serveur peut lire la chaîne via votre nœud et soumettre des transactions : ne le faites que sur un réseau de confiance, derrière un pare-feu. Ajoutez les noms utilisés par les autres machines sous Noms d'hôte autorisés.",
+  "settings.rpc.vhosts.more":
+    "Chaque requête HTTP indique l'hôte auquel elle est destinée. Le nœud refuse les requêtes adressées à un nom absent de cette liste, ce qui empêche une page web malveillante d'atteindre votre nœud par DNS rebinding — en faisant parler votre navigateur à 127.0.0.1 sous son propre nom de domaine.\n\nLes requêtes adressées à une adresse IP sont toujours acceptées. Ajoutez ici un nom si vous joignez le nœud par celui-ci, et n'utilisez * pour tout accepter que si vous en comprenez le risque.",
+  "settings.rpc.unprotected.more":
+    "Les transactions signées avec un chain ID (EIP-155) ne sont valides que sur cette chaîne. Les transactions non protégées, signées sans, sont valides sur toutes les chaînes partageant le même format d'adresse, si bien que n'importe qui peut les rejouer ailleurs.\n\nN'activez ceci que si un outil de confiance ne sait pas signer avec un chain ID, comme certains scripts de déploiement pour des adresses de contrat déterministes.",
+  "settings.metrics.more":
+    "Le nœud tient toujours des compteurs légers pour sa base de données, le réseau, la synchronisation et le pool de transactions, et l'app en affiche certains, comme le trafic réseau. Activez ceci pour les servir sur un point de terminaison de métriques, à /debug/metrics (JSON) et /debug/metrics/prometheus pour Prometheus ou Grafana, et pour permettre les métriques détaillées.\n\nLe daemon met en place ses métriques au démarrage : ce réglage prend effet après le redémarrage de l'app.",
+  "settings.group.performance.more":
+    "Le nœud répartit sa mémoire de cache en quatre :\n\n• le cache de base de données contient les données de chaîne récemment lues et écrites ;\n\n• le cache trie propre contient les nœuds du trie d'état lus depuis le disque ;\n\n• le cache trie sale contient les changements d'état pas encore écrits sur disque — plus il est grand, moins les écritures sont nombreuses et plus elles sont volumineuses ;\n\n• le cache du snapshot contient les entrées du snapshot d'état à plat.\n\nLes valeurs par défaut totalisent 4 GB, comme le client en ligne de commande sur le mainnet. Si le total dépasse un tiers de votre RAM, le nœud les réduit pour que le système ne manque pas de mémoire.",
   "settings.readMore": "En savoir plus",
   "settings.cliFlag": "Équivalent en ligne de commande",
   "settings.advanced": "Avancé",
@@ -762,7 +852,8 @@ const fr: Dict = {
   "settings.bootnodes.desc": "Les premiers pairs qu'interroge un nouveau nœud. Vide utilise la liste intégrée.",
   "settings.bootnodes.placeholder": "Liste intégrée",
 
-  "settings.privacy.desc": "Faites passer les connexions du nœud aux pairs par Tor ou un autre proxy SOCKS5, et joignez des pairs sur des adresses onion.",
+  "settings.privacy.desc":
+    "Faites passer les connexions du nœud aux pairs par Tor ou un autre proxy SOCKS5, et joignez des pairs sur des adresses onion.",
   "settings.proxy": "Proxy SOCKS5",
   "settings.proxy.desc": "Fait passer les connexions sortantes vers les pairs par SOCKS5.",
   "settings.listenOnion": "Service onion",
@@ -783,7 +874,8 @@ const fr: Dict = {
   "settings.torPassword.desc": "Uniquement pour l'authentification par mot de passe. Stocké en clair.",
   "settings.torPassword.placeholder": "Authentification par cookie",
 
-  "settings.rpc.exposed": "Le serveur RPC écoute au-delà de cet ordinateur. Quiconque peut l'atteindre peut lire la chaîne via votre nœud et soumettre des transactions. Ne le faites que sur un réseau de confiance, derrière un pare-feu.",
+  "settings.rpc.exposed":
+    "Le serveur RPC écoute au-delà de cet ordinateur. Quiconque peut l'atteindre peut lire la chaîne via votre nœud et soumettre des transactions. Ne le faites que sur un réseau de confiance, derrière un pare-feu.",
   "settings.rpc.host": "Adresse d'écoute",
   "settings.rpc.host.desc": "L'interface sur laquelle écoute le serveur.",
   "settings.rpc.apis": "API",
@@ -801,15 +893,19 @@ const fr: Dict = {
   "settings.graphql": "GraphQL",
   "settings.graphql.desc": "Fournit un endpoint GraphQL sur /graphql du serveur HTTP-RPC.",
   "settings.ipc": "Endpoint IPC",
-  "settings.ipc.desc": "Un socket local dans le répertoire de données, pour la console parallax-cli et d'autres outils sur cet ordinateur.",
+  "settings.ipc.desc":
+    "Un socket local dans le répertoire de données, pour la console parallax-cli et d'autres outils sur cet ordinateur.",
   "settings.rpc.gasCap": "Plafond de gas des appels",
-  "settings.rpc.gasCap.desc": "Le gas maximal que eth_call et eth_estimateGas peuvent utiliser. 0 signifie aucun plafond.",
+  "settings.rpc.gasCap.desc":
+    "Le gas maximal que eth_call et eth_estimateGas peuvent utiliser. 0 signifie aucun plafond.",
   "settings.rpc.txFeeCap": "Plafond des frais de transaction",
-  "settings.rpc.txFeeCap.desc": "Refuse les transactions envoyées via RPC dont les frais dépassent ce montant. 0 signifie aucun plafond.",
+  "settings.rpc.txFeeCap.desc":
+    "Refuse les transactions envoyées via RPC dont les frais dépassent ce montant. 0 signifie aucun plafond.",
   "settings.rpc.pvmTimeout": "Délai des appels",
   "settings.rpc.pvmTimeout.desc": "Durée maximale d'exécution d'un eth_call. 0 signifie aucune limite.",
   "settings.rpc.logQueryLimit": "Limite des filtres de logs",
-  "settings.rpc.logQueryLimit.desc": "Le nombre maximal d'adresses ou de topics qu'un filtre eth_getLogs peut lister par position. 0 signifie aucune limite.",
+  "settings.rpc.logQueryLimit.desc":
+    "Le nombre maximal d'adresses ou de topics qu'un filtre eth_getLogs peut lister par position. 0 signifie aucune limite.",
   "settings.rpc.batchLimit": "Taille maximale des lots",
   "settings.rpc.batchLimit.desc": "Le nombre maximal de requêtes dans un lot JSON-RPC.",
   "settings.rpc.unprotected": "Autoriser les transactions non protégées",
@@ -824,23 +920,28 @@ const fr: Dict = {
   "settings.gpo.ignorePrice": "Prix ignoré",
   "settings.gpo.ignorePrice.desc": "Les prix du gas inférieurs sont exclus de l'estimation par défaut.",
   "settings.txpool.locals": "Comptes locaux",
-  "settings.txpool.locals.desc": "Adresses dont les transactions sont toujours conservées et prioritaires, une par ligne.",
+  "settings.txpool.locals.desc":
+    "Adresses dont les transactions sont toujours conservées et prioritaires, une par ligne.",
   "settings.txpool.noLocals": "Traiter les transactions locales comme les autres",
-  "settings.txpool.noLocals.desc": "Supprime les exemptions de prix dont bénéficient les transactions envoyées via ce nœud.",
+  "settings.txpool.noLocals.desc":
+    "Supprime les exemptions de prix dont bénéficient les transactions envoyées via ce nœud.",
   "settings.txpool.priceLimit": "Prix du gas minimum",
   "settings.txpool.priceLimit.desc": "Le prix du gas le plus bas requis pour qu'une transaction entre dans le pool.",
   "settings.txpool.priceBump": "Hausse de remplacement",
-  "settings.txpool.priceBump.desc": "De combien une transaction doit payer plus pour en remplacer une avec le même nonce.",
+  "settings.txpool.priceBump.desc":
+    "De combien une transaction doit payer plus pour en remplacer une avec le même nonce.",
   "settings.txpool.accountSlots": "Emplacements exécutables par compte",
   "settings.txpool.accountSlots.desc": "Place garantie pour les transactions prêtes de chaque compte.",
   "settings.txpool.globalSlots": "Emplacements exécutables au total",
   "settings.txpool.globalSlots.desc": "Le nombre maximal de transactions prêtes que le pool contient.",
   "settings.txpool.accountQueue": "Emplacements en file par compte",
-  "settings.txpool.accountQueue.desc": "Le nombre maximal de transactions pas encore exécutables gardées pour chaque compte.",
+  "settings.txpool.accountQueue.desc":
+    "Le nombre maximal de transactions pas encore exécutables gardées pour chaque compte.",
   "settings.txpool.globalQueue": "Emplacements en file au total",
   "settings.txpool.globalQueue.desc": "Le nombre maximal de transactions pas encore exécutables que le pool contient.",
   "settings.txpool.lifetime": "Durée de vie en file",
-  "settings.txpool.lifetime.desc": "Combien de temps une transaction pas encore exécutable peut attendre avant d'être supprimée.",
+  "settings.txpool.lifetime.desc":
+    "Combien de temps une transaction pas encore exécutable peut attendre avant d'être supprimée.",
 
   "settings.prefetch": "Préchargement de l'état",
   "settings.prefetch.desc": "Lit l'état à l'avance pendant l'import des blocs.",
@@ -850,7 +951,8 @@ const fr: Dict = {
   "settings.logLevel": "Niveau de log",
   "settings.logLevel.desc": "Le niveau de détail que le nœud et l'app écrivent dans le log.",
   "settings.clearLogs": "Vider les journaux au démarrage",
-  "settings.clearLogs.desc": "Commencer chaque lancement avec un journal vide. Sinon, les derniers journaux sont conservés d'un redémarrage à l'autre, ce qui aide à analyser un plantage.",
+  "settings.clearLogs.desc":
+    "Commencer chaque lancement avec un journal vide. Sinon, les derniers journaux sont conservés d'un redémarrage à l'autre, ce qui aide à analyser un plantage.",
   "settings.logLevel.1": "Erreurs",
   "settings.logLevel.2": "Avertissements",
   "settings.logLevel.3": "Info",
@@ -867,7 +969,8 @@ const fr: Dict = {
   "notify.synced": "Synchronisation terminée",
   "notify.synced.body": "Votre nœud a rattrapé le réseau au bloc {block}.",
   "notify.lowDisk": "Nœud arrêté",
-  "notify.lowDisk.body": "Le disque est presque plein, le nœud s'est donc arrêté pour protéger sa base de données. Libérez de l'espace, puis redémarrez-le.",
+  "notify.lowDisk.body":
+    "Le disque est presque plein, le nœud s'est donc arrêté pour protéger sa base de données. Libérez de l'espace, puis redémarrez-le.",
 };
 
 export default fr;

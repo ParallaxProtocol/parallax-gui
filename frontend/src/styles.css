@@ -162,7 +162,10 @@ button.glass:hover,
 /* What the glass covers up: a chosen option */
 .glass[aria-checked="true"] {
   border-color: var(--brand-mark);
-  box-shadow: var(--glass-shine), 0 0 0 1px var(--brand-mark), var(--glass-drop);
+  box-shadow:
+    var(--glass-shine),
+    0 0 0 1px var(--brand-mark),
+    var(--glass-drop);
 }
 
 @theme inline {
@@ -204,7 +207,8 @@ button.glass:hover,
 
   /* The OS's UI font where it has one (SF on macOS, Segoe UI Variable on
      Windows); Linux desktops vary too much, so Geist stands in there */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Geist Variable", system-ui, sans-serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Geist Variable", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Geist Mono Variable", monospace;
 
   /* Desktop type sizes: 13px body, 12px secondary, 11px captions */
@@ -502,7 +506,9 @@ button.glass:hover,
   .input:focus {
     outline: none;
     border-color: var(--brand-mark);
-    box-shadow: var(--glass-shine), 0 0 0 3px var(--ring);
+    box-shadow:
+      var(--glass-shine),
+      0 0 0 3px var(--ring);
   }
 
   .range {

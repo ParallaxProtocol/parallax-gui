@@ -87,7 +87,14 @@ export default function AssistantBar() {
             right: NODE_BAR_GAP,
             bottom: NODE_BAR_GAP,
           }}
-          initial={{ opacity: 0, y: 16, scale: 0.88, width, height: NODE_BAR_HEIGHT, borderRadius: NODE_BAR_HEIGHT / 2 }}
+          initial={{
+            opacity: 0,
+            y: 16,
+            scale: 0.88,
+            width,
+            height: NODE_BAR_HEIGHT,
+            borderRadius: NODE_BAR_HEIGHT / 2,
+          }}
           // Fully rounded, unlike the node bar: a circle or a capsule at rest,
           // softer corners opened on a request
           animate={{ opacity: 1, y: 0, scale: 1, width, height, borderRadius: open ? 28 : NODE_BAR_HEIGHT / 2 }}
@@ -110,9 +117,14 @@ export default function AssistantBar() {
           >
             {/* The overview card's glow, in the assistants' blue, grown to light the whole bar:
                 brightest near its top, still there by the actions at its foot */}
-            <div className="absolute" style={{ left: "-25%", right: "-25%", top: "-60%", height: "200%", background: ASSISTANT_GLOW }} />
+            <div
+              className="absolute"
+              style={{ left: "-25%", right: "-25%", top: "-60%", height: "200%", background: ASSISTANT_GLOW }}
+            />
           </motion.div>
-          <div className={`relative min-h-0 flex-1 overflow-x-hidden ${open ? "overflow-y-auto" : "overflow-y-hidden"}`}>
+          <div
+            className={`relative min-h-0 flex-1 overflow-x-hidden ${open ? "overflow-y-auto" : "overflow-y-hidden"}`}
+          >
             {/* Laid out at the bar's coming width, so nothing reflows as it grows */}
             {/* At rest the contents keep their told width, clipped down to the badge */}
             <div ref={inner} style={{ width: open ? width : restWidth }}>
@@ -253,7 +265,12 @@ function Rest({ status, activity, told }: { status: MCPStatus | null; activity: 
               exit={{ opacity: 0, scale: 0.6, transition: FADE_OUT }}
             >
               <Tooltip content={t("assistant.bar.cancel")}>
-                <button type="button" className="btn btn-tinted btn-icon" onClick={cancel} aria-label={t("assistant.bar.cancel")}>
+                <button
+                  type="button"
+                  className="btn btn-tinted btn-icon"
+                  onClick={cancel}
+                  aria-label={t("assistant.bar.cancel")}
+                >
                   <X className="size-4" />
                 </button>
               </Tooltip>
@@ -294,7 +311,9 @@ function Sent({ sent }: { sent: SentInfo }) {
           {tx.watchOnly ? t("assistant.sent.requestTitle") : t("wallet.sent.title")}
         </h2>
         <p>{tx.watchOnly ? t("assistant.sent.requestDesc", { amount }) : t("wallet.sent.desc", { amount })}</p>
-        <p className="text-sm text-muted-foreground">{tx.watchOnly ? t("assistant.sent.requestWait") : t("wallet.sent.wait")}</p>
+        <p className="text-sm text-muted-foreground">
+          {tx.watchOnly ? t("assistant.sent.requestWait") : t("wallet.sent.wait")}
+        </p>
       </motion.div>
       <motion.div
         className="mt-4 flex w-full flex-col divide-y divide-border/70 rounded-lg bg-muted/60 text-left text-sm"

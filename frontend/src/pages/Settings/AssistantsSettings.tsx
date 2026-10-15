@@ -13,7 +13,14 @@ const SEE: (keyof MCPAllow)[] = ["nodeStatus", "nodeLogs", "wallet", "contacts"]
 /** The public services: on or off, as changing them restarts the server. */
 const PUBLIC: ("explorer" | "statusPage")[] = ["explorer", "statusPage"];
 const DO: (keyof MCPAllow)[] = ["startNode"];
-const ASK: (keyof MCPAllow)[] = ["sendTransactions", "stopNode", "settings", "newAccounts", "watchOnly", "editContacts"];
+const ASK: (keyof MCPAllow)[] = [
+  "sendTransactions",
+  "stopNode",
+  "settings",
+  "newAccounts",
+  "watchOnly",
+  "editContacts",
+];
 
 /** What no assistant can do, whatever is allowed above: listed so it's plain. */
 const NEVER = ["seeds", "keys", "remove", "password", "send", "exposure", "offline", "access"];
@@ -27,7 +34,11 @@ export function AssistantsOverview({ cfg, update }: PageProps) {
     <Group title={t("settings.group.mcp")} desc={t("settings.mcp.desc")} more={t("settings.mcp.more")}>
       <Rows>
         <Setting title={t("settings.mcp.enable")} desc={t("settings.mcp.enable.desc")}>
-          <Toggle checked={cfg.mcpEnabled} onChange={(v) => update({ mcpEnabled: v })} label={t("settings.mcp.enable")} />
+          <Toggle
+            checked={cfg.mcpEnabled}
+            onChange={(v) => update({ mcpEnabled: v })}
+            label={t("settings.mcp.enable")}
+          />
         </Setting>
         {cfg.mcpEnabled && (
           <Setting title={t("settings.mcp.port")} desc={t("settings.mcp.port.desc")}>

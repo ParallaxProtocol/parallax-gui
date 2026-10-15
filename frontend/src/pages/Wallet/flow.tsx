@@ -40,9 +40,7 @@ export function FlowPage({
         {/* Keyed by the step's name, not its index: the backup step ticks
             its progress on once saved without arriving all over again */}
         <motion.div key={title} {...PAGE}>
-          <Section title={title}>
-            {children}
-          </Section>
+          <Section title={title}>{children}</Section>
         </motion.div>
       </AnimatePresence>
     </div>
@@ -67,7 +65,7 @@ export function Steps({ steps, current }: { steps: string[]; current: number }) 
               {state === "current" && (
                 <motion.span
                   key="name"
-                  className="overflow-hidden whitespace-nowrap font-medium text-foreground"
+                  className="overflow-hidden font-medium whitespace-nowrap text-foreground"
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: "auto", opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}

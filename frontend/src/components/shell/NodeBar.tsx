@@ -93,7 +93,13 @@ export default function NodeBar({ version }: { version: string }) {
       refresh();
     }
   };
-  const switchLabel = busy ? (running ? t("node.stopping") : t("node.starting")) : running ? t("node.stop") : t("node.start");
+  const switchLabel = busy
+    ? running
+      ? t("node.stopping")
+      : t("node.starting")
+    : running
+      ? t("node.stop")
+      : t("node.start");
   const openLabel = open ? t("node.collapse") : t("node.expand");
 
   return (
@@ -102,7 +108,10 @@ export default function NodeBar({ version }: { version: string }) {
       className={`no-drag fixed z-40 flex flex-col overflow-hidden ${BAR_SURFACE}`}
       style={{ left: NODE_BAR_GAP, bottom: NODE_BAR_GAP, borderRadius: 16 }}
       initial={false}
-      animate={{ right, height: open ? Math.max(NODE_BAR_HEIGHT, vh - TOP_BAR_HEIGHT - NODE_BAR_GAP) : NODE_BAR_HEIGHT }}
+      animate={{
+        right,
+        height: open ? Math.max(NODE_BAR_HEIGHT, vh - TOP_BAR_HEIGHT - NODE_BAR_GAP) : NODE_BAR_HEIGHT,
+      }}
       transition={{ type: "spring", bounce: 0, visualDuration: 0.35 }}
     >
       {/* The bar: a click anywhere on it opens the page, whose header it then is */}
@@ -125,14 +134,15 @@ export default function NodeBar({ version }: { version: string }) {
             </span>
           </span>
           <span className="flex min-w-0 flex-col">
-            <span className="truncate text-[15px] font-semibold text-foreground">{open ? t("nav.node") : t(`node.state.${state}`)}</span>
+            <span className="truncate text-[15px] font-semibold text-foreground">
+              {open ? t("nav.node") : t(`node.state.${state}`)}
+            </span>
             <span className="truncate text-sm">
               {running ? (
                 <>
                   <Tooltip content={t("clock.bestBlock")}>
                     <span>
-                      {t("status.block")}{" "}
-                      <Counter value={node.currentBlock} format={(v) => formatInt(Math.round(v))} />
+                      {t("status.block")} <Counter value={node.currentBlock} format={(v) => formatInt(Math.round(v))} />
                     </span>
                   </Tooltip>
                   {" · "}
@@ -152,7 +162,11 @@ export default function NodeBar({ version }: { version: string }) {
         {running && state === "syncing" && (
           <span className="flex items-center gap-2.5">
             <Meter value={progress} live thick className="w-56" label={t("node.state.syncing")} />
-            <Counter value={progress * 100} format={(v) => `${v.toFixed(1)}%`} className="font-medium text-foreground" />
+            <Counter
+              value={progress * 100}
+              format={(v) => `${v.toFixed(1)}%`}
+              className="font-medium text-foreground"
+            />
           </span>
         )}
 
@@ -199,7 +213,7 @@ export default function NodeBar({ version }: { version: string }) {
         {open && (
           <motion.div
             key="page"
-            className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]"
+            className="min-h-0 flex-1 [scrollbar-gutter:stable] overflow-y-auto"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.4, ease: [0.16, 1, 0.3, 1] } }}
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
@@ -224,7 +238,13 @@ export function OfflineBar({ version }: { version: string }) {
     <section
       aria-label={t("offline.mode")}
       className={`no-drag fixed z-40 flex items-center gap-3 px-3 text-sm text-muted-foreground ${BAR_SURFACE}`}
-      style={{ left: NODE_BAR_GAP, right: NODE_BAR_GAP, bottom: NODE_BAR_GAP, height: NODE_BAR_HEIGHT, borderRadius: 16 }}
+      style={{
+        left: NODE_BAR_GAP,
+        right: NODE_BAR_GAP,
+        bottom: NODE_BAR_GAP,
+        height: NODE_BAR_HEIGHT,
+        borderRadius: 16,
+      }}
     >
       <IconBadge icon={ShieldCheck} tone="good" />
       <span className="flex min-w-0 flex-1 flex-col">

@@ -57,7 +57,9 @@ export function Section({
       <div className="flex items-baseline justify-between gap-4 px-1">
         <h2 className="flex items-baseline gap-2 text-xl font-semibold tracking-tight">
           {title}
-          {count !== undefined && <span className="text-base font-medium text-muted-foreground tabular-nums">{count}</span>}
+          {count !== undefined && (
+            <span className="text-base font-medium text-muted-foreground tabular-nums">{count}</span>
+          )}
         </h2>
         {aside && <div className="flex items-center gap-2 text-sm text-muted-foreground tabular-nums">{aside}</div>}
       </div>
@@ -102,7 +104,7 @@ export function Row({
 }) {
   return (
     <div className="flex min-h-14 items-center justify-between gap-8 px-4 py-3">
-      <div className="min-w-0 max-w-xl">
+      <div className="max-w-xl min-w-0">
         <div className="flex items-center gap-2">
           {title}
           {badge}
@@ -119,7 +121,9 @@ export function Property({ label, mono, children }: { label: string; mono?: bool
   return (
     <div className="flex min-h-12 items-center justify-between gap-6 px-5 py-3">
       <dt className="shrink-0">{label}</dt>
-      <dd className={`flex min-w-0 items-center justify-end gap-1 text-muted-foreground tabular-nums ${mono ? "font-mono text-sm" : ""}`}>
+      <dd
+        className={`flex min-w-0 items-center justify-end gap-1 text-muted-foreground tabular-nums ${mono ? "font-mono text-sm" : ""}`}
+      >
         {children}
       </dd>
     </div>

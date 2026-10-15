@@ -70,7 +70,8 @@ const zhTW: Dict = {
   "onboarding.datadir.title": "資料要放在哪裡？",
   "onboarding.datadir.desc": "同步區塊鏈需要幾 GB 空間。\n請選一個有充足可用空間的位置。",
   "onboarding.networking.title": "為網路出一份力",
-  "onboarding.networking.desc": "允許 Parallax 網路上的其他節點連線到您的節點。\n這會讓網路更健康，也能讓您更快收到新區塊。",
+  "onboarding.networking.desc":
+    "允許 Parallax 網路上的其他節點連線到您的節點。\n這會讓網路更健康，也能讓您更快收到新區塊。",
   "onboarding.networking.desc2": "啟用後，您的 IP 會對其他節點可見。",
   "onboarding.networking.toggle": "允許入站連線",
   "onboarding.networking.recommended": "推薦",
@@ -226,7 +227,8 @@ const zhTW: Dict = {
   "node.peers": "{n} 個節點",
   "node.offlineHint": "未執行。啟動它以同步並使用錢包。",
   "overview.stopped.title": "您的節點目前離線。",
-  "overview.stopped.desc": "啟動節點以與 Parallax 網路同步，親自驗證每個區塊，並在不經任何第三方的情況下為您的錢包提供服務。",
+  "overview.stopped.desc":
+    "啟動節點以與 Parallax 網路同步，親自驗證每個區塊，並在不經任何第三方的情況下為您的錢包提供服務。",
   "overview.sync.searching": "正在尋找節點",
   "overview.sync.searchingDesc": "正在連線網路。一旦有節點回應，就會開始同步。",
   "overview.sync.desc": "正在下載並驗證區塊鏈。追上網路最新區塊後，節點即可使用。",
@@ -339,14 +341,16 @@ const zhTW: Dict = {
   "wallet.welcome.createDesc": "在這台電腦上產生的新助記詞和帳戶。",
   "wallet.welcome.import": "匯入帳戶",
   "wallet.welcome.importDesc": "從助記詞、keystore 檔案或私鑰匯入。",
-  "wallet.welcome.local": "私鑰僅以加密形式儲存在這台電腦上，絕不會傳送到任何地方。您的助記詞就是備份：沒有人能替您找回它。",
+  "wallet.welcome.local":
+    "私鑰僅以加密形式儲存在這台電腦上，絕不會傳送到任何地方。您的助記詞就是備份：沒有人能替您找回它。",
   "wallet.welcome.cta": "設定錢包",
 
   // Wallet: the wallet password
   "wallet.walletPassword": "錢包密碼",
   "wallet.walletPasswordHint": "保護此錢包中每個帳戶的密碼。",
   "wallet.locked.title": "歡迎使用 Parallax",
-  "wallet.locked.desc": "一個應用程式中包含完整的 Parallax 節點和錢包。透過您自己的節點持有、傳送和接收 LAX，無需任何第三方。",
+  "wallet.locked.desc":
+    "一個應用程式中包含完整的 Parallax 節點和錢包。透過您自己的節點持有、傳送和接收 LAX，無需任何第三方。",
   "wallet.locked.existing": "此錢包中已有來自先前版本的金鑰。請設定其密碼以繼續使用：必須是建立這些金鑰時使用的密碼。",
   "wallet.locked.node": "您自己的節點",
   "wallet.locked.nodeDesc": "它自行驗證每個區塊並轉發您的交易，因此沒有其他人能看到您的餘額。",
@@ -359,7 +363,8 @@ const zhTW: Dict = {
   "wallet.setup.title": "設定錢包密碼",
   "wallet.setup.desc": "一個密碼即可保護此錢包中的每個帳戶和助記詞。每次傳送、備份或新增帳戶時，您都需要輸入它。",
   "wallet.setup.existingDesc": "此錢包中已有私鑰。請輸入建立這些私鑰時使用的密碼：它將成為錢包密碼。",
-  "wallet.setup.noRecovery": "此密碼用於在這台電腦上加密您的私鑰，無法重設，也無法找回。如果遺失，只有您的助記詞和備份檔案才能找回您的帳戶。",
+  "wallet.setup.noRecovery":
+    "此密碼用於在這台電腦上加密您的私鑰，無法重設，也無法找回。如果遺失，只有您的助記詞和備份檔案才能找回您的帳戶。",
   "wallet.setup.cta": "設定密碼",
   "wallet.setup.step": "密碼",
   "wallet.offer.title": "建立復原詞組",
@@ -389,7 +394,8 @@ const zhTW: Dict = {
   "wallet.create.kind.derive": "從助記詞產生另一個帳戶",
   "wallet.create.kind.deriveDesc": "來自此錢包中已有的助記詞，該助記詞已為它提供備份。",
   "wallet.create.kind.phrase": "新助記詞",
-  "wallet.create.kind.phraseDesc": "12 個單字，可備份此帳戶以及您之後新增的所有帳戶。適用於 MetaMask 和大多數其他錢包。",
+  "wallet.create.kind.phraseDesc":
+    "12 個單字，可備份此帳戶以及您之後新增的所有帳戶。適用於 MetaMask 和大多數其他錢包。",
   "wallet.create.kind.key": "單一金鑰",
   "wallet.create.kind.keyDesc": "一個擁有獨立金鑰的帳戶，以加密的 keystore 檔案備份。",
   "wallet.create.recommended": "推薦",
@@ -402,7 +408,8 @@ const zhTW: Dict = {
   "wallet.create.step.backup": "備份",
   "wallet.create.lead": "新帳戶將在這台電腦上建立，以下三步同時完成：",
   "wallet.create.fact1": "一組助記詞",
-  "wallet.create.fact1Desc": "12 個單字，在此由系統的安全隨機來源產生。憑它們可以在本錢包或任何相容錢包中還原您的帳戶。",
+  "wallet.create.fact1Desc":
+    "12 個單字，在此由系統的安全隨機來源產生。憑它們可以在本錢包或任何相容錢包中還原您的帳戶。",
   "wallet.create.fact2": "以您的密碼鎖定",
   "wallet.create.fact2Desc": "助記詞和您帳戶的金鑰會以您在下一頁設定的密碼加密。",
   "wallet.create.fact3": "保存在這台電腦上",
@@ -443,7 +450,8 @@ const zhTW: Dict = {
   "wallet.import.phraseLabel": "助記詞",
   "wallet.import.step.accounts": "帳戶",
   "wallet.import.chooseTitle": "選擇帳戶",
-  "wallet.import.chooseDesc": "一組助記詞可以包含許多帳戶，不同錢包會把它們放在不同的路徑下。請選擇要匯入的帳戶：已使用過的已勾選。",
+  "wallet.import.chooseDesc":
+    "一組助記詞可以包含許多帳戶，不同錢包會把它們放在不同的路徑下。請選擇要匯入的帳戶：已使用過的已勾選。",
   "wallet.import.scheme.standard": "標準",
   "wallet.import.scheme.ledgerlive": "Ledger Live",
   "wallet.import.scheme.legacy": "舊版",
@@ -459,7 +467,8 @@ const zhTW: Dict = {
   "wallet.import.keyDesc": "帳戶的原始私鑰：64 個十六進位字元。",
   "wallet.import.keyfile": "Keystore 檔案",
   "wallet.import.key": "私鑰",
-  "wallet.import.keyfileDesc": "JSON 格式的 keystore 檔案，也就是 parallaxd、parallax-wallet 和大多數以太坊風格錢包匯出的格式。",
+  "wallet.import.keyfileDesc":
+    "JSON 格式的 keystore 檔案，也就是 parallaxd、parallax-wallet 和大多數以太坊風格錢包匯出的格式。",
   "wallet.import.file": "檔案",
   "wallet.import.choose": "選擇檔案…",
   "wallet.import.noFile": "未選擇檔案",
@@ -506,7 +515,8 @@ const zhTW: Dict = {
   "wallet.accounts.noBackup": "無備份",
   "wallet.accounts.fromPhrase": "{name} · #{n}",
   "wallet.accounts.storage": "儲存位置",
-  "wallet.accounts.storageDesc": "私鑰保存在此資料夾中，全部以你的錢包密碼加密。節點永遠看不到它們，任何連線到節點 RPC 的程式也無法使用它們。",
+  "wallet.accounts.storageDesc":
+    "私鑰保存在此資料夾中，全部以你的錢包密碼加密。節點永遠看不到它們，任何連線到節點 RPC 的程式也無法使用它們。",
 
   // Wallet: send
   "wallet.send.title": "傳送 LAX",
@@ -520,7 +530,8 @@ const zhTW: Dict = {
   "wallet.send.feeAuto": "建議",
   "wallet.send.feeManual": "自訂",
   "wallet.send.feeSuggested": "您的節點會根據最近的區塊和其交易池提供建議價格。",
-  "wallet.send.feeCustom": "支付高於節點建議的價格，可以更快被打包進區塊。無法更低：一筆卡住的交易會阻擋此帳戶之後的所有交易。",
+  "wallet.send.feeCustom":
+    "支付高於節點建議的價格，可以更快被打包進區塊。無法更低：一筆卡住的交易會阻擋此帳戶之後的所有交易。",
   "wallet.send.gasPrice": "Gas 價格",
   "wallet.send.review": "檢查",
   "wallet.review.title": "檢查並簽署",
@@ -550,15 +561,18 @@ const zhTW: Dict = {
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "新增密碼短語（進階）",
-  "wallet.passphrase.toggleDesc": "一個額外的詞，會改變該助記詞產生的每個帳戶，與 Ledger 和 Trezor 上的功能相同。MetaMask 不支援此功能。",
-  "wallet.passphrase.warning": "也請把密碼短語抄寫下來。還原時既需要這些單字，也需要完全一致的密碼短語；密碼短語錯誤會得到另一個空錢包，且不會有任何錯誤提示。",
+  "wallet.passphrase.toggleDesc":
+    "一個額外的詞，會改變該助記詞產生的每個帳戶，與 Ledger 和 Trezor 上的功能相同。MetaMask 不支援此功能。",
+  "wallet.passphrase.warning":
+    "也請把密碼短語抄寫下來。還原時既需要這些單字，也需要完全一致的密碼短語；密碼短語錯誤會得到另一個空錢包，且不會有任何錯誤提示。",
   "wallet.passphrase.label": "密碼短語",
   "wallet.passphrase.confirm": "確認密碼短語",
   "wallet.passphrase.mismatch": "兩次輸入的密碼短語不一致",
   "wallet.passphrase.remember": "此助記詞設有密碼短語：要還原這些帳戶，您需要與輸入時完全一致的密碼短語。",
   "wallet.passphrase.importToggle": "它設有密碼短語（進階）",
   "wallet.passphrase.importToggleDesc": "如果您在 Ledger 或 Trezor 上設定過額外的詞，請輸入它以找到相同的帳戶。",
-  "wallet.passphrase.importHint": "須與設定時完全一致：大小寫和空格都有區別。如果下一步沒有顯示熟悉的帳戶，請檢查密碼短語。",
+  "wallet.passphrase.importHint":
+    "須與設定時完全一致：大小寫和空格都有區別。如果下一步沒有顯示熟悉的帳戶，請檢查密碼短語。",
   "wallet.passphrase.show": "顯示密碼短語",
   "wallet.passphrase.badge": "密碼短語",
 
@@ -568,7 +582,8 @@ const zhTW: Dict = {
   "wallet.phrase.yours": "您的助記詞",
   "wallet.phrase.writeDown": "請將這些單字依順序抄寫在紙上，並存放在安全的地方。它們是由其產生的所有帳戶的備份。",
   "wallet.phrase.reveal": "點擊顯示",
-  "wallet.phrase.warning": "任何擁有這些單字的人都能拿走您的 LAX。切勿在任何網站上輸入它們，切勿分享，也切勿將其儲存在螢幕截圖或這台電腦上的筆記中。",
+  "wallet.phrase.warning":
+    "任何擁有這些單字的人都能拿走您的 LAX。切勿在任何網站上輸入它們，切勿分享，也切勿將其儲存在螢幕截圖或這台電腦上的筆記中。",
   "wallet.phrase.laterWarn": "在您確認之前，助記詞不算已備份。",
   "wallet.phrase.written": "我已抄寫下來",
   "wallet.phrase.quizTitle": "確認您的助記詞",
@@ -592,8 +607,10 @@ const zhTW: Dict = {
   "wallet.phrase.account": "1 個帳戶",
   "wallet.removeSeed.title": "移除助記詞",
   "wallet.removeSeed.cta": "移除助記詞和帳戶",
-  "wallet.removeSeed.warn": "該助記詞及其 {n} 個帳戶將從這台電腦上刪除。要再次使用它們，您需要抄寫下來的單字（如果設有密碼短語，還需要密碼短語）。",
-  "wallet.removeSeed.warnUnconfirmed": "此助記詞從未確認過。如果您沒有把它抄寫下來，其 {n} 個帳戶及其中的資金將永久遺失。",
+  "wallet.removeSeed.warn":
+    "該助記詞及其 {n} 個帳戶將從這台電腦上刪除。要再次使用它們，您需要抄寫下來的單字（如果設有密碼短語，還需要密碼短語）。",
+  "wallet.removeSeed.warnUnconfirmed":
+    "此助記詞從未確認過。如果您沒有把它抄寫下來，其 {n} 個帳戶及其中的資金將永久遺失。",
   "wallet.removeSeed.confirm": "我已了解，並且已抄寫下助記詞，或其帳戶中沒有任何資產。",
   "wallet.phrase.missingTitle": "您的助記詞尚未確認",
   "wallet.phrase.missingDesc": "如果這台電腦遺失或磁碟故障，助記詞是找回此帳戶的唯一途徑。請抄寫並確認它。",
@@ -640,7 +657,8 @@ const zhTW: Dict = {
   "settings.theme.light": "淺色",
   "settings.theme.dark": "深色",
   "settings.avatars": "帳戶頭像",
-  "settings.avatars.desc": "根據每個地址產生的圖案。Jazzicon 是 MetaMask 的預設樣式；Blockies 是 Etherscan 使用的樣式。",
+  "settings.avatars.desc":
+    "根據每個地址產生的圖案。Jazzicon 是 MetaMask 的預設樣式；Blockies 是 Etherscan 使用的樣式。",
   "settings.dataDir.desc": "區塊鏈的儲存位置。更換位置將重新開始同步。",
   "settings.syncMode.desc": "Snap 最快；完整同步會重播每個區塊。",
   "settings.maxPeers.desc": "節點保持連線的最大節點數。",
@@ -675,37 +693,65 @@ const zhTW: Dict = {
   "settings.group.logs": "日誌",
   "settings.txpool.desc": "節點保留與轉發待處理交易的規則。",
   "settings.limits.desc": "保護節點免受高成本或高風險 RPC 請求影響的上限。",
-  "settings.preventSleep.more": "電腦一進入睡眠，同步就會暫停，因此整夜無人看管的同步可能損失好幾個小時。\n\n開啟後，應用程式只在節點同步時阻止系統睡眠，節點追上進度後便立即解除。螢幕仍可照常關閉並鎖定。",
-  "settings.notifications.more": "應用程式會在以下情況傳送桌面通知：\n\n• 耗時超過幾分鐘的同步完成時，讓您知道節點已追上進度；\n\n• 節點因磁碟將滿而自行停止，讓您可以在重新啟動前釋放空間。\n\n通知僅在應用程式執行時顯示。",
-  "settings.ancientDir.more": "節點將近期鏈資料保存在快速的鍵值資料庫中，並將較舊的區塊、區塊頭和收據移入只能附加寫入的「ancient」儲存區。該儲存區佔資料目錄的大部分，且很少被讀取。\n\n將其指向更大、較慢的磁碟，即可讓 SSD 只保留近期資料。留空則所有資料都保存在資料目錄內。\n\n變更此設定不會移動現有資料：請在節點停止時自行移動 ancient 資料夾，否則節點會重新建立 ancient 儲存區。",
-  "settings.minFreeDisk.more": "資料庫若在寫入途中耗盡磁碟空間，可能會損壞並需要完整重新同步。為防止這種情況，節點每 30 秒檢查一次資料磁碟的可用空間，低於此值時便正常地自行停止；當可用空間降至此值的兩倍以內時會先發出警告。\n\n留空使用 trie dirty 快取的兩倍，與命令列用戶端的預設值相同。0 關閉此保護。",
-  "settings.syncMode.more": "Snap 同步直接從其他節點下載每個帳戶的近期狀態，對照鏈驗證後再正常追蹤新區塊。只需數小時而非數天即可得到可用的節點。\n\n完整同步從創世區塊下載每個區塊，並執行每筆交易以自行重建狀態。速度較慢，但不信任任何未經自己計算的資料。\n\n無論哪種方式，節點最終都會完整驗證每個新區塊。變更模式不會重新同步已下載的鏈。",
-  "settings.archive.more": "一般情況下，節點會修剪舊狀態，只保留驗證新區塊所需的資料及近期歷史。歸檔節點則保留每個區塊的狀態，讓您可以查詢過去任何時間點的餘額或執行追蹤——這正是區塊瀏覽器和索引器所需要的。\n\n它會佔用多得多的磁碟空間，且增長迅速。過去的狀態只能透過從創世區塊開始的完整同步補齊，因此請將同步模式切換為「完整」並使用空的資料目錄。歸檔模式也會保留 preimage 和完整的交易索引。",
-  "settings.txLookupLimit.more": "按雜湊查詢交易（eth_getTransactionByHash、收據）需要該交易的索引項目。節點為這麼多個近期區塊保留這些項目，並刪除較舊的項目以節省空間。\n\n留空約保留一年的區塊。0 索引整條鏈，查詢舊交易的錢包和瀏覽器需要如此。歸檔模式一律索引全部。",
-  "settings.snapshot.more": "快照是與狀態 trie 並存的每個帳戶和儲存槽的扁平副本。從快照讀取比走訪 trie 快得多，可加速區塊匯入和 RPC 呼叫。\n\nSnap 同步需要它，因此在 Snap 同步下會保持開啟。在完整同步下可將其關閉以節省磁碟空間，其記憶體則改給 trie 快取使用。",
-  "settings.prefetch.more": "匯入區塊時，節點會利用閒置執行緒預先執行其中的交易，將它們會用到的狀態載入記憶體。真正匯入時，所需的大部分資料都已在快取中。\n\n關閉可節省 CPU 和磁碟讀取，代價是匯入變慢。主要在慢速磁碟或忙碌的機器上有差別。",
-  "settings.preimages.more": "狀態 trie 以鍵的雜湊儲存帳戶和儲存槽。Preimage 即原始鍵，部分除錯和狀態匯出工具需要它們來顯示可讀的位址和儲存槽。\n\n記錄它們會佔用額外的磁碟空間。歸檔模式一律會記錄。",
+  "settings.preventSleep.more":
+    "電腦一進入睡眠，同步就會暫停，因此整夜無人看管的同步可能損失好幾個小時。\n\n開啟後，應用程式只在節點同步時阻止系統睡眠，節點追上進度後便立即解除。螢幕仍可照常關閉並鎖定。",
+  "settings.notifications.more":
+    "應用程式會在以下情況傳送桌面通知：\n\n• 耗時超過幾分鐘的同步完成時，讓您知道節點已追上進度；\n\n• 節點因磁碟將滿而自行停止，讓您可以在重新啟動前釋放空間。\n\n通知僅在應用程式執行時顯示。",
+  "settings.ancientDir.more":
+    "節點將近期鏈資料保存在快速的鍵值資料庫中，並將較舊的區塊、區塊頭和收據移入只能附加寫入的「ancient」儲存區。該儲存區佔資料目錄的大部分，且很少被讀取。\n\n將其指向更大、較慢的磁碟，即可讓 SSD 只保留近期資料。留空則所有資料都保存在資料目錄內。\n\n變更此設定不會移動現有資料：請在節點停止時自行移動 ancient 資料夾，否則節點會重新建立 ancient 儲存區。",
+  "settings.minFreeDisk.more":
+    "資料庫若在寫入途中耗盡磁碟空間，可能會損壞並需要完整重新同步。為防止這種情況，節點每 30 秒檢查一次資料磁碟的可用空間，低於此值時便正常地自行停止；當可用空間降至此值的兩倍以內時會先發出警告。\n\n留空使用 trie dirty 快取的兩倍，與命令列用戶端的預設值相同。0 關閉此保護。",
+  "settings.syncMode.more":
+    "Snap 同步直接從其他節點下載每個帳戶的近期狀態，對照鏈驗證後再正常追蹤新區塊。只需數小時而非數天即可得到可用的節點。\n\n完整同步從創世區塊下載每個區塊，並執行每筆交易以自行重建狀態。速度較慢，但不信任任何未經自己計算的資料。\n\n無論哪種方式，節點最終都會完整驗證每個新區塊。變更模式不會重新同步已下載的鏈。",
+  "settings.archive.more":
+    "一般情況下，節點會修剪舊狀態，只保留驗證新區塊所需的資料及近期歷史。歸檔節點則保留每個區塊的狀態，讓您可以查詢過去任何時間點的餘額或執行追蹤——這正是區塊瀏覽器和索引器所需要的。\n\n它會佔用多得多的磁碟空間，且增長迅速。過去的狀態只能透過從創世區塊開始的完整同步補齊，因此請將同步模式切換為「完整」並使用空的資料目錄。歸檔模式也會保留 preimage 和完整的交易索引。",
+  "settings.txLookupLimit.more":
+    "按雜湊查詢交易（eth_getTransactionByHash、收據）需要該交易的索引項目。節點為這麼多個近期區塊保留這些項目，並刪除較舊的項目以節省空間。\n\n留空約保留一年的區塊。0 索引整條鏈，查詢舊交易的錢包和瀏覽器需要如此。歸檔模式一律索引全部。",
+  "settings.snapshot.more":
+    "快照是與狀態 trie 並存的每個帳戶和儲存槽的扁平副本。從快照讀取比走訪 trie 快得多，可加速區塊匯入和 RPC 呼叫。\n\nSnap 同步需要它，因此在 Snap 同步下會保持開啟。在完整同步下可將其關閉以節省磁碟空間，其記憶體則改給 trie 快取使用。",
+  "settings.prefetch.more":
+    "匯入區塊時，節點會利用閒置執行緒預先執行其中的交易，將它們會用到的狀態載入記憶體。真正匯入時，所需的大部分資料都已在快取中。\n\n關閉可節省 CPU 和磁碟讀取，代價是匯入變慢。主要在慢速磁碟或忙碌的機器上有差別。",
+  "settings.preimages.more":
+    "狀態 trie 以鍵的雜湊儲存帳戶和儲存槽。Preimage 即原始鍵，部分除錯和狀態匯出工具需要它們來顯示可讀的位址和儲存槽。\n\n記錄它們會佔用額外的磁碟空間。歸檔模式一律會記錄。",
   "settings.smartFee.desc": "Bitcoin Core 風格的手續費估算。",
-  "settings.smartFee.more": "Gas 價格預言機有兩種演算法。預設演算法使用近期區塊小費的百分位數——快速且久經考驗。Smart Fee 選項移植了 Bitcoin Core 的 estimateSmartFee 演算法，將觀察到的確認分組統計，並反推出能達到目標確認深度的手續費。\n\nSmart Fee 需要長時間、連續觀察確認才能產生準確的估算。Parallax Wallet 通常是按需啟動和停止，而非 24/7 持續執行，因此預言機可能累積不到足夠資料，進而退回預設最低值。持續在線的節點最能發揮其效果。",
+  "settings.smartFee.more":
+    "Gas 價格預言機有兩種演算法。預設演算法使用近期區塊小費的百分位數——快速且久經考驗。Smart Fee 選項移植了 Bitcoin Core 的 estimateSmartFee 演算法，將觀察到的確認分組統計，並反推出能達到目標確認深度的手續費。\n\nSmart Fee 需要長時間、連續觀察確認才能產生準確的估算。Parallax Wallet 通常是按需啟動和停止，而非 24/7 持續執行，因此預言機可能累積不到足夠資料，進而退回預設最低值。持續在線的節點最能發揮其效果。",
   "settings.allowInbound.desc": "允許其他節點連線到您的節點。",
-  "settings.allowInbound.more": "啟用後，節點會請求路由器（透過 UPnP 或 NAT-PMP）轉送其監聽連接埠，讓網際網路上的節點能撥接您。接受入站節點能讓網路更健康，也讓您更快收到區塊。\n\n相對地，其他節點將能發現您的 IP 位址。若您位於嚴格的防火牆後方或只想進行出站連線，請關閉此選項：節點仍會主動連線到其他節點。",
-  "settings.nat.more": "「自動」會嘗試 UPnP 和 NAT-PMP，並使用路由器回應的那一種。選擇其中一種即可略過另一種。\n\n「固定公用 IP」適用於您已自行在路由器上轉送連接埠，或機器擁有公用位址的情況：節點會直接公告該 IP，而不詢問路由器。\n\n僅在允許入站連線時使用。",
-  "settings.discovery.more": "開啟探索後，節點會從其他節點、DNS 種子和 DNS 探索樹得知節點，並將它們保存在位址簿中。\n\n關閉後，節點只會連線到您從節點清單新增的節點和引導節點。這適用於私人環境，但連線對象太少的節點更容易被孤立。",
-  "settings.legacyDiscovery.more": "Parallax v2 節點使用 v2 交握連線，並將節點保存在位址簿中。v1.x 傳輸協定（UDP 探索和舊版交握）則為相容較舊的節點而保留。\n\n「自動」會回應主動聯繫的 v1 節點並接受舊版連線，但不主動尋找 v1 節點。這是預設值。\n\n「開」還會使用 v1 探索來尋找要撥接的節點。\n\n「關」會完全關閉 v1 介面：沒有 UDP 通訊端，沒有舊版交握。節點將僅使用 v2，其 enode URL 僅供參考。",
-  "settings.bootnodes.more": "引導節點是位址簿為空的節點開始尋找其他節點的地方。每行一個項目：\n\n• enode:// URL 用於 v1 探索的初始種子；\n\n• ip:port 或 <address>.onion:port 項目以 v2 交握撥接。\n\n自訂項目會取代內建項目。除非關閉節點探索，DNS 種子仍會與它們一起運作。",
-  "settings.proxy.more": "每個出站節點連線（包括洋蔥位址）都會經由此 SOCKS5 代理。將其設為本機 Tor（通常是 127.0.0.1:9050），即可對您撥接的節點隱藏 IP 位址。\n\nDNS 種子名稱也會透過代理解析，因此不會有查詢洩漏到本機解析器。入站連線不受影響：若要停止在您自己的位址上接受節點，請一併關閉入站連線。",
-  "settings.listenOnion.more": "若本機正在執行 Tor 且其控制連接埠已開啟，節點會請 Tor 建立轉送至監聽連接埠的洋蔥服務，讓其他節點能透過 Tor 連到您而無從得知您的 IP 位址。服務金鑰保存在資料目錄中，因此位址在重新啟動後保持不變。\n\n若無法連到 Tor，除了偶爾安靜地重試外不會有任何作用。除非已設定洋蔥代理，節點也會使用 Tor 的 SOCKS 連接埠撥接洋蔥節點。",
-  "settings.onlyNet.more": "節點只會撥接所選網路上的節點。只選擇「洋蔥」，並搭配代理或洋蔥服務，即可讓每個出站連線都經由 Tor。\n\n未選擇則允許所有網路。入站連線和您手動新增的節點不受影響。",
-  "settings.onionProxy.more": "洋蔥位址會經由此 SOCKS5 代理，而非主要代理。留空則使用主要代理，或在洋蔥服務執行時使用 Tor 的 SOCKS 連接埠。\n\n設為 0 則完全不建立洋蔥連線，即使已設定代理也一樣。",
-  "settings.proxyRandomize.more": "Tor 會為使用不同 SOCKS 憑證的連線分配不同線路。開啟後，節點會為每個連線使用新的憑證，因此任兩個節點都不會共用線路，也無法透過出口節點將它們彼此關聯。\n\n關閉則讓所有節點共用一條線路，佔用較少的 Tor 資源。",
+  "settings.allowInbound.more":
+    "啟用後，節點會請求路由器（透過 UPnP 或 NAT-PMP）轉送其監聽連接埠，讓網際網路上的節點能撥接您。接受入站節點能讓網路更健康，也讓您更快收到區塊。\n\n相對地，其他節點將能發現您的 IP 位址。若您位於嚴格的防火牆後方或只想進行出站連線，請關閉此選項：節點仍會主動連線到其他節點。",
+  "settings.nat.more":
+    "「自動」會嘗試 UPnP 和 NAT-PMP，並使用路由器回應的那一種。選擇其中一種即可略過另一種。\n\n「固定公用 IP」適用於您已自行在路由器上轉送連接埠，或機器擁有公用位址的情況：節點會直接公告該 IP，而不詢問路由器。\n\n僅在允許入站連線時使用。",
+  "settings.discovery.more":
+    "開啟探索後，節點會從其他節點、DNS 種子和 DNS 探索樹得知節點，並將它們保存在位址簿中。\n\n關閉後，節點只會連線到您從節點清單新增的節點和引導節點。這適用於私人環境，但連線對象太少的節點更容易被孤立。",
+  "settings.legacyDiscovery.more":
+    "Parallax v2 節點使用 v2 交握連線，並將節點保存在位址簿中。v1.x 傳輸協定（UDP 探索和舊版交握）則為相容較舊的節點而保留。\n\n「自動」會回應主動聯繫的 v1 節點並接受舊版連線，但不主動尋找 v1 節點。這是預設值。\n\n「開」還會使用 v1 探索來尋找要撥接的節點。\n\n「關」會完全關閉 v1 介面：沒有 UDP 通訊端，沒有舊版交握。節點將僅使用 v2，其 enode URL 僅供參考。",
+  "settings.bootnodes.more":
+    "引導節點是位址簿為空的節點開始尋找其他節點的地方。每行一個項目：\n\n• enode:// URL 用於 v1 探索的初始種子；\n\n• ip:port 或 <address>.onion:port 項目以 v2 交握撥接。\n\n自訂項目會取代內建項目。除非關閉節點探索，DNS 種子仍會與它們一起運作。",
+  "settings.proxy.more":
+    "每個出站節點連線（包括洋蔥位址）都會經由此 SOCKS5 代理。將其設為本機 Tor（通常是 127.0.0.1:9050），即可對您撥接的節點隱藏 IP 位址。\n\nDNS 種子名稱也會透過代理解析，因此不會有查詢洩漏到本機解析器。入站連線不受影響：若要停止在您自己的位址上接受節點，請一併關閉入站連線。",
+  "settings.listenOnion.more":
+    "若本機正在執行 Tor 且其控制連接埠已開啟，節點會請 Tor 建立轉送至監聽連接埠的洋蔥服務，讓其他節點能透過 Tor 連到您而無從得知您的 IP 位址。服務金鑰保存在資料目錄中，因此位址在重新啟動後保持不變。\n\n若無法連到 Tor，除了偶爾安靜地重試外不會有任何作用。除非已設定洋蔥代理，節點也會使用 Tor 的 SOCKS 連接埠撥接洋蔥節點。",
+  "settings.onlyNet.more":
+    "節點只會撥接所選網路上的節點。只選擇「洋蔥」，並搭配代理或洋蔥服務，即可讓每個出站連線都經由 Tor。\n\n未選擇則允許所有網路。入站連線和您手動新增的節點不受影響。",
+  "settings.onionProxy.more":
+    "洋蔥位址會經由此 SOCKS5 代理，而非主要代理。留空則使用主要代理，或在洋蔥服務執行時使用 Tor 的 SOCKS 連接埠。\n\n設為 0 則完全不建立洋蔥連線，即使已設定代理也一樣。",
+  "settings.proxyRandomize.more":
+    "Tor 會為使用不同 SOCKS 憑證的連線分配不同線路。開啟後，節點會為每個連線使用新的憑證，因此任兩個節點都不會共用線路，也無法透過出口節點將它們彼此關聯。\n\n關閉則讓所有節點共用一條線路，佔用較少的 Tor 資源。",
   "settings.stats.desc": "在 status.parallaxprotocol.org 上顯示此節點。",
-  "settings.stats.toggle.more": "節點會以保存在資料目錄中的隨機名稱，向位於 status.parallaxprotocol.org 的公開儀表板回報自身狀態。\n\n分享的內容包括區塊高度、節點數、同步與挖礦狀態、節點延遲、用戶端版本和作業系統。不會傳送任何錢包、帳戶或交易資料，但統計伺服器能看到您的 IP 位址。",
-  "settings.rpc.enable.more": "啟動 JSON-RPC 伺服器，讓 MetaMask 等錢包、dapp 和開發工具透過您自己的節點（而非第三方供應商）讀取鏈上資料並傳送交易。\n\n預設僅監聽 127.0.0.1，因此只有這台電腦上的程式能連到它。您可以在「進階」中變更位址——切勿將其暴露於公共網際網路。",
-  "settings.rpc.host.more": "127.0.0.1 只接受來自這台電腦的連線。LAN 位址或 0.0.0.0（所有介面）也允許其他機器連線，例如您手機或另一台電腦上的錢包。\n\n任何能連到伺服器的人都可以透過您的節點讀取鏈上資料並提交交易，因此請僅在受信任的網路中、防火牆後方這樣做。請在「允許的主機名稱」中新增其他機器使用的名稱。",
-  "settings.rpc.vhosts.more": "每個 HTTP 請求都會指明其目標主機。節點會拒絕指向不在此清單中的名稱的請求，以防止惡意網頁透過 DNS 重新繫結連到您的節點——即讓您的瀏覽器以該網頁自己的網域名稱與 127.0.0.1 通訊。\n\n指向 IP 位址的請求一律接受。若您透過某個名稱連到節點，請在此新增該名稱；只有在了解風險時才使用 * 接受任何名稱。",
-  "settings.rpc.unprotected.more": "附鏈 ID（EIP-155）簽署的交易只在這條鏈上有效。未受保護的交易未附鏈 ID 簽署，在所有使用相同位址格式的鏈上都有效，因此任何人都能在其他鏈上重放它們。\n\n僅在您信任的工具無法附鏈 ID 簽署時才開啟此選項，例如某些用於確定性合約位址的部署腳本。",
-  "settings.metrics.more": "節點一律會為資料庫、網路、同步與交易池保留輕量計數器，應用程式會顯示其中一部分，例如網路流量。開啟後，這些指標將透過指標端點提供，位址為 /debug/metrics（JSON）與 /debug/metrics/prometheus（供 Prometheus 或 Grafana 使用），並允許詳細指標。\n\n守護程序會在啟動時設定指標，因此需重新啟動應用程式後生效。",
-  "settings.group.performance.more": "節點將快取記憶體分為四部分：\n\n• 資料庫快取保存最近讀寫的鏈資料；\n\n• trie clean 快取保存從磁碟讀取的狀態 trie 節點；\n\n• trie dirty 快取保存尚未寫入磁碟的狀態變更——越大則寫入次數越少、單次寫入越大；\n\n• 快照快取保存扁平狀態快照的項目。\n\n預設總計 4 GB，與命令列用戶端在主網上的設定相同。若總量超過 RAM 的三分之一，節點會將其縮減，以免系統記憶體不足。",
+  "settings.stats.toggle.more":
+    "節點會以保存在資料目錄中的隨機名稱，向位於 status.parallaxprotocol.org 的公開儀表板回報自身狀態。\n\n分享的內容包括區塊高度、節點數、同步與挖礦狀態、節點延遲、用戶端版本和作業系統。不會傳送任何錢包、帳戶或交易資料，但統計伺服器能看到您的 IP 位址。",
+  "settings.rpc.enable.more":
+    "啟動 JSON-RPC 伺服器，讓 MetaMask 等錢包、dapp 和開發工具透過您自己的節點（而非第三方供應商）讀取鏈上資料並傳送交易。\n\n預設僅監聽 127.0.0.1，因此只有這台電腦上的程式能連到它。您可以在「進階」中變更位址——切勿將其暴露於公共網際網路。",
+  "settings.rpc.host.more":
+    "127.0.0.1 只接受來自這台電腦的連線。LAN 位址或 0.0.0.0（所有介面）也允許其他機器連線，例如您手機或另一台電腦上的錢包。\n\n任何能連到伺服器的人都可以透過您的節點讀取鏈上資料並提交交易，因此請僅在受信任的網路中、防火牆後方這樣做。請在「允許的主機名稱」中新增其他機器使用的名稱。",
+  "settings.rpc.vhosts.more":
+    "每個 HTTP 請求都會指明其目標主機。節點會拒絕指向不在此清單中的名稱的請求，以防止惡意網頁透過 DNS 重新繫結連到您的節點——即讓您的瀏覽器以該網頁自己的網域名稱與 127.0.0.1 通訊。\n\n指向 IP 位址的請求一律接受。若您透過某個名稱連到節點，請在此新增該名稱；只有在了解風險時才使用 * 接受任何名稱。",
+  "settings.rpc.unprotected.more":
+    "附鏈 ID（EIP-155）簽署的交易只在這條鏈上有效。未受保護的交易未附鏈 ID 簽署，在所有使用相同位址格式的鏈上都有效，因此任何人都能在其他鏈上重放它們。\n\n僅在您信任的工具無法附鏈 ID 簽署時才開啟此選項，例如某些用於確定性合約位址的部署腳本。",
+  "settings.metrics.more":
+    "節點一律會為資料庫、網路、同步與交易池保留輕量計數器，應用程式會顯示其中一部分，例如網路流量。開啟後，這些指標將透過指標端點提供，位址為 /debug/metrics（JSON）與 /debug/metrics/prometheus（供 Prometheus 或 Grafana 使用），並允許詳細指標。\n\n守護程序會在啟動時設定指標，因此需重新啟動應用程式後生效。",
+  "settings.group.performance.more":
+    "節點將快取記憶體分為四部分：\n\n• 資料庫快取保存最近讀寫的鏈資料；\n\n• trie clean 快取保存從磁碟讀取的狀態 trie 節點；\n\n• trie dirty 快取保存尚未寫入磁碟的狀態變更——越大則寫入次數越少、單次寫入越大；\n\n• 快照快取保存扁平狀態快照的項目。\n\n預設總計 4 GB，與命令列用戶端在主網上的設定相同。若總量超過 RAM 的三分之一，節點會將其縮減，以免系統記憶體不足。",
   "settings.readMore": "閱讀更多",
   "settings.cliFlag": "等效命令列參數",
   "settings.advanced": "進階",
@@ -783,7 +829,8 @@ const zhTW: Dict = {
   "settings.torPassword.desc": "僅用於密碼驗證。以未加密形式儲存。",
   "settings.torPassword.placeholder": "Cookie 驗證",
 
-  "settings.rpc.exposed": "RPC 伺服器正在監聽本機以外的連線。任何能連到它的人都可以透過您的節點讀取鏈上資料並提交交易。請僅在受信任的網路中、防火牆後方這樣做。",
+  "settings.rpc.exposed":
+    "RPC 伺服器正在監聽本機以外的連線。任何能連到它的人都可以透過您的節點讀取鏈上資料並提交交易。請僅在受信任的網路中、防火牆後方這樣做。",
   "settings.rpc.host": "監聽位址",
   "settings.rpc.host.desc": "伺服器監聽的網路介面。",
   "settings.rpc.apis": "API",

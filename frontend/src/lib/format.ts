@@ -60,7 +60,6 @@ export function timeAgo(unixSeconds: number): string {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-
 export function formatBytes(n: number): string {
   if (!n || n < 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
