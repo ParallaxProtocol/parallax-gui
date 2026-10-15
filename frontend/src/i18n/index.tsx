@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, ReactNode } from "react";
+import { LanguageContext, type Ctx } from "./context";
 import { Dict, en, Lang, loadDict } from "./translations";
 
 const STORAGE_KEY = "parallax-lang";
@@ -41,14 +42,6 @@ function detectInitial(): Lang {
   }
   return "en";
 }
-
-type Ctx = {
-  lang: Lang;
-  setLang: (l: Lang) => void;
-  t: (key: string, vars?: Record<string, string | number>) => string;
-};
-
-const LanguageContext = createContext<Ctx | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(detectInitial);
@@ -97,34 +90,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
-export function useLang() {
-  const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLang must be used inside LanguageProvider");
-  return ctx;
-}
-
-export function useT() {
-  return useLang().t;
-}
-
-/**
- * useAgo returns a formatter for how long ago a unix time (seconds) was,
- * in the interface language: "3 minutes ago", "vor 3 Minuten".
- */
-export function useAgo() {
-  const { lang } = useLang();
-  return useMemo(() => {
-    const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto", style: "short" });
-    return (unixSeconds: number, now = Date.now()) => {
-      const s = Math.round(unixSeconds - now / 1000);
-      const a = Math.abs(s);
-      if (a < 60) return rtf.format(s, "second");
-      if (a < 3600) return rtf.format(Math.round(s / 60), "minute");
-      if (a < 86_400) return rtf.format(Math.round(s / 3600), "hour");
-      return rtf.format(Math.round(s / 86_400), "day");
-    };
-  }, [lang]);
-}
+// The context and its hooks live apart (context.ts), so a change to the
+// strings never makes a second context
+export { useAgo, useLang, useT } from "./context";
 
 // LANG_NAMES is imported from ./translations directly: a module that
 // exports anything but components and hooks can't be Fast Refreshed
