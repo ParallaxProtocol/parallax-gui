@@ -50,10 +50,11 @@ func writeCrashReport(name string, r interface{}, stack []byte) string {
 		return ""
 	}
 	dir = filepath.Join(dir, appDirName())
-	_ = os.MkdirAll(dir, 0o755)
+	_ = os.MkdirAll(dir, 0o700)
 
+	// Readable by the user only, like everything else the app writes
 	path := filepath.Join(dir, fmt.Sprintf("crash-%d.log", time.Now().Unix()))
-	f, err := os.Create(path)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return ""
 	}

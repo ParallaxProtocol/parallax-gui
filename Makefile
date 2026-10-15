@@ -25,13 +25,17 @@ DISPLAY_ARCH := $(if $(filter amd64,$(GOARCH)),x86_64,$(GOARCH))
 EB_PLATFORM  := $(if $(filter darwin,$(GOOS)),--mac,$(if $(filter windows,$(GOOS)),--win,--linux))
 
 BACKEND_DIR := build/backend/$(EB_OS)-$(EB_ARCH)
+# runtime/secret, which wipes what the bridge's secret calls leave in
+# memory (secret_erase.go), is a Go experiment that erases only on Linux
+# so far; elsewhere the backend builds without it.
+GOEXPERIMENT_FLAGS := $(if $(filter linux,$(GOOS)),runtimesecret,)
 BACKEND_EXE := parallax-backend$(if $(filter windows,$(GOOS)),.exe,)
 
 # backend builds the Go engine (the node and updater behind the
 # bridge). Pure Go, so it cross-compiles with no C toolchain.
 backend:
 	@mkdir -p $(BACKEND_DIR)
-	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -trimpath \
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) GOEXPERIMENT=$(GOEXPERIMENT_FLAGS) go build -trimpath \
 	  -ldflags "$(LDFLAGS) -X github.com/ParallaxProtocol/parallax-gui/backend.GUIVersion=$(VERSION) -X github.com/ParallaxProtocol/parallax-gui/backend.DaemonCommit=$(DAEMON_COMMIT)" \
 	  -o $(BACKEND_DIR)/$(BACKEND_EXE) .
 

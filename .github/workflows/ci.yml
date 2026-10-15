@@ -43,6 +43,16 @@ jobs:
           GOPRIVATE: github.com/ParallaxProtocol/*
         run: go vet ./...
 
+      # Linux release builds turn on runtime/secret (Makefile), which
+      # compiles secret_erase.go and backend/secret_test.go
+      - name: Vet and test with runtime/secret
+        env:
+          GOPRIVATE: github.com/ParallaxProtocol/*
+          GOEXPERIMENT: runtimesecret
+        run: |
+          go vet ./...
+          go test . && go test ./backend/ -run 'TestWalletUnderRuntimeSecret|TestHardenProcess'
+
   frontend:
     runs-on: ubuntu-latest
     steps:

@@ -34,7 +34,7 @@ func LoadConfigStore(path string) (*ConfigStore, error) {
 	}
 	cs := &ConfigStore{path: path, cfg: defaultGUIConfig()}
 
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return nil, err
 	}
 

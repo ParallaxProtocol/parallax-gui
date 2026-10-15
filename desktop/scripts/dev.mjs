@@ -56,6 +56,8 @@ run(
   ],
   {
     cwd: root,
+    // As the release build has it on Linux (Makefile): secret calls wipe what they leave in memory
+    env: process.platform === "linux" ? { ...process.env, GOEXPERIMENT: "runtimesecret" } : process.env,
   },
 );
 run("node", ["build.mjs"], { cwd: desktop });

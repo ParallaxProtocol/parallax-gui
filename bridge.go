@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"reflect"
@@ -143,22 +144,104 @@ type callResponse struct {
 
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
+// secretMethods are the calls that carry a password, a recovery phrase or a
+// key, in their arguments or their result. Each is decoded, run and its
+// response encoded under erasing, which wipes what it leaves in memory
+// (secret_erase.go).
+var secretMethods = map[string]bool{
+	"AssistantApprove":       true,
+	"MessageSign":            true,
+	"MessageSignRequest":     true,
+	"OfflineSignRequest":     true,
+	"WalletAddSeedAccounts":  true,
+	"WalletBackup":           true,
+	"WalletChangePassword":   true,
+	"WalletCreate":           true,
+	"WalletCreateSeed":       true,
+	"WalletCreateSeedWords":  true,
+	"WalletDeriveAccount":    true,
+	"WalletImportKeyfile":    true,
+	"WalletImportPrivateKey": true,
+	"WalletImportSeed":       true,
+	"WalletNewSeedWords":     true,
+	"WalletRemove":           true,
+	"WalletRemoveSeed":       true,
+	"WalletReplace":          true,
+	"WalletRevealSeed":       true,
+	"WalletScanSeed":         true,
+	"WalletScanWalletSeed":   true,
+	"WalletSend":             true,
+	"WalletSetupPassword":    true,
+}
+
 func (b *bridge) handleCall(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	var req callRequest
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
+	body, err := readBody(http.MaxBytesReader(w, r.Body, maxCallBytes), r.ContentLength)
+	// Passwords and phrases arrive in it
+	defer clear(body)
+	if err != nil {
 		writeJSON(w, http.StatusBadRequest, callResponse{Error: "bad request: " + err.Error()})
 		return
 	}
-	result, err := b.call(req.Method, req.Args)
-	if err != nil {
-		writeJSON(w, http.StatusOK, callResponse{Error: err.Error()})
+	// The method alone first, to tell whether the call is a secret one
+	var head struct {
+		Method string `json:"method"`
+	}
+	if err := json.Unmarshal(body, &head); err != nil {
+		writeJSON(w, http.StatusBadRequest, callResponse{Error: "bad request: " + err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, callResponse{Result: result})
+	var status int
+	var out []byte
+	respond := func() { status, out = b.respond(body) }
+	if secretMethods[head.Method] {
+		erasing(respond)
+	} else {
+		respond()
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_, _ = w.Write(out)
+}
+
+// maxCallBytes bounds a call's request body.
+const maxCallBytes = 1 << 20
+
+// readBody reads a request body into one buffer, sized up front from its
+// Content-Length when it has one, so that no smaller copy is left behind
+// unwiped as the buffer grows.
+func readBody(r io.Reader, length int64) ([]byte, error) {
+	if length < 0 || length > maxCallBytes {
+		return io.ReadAll(r)
+	}
+	buf := make([]byte, length)
+	if _, err := io.ReadFull(r, buf); err != nil {
+		clear(buf)
+		return nil, err
+	}
+	return buf, nil
+}
+
+// respond decodes a call, runs it and encodes its response.
+func (b *bridge) respond(body []byte) (int, []byte) {
+	var req callRequest
+	resp := callResponse{}
+	status := http.StatusOK
+	if err := json.Unmarshal(body, &req); err != nil {
+		status, resp.Error = http.StatusBadRequest, "bad request: "+err.Error()
+	} else if result, err := b.call(req.Method, req.Args); err != nil {
+		resp.Error = err.Error()
+	} else {
+		resp.Result = result
+	}
+	out, err := json.Marshal(resp)
+	if err != nil {
+		return http.StatusInternalServerError, []byte(`{"result":null,"error":"unencodable result"}`)
+	}
+	return status, append(out, '\n')
 }
 
 // call invokes App.<method> with JSON-decoded arguments. Methods return
