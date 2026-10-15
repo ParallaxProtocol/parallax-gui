@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -71,7 +71,6 @@ export default function WalletPage() {
 function Overview() {
   const t = useT();
   const stagger = useStagger();
-  const ago = useAgo();
   const now = useNow(5000);
   const { info, account } = useWallet();
   const { view, err, running, refresh } = useSummary(account?.address);
@@ -110,9 +109,12 @@ function Overview() {
         hash: tx.hash,
       };
     };
-    // The backend lists confirmed ones newest first; waiting ones go on top
+    // The backend lists confirmed ones newest first
     return [...view.pending.map((tx) => row(tx, true)), ...view.transactions.slice(0, 25).map((tx) => row(tx, false))];
   }, [view]);
+  // Waiting ones get a section of their own, above the confirmed
+  const waiting = activity.filter((a) => a.pending);
+  const confirmed = activity.filter((a) => !a.pending);
 
   // The opened one read again as it lands in a block
   const openedBlock = activity.find((a) => a.hash === opened)?.block;
@@ -233,75 +235,54 @@ function Overview() {
 
       <PendingRequests />
 
+      {waiting.length > 0 && (
+        <Section title={t("wallet.pending")} count={waiting.length}>
+          <Panel className="overflow-hidden">
+            <motion.ul {...stagger} className="flex flex-col divide-y divide-border">
+              {waiting.map((a) => (
+                <ActivityRow
+                  key={a.hash}
+                  a={a}
+                  opened={opened === a.hash}
+                  onToggle={() => toggle(a.hash)}
+                  details={details[a.hash]}
+                  head={view?.headBlock ?? 0}
+                  now={now}
+                  // A hot account's own waiting send can be replaced at its nonce
+                  onReplace={
+                    a.kind !== "in" && !account.watchOnly
+                      ? (kind) => setReplace({ from: account.address, hash: a.hash, kind })
+                      : undefined
+                  }
+                />
+              ))}
+            </motion.ul>
+          </Panel>
+        </Section>
+      )}
+
       <Section
         title={t("wallet.activity")}
         aside={view && t("wallet.activityWindow", { from: formatInt(view.scannedFrom) })}
       >
         <Panel className="overflow-hidden">
-          {activity.length === 0 ? (
+          {confirmed.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-14 text-center text-muted-foreground">
               <IconBadge icon={ScrollText} size="lg" />
               <p>{!running ? t("wallet.activityOffline") : view ? t("wallet.activityEmpty") : "…"}</p>
             </div>
           ) : (
             <motion.ul {...stagger} className="flex flex-col divide-y divide-border">
-              {activity.map((a) => (
-                <motion.li variants={STAGGER.item} key={`${a.pending}-${a.hash}`}>
-                  <button
-                    type="button"
-                    onClick={() => toggle(a.hash)}
-                    aria-expanded={opened === a.hash}
-                    className={`flex h-16 w-full items-center gap-3.5 px-4 text-left transition-colors hover:bg-hover ${opened === a.hash ? "bg-hover" : ""}`}
-                  >
-                    <ActivityIcon kind={a.kind} pending={a.pending} cancel={a.cancel} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 font-medium">
-                        {a.cancel
-                          ? t(a.pending ? "wallet.kind.cancelling" : "wallet.kind.cancelled")
-                          : t(`wallet.kind.${a.kind}`)}
-                        {a.pending && <Pill tone="info">{t("wallet.pending")}</Pill>}
-                      </div>
-                      <div className="truncate text-sm text-muted-foreground tabular-nums">
-                        {a.pending ? t("wallet.inPool") : t("wallet.inBlock", { block: formatInt(a.block) })}
-                        {a.kind !== "self" && (
-                          <>
-                            {" · "}
-                            {a.kind === "out" ? t("wallet.row.to") : t("wallet.row.from")}{" "}
-                            <Counterparty address={a.other} />
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right tabular-nums">
-                      <div className={`font-semibold ${a.kind === "in" ? "text-good-ink" : ""}`}>
-                        {a.kind === "in" ? "+" : a.kind === "out" ? "−" : ""}
-                        {formatLax(a.amountWei, 6)} <span className="font-normal text-muted-foreground">LAX</span>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {a.pending ? t("wallet.unconfirmed") : ago(a.time, now)}
-                      </div>
-                    </div>
-                    <ChevronRight
-                      className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${opened === a.hash ? "rotate-90" : ""}`}
-                    />
-                  </button>
-                  <AnimatePresence initial={false}>
-                    {opened === a.hash && (
-                      <Unfold>
-                        <ActivityDetails
-                          d={details[a.hash]}
-                          head={view?.headBlock ?? 0}
-                          // A hot account's own waiting send can be replaced at its nonce
-                          onReplace={
-                            a.pending && a.kind !== "in" && !account.watchOnly
-                              ? (kind) => setReplace({ from: account.address, hash: a.hash, kind })
-                              : undefined
-                          }
-                        />
-                      </Unfold>
-                    )}
-                  </AnimatePresence>
-                </motion.li>
+              {confirmed.map((a) => (
+                <ActivityRow
+                  key={a.hash}
+                  a={a}
+                  opened={opened === a.hash}
+                  onToggle={() => toggle(a.hash)}
+                  details={details[a.hash]}
+                  head={view?.headBlock ?? 0}
+                  now={now}
+                />
               ))}
             </motion.ul>
           )}
@@ -312,10 +293,10 @@ function Overview() {
         target={replace}
         onClose={() => setReplace(null)}
         onReplaced={(tx) => {
+          // An opened transaction follows on to its replacement; a closed one stays closed
+          if (replace && opened === replace.hash) load(tx.hash).then(() => setOpened(tx.hash));
           setReplace(null);
           refresh();
-          // Follow the transaction to its replacement
-          load(tx.hash).then(() => setOpened(tx.hash));
         }}
       />
       <RevealPhraseModal open={reveal} onClose={() => setReveal(false)} seedId={account.seedId || null} />
@@ -325,19 +306,111 @@ function Overview() {
 }
 
 /**
- * ActivityDetails is an opened activity row: everything the node knows of
- * the transaction, and for one of the account's own still waiting, the
- * ways to speed it up or cancel it.
+ * ActivityRow is one transaction of the account's: what it was, with whom,
+ * and for how much, opening to its details. One of the account's own still
+ * waiting has the ways to speed it up or cancel it beside them.
  */
-function ActivityDetails({
-  d,
+function ActivityRow({
+  a,
+  opened,
+  onToggle,
+  details,
   head,
+  now,
   onReplace,
 }: {
-  d: TxDetails | string | undefined;
+  a: Activity;
+  opened: boolean;
+  onToggle: () => void;
+  details: TxDetails | string | undefined;
   head: number;
+  now: number;
   onReplace?: (kind: ReplaceKind) => void;
 }) {
+  const t = useT();
+  const ago = useAgo();
+  const label = useId();
+  return (
+    <motion.li variants={STAGGER.item}>
+      {/* The whole row opens it: a button beneath the row's contents, so
+          the buttons to speed up or cancel can sit in the row beside them.
+          It lights up wherever on the row the pointer is, those included */}
+      <div className="group relative flex h-16 items-center gap-3.5 px-4">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={opened}
+          aria-labelledby={label}
+          className={`absolute inset-0 transition-colors group-hover:bg-hover ${opened ? "bg-hover" : ""}`}
+        />
+        <span className="pointer-events-none relative">
+          <ActivityIcon kind={a.kind} pending={a.pending} cancel={a.cancel} />
+        </span>
+        <div id={label} className="pointer-events-none relative min-w-0 flex-1">
+          <div className="flex items-center gap-2 font-medium">
+            {a.cancel ? t(a.pending ? "wallet.kind.cancelling" : "wallet.kind.cancelled") : t(`wallet.kind.${a.kind}`)}
+          </div>
+          <div className="truncate text-sm text-muted-foreground tabular-nums">
+            {a.pending ? t("wallet.inPool") : t("wallet.inBlock", { block: formatInt(a.block) })}
+            {a.kind !== "self" && (
+              <>
+                {" · "}
+                {a.kind === "out" ? t("wallet.row.to") : t("wallet.row.from")} <Counterparty address={a.other} />
+              </>
+            )}
+          </div>
+        </div>
+        {onReplace && (
+          <span className="relative flex shrink-0 gap-2">
+            <Tooltip content={t("wallet.replace.speedUp")}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm btn-icon"
+                aria-label={t("wallet.replace.speedUp")}
+                onClick={() => onReplace("speedUp")}
+              >
+                <Zap className="size-3.5" />
+              </button>
+            </Tooltip>
+            <Tooltip content={t("wallet.replace.cancel")}>
+              <button
+                type="button"
+                className="btn btn-danger btn-sm btn-icon"
+                aria-label={t("wallet.replace.cancel")}
+                onClick={() => onReplace("cancel")}
+              >
+                <Ban className="size-3.5" />
+              </button>
+            </Tooltip>
+          </span>
+        )}
+        <div className="pointer-events-none relative text-right tabular-nums">
+          <div className={`font-semibold ${a.kind === "in" ? "text-good-ink" : ""}`}>
+            {a.kind === "in" ? "+" : a.kind === "out" ? "−" : ""}
+            {formatLax(a.amountWei, 6)} <span className="font-normal text-muted-foreground">LAX</span>
+          </div>
+          <div className="text-sm text-muted-foreground">{a.pending ? t("wallet.unconfirmed") : ago(a.time, now)}</div>
+        </div>
+        <ChevronRight
+          className={`pointer-events-none relative size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${opened ? "rotate-90" : ""}`}
+        />
+      </div>
+      <AnimatePresence initial={false}>
+        {opened && (
+          <Unfold>
+            <ActivityDetails d={details} head={head} />
+          </Unfold>
+        )}
+      </AnimatePresence>
+    </motion.li>
+  );
+}
+
+/**
+ * ActivityDetails is an opened activity row: everything the node knows of
+ * the transaction.
+ */
+function ActivityDetails({ d, head }: { d: TxDetails | string | undefined; head: number }) {
   const t = useT();
   const { lang } = useLang();
 
@@ -365,18 +438,6 @@ function ActivityDetails({
             {t(confirmations === 1 ? "wallet.tx.confirmation" : "wallet.tx.confirmations", {
               n: formatInt(confirmations),
             })}
-          </span>
-        )}
-        {pending && onReplace && (
-          <span className="ml-auto flex gap-2">
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => onReplace("speedUp")}>
-              <Zap className="size-3.5" />
-              {t("wallet.replace.speedUp")}
-            </button>
-            <button type="button" className="btn btn-danger btn-sm" onClick={() => onReplace("cancel")}>
-              <Ban className="size-3.5" />
-              {t("wallet.replace.cancel")}
-            </button>
           </span>
         )}
       </div>
