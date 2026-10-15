@@ -754,12 +754,20 @@ const de: Dict = {
   "storage.wallet.moving": "Wallet wird kopiert…",
   "storage.wallet.restarting": "Wird neu gestartet…",
   "storage.wallet.moveSubmit": "Verschieben und neu starten",
+  "storage.danger": "Gefahrenbereich",
+  "storage.danger.note":
+    "Nichts hier lässt sich rückgängig machen. Stellen Sie vorher sicher, dass Ihre Wiederherstellungsphrasen notiert und Ihre einzelnen Schlüssel gesichert sind.",
   "storage.wallet.delete": "Wallet löschen",
   "storage.wallet.deleteDesc":
-    "Entfernt jeden Schlüssel, jede Wiederherstellungsphrase, jeden Kontonamen und jeden Kontakt von diesem Computer.",
-  "storage.wallet.deleteTitle": "Wallet löschen",
+    "Löscht die gesamte Wallet samt Passwort von diesem Computer. Danach legen Sie ein neues Wallet-Passwort fest.",
+  "storage.wallet.deleteTitle": "Wallet vollständig löschen",
   "storage.wallet.deleteWarn":
-    "Jedes Konto dieser Wallet geht mit. Ohne Sicherung seiner Schlüssel oder Wiederherstellungsphrasen ist das Guthaben für immer verloren: Niemand kann es zurückholen.",
+    "Dies löscht die Wallet vollständig: Jedes Konto geht verloren. Ohne Sicherung der Schlüssel oder Wiederherstellungsphrasen ist das Guthaben für immer verloren, und niemand kann es zurückholen.",
+  "storage.wallet.wipeCta": "Löschen…",
+  "storage.wallet.deleteAfter":
+    "Auch das Wallet-Passwort wird gelöscht. Die App beginnt dann wie beim ersten Start: Sie wählen ein neues Wallet-Passwort und erstellen oder importieren Ihre Konten erneut.",
+  "storage.wallet.deleteList":
+    "Von diesem Computer gelöscht werden: die Schlüssel und Wiederherstellungsphrasen, die Kontonamen und Watch-only-Konten, die Kontakte, die Signaturanfragen und -aufzeichnungen für Offline-Signierung, die auf einen Block wartenden Transaktionen und die Logs.",
   "storage.wallet.deleteType": "Geben Sie {word} zur Bestätigung ein",
   "storage.wallet.deleteWord": "LÖSCHEN",
   "storage.wallet.deleteSubmit": "Wallet löschen",

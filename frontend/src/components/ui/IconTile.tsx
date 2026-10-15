@@ -13,6 +13,7 @@ export const TILE = {
   green: "#30b158",
   orange: "#ff9f0a",
   pink: "#ff375f",
+  red: "#ff453a",
 } as const;
 
 /**

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderInput as FolderInputIcon, Loader2, Trash2 } from "lucide-react";
+import { FolderInput as FolderInputIcon, Loader2, Trash2, TriangleAlert } from "lucide-react";
 import { api, onEvent, pickFolder, type StorageProgress } from "../../lib/api";
 import { formatBytes } from "../../lib/format";
 import { useWallet } from "../../lib/wallet";
@@ -8,24 +8,24 @@ import { useT } from "../../i18n";
 import { CONFIG_UPDATED_EVENT } from "../../App";
 import { useSettingsSheet } from "../../components/shell/SettingsSheet";
 import { Modal, ModalForm } from "../../components/ui/Modal";
-import { Meter, Notice } from "../../components/ui/bits";
-import { Rows } from "../../components/ui/Panel";
+import { CopyButton, Meter, Notice } from "../../components/ui/bits";
+import { Tooltip } from "../../components/ui/Tooltip";
+import { Panel, Rows } from "../../components/ui/Panel";
+import { IconTile, TILE } from "../../components/ui/IconTile";
 import { Field, PasswordInput } from "../Wallet/common";
 import { useBusy } from "../Wallet/accountActions";
-import { Advanced, FolderInput, Setting } from "./fields";
+import { Advanced, Setting } from "./fields";
 
 /**
  * WalletStorage is the wallet's part of Settings' Storage: the folder its
- * encrypted keys are kept in on this computer, chosen as the node's data
- * folder is (the folder picked is where the wallet moves to) and, folded
- * under Advanced, moving them to another folder or deleting the wallet
- * altogether.
+ * encrypted keys are kept in on this computer and, folded under Advanced,
+ * moving them to another folder. Wiping the wallet is a group of its own
+ * (WipeWallet).
  */
 export function WalletStorage() {
   const t = useT();
   const { info } = useWallet();
   const [moveTo, setMoveTo] = useState<string | null>(null);
-  const [wiping, setWiping] = useState(false);
   if (!info) return null;
 
   // The wallet's folder: the keystore's
@@ -38,9 +38,17 @@ export function WalletStorage() {
   return (
     <>
       <Rows>
-        {/* As the node's data folder is chosen; the folder picked is where the wallet moves to */}
+        {/* Shown, not chosen: the wallet moves with its files (Move wallet, below) */}
         <Setting title={t("storage.wallet.folder")} desc={t("wallet.accounts.storageDesc")}>
-          <FolderInput title={t("storage.wallet.pick")} value={folder} onChange={setMoveTo} />
+          <div className="flex w-72 items-center gap-1 rounded-xl bg-muted py-1 pr-1 pl-3">
+            <Tooltip content={folder} mono>
+              {/* A long path keeps its end, the folder's own name, in view */}
+              <code className="selectable min-w-0 flex-1 truncate font-mono text-sm [direction:rtl]">
+                <bdi>{folder}</bdi>
+              </code>
+            </Tooltip>
+            <CopyButton value={folder} />
+          </div>
         </Setting>
         <Advanced id="walletStorage" changed={0}>
           <Setting title={t("storage.wallet.move")} desc={t("storage.wallet.moveDesc")}>
@@ -48,13 +56,6 @@ export function WalletStorage() {
               {t("storage.move.cta")}
             </button>
           </Setting>
-          {info.hasPassword && (
-            <Setting title={t("storage.wallet.delete")} desc={t("storage.wallet.deleteDesc")}>
-              <button type="button" className="btn btn-tinted btn-sm text-critical-ink" onClick={() => setWiping(true)}>
-                {t("storage.delete.cta")}
-              </button>
-            </Setting>
-          )}
         </Advanced>
       </Rows>
       <MoveModal
@@ -71,6 +72,36 @@ export function WalletStorage() {
           return "restart";
         }}
       />
+    </>
+  );
+}
+
+/**
+ * WipeWallet is Settings' Storage's last group, apart from the rest as
+ * what can't be undone: wiping the whole wallet. Only a wallet with a
+ * password has anything to wipe.
+ */
+export function WipeWallet() {
+  const t = useT();
+  const [wiping, setWiping] = useState(false);
+  return (
+    <>
+      {/* Set apart as System Settings sets apart what erases: the panel's edge
+          in the destructive colour, the row marked by a red symbol, its name
+          and its button in red, and a footnote under the group */}
+      <Panel tone="critical">
+        <div className="flex min-h-14 items-center gap-3.5 px-4 py-3">
+          <IconTile icon={TriangleAlert} color={TILE.red} />
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="font-medium text-critical-ink">{t("storage.wallet.delete")}</span>
+            <span className="text-sm text-muted-foreground">{t("storage.wallet.deleteDesc")}</span>
+          </div>
+          <button type="button" className="btn btn-danger btn-sm shrink-0" onClick={() => setWiping(true)}>
+            {t("storage.wallet.wipeCta")}
+          </button>
+        </div>
+      </Panel>
+      <p className="px-1 text-sm text-muted-foreground">{t("storage.danger.note")}</p>
       <WipeModal open={wiping} onClose={() => setWiping(false)} />
     </>
   );
@@ -313,6 +344,8 @@ function Wipe({ onClose }: { onClose: () => void }) {
       }
     >
       <p className="text-critical-ink">{t("storage.wallet.deleteWarn")}</p>
+      <p className="text-sm text-muted-foreground">{t("storage.wallet.deleteList")}</p>
+      <p className="text-sm text-muted-foreground">{t("storage.wallet.deleteAfter")}</p>
       <Field label={t("storage.wallet.deleteType", { word: confirmWord })}>
         {(id) => (
           <input

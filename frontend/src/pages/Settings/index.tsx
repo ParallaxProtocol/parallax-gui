@@ -31,7 +31,7 @@ import { Tooltip } from "../../components/ui/Tooltip";
 import logo from "../../assets/logo.svg";
 import { IconTile, TILE } from "../../components/ui/IconTile";
 import { AccountsSettings, SecuritySettings } from "../Wallet/Accounts";
-import { NodeStorageActions, WalletStorage } from "./storage";
+import { NodeStorageActions, WalletStorage, WipeWallet } from "./storage";
 import { Indicator } from "../../components/ui/Indicator";
 import { Row, Rows } from "../../components/ui/Panel";
 import { Segmented } from "../../components/ui/Segmented";
@@ -333,6 +333,12 @@ export default function Settings() {
                 </Group>
                 {/* An offline signer has no node, nor its data */}
                 {!offline && nodeStorage(t("nav.node"), true)}
+                {/* Last, apart from the rest: what can't be undone */}
+                {walletInfo?.hasPassword && (
+                  <Group title={t("storage.danger")}>
+                    <WipeWallet />
+                  </Group>
+                )}
               </>
             )}
 

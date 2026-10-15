@@ -1041,14 +1041,23 @@ export const en: Dict = {
   "storage.wallet.moving": "Copying the wallet…",
   "storage.wallet.restarting": "Restarting…",
   "storage.wallet.moveSubmit": "Move and restart",
-  "storage.wallet.delete": "Delete wallet",
-  "storage.wallet.deleteDesc": "Removes every key, recovery phrase, account name and contact from this computer.",
-  "storage.wallet.deleteTitle": "Delete the wallet",
+  "storage.danger": "Danger zone",
+  "storage.danger.note":
+    "Nothing here can be undone. Make sure your recovery phrases are written down and your single keys backed up first.",
+  "storage.wallet.delete": "Wipe wallet",
+  "storage.wallet.deleteDesc":
+    "Deletes the whole wallet from this computer, its password included. You'll set a new wallet password afterwards.",
+  "storage.wallet.deleteTitle": "Wipe the wallet",
   "storage.wallet.deleteWarn":
-    "Every account in this wallet goes with it. Without a backup of its keys or recovery phrases, their funds are lost for good: nobody can bring them back.",
+    "This wipes the wallet: every account goes. Without a backup of their keys or recovery phrases, their funds are lost for good, and nobody can bring them back.",
+  "storage.wallet.wipeCta": "Wipe…",
+  "storage.wallet.deleteAfter":
+    "The wallet password goes too. The app then starts over as on a first launch: you'll choose a new wallet password, then create or import your accounts again.",
+  "storage.wallet.deleteList":
+    "Deleted from this computer: the keys and recovery phrases, the account names and watch-only accounts, the contacts, the offline signing requests and records, the sends waiting for a block, and the logs.",
   "storage.wallet.deleteType": "Type {word} to confirm",
-  "storage.wallet.deleteWord": "DELETE",
-  "storage.wallet.deleteSubmit": "Delete wallet",
+  "storage.wallet.deleteWord": "WIPE",
+  "storage.wallet.deleteSubmit": "Wipe wallet",
   "storage.node.pick": "Choose where to keep the node's data",
   "storage.node.move": "Move data",
   "storage.node.moveDesc":

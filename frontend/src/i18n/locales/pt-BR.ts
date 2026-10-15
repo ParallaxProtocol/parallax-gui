@@ -745,12 +745,20 @@ const ptBR: Dict = {
   "storage.wallet.moving": "Copiando a carteira…",
   "storage.wallet.restarting": "Reiniciando…",
   "storage.wallet.moveSubmit": "Mover e reiniciar",
+  "storage.danger": "Zona de perigo",
+  "storage.danger.note":
+    "Nada aqui pode ser desfeito. Antes, confira se suas frases de recuperação estão anotadas e suas chaves avulsas com backup.",
   "storage.wallet.delete": "Apagar carteira",
   "storage.wallet.deleteDesc":
-    "Remove deste computador todas as chaves, frases de recuperação, nomes de contas e contatos.",
+    "Apaga a carteira inteira deste computador, incluindo a senha. Depois você definirá uma nova senha da carteira.",
   "storage.wallet.deleteTitle": "Apagar a carteira",
   "storage.wallet.deleteWarn":
-    "Todas as contas desta carteira vão junto. Sem um backup das chaves ou frases de recuperação, os fundos se perdem para sempre: ninguém pode recuperá-los.",
+    "Isto apaga a carteira: todas as contas vão junto. Sem um backup das chaves ou frases de recuperação, os fundos se perdem para sempre, e ninguém pode recuperá-los.",
+  "storage.wallet.wipeCta": "Apagar…",
+  "storage.wallet.deleteAfter":
+    "A senha da carteira também é apagada. O app então recomeça como na primeira vez: você escolherá uma nova senha da carteira e criará ou importará suas contas de novo.",
+  "storage.wallet.deleteList":
+    "Apagados deste computador: as chaves e frases de recuperação, os nomes das contas e as contas somente leitura, os contatos, os pedidos e registros de assinatura offline, os envios aguardando um bloco e os logs.",
   "storage.wallet.deleteType": "Digite {word} para confirmar",
   "storage.wallet.deleteWord": "APAGAR",
   "storage.wallet.deleteSubmit": "Apagar carteira",

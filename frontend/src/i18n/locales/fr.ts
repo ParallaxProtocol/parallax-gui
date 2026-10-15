@@ -750,14 +750,23 @@ const fr: Dict = {
   "storage.wallet.moving": "Copie du portefeuille…",
   "storage.wallet.restarting": "Redémarrage…",
   "storage.wallet.moveSubmit": "Déplacer et redémarrer",
-  "storage.wallet.delete": "Supprimer le portefeuille",
-  "storage.wallet.deleteDesc": "Retire de cet ordinateur chaque clé, phrase de récupération, nom de compte et contact.",
-  "storage.wallet.deleteTitle": "Supprimer le portefeuille",
+  "storage.danger": "Zone de danger",
+  "storage.danger.note":
+    "Rien ici ne peut être annulé. Assurez-vous d'abord que vos phrases de récupération sont notées et vos clés individuelles sauvegardées.",
+  "storage.wallet.delete": "Effacer le portefeuille",
+  "storage.wallet.deleteDesc":
+    "Supprime tout le portefeuille de cet ordinateur, mot de passe compris. Vous définirez ensuite un nouveau mot de passe du portefeuille.",
+  "storage.wallet.deleteTitle": "Effacer le portefeuille",
   "storage.wallet.deleteWarn":
-    "Chaque compte de ce portefeuille disparaît avec lui. Sans sauvegarde de ses clés ou phrases de récupération, leurs fonds sont perdus pour de bon : personne ne peut les récupérer.",
+    "Cela efface le portefeuille : chaque compte disparaît. Sans sauvegarde de leurs clés ou phrases de récupération, leurs fonds sont perdus pour de bon, et personne ne peut les récupérer.",
+  "storage.wallet.wipeCta": "Effacer…",
+  "storage.wallet.deleteAfter":
+    "Le mot de passe du portefeuille disparaît aussi. L'app repart alors comme au premier lancement : vous choisirez un nouveau mot de passe du portefeuille, puis créerez ou importerez à nouveau vos comptes.",
+  "storage.wallet.deleteList":
+    "Supprimés de cet ordinateur : les clés et phrases de récupération, les noms des comptes et les comptes en lecture seule, les contacts, les demandes et l'historique de signature hors ligne, les envois en attente d'un bloc, et les journaux.",
   "storage.wallet.deleteType": "Tapez {word} pour confirmer",
-  "storage.wallet.deleteWord": "SUPPRIMER",
-  "storage.wallet.deleteSubmit": "Supprimer le portefeuille",
+  "storage.wallet.deleteWord": "EFFACER",
+  "storage.wallet.deleteSubmit": "Effacer le portefeuille",
   "storage.node.pick": "Choisissez où conserver les données du nœud",
   "storage.node.move": "Déplacer les données",
   "storage.node.moveDesc":
