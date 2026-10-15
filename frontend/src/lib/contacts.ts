@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 import type { Contact, ContactInput, ContactsImport } from "./api";
 
-// The address book, read through useContacts; ContactsProvider.tsx holds it
+// The contacts, read through useContacts; ContactsProvider.tsx holds it
 
 export type ContactsState = {
   /** Null until the backend first answers; favourites first, then by name. */

@@ -60,7 +60,7 @@ export default function SendPage() {
   // the transaction the offline signer made of it
   const [request, setRequest] = useState<SigningRequest | null>(null);
   const [scanning, setScanning] = useState(false);
-  // The form keeps what was typed while the review shows. The address book
+  // The form keeps what was typed while the review shows. The contacts page
   // opens it with a contact's address (/send?to=0x…)
   const [params, setParams] = useSearchParams();
   const [to, setTo] = useState(params.get("to") ?? "");
@@ -731,7 +731,7 @@ type SuggestionTab = "recent" | "contacts";
 type Suggestion = {
   address: string;
   name?: string;
-  /** Whether it is in the address book: a contact goes by its name alone, as the From field's account does. */
+  /** Whether it is in the contacts: a contact goes by its name alone, as the From field's account does. */
   contact?: boolean;
   /** For a recent one: which way it went, and when (0 while in the pool). */
   recent?: { kind: "in" | "out"; time: number };
@@ -740,7 +740,7 @@ type Suggestion = {
 /**
  * RecipientInput is the recipient's address, with what to pick it from
  * listed under it as the field is focused, on two tabs: the addresses
- * this account last sent to or received from, and the address book
+ * this account last sent to or received from, and the contacts
  * (recently sent to first, then favourites). Recent shows first while it
  * has anything to show, until a tab is chosen. Typing a name, part of an
  * address or a note narrows both. Arrow keys move through the list,
@@ -1052,7 +1052,7 @@ function RecipientInput({
   );
 }
 
-/** ContactMark marks a name as an address book contact's, with the address book's icon. */
+/** ContactMark marks a name as a contact's, with the contacts' icon. */
 function ContactMark() {
   const t = useT();
   return (

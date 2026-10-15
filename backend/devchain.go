@@ -46,7 +46,7 @@ var profileName = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 
 // Profile is the development profile this app runs as (make dev
 // PROFILE=<name>), or "" for the default one. A profile is a separate copy
-// of the app's state, its config, wallet, address book and logs in
+// of the app's state, its config, wallet, contacts and logs in
 // <user config>/Parallax-<name>, so two copies can run side by side, an
 // online wallet and an offline signer, say. Release builds have no
 // profiles, whatever their environment says.

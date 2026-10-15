@@ -24,7 +24,7 @@ import (
 	"github.com/ParallaxProtocol/parallax/v2/logging"
 )
 
-// The address book: the people and services the user sends to, by name.
+// The contacts: the people and services the user sends to, by name.
 // It lives in contacts.json beside the wallet, holds nothing secret, and
 // is written atomically. Names and addresses are each unique, so a name
 // always means one address and an address one name: a look-alike entry
@@ -44,14 +44,14 @@ const (
 var (
 	ErrContactName     = errors.New("contacts: a contact needs a name of at most 64 characters")
 	ErrContactNote     = errors.New("contacts: the note is longer than 500 characters")
-	ErrContactExists   = errors.New("contacts: this address is already in the address book")
+	ErrContactExists   = errors.New("contacts: this address is already in your contacts")
 	ErrContactNameUsed = errors.New("contacts: another contact already has this name")
-	ErrContactUnknown  = errors.New("contacts: no such contact in the address book")
-	ErrContactsFull    = errors.New("contacts: the address book is full")
-	ErrContactsFile    = errors.New("contacts: not an address book file")
+	ErrContactUnknown  = errors.New("contacts: no such contact")
+	ErrContactsFull    = errors.New("contacts: the contacts are full")
+	ErrContactsFile    = errors.New("contacts: not a contacts file")
 )
 
-// Contact is one entry of the address book. Times are Unix seconds;
+// Contact is one entry of the contacts. Times are Unix seconds;
 // LastSentAt is zero until the wallet first sends to it.
 type Contact struct {
 	ID         string `json:"id"`
@@ -87,7 +87,7 @@ type contactsFile struct {
 	Contacts []Contact `json:"contacts"`
 }
 
-// Contacts is the address book. It is safe for concurrent use.
+// Contacts is the user's contacts. It is safe for concurrent use.
 type Contacts struct {
 	mu   sync.Mutex
 	path string
@@ -95,7 +95,7 @@ type Contacts struct {
 	now  func() time.Time // tests set the clock
 }
 
-// OpenContacts reads the address book in configDir. An unreadable file is
+// OpenContacts reads the contacts in configDir. An unreadable file is
 // set aside, never overwritten, so a damaged book can still be recovered
 // by hand, and the app starts with an empty one.
 func OpenContacts(configDir string) (*Contacts, error) {
@@ -110,7 +110,7 @@ func OpenContacts(configDir string) (*Contacts, error) {
 	var f contactsFile
 	if err := json.Unmarshal(data, &f); err != nil || f.Version > contactsVersion {
 		aside := fmt.Sprintf("%s.unreadable-%d", c.path, time.Now().Unix())
-		logging.Warn("Setting aside an unreadable address book", "file", c.path, "to", aside, "err", err, "version", f.Version)
+		logging.Warn("Setting aside an unreadable contacts file", "file", c.path, "to", aside, "err", err, "version", f.Version)
 		if err := os.Rename(c.path, aside); err != nil {
 			return nil, err
 		}
@@ -121,7 +121,7 @@ func OpenContacts(configDir string) (*Contacts, error) {
 	for _, k := range f.Contacts {
 		in, err := c.clean(ContactInput{Name: k.Name, Address: k.Address, Note: k.Note}, "")
 		if err != nil {
-			logging.Warn("Dropping an invalid address book entry", "name", k.Name, "address", k.Address, "err", err)
+			logging.Warn("Dropping an invalid contact", "name", k.Name, "address", k.Address, "err", err)
 			continue
 		}
 		k.Name, k.Address, k.Note = in.Name, in.Address, in.Note
@@ -240,7 +240,7 @@ func (c *Contacts) SentTo(address string) {
 		if strings.EqualFold(c.list[i].Address, address) {
 			c.list[i].LastSentAt = c.now().Unix()
 			if err := c.save(); err != nil {
-				logging.Warn("Failed to save the address book", "err", err)
+				logging.Warn("Failed to save the contacts", "err", err)
 			}
 			return
 		}

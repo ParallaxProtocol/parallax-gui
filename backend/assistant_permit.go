@@ -80,7 +80,7 @@ func (a *MCPAllow) feature(name string) (mcpFeature, bool) {
 	case "wallet":
 		return mcpFeature{&a.Wallet, "see the wallet", false}, true
 	case "contacts":
-		return mcpFeature{&a.Contacts, "see the address book", false}, true
+		return mcpFeature{&a.Contacts, "see the contacts", false}, true
 	case "startNode":
 		return mcpFeature{&a.StartNode, "start the node", false}, true
 	case "stopNode":
@@ -92,7 +92,7 @@ func (a *MCPAllow) feature(name string) (mcpFeature, bool) {
 	case "watchOnly":
 		return mcpFeature{&a.WatchOnly, "ask to add watch-only accounts", true}, true
 	case "editContacts":
-		return mcpFeature{&a.EditContacts, "ask to edit the address book", true}, true
+		return mcpFeature{&a.EditContacts, "ask to edit the contacts", true}, true
 	case "sendTransactions":
 		return mcpFeature{&a.SendTransactions, "ask to send transactions", true}, true
 	}

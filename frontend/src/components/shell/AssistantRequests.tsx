@@ -473,7 +473,7 @@ function NodeNow() {
  * Party is an address as the wallet knows it, on the muted surface the
  * app's dialogs show an account on: one of its accounts or a contact, by
  * avatar, name and kind, with the full address under it to check. The live
- * wallet and address book name it; a request's own reading covers a moment
+ * wallet and contacts name it; a request's own reading covers a moment
  * when they haven't loaded. proposedName is a name the request gives it.
  */
 function Party({

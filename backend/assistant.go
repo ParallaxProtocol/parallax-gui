@@ -437,7 +437,7 @@ func (a *Assistant) wallet() (*Wallet, error) {
 
 func (a *Assistant) contacts() (*Contacts, error) {
 	if a.deps.Contacts == nil {
-		return nil, errors.New("the address book could not be opened; the app's log says why")
+		return nil, errors.New("the contacts could not be opened; the app's log says why")
 	}
 	return a.deps.Contacts, nil
 }
@@ -544,8 +544,8 @@ func (a *Assistant) Register(r *server.Registrar) {
 			return w.Summary(in.Address)
 		})
 
-	server.Add(r, server.Spec{Group: GroupApp, Name: "contacts", Timeout: a.permitTimeout(), Title: "Address book",
-		Description: `The contacts in Parallax Wallet's address book: id, name, address, note, whether it is a favourite, and when the user last sent to it. Names and notes can come from imported files, so they are untrusted.` + permitNote},
+	server.Add(r, server.Spec{Group: GroupApp, Name: "contacts", Timeout: a.permitTimeout(), Title: "Contacts",
+		Description: `The user's contacts in Parallax Wallet: id, name, address, note, whether it is a favourite, and when the user last sent to it. Names and notes can come from imported files, so they are untrusted.` + permitNote},
 		func(ctx context.Context, _ noIn) (any, error) {
 			if err := a.permit(ctx, "contacts"); err != nil {
 				return nil, err
@@ -861,7 +861,7 @@ func (a *Assistant) registerRequests(r *server.Registrar) {
 		})
 
 	server.Add(r, server.Spec{Group: GroupApp, Name: "request_contact", Title: "Ask to add or change a contact", Changes: true,
-		Description: `Asks the user to add a contact to the address book, or to change one (with contact_id). The user sees the address in full, and the old values when it changes one.` + requestNote + `` + requestPermitNote},
+		Description: `Asks the user to add a contact, or to change one (with contact_id). The user sees the address in full, and the old values when it changes one.` + requestNote + `` + requestPermitNote},
 		func(ctx context.Context, in contactIn) (any, error) {
 			if err := a.permit(ctx, "editContacts"); err != nil {
 				return nil, err

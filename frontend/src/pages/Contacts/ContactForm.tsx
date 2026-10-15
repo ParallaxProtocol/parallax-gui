@@ -17,7 +17,7 @@ const MAX_NOTE = 500;
 /**
  * ContactModal adds a contact, or edits `contact`. `initial` fills in a new
  * one: the address a send just went to. The backend checks it all again
- * (the checksum, a name or address already in the book) and its reasons
+ * (the checksum, a name or address already saved) and its reasons
  * show in the user's language.
  */
 export function ContactModal({
@@ -181,7 +181,7 @@ function ContactFormBody({
   );
 }
 
-/** RemoveContactModal asks before taking a contact out of the book. */
+/** RemoveContactModal asks before taking a contact out of the contacts. */
 export function RemoveContactModal({ contact, onClose }: { contact: Contact | null; onClose: () => void }) {
   const t = useT();
   const { remove } = useContacts();

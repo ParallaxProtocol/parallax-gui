@@ -104,7 +104,7 @@ export function DocBody({
 
 /**
  * TxSummary is a transfer as both sides review it: the amount, who it goes
- * to (named from this computer's own address book or accounts), and every
+ * to (named from this computer's own contacts or accounts), and every
  * figure that will be signed.
  */
 export function TxSummary({ tx, feeLabel }: { tx: OfflineTx; feeLabel?: string }) {

@@ -46,7 +46,7 @@ contextBridge.exposeInMainWorld("parallax", {
   saveBackup(fileName: string, contents: string): Promise<boolean> {
     return ipcRenderer.invoke("wallet:saveBackup", fileName, contents);
   },
-  /** Saves an exported address book where the user picks; false if cancelled. */
+  /** Saves exported contacts where the user picks; false if cancelled. */
   exportContacts(format: "json" | "csv", contents: string): Promise<boolean> {
     return ipcRenderer.invoke("contacts:export", format, contents);
   },

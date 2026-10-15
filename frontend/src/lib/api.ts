@@ -570,7 +570,7 @@ export type OfflineRequestInput = {
   memo: string;
 };
 
-/** An address book entry (backend/contacts.go). Times are Unix seconds; lastSentAt 0 until sent to. */
+/** A contact (backend/contacts.go). Times are Unix seconds; lastSentAt 0 until sent to. */
 export type Contact = {
   id: string;
   name: string;
@@ -645,12 +645,12 @@ const WALLET_ERRORS: Record<string, string> = {
   "message: the message does not match its fingerprint": "message.err.tampered",
   "contacts: a contact needs a name of at most 64 characters": "contacts.err.name",
   "contacts: the note is longer than 500 characters": "contacts.err.note",
-  "contacts: this address is already in the address book": "contacts.err.exists",
+  "contacts: this address is already in your contacts": "contacts.err.exists",
   "contacts: another contact already has this name": "contacts.err.nameUsed",
-  "contacts: no such contact in the address book": "contacts.err.unknown",
-  "contacts: the address book is full": "contacts.err.full",
-  "contacts: not an address book file": "contacts.err.file",
-  "contacts: the address book could not be opened": "contacts.err.unavailable",
+  "contacts: no such contact": "contacts.err.unknown",
+  "contacts: the contacts are full": "contacts.err.full",
+  "contacts: not a contacts file": "contacts.err.file",
+  "contacts: the contacts could not be opened": "contacts.err.unavailable",
   "wallet: this account's key is under a different password": "wallet.err.keyMismatch",
   "wallet: the password doesn't open every key in the wallet": "wallet.err.setupMismatch",
   "wallet: wrong password for the keystore file": "wallet.err.wrongFilePassword",
@@ -675,7 +675,7 @@ export function cameraAccess(): Promise<boolean> {
   return window.parallax?.cameraAccess ? window.parallax.cameraAccess() : Promise.resolve(true);
 }
 
-/** Saves an exported address book where the user picks; false if cancelled. */
+/** Saves exported contacts where the user picks; false if cancelled. */
 export function exportContacts(format: "json" | "csv", contents: string): Promise<boolean> {
   if (!window.parallax) return Promise.reject(new Error("unavailable"));
   return window.parallax.exportContacts(format, contents);

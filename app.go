@@ -95,7 +95,7 @@ func (a *App) startup(ctx context.Context) {
 			logging.Error("Failed to open the wallet", "err", err)
 		}
 		if a.contacts, err = backend.OpenContacts(cfg.Dir()); err != nil {
-			logging.Error("Failed to open the address book", "err", err)
+			logging.Error("Failed to open the contacts", "err", err)
 		}
 		// Serves whichever node runs, so it starts before the node does
 		a.mcp = backend.NewMCPServer(cfg.Dir(), backend.AssistantDeps{
@@ -742,10 +742,10 @@ func (a *App) MessageReviewSigned(data string) (backend.SignedMessageReview, err
 }
 
 // ---------------------------------------------------------------------------
-// Address book
+// Contacts
 // ---------------------------------------------------------------------------
 
-var errNoContacts = errors.New("contacts: the address book could not be opened")
+var errNoContacts = errors.New("contacts: the contacts could not be opened")
 
 func (a *App) contactsOrErr() (*backend.Contacts, error) {
 	if a.contacts == nil {
@@ -754,7 +754,7 @@ func (a *App) contactsOrErr() (*backend.Contacts, error) {
 	return a.contacts, nil
 }
 
-// Contacts lists the address book: favourites first, then by name.
+// Contacts lists the contacts: favourites first, then by name.
 func (a *App) Contacts() ([]backend.Contact, error) {
 	c, err := a.contactsOrErr()
 	if err != nil {
@@ -795,7 +795,7 @@ func (a *App) ContactRemove(id string) error {
 	return c.Remove(id)
 }
 
-// ContactsExport writes the address book as "json" or "csv".
+// ContactsExport writes the contacts as "json" or "csv".
 func (a *App) ContactsExport(format string) (string, error) {
 	c, err := a.contactsOrErr()
 	if err != nil {
@@ -804,7 +804,7 @@ func (a *App) ContactsExport(format string) (string, error) {
 	return c.Export(format)
 }
 
-// ContactsImport adds the contacts of an exported address book.
+// ContactsImport adds the contacts of an exported contacts file.
 func (a *App) ContactsImport(data string) (backend.ContactsImport, error) {
 	c, err := a.contactsOrErr()
 	if err != nil {

@@ -33,17 +33,17 @@ import { GlowCard } from "../../components/ui/GlowCard";
 import { Unfold } from "../Overview/parts";
 import { ContactModal, RemoveContactModal } from "./ContactForm";
 
-/** The largest file the address book imports, as the backend takes it. */
+/** The largest file the contacts import takes, as the backend takes it. */
 const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 
 /** The most favourites shown as tiles; the rest are in the list, starred. */
 const MAX_TILES = 8;
 
 /**
- * ContactsPage is the address book: the people and services the user sends
+ * ContactsPage is the contacts page: the people and services the user sends
  * to, by name. Favourites sit on top as tiles to send to in one click; below,
  * every contact in a list whose rows open to the whole address, the note and
- * the ways to send, star, edit or remove. The book can be searched, and
+ * the ways to send, star, edit or remove. The contacts can be searched, and
  * imported or exported as JSON or CSV.
  */
 export default function ContactsPage() {
@@ -105,7 +105,7 @@ export default function ContactsPage() {
   return (
     <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
       <ToolbarAccessory>
-        <BookActions canExport={!empty} onImport={() => fileInput.current?.click()} onExport={doExport} />
+        <ContactsActions canExport={!empty} onImport={() => fileInput.current?.click()} onExport={doExport} />
       </ToolbarAccessory>
       <input
         ref={fileInput}
@@ -132,7 +132,7 @@ export default function ContactsPage() {
       )}
 
       {empty ? (
-        // An empty book: what it is for, and the two ways to fill it
+        // No contacts yet: what it is for, and the two ways to fill it
         <GlowCard {...stagger} className="px-6 py-14">
           <div className="flex flex-col items-center gap-5 text-center">
             <motion.div variants={STAGGER.item}>
@@ -266,7 +266,7 @@ export default function ContactsPage() {
 }
 
 /**
- * FavoriteTile is a favourite on top of the book: its avatar and name on a
+ * FavoriteTile is a favourite on top of the page: its avatar and name on a
  * glass tile that sends to it, lifting a little under the pointer.
  */
 function FavoriteTile({ contact: c, onSend }: { contact: Contact; onSend: () => void }) {
@@ -303,7 +303,7 @@ function FavoriteTile({ contact: c, onSend }: { contact: Contact; onSend: () => 
 }
 
 /**
- * ContactRow is one contact of the book's list: who, at which address, and
+ * ContactRow is one contact of the list: who, at which address, and
  * when last sent to, opening to the rest. As an activity row, the whole row
  * is a button beneath its contents, so Send can sit in the row beside them.
  */
@@ -495,11 +495,11 @@ function ImportResult({ result: r, onClose }: { result: ContactsImport; onClose:
 }
 
 /**
- * BookActions is what acts on the whole book, in the toolbar: a glass pill,
+ * ContactsActions is what acts on all the contacts, in the toolbar: a glass pill,
  * as a flow's steps are, of Import and Export, Export asking JSON or CSV.
- * An empty book has nothing to export, so Export opens out once it has.
+ * With no contacts there is nothing to export, so Export opens out once it has.
  */
-function BookActions({
+function ContactsActions({
   canExport,
   onImport,
   onExport,

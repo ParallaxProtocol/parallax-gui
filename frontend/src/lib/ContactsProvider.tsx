@@ -3,7 +3,7 @@ import { api, Contact } from "./api";
 import { ContactsContext, type ContactsState } from "./contacts";
 
 /**
- * ContactsProvider holds the address book (backend/contacts.go) for every
+ * ContactsProvider holds the contacts (backend/contacts.go) for every
  * page: the book itself, editing it, and finding the contact at an address,
  * which the activity, Send and the notifications name people by.
  */

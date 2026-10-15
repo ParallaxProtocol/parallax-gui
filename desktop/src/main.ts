@@ -211,7 +211,7 @@ async function saveBackup(fileName: string, contents: string): Promise<boolean> 
 }
 
 /**
- * Saves an exported address book (backend/contacts.go) where the user
+ * Saves exported contacts (backend/contacts.go) where the user
  * picks, as JSON or CSV. Nothing in it is secret, but it says who the user
  * pays, so it is written private to them like a backup.
  */
@@ -219,7 +219,7 @@ async function saveContacts(format: "json" | "csv", contents: string): Promise<b
   if (contents.length > 8 * 1024 * 1024) return false;
   const date = new Date().toISOString().slice(0, 10);
   const opts = {
-    title: "Export address book",
+    title: "Export contacts",
     defaultPath: path.join(app.getPath("documents"), `parallax-contacts-${date}.${format}`),
     filters: [format === "json" ? { name: "JSON", extensions: ["json"] } : { name: "CSV", extensions: ["csv"] }],
   };
