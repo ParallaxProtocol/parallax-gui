@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowDownLeft,
@@ -12,7 +12,7 @@ import {
   PanelLeftOpen,
   XCircle,
 } from "lucide-react";
-import { FADE_OUT, GLIDE } from "../../lib/motion";
+import { FADE_IN, FADE_OUT, GLIDE, SPRING } from "../../lib/motion";
 import { useNotifications, type NoticeKind } from "../../lib/notifications";
 import { useSidebar } from "../../lib/sidebar";
 import { useUpdate } from "../../lib/update";
@@ -190,6 +190,9 @@ const KIND_TONE: Record<NoticeKind, "critical" | "good" | "brand" | "neutral"> =
   failed: "critical",
 };
 
+/** How long the cards take to fade away when the notifications are cleared. */
+const CLEAR_FADE_MS = 180;
+
 /**
  * Notifications lists what the app has had to tell the user, newest first,
  * as Notification Center does: each its own rounded card, its icon, title,
@@ -200,37 +203,86 @@ function Notifications() {
   const ago = useAgo();
   const now = useNow(30_000);
   const { notices, clear } = useNotifications();
+  // Cleared, the cards fade away in place first; once they're gone the
+  // list is emptied, and the panel eases to the empty state's height
+  const [clearing, setClearing] = useState(false);
+  useEffect(() => {
+    if (!clearing) return;
+    const done = setTimeout(() => {
+      clear();
+      setClearing(false);
+    }, CLEAR_FADE_MS);
+    return () => clearTimeout(done);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearing]);
+  const inner = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | "auto">("auto");
+  useLayoutEffect(() => {
+    const el = inner.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setHeight(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between px-1">
+      <div className="flex h-7 items-center justify-between px-1">
         <span className="text-base font-semibold">{t("notifications.title")}</span>
-        {notices.length > 0 && (
-          <button type="button" className="btn btn-tinted btn-sm" onClick={clear}>
-            {t("notifications.clear")}
-          </button>
-        )}
+        <AnimatePresence initial={false}>
+          {notices.length > 0 && !clearing && (
+            <motion.button
+              type="button"
+              className="btn btn-tinted btn-sm"
+              onClick={() => setClearing(true)}
+              exit={{ opacity: 0, transition: FADE_OUT }}
+            >
+              {t("notifications.clear")}
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
-      {notices.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-          <IconBadge icon={Bell} size="lg" />
-          <p className="text-sm text-muted-foreground">{t("notifications.empty")}</p>
+      <motion.div className="overflow-hidden" initial={false} animate={{ height }} transition={SPRING}>
+        <div ref={inner}>
+          {notices.length === 0 ? (
+            <motion.div
+              className="flex flex-col items-center gap-3 px-4 py-8 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: FADE_IN }}
+            >
+              <IconBadge icon={Bell} size="lg" />
+              <p className="text-sm text-muted-foreground">{t("notifications.empty")}</p>
+            </motion.div>
+          ) : (
+            <ul className="flex max-h-96 flex-col gap-2 overflow-x-hidden overflow-y-auto">
+              <AnimatePresence initial={false}>
+                {notices.map((n, i) => (
+                  <motion.li
+                    key={n.id}
+                    className="flex items-start gap-3 rounded-xl bg-muted/60 p-3"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={
+                      clearing
+                        ? { opacity: 0, scale: 0.97, transition: { duration: CLEAR_FADE_MS / 1000, ease: "easeOut" } }
+                        : { opacity: 1, scale: 1, y: 0, transition: SPRING }
+                    }
+                  >
+                    <IconBadge icon={KIND_ICON[n.kind]} tone={KIND_TONE[n.kind]} size="sm" />
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="flex items-baseline justify-between gap-2">
+                        <span className="truncate font-semibold">{n.title}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                          {ago(n.at / 1000, now)}
+                        </span>
+                      </span>
+                      <span className="text-sm text-muted-foreground">{n.body}</span>
+                    </span>
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+            </ul>
+          )}
         </div>
-      ) : (
-        <ul className="flex max-h-96 flex-col gap-2 overflow-y-auto">
-          {notices.map((n) => (
-            <li key={n.id} className="flex items-start gap-3 rounded-xl bg-muted/60 p-3">
-              <IconBadge icon={KIND_ICON[n.kind]} tone={KIND_TONE[n.kind]} size="sm" />
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="flex items-baseline justify-between gap-2">
-                  <span className="truncate font-semibold">{n.title}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{ago(n.at / 1000, now)}</span>
-                </span>
-                <span className="text-sm text-muted-foreground">{n.body}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      </motion.div>
     </div>
   );
 }
