@@ -686,7 +686,7 @@ function Sent({ tx, quote }: { tx: SentTx; quote: SendQuote }) {
       >
         <Rows as="dl" className="w-full text-left">
           <Property label={t("wallet.send.to")} mono>
-            <span className="selectable truncate">{quote.to}</span>
+            <GroupedAddress address={quote.to} className="truncate" />
             {toName && <span className="shrink-0 font-sans text-muted-foreground">{toName}</span>}
           </Property>
           <Property label={t("wallet.sent.hash")} mono>

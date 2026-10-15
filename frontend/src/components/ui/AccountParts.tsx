@@ -11,18 +11,31 @@ import { Tooltip } from "./Tooltip";
 
 /**
  * GroupedAddress shows an address as a card number is printed: 0x, then
- * its digits in groups of four. The gaps are margins, not spaces, so the
- * address selects and copies whole.
+ * its digits in groups of four, every other group a shade lighter, so it
+ * can be checked group by group against what the other party gave. The
+ * shades are opacities, so it reads the same in muted text as in plain;
+ * the gaps are blank boxes, not spaces, so it selects and copies whole.
+ * `wrap` lets it break between groups where a line runs out.
  */
-export function GroupedAddress({ address }: { address: string }) {
+export function GroupedAddress({
+  address,
+  wrap = false,
+  className = "",
+}: {
+  address: string;
+  wrap?: boolean;
+  className?: string;
+}) {
   const digits = address.replace(/^0x/i, "");
   const groups = digits.match(/.{1,4}/g) ?? [digits];
   return (
-    <span className="selectable font-mono tracking-wide">
-      <span className="mr-1.5">0x</span>
+    <span className={`selectable font-mono ${wrap ? "break-all" : "whitespace-nowrap"} ${className}`}>
+      <span className="opacity-55">0x</span>
+      <span className="inline-block w-[0.3em]" />
       {groups.map((g, i) => (
-        <span key={i} className={i < groups.length - 1 ? "mr-1.5" : ""}>
+        <span key={i} className={i % 2 ? "opacity-75" : ""}>
           {g}
+          {i < groups.length - 1 && <span className="inline-block w-[0.3em]" />}
         </span>
       ))}
     </span>

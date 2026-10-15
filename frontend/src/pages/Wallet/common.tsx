@@ -5,6 +5,7 @@ import { api, AddressView } from "../../lib/api";
 import { useNode } from "../../lib/live";
 import { useT } from "../../i18n";
 import { Tooltip } from "../../components/ui/Tooltip";
+import { GroupedAddress } from "../../components/ui/AccountParts";
 
 /** The shortest password the backend accepts (backend/wallet.go minPasswordLen). */
 export const MIN_PASSWORD = 8;
@@ -138,22 +139,10 @@ export function NewPassword({ onChange, label }: { onChange: (password: string) 
 /**
  * Address shows a full address in groups of four, so it can be checked
  * character by character against what the other party gave: never
- * shortened where money is about to move.
+ * shortened where money is about to move. It wraps between groups.
  */
 export function Address({ value, className = "" }: { value: string; className?: string }) {
-  const body = value.startsWith("0x") ? value.slice(2) : value;
-  const groups = body.match(/.{1,4}/g) ?? [];
-  return (
-    <span className={`selectable font-mono break-all ${className}`}>
-      <span className="text-muted-foreground">0x</span>
-      {groups.map((g, i) => (
-        <span key={i} className={i % 2 ? "text-foreground/75" : ""}>
-          {g}
-          {i < groups.length - 1 && <span className="inline-block w-[0.3em]" />}
-        </span>
-      ))}
-    </span>
-  );
+  return <GroupedAddress address={value} wrap className={className} />;
 }
 
 /**
