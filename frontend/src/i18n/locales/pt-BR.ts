@@ -4,6 +4,8 @@ const ptBR: Dict = {
   // Shell
   "nav.wallet": "Carteira",
   "nav.settings": "Configurações",
+  "nav.collapseSidebar": "Recolher barra lateral",
+  "nav.expandSidebar": "Expandir barra lateral",
   "splash.loading": "Carregando",
 
   // Hello: the first launch

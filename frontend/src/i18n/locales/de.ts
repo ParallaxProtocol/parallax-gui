@@ -4,6 +4,8 @@ const de: Dict = {
   // Shell
   "nav.wallet": "Wallet",
   "nav.settings": "Einstellungen",
+  "nav.collapseSidebar": "Seitenleiste einklappen",
+  "nav.expandSidebar": "Seitenleiste ausklappen",
   "splash.loading": "Lädt",
 
   // Hello: the first launch

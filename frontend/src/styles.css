@@ -154,7 +154,9 @@
 li.glass {
   border-radius: 10px;
 }
-button.glass:hover {
+button.glass:hover,
+/* A glass card under one button that covers it (the sidebar's account switcher) */
+.glass:has(> .switcher-opener:hover) {
   background-color: var(--glass-hover);
 }
 /* What the glass covers up: a chosen option */
@@ -297,6 +299,10 @@ button.glass:hover {
   -webkit-app-region: drag;
 }
 .drag :is(button, a, input, select, [role="button"], .no-drag) {
+  -webkit-app-region: no-drag;
+}
+/* While a menu is open, a press on a drag area closes it rather than move the window */
+.drag-off .drag {
   -webkit-app-region: no-drag;
 }
 /* What floats over a drag area (the panels, popovers) must opt out too:

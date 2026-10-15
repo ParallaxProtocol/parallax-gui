@@ -4,6 +4,8 @@ const fr: Dict = {
   // Shell
   "nav.wallet": "Portefeuille",
   "nav.settings": "Paramètres",
+  "nav.collapseSidebar": "Réduire la barre latérale",
+  "nav.expandSidebar": "Développer la barre latérale",
   "splash.loading": "Chargement",
 
   // Hello: the first launch

@@ -2,6 +2,8 @@ import { createContext, lazy, ReactNode, Suspense, useContext, useEffect, useMem
 import { AnimatePresence, motion } from "motion/react";
 import { Minimize2, Settings2 } from "lucide-react";
 import { useT } from "../../i18n";
+import { FADE_IN, FADE_OUT } from "../../lib/motion";
+import { useSidebar } from "../../lib/sidebar";
 import { Tooltip } from "../ui/Tooltip";
 import { NODE_BAR_GAP, NODE_BAR_ROOM } from "./NodeBar";
 import { TOP_BAR_HEIGHT } from "./TopBar";
@@ -61,26 +63,37 @@ export const useSettingsSheet = () => useContext(SheetContext);
 export function SettingsButton() {
   const t = useT();
   const { open, setOpen } = useSettingsSheet();
+  // In the sidebar's rail, the icon alone, its name in a tooltip
+  const { collapsed } = useSidebar();
   if (open) return <div className="h-10" />;
   return (
-    <motion.button
-      type="button"
-      layoutId="settings-surface"
-      transition={SETTINGS_SPRING}
-      onClick={() => setOpen(true)}
-      className="group flex h-10 w-full items-center px-2.5 text-left text-[15px] text-foreground/80 hover:bg-hover"
-      style={{ borderRadius: 10 }}
-    >
-      <SettingsTitle label={t("nav.settings")} />
-    </motion.button>
+    <Tooltip content={collapsed ? t("nav.settings") : null}>
+      <motion.button
+        type="button"
+        layoutId="settings-surface"
+        transition={SETTINGS_SPRING}
+        onClick={() => setOpen(true)}
+        aria-label={collapsed ? t("nav.settings") : undefined}
+        className="group flex h-10 w-full items-center overflow-hidden px-2.5 text-left text-[15px] whitespace-nowrap text-foreground/80 hover:bg-hover"
+        style={{ borderRadius: 10 }}
+      >
+        <SettingsTitle label={t("nav.settings")} hidden={collapsed} />
+      </motion.button>
+    </Tooltip>
   );
 }
 
-function SettingsTitle({ label, large }: { label: string; large?: boolean }) {
+function SettingsTitle({ label, large, hidden }: { label: string; large?: boolean; hidden?: boolean }) {
   return (
     <motion.span layoutId="settings-title" transition={SETTINGS_SPRING} className="flex items-center gap-3">
-      <Settings2 className="size-[18px] text-muted-foreground" strokeWidth={1.75} />
-      <span className={large ? "text-base font-semibold text-foreground" : ""}>{label}</span>
+      <Settings2 className="size-[18px] shrink-0 text-muted-foreground" strokeWidth={1.75} />
+      <motion.span
+        className={large ? "text-base font-semibold text-foreground" : ""}
+        initial={false}
+        animate={{ opacity: hidden ? 0 : 1, transition: hidden ? FADE_OUT : { ...FADE_IN, delay: 0.08 } }}
+      >
+        {label}
+      </motion.span>
     </motion.span>
   );
 }

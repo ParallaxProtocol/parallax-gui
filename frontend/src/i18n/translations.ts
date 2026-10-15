@@ -29,6 +29,8 @@ export const en: Dict = {
   // Shell
   "nav.wallet": "Wallet",
   "nav.settings": "Settings",
+  "nav.collapseSidebar": "Collapse sidebar",
+  "nav.expandSidebar": "Expand sidebar",
   "splash.loading": "Loading",
 
   // Hello: the first launch
@@ -229,8 +231,6 @@ export const en: Dict = {
   "nav.send": "Send",
   "nav.receive": "Receive",
   "nav.contacts": "Address book",
-  "nav.group.allAccounts": "All accounts",
-  "nav.group.signing": "Signing",
   "nav.signMessage": "Sign message",
   "nav.verifyMessage": "Verify message",
   "nav.accounts": "Accounts",

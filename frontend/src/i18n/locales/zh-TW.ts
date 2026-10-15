@@ -4,6 +4,8 @@ const zhTW: Dict = {
   // Shell
   "nav.wallet": "錢包",
   "nav.settings": "設定",
+  "nav.collapseSidebar": "收合側邊欄",
+  "nav.expandSidebar": "展開側邊欄",
   "splash.loading": "載入中",
 
   // Hello: the first launch

@@ -25,8 +25,9 @@ const TITLES: Record<string, string> = {
 /**
  * Toolbar is the content's title bar: the page's name, and on the right
  * whatever the page puts there (lib/toolbar.tsx): its progress, its
- * actions. It is a drag area, under the window's title bar (TopBar). Its separator shows only once content scrolls beneath it, as
- * on macOS.
+ * actions. It sits under the window's title bar (TopBar), which alone
+ * drags the window: this is the page's, not the window's. Its separator
+ * shows only once content scrolls beneath it, as on macOS.
  */
 export default function Toolbar() {
   const t = useT();
@@ -45,7 +46,7 @@ export default function Toolbar() {
 
   return (
     <header
-      className={`drag relative z-10 flex h-14 shrink-0 items-center gap-3 border-b bg-background pl-5 transition-[border-color,box-shadow] duration-200 ${
+      className={`relative z-10 flex h-14 shrink-0 items-center gap-3 border-b bg-background pl-5 transition-[border-color,box-shadow] duration-200 ${
         scrolled ? "border-border shadow-[0_6px_16px_-12px_rgb(0_0_0/40%)]" : "border-transparent"
       }`}
     >

@@ -35,6 +35,7 @@ const ImportAccountPage = lazy(() =>
 );
 const Hello = lazy(() => import("./pages/Hello"));
 import Sidebar from "./components/shell/Sidebar";
+import { SidebarProvider } from "./lib/SidebarProvider";
 import Toolbar from "./components/shell/Toolbar";
 import NodeBar, { NODE_BAR_ROOM, NodeSheetProvider, OfflineBar, useNodeSheet } from "./components/shell/NodeBar";
 import TopBar from "./components/shell/TopBar";
@@ -165,27 +166,29 @@ export default function App() {
               <NotificationsProvider>
                 <UpdateProvider>
                   <NodeSheetProvider>
-                    <SettingsSheetProvider>
-                      <AssistantProvider enabled={!offline}>
-                        <DesktopBehaviors {...desktop} />
-                        {/* The sidebar and the page run the window's whole height, the
-                          node's bar floating over their foot: each keeps room for it */}
-                        <div className="flex h-full">
-                          <Sidebar />
-                          <div
-                            className="flex min-w-0 flex-1 flex-col bg-background"
-                            style={{ paddingBottom: NODE_BAR_ROOM }}
-                          >
-                            <TopBar />
-                            <Toolbar />
-                            <RoutedContent animate={!animationsDisabled} />
+                    <SidebarProvider>
+                      <SettingsSheetProvider>
+                        <AssistantProvider enabled={!offline}>
+                          <DesktopBehaviors {...desktop} />
+                          {/* The sidebar and the page run the window's whole height, the
+                            node's bar floating over their foot: each keeps room for it */}
+                          <div className="flex h-full">
+                            <Sidebar />
+                            <div
+                              className="flex min-w-0 flex-1 flex-col bg-background"
+                              style={{ paddingBottom: NODE_BAR_ROOM }}
+                            >
+                              <TopBar />
+                              <Toolbar />
+                              <RoutedContent animate={!animationsDisabled} />
+                            </div>
                           </div>
-                        </div>
-                        <SettingsSheet />
-                        {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
-                        {!offline && <AssistantBar />}
-                      </AssistantProvider>
-                    </SettingsSheetProvider>
+                          <SettingsSheet />
+                          {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
+                          {!offline && <AssistantBar />}
+                        </AssistantProvider>
+                      </SettingsSheetProvider>
+                    </SidebarProvider>
                   </NodeSheetProvider>
                 </UpdateProvider>
               </NotificationsProvider>

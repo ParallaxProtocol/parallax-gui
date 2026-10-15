@@ -4,6 +4,8 @@ const zhSG: Dict = {
   // Shell
   "nav.wallet": "钱包",
   "nav.settings": "设置",
+  "nav.collapseSidebar": "收起边栏",
+  "nav.expandSidebar": "展开边栏",
   "splash.loading": "加载中",
 
   // Hello: the first launch

@@ -4,6 +4,8 @@ const ru: Dict = {
   // Shell
   "nav.wallet": "Кошелёк",
   "nav.settings": "Настройки",
+  "nav.collapseSidebar": "Свернуть боковую панель",
+  "nav.expandSidebar": "Развернуть боковую панель",
   "splash.loading": "Загрузка",
 
   // Hello: the first launch

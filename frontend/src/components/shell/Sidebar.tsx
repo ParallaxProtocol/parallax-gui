@@ -1,28 +1,44 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, BookUser, Check, ChevronsUpDown, FileCheck, FileSignature, PenLine, Radio, ShieldCheck, Sparkles, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, BookUser, ChevronsUpDown, FileCheck, FileSignature, PenLine, Radio, ShieldCheck, Sparkles, Wallet } from "lucide-react";
 import { useOfflineMode } from "../../lib/offline";
+import { SIDEBAR_RAIL, SIDEBAR_RAIL_MAC, SIDEBAR_WIDTH, useSidebar } from "../../lib/sidebar";
 import { api } from "../../lib/api";
-import { formatLax, shortHex } from "../../lib/format";
-import { FADE_OUT, GLIDE } from "../../lib/motion";
+import { formatLax } from "../../lib/format";
+import { FADE_IN, FADE_OUT, GLIDE, SPRING, useStagger } from "../../lib/motion";
 import { accountLabel, useBalances, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import logo from "../../assets/logo.svg";
 import { NODE_BAR_ROOM } from "./NodeBar";
 import { SettingsButton, useSettingsSheet } from "./SettingsSheet";
 import { AddressAvatar } from "../ui/AddressAvatar";
+import { CopyButton } from "../ui/bits";
+import { Counter } from "../ui/Counter";
 import { Pill } from "../ui/Pill";
 import { Tooltip } from "../ui/Tooltip";
+
+/** macOS keeps its traffic lights over the sidebar's top left (public/boot.js marks the platform). */
+const MAC = document.documentElement.dataset.platform === "darwin";
+const RAIL = MAC ? SIDEBAR_RAIL_MAC : SIDEBAR_RAIL;
+/** An item's width in the rail: its icon and the padding around it. */
+const RAIL_ITEM = 40;
+/** The account card's width open: the sidebar's, less the items' padding. */
+const CARD_WIDTH = SIDEBAR_WIDTH - 24;
+/** What fades as the sidebar collapses goes quickly; what comes back waits for the room. */
+const fade = (shown: boolean) => ({ opacity: shown ? 1 : 0, transition: shown ? { ...FADE_IN, delay: 0.08 } : FADE_OUT });
 
 /**
  * Sidebar is the window's source list: the account the wallet shows and
  * its destinations, under the app's name in the window's title bar (the
  * rest of which, over the page, is TopBar). The node has the bar along the
- * window's foot (NodeBar).
+ * window's foot (NodeBar). Collapsed (TopBar's button, or Ctrl+\), it
+ * narrows to a rail of its icons, their names in tooltips, the page
+ * gliding over to take the room.
  */
 export default function Sidebar() {
   const t = useT();
+  const { collapsed } = useSidebar();
   // Sending and receiving need an account: until there is one they show, greyed out
   const { info, account } = useWallet();
   const noAccount = !!info && !account;
@@ -31,36 +47,55 @@ export default function Sidebar() {
   const watching = !!info?.accounts.some((a) => a.watchOnly);
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col bg-sidebar">
+    <motion.aside
+      className="flex shrink-0 flex-col bg-sidebar"
+      initial={false}
+      animate={{ width: collapsed ? RAIL : SIDEBAR_WIDTH }}
+      transition={SPRING}
+    >
       {/* The title bar's part over the sidebar: the line under it runs on
-          under the page's part, and the sidebar's own line starts below it */}
-      <div className="drag flex h-13 shrink-0 items-center gap-2.5 border-b border-border px-4">
+          under the page's part, and the sidebar's own line starts below it.
+          In the rail, the logo alone (on macOS, the traffic lights alone) */}
+      <motion.div
+        className="drag flex h-13 shrink-0 items-center gap-2.5 overflow-hidden border-b border-border pr-4 whitespace-nowrap"
+        initial={false}
+        animate={{ paddingLeft: collapsed && !MAC ? (RAIL - 20) / 2 : 16 }}
+        transition={SPRING}
+      >
         <span className="traffic-light-gap" />
-        <img src={logo} alt="" className="size-5" />
-        <span className="text-[15px] font-semibold">Parallax</span>
-        <ProfileBadge />
-      </div>
+        <motion.img src={logo} alt="" className="size-5 shrink-0" initial={false} animate={fade(!collapsed || !MAC)} />
+        <motion.span className="flex min-w-0 items-center gap-2.5" initial={false} animate={fade(!collapsed)}>
+          <span className="text-[15px] font-semibold">Parallax</span>
+          <ProfileBadge />
+        </motion.span>
+      </motion.div>
 
       <div className="flex min-h-0 flex-1 flex-col border-r border-border" style={{ paddingBottom: NODE_BAR_ROOM }}>
         {/* Grouped by scope: what is about the account the switcher shows,
             then what spans every account */}
-        <nav className="flex flex-col gap-0.5 px-3 pt-3" aria-label={t("nav.label")}>
-          <GroupHeading first>{t("nav.wallet")}</GroupHeading>
+        <motion.nav
+          className="flex flex-col gap-0.5 pt-3"
+          aria-label={t("nav.label")}
+          initial={false}
+          animate={{ paddingInline: collapsed ? (RAIL - RAIL_ITEM) / 2 : 12 }}
+          transition={SPRING}
+        >
           {locked ? (
             // Until the wallet has its password, only the welcome
             <NavItem to="/" icon={Sparkles} label={t("nav.welcome")} />
           ) : offline ? (
-            // The offline signer: its accounts, then signing, which the
-            // request's own account decides, not the switcher
+            // The offline signer, laid out as the online wallet is: its home
+            // and signing in place of the overview and sending
             <>
               <AccountSwitcher />
-              <NavItem to="/receive" icon={ArrowDownLeft} label={t("nav.receive")} disabled={noAccount} />
-              <GroupHeading>{t("nav.group.signing")}</GroupHeading>
               <NavItem to="/" icon={ShieldCheck} label={t("offline.nav.home")} />
               <NavItem to="/sign" icon={PenLine} label={t("offline.nav.sign")} disabled={noAccount} />
+              <NavItem to="/receive" icon={ArrowDownLeft} label={t("nav.receive")} disabled={noAccount} />
+              <GroupSeparator />
+              <NavItem to="/contacts" icon={BookUser} label={t("nav.contacts")} />
+              <GroupSeparator />
               <NavItem to="/messages/sign" icon={FileSignature} label={t("nav.signMessage")} disabled={noAccount} />
               <NavItem to="/messages/verify" icon={FileCheck} label={t("nav.verifyMessage")} />
-              <NavItem to="/contacts" icon={BookUser} label={t("nav.contacts")} />
             </>
           ) : (
             <>
@@ -68,25 +103,41 @@ export default function Sidebar() {
               <NavItem to="/" icon={Wallet} label={t("nav.overview")} />
               <NavItem to="/send" icon={ArrowUpRight} label={t("nav.send")} disabled={noAccount} />
               <NavItem to="/receive" icon={ArrowDownLeft} label={t("nav.receive")} disabled={noAccount} />
-              <NavItem to="/messages/sign" icon={FileSignature} label={t("nav.signMessage")} disabled={noAccount} />
-              <GroupHeading>{t("nav.group.allAccounts")}</GroupHeading>
+              <GroupSeparator />
               <NavItem to="/contacts" icon={BookUser} label={t("nav.contacts")} />
-              <NavItem to="/messages/verify" icon={FileCheck} label={t("nav.verifyMessage")} />
               {/* Takes a transaction signed offline for any watch-only account */}
               {watching && <NavItem to="/broadcast" icon={Radio} label={t("offline.nav.broadcast")} />}
+              <GroupSeparator />
+              <NavItem to="/messages/sign" icon={FileSignature} label={t("nav.signMessage")} disabled={noAccount} />
+              <NavItem to="/messages/verify" icon={FileCheck} label={t("nav.verifyMessage")} />
             </>
           )}
-        </nav>
+        </motion.nav>
 
         <div className="flex-1" />
 
-        <div className="flex flex-col px-3 pb-3">
+        <motion.div
+          className="flex flex-col pb-3"
+          initial={false}
+          animate={{ paddingInline: collapsed ? (RAIL - RAIL_ITEM) / 2 : 12 }}
+          transition={SPRING}
+        >
           <SettingsButton />
-        </div>
+        </motion.div>
       </div>
-    </aside>
+    </motion.aside>
   );
 }
+
+/**
+ * ROW_IN is STAGGER's arrival for the switcher's rows, settling down from
+ * above instead of rising: in the list's scroll box a row still below its
+ * place would overflow the bottom and flash a scrollbar, the top doesn't.
+ */
+const ROW_IN = {
+  hidden: { opacity: 0, y: -6 },
+  visible: { opacity: 1, y: 0, transition: SPRING },
+};
 
 /**
  * AccountSwitcher shows the account the wallet pages are about, and opens
@@ -102,103 +153,222 @@ function AccountSwitcher() {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
+  const stagger = useStagger();
+  const { collapsed } = useSidebar();
 
   // Another page closes it, however it was reached
   useEffect(() => setOpen(false), [pathname]);
 
+  // A press anywhere else closes it, heard before the page can swallow it;
+  // so does the window losing focus (a press on another window or the
+  // desktop). The window's drag areas would keep a press from the page
+  // altogether, so while the list is open they don't drag
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => {
+    document.body.classList.add("drag-off");
+    const onDown = (e: PointerEvent) => {
       if (!box.current?.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    window.addEventListener("mousedown", onDown);
+    const onBlur = () => setOpen(false);
+    window.addEventListener("pointerdown", onDown, true);
     window.addEventListener("keydown", onKey);
+    window.addEventListener("blur", onBlur);
     return () => {
-      window.removeEventListener("mousedown", onDown);
+      document.body.classList.remove("drag-off");
+      window.removeEventListener("pointerdown", onDown, true);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("blur", onBlur);
     };
   }, [open]);
+
+  // The check moves to the chosen account before the list closes
+  const choose = (address: string) => {
+    if (address === account?.address) return setOpen(false);
+    select(address);
+    window.setTimeout(() => setOpen(false), 180);
+  };
 
   if (!info || !account) return null;
   const accounts = info.accounts;
 
+  const name = accountLabel(account, accounts, t);
+
   return (
     <div ref={box} className="relative mb-2">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className="glass flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:border-border-strong"
+      {/* One card that morphs between its two shapes on the sidebar's own
+          spring: full, as wide as the sidebar's items, and in the rail a
+          tile around the avatar. Its size, corners and padding move, the
+          avatar shrinks in place, and what doesn't fit the tile fades as
+          it's clipped, laid out at its full width so it never reflows. A
+          button covering the card opens the list; the copy button sits
+          above it, and a press anywhere else sinks the card */}
+      <motion.div
+        className="glass relative overflow-hidden transition-[transform,border-color] duration-200 hover:border-border-strong has-[.switcher-opener:active]:scale-[0.98]"
+        initial={false}
+        animate={{
+          // Its height follows what's in it: the avatar's row, and the balance's as it folds
+          width: collapsed ? RAIL_ITEM : CARD_WIDTH,
+          borderRadius: collapsed ? 12 : 14,
+        }}
+        transition={SPRING}
       >
-        <AddressAvatar address={account.address} size={34} />
-        <span className="min-w-0 flex-1">
-          <span className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-[15px] font-semibold">{accountLabel(account, accounts, t)}</span>
-            {account.watchOnly && <WatchOnlyBadge />}
-          </span>
-          {!offline && (
-            <span className="block truncate text-sm tabular-nums">
-              <Balance wei={balances[account.address]} />
-            </span>
-          )}
-          <span className="block truncate font-mono text-xs text-muted-foreground">
-            {shortHex(account.address, 8, 6)}
-          </span>
-        </span>
-        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
-      </button>
+        <Tooltip content={collapsed ? name : null}>
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            aria-label={name}
+            className="switcher-opener absolute inset-0 rounded-[inherit]"
+          />
+        </Tooltip>
+        <motion.div
+          className="pointer-events-none relative flex items-center"
+          initial={false}
+          animate={{ padding: `${collapsed ? (RAIL_ITEM - 28) / 2 : 12}px`, columnGap: `${collapsed ? 0 : 12}px` }}
+          transition={SPRING}
+        >
+          {/* The avatar, drawn to its box's size as the box shrinks; on a switch the new one fades in over the old */}
+          <motion.div
+            className="relative shrink-0"
+            initial={false}
+            animate={{ width: collapsed ? 28 : 36, height: collapsed ? 28 : 36 }}
+            transition={SPRING}
+          >
+            <AnimatePresence initial={false}>
+              <motion.div
+                key={account.address}
+                className="absolute inset-0"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: FADE_IN }}
+                exit={{ opacity: 0, transition: FADE_OUT }}
+              >
+                <AddressAvatar address={account.address} size={36} className="size-full" />
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+          {/* Takes the width left, but not height: the row is as tall as the
+              avatar, so the tile stays square with the text hidden in it */}
+          <div className="relative min-w-0 flex-1 self-stretch overflow-x-clip">
+            <motion.div
+              className="absolute inset-y-0 left-0 flex items-center gap-3"
+              style={{ width: CARD_WIDTH - 24 - 36 - 12 }}
+              initial={false}
+              animate={fade(!collapsed)}
+            >
+              {/* Who the account is: on a switch the old one fades as the new one rises */}
+              <div className="grid min-w-0 flex-1">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.div
+                    key={account.address}
+                    className="col-start-1 row-start-1 min-w-0"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0, transition: SPRING }}
+                    exit={{ opacity: 0, transition: FADE_OUT }}
+                  >
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate text-[15px] font-semibold">{name}</span>
+                      {account.watchOnly && (
+                        <span className={collapsed ? "" : "pointer-events-auto"}>
+                          <WatchOnlyBadge />
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex min-w-0 items-center gap-0.5">
+                      <ShortAddress address={account.address} />
+                      <span className={collapsed ? "" : "pointer-events-auto"}>
+                        <CopyButton value={account.address} className="-my-1 size-6" />
+                      </span>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+            </motion.div>
+          </div>
+        </motion.div>
+        {/* What it holds, under a hairline, folding away into the tile; an offline signer has no chain to read it from */}
+        {!offline && (
+          <motion.div
+            className="pointer-events-none relative overflow-hidden"
+            initial={false}
+            animate={{ height: collapsed ? 0 : "auto", opacity: collapsed ? 0 : 1 }}
+            transition={{ ...SPRING, opacity: fade(!collapsed).transition }}
+          >
+            <div
+              className="mx-3 flex items-center justify-between gap-3 border-t border-border py-2.5 text-sm whitespace-nowrap"
+              style={{ width: CARD_WIDTH - 24 }}
+            >
+              <span className="text-muted-foreground">{t("wallet.balance")}</span>
+              <span className="truncate tabular-nums">
+                <Balance wei={balances[account.address]} counted />
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
       <AnimatePresence>
         {open && (
           <motion.div
+            key="list"
             role="listbox"
             aria-label={t("nav.accounts")}
-            className="menu absolute top-full left-0 z-50 mt-1 flex w-96 flex-col gap-px p-1.5"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, transition: FADE_OUT }}
-            transition={GLIDE}
+            className={`menu absolute z-50 flex flex-col gap-px p-1.5 ${
+              // From the card, as wide as it; from the rail's avatar, beside it at the card's width
+              collapsed ? "top-0 left-full ml-2 origin-top-left" : "inset-x-0 top-full mt-1.5 origin-top"
+            }`}
+            style={collapsed ? { width: CARD_WIDTH } : undefined}
+            initial={{ opacity: 0, scale: 0.96, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0, transition: SPRING }}
+            exit={{ opacity: 0, scale: 0.98, transition: FADE_OUT }}
           >
-            <div className="flex max-h-96 flex-col gap-px overflow-y-auto">
+            <motion.div className="flex max-h-96 flex-col gap-px overflow-y-auto" {...stagger}>
               {accounts.map((a) => {
                 const here = a.address === account.address;
                 return (
-                  <button
+                  <motion.button
                     key={a.address}
                     type="button"
                     role="option"
                     aria-selected={here}
-                    onClick={() => {
-                      setOpen(false);
-                      if (!here) select(a.address);
-                    }}
-                    className="menu-item gap-3 py-2"
+                    variants={ROW_IN}
+                    onClick={() => choose(a.address)}
+                    className="menu-item relative gap-2.5 py-2"
                   >
-                    <AddressAvatar address={a.address} size={32} />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex min-w-0 items-center gap-1.5">
-                        <span className="truncate">{accountLabel(a, accounts, t)}</span>
-                        {a.watchOnly && <WatchOnlyBadge />}
-                      </span>
-                      <span className="block truncate font-mono text-xs text-muted-foreground">
-                        {shortHex(a.address, 8, 6)}
-                      </span>
-                    </span>
-                    {!offline && (
-                      <span className="shrink-0 pl-2 text-right tabular-nums">
-                        <Balance wei={balances[a.address]} />
-                      </span>
+                    {/* The chosen account is lit as the sidebar's page is, and the light glides to a new choice */}
+                    {here && (
+                      <motion.span
+                        layoutId="switcher-selection"
+                        transition={GLIDE}
+                        className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
+                      />
                     )}
-                    <span className="grid size-3.5 shrink-0 place-items-center">
-                      {here && <Check className="size-3.5 text-brand" />}
+                    <span className="relative">
+                      <AddressAvatar address={a.address} size={28} />
                     </span>
-                  </button>
+                    <span className="relative min-w-0 flex-1">
+                      <span className="flex min-w-0 items-baseline gap-2">
+                        <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                          <span className={`truncate ${here ? "font-medium" : ""}`}>{accountLabel(a, accounts, t)}</span>
+                          {a.watchOnly && <WatchOnlyBadge />}
+                        </span>
+                        {!offline && (
+                          <span className="shrink-0 text-xs tabular-nums">
+                            <Balance wei={balances[a.address]} />
+                          </span>
+                        )}
+                      </span>
+                      <span className="flex">
+                        <ShortAddress address={a.address} />
+                      </span>
+                    </span>
+                  </motion.button>
                 );
               })}
-            </div>
+            </motion.div>
             <div className="my-0.5 border-t border-border" />
             <button
               type="button"
@@ -232,9 +402,20 @@ function ProfileBadge() {
   );
 }
 
-/** GroupHeading titles a group of the sidebar's items, as Settings' sidebar does. */
-function GroupHeading({ first, children }: { first?: boolean; children: string }) {
-  return <h2 className={`px-2.5 pb-1.5 text-sm font-semibold text-muted-foreground ${first ? "" : "pt-5"}`}>{children}</h2>;
+/** GroupSeparator parts one group of the sidebar's items from the next. */
+function GroupSeparator() {
+  return <div role="separator" className="mx-2.5 my-2.5 border-t border-border" />;
+}
+
+/** ShortAddress is an address's first and last four digits, the gap between them a dimmed midline ellipsis. */
+function ShortAddress({ address }: { address: string }) {
+  return (
+    <span className="truncate font-mono text-xs text-muted-foreground">
+      {address.slice(0, 6)}
+      <span className="mx-0.5 text-muted-foreground/50">⋯</span>
+      {address.slice(-4)}
+    </span>
+  );
 }
 
 /** WatchOnlyBadge marks an account whose key is on an offline signer. */
@@ -247,14 +428,21 @@ function WatchOnlyBadge() {
   );
 }
 
-/** Balance is an amount of LAX, or a dash until it is known. */
-function Balance({ wei }: { wei?: string }) {
+/** Balance is an amount of LAX, or a dash until it is known. Counted, it glides to each new amount. */
+function Balance({ wei, counted }: { wei?: string; counted?: boolean }) {
   if (wei === undefined) return <span className="text-muted-foreground">—</span>;
+  const amount = formatLax(wei, 4);
   return (
     <>
-      {formatLax(wei, 4)} <span className="text-muted-foreground">LAX</span>
+      {counted ? <Counter value={Number(amount)} format={formatAmount} /> : amount}{" "}
+      <span className="text-muted-foreground">LAX</span>
     </>
   );
+}
+
+/** Up to four decimals, without trailing zeros, as formatLax shows a balance. */
+function formatAmount(v: number): string {
+  return v.toLocaleString("en-US", { maximumFractionDigits: 4, useGrouping: false });
 }
 
 function NavItem({
@@ -269,47 +457,59 @@ function NavItem({
   /** Shown but not reachable, until what it needs exists. */
   disabled?: boolean;
 }) {
+  // In the rail the name fades, and shows as the icon's tooltip instead
+  const { collapsed } = useSidebar();
+  const name = (
+    <motion.span className="relative flex-1 truncate" initial={false} animate={fade(!collapsed)}>
+      {label}
+    </motion.span>
+  );
   if (disabled) {
     return (
-      <span
-        aria-disabled="true"
-        className="flex h-10 cursor-default items-center gap-3 rounded-lg px-2.5 text-[15px] text-foreground/35"
-      >
-        <Icon className="size-[18px] text-muted-foreground/50" strokeWidth={1.75} />
-        <span className="flex-1 truncate">{label}</span>
-      </span>
+      <Tooltip content={collapsed ? label : null}>
+        <span
+          aria-disabled="true"
+          className="flex h-10 shrink-0 cursor-default items-center gap-3 rounded-lg px-2.5 text-[15px] text-foreground/35"
+        >
+          <Icon className="size-[18px] shrink-0 text-muted-foreground/50" strokeWidth={1.75} />
+          {name}
+        </span>
+      </Tooltip>
     );
   }
   return (
-    <NavLink
-      to={to}
-      end={to === "/"}
-      className={({ isActive }) =>
-        `group relative flex h-10 items-center gap-3 rounded-lg px-2.5 text-[15px] transition-colors ${
-          isActive ? "text-foreground" : "text-foreground/80 hover:bg-hover"
-        }`
-      }
-    >
-      {({ isActive }) => (
-        <>
-          {/* The selection glides from item to item */}
-          {isActive && (
-            <motion.span
-              layoutId="sidebar-selection"
-              layoutDependency={isActive}
-              transition={GLIDE}
-              className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
+    <Tooltip content={collapsed ? label : null}>
+      <NavLink
+        aria-label={collapsed ? label : undefined}
+        to={to}
+        end={to === "/"}
+        className={({ isActive }) =>
+          `group relative flex h-10 items-center gap-3 rounded-lg px-2.5 text-[15px] transition-colors ${
+            isActive ? "text-foreground" : "text-foreground/80 hover:bg-hover"
+          }`
+        }
+      >
+        {({ isActive }) => (
+          <>
+            {/* The selection glides from item to item */}
+            {isActive && (
+              <motion.span
+                layoutId="sidebar-selection"
+                layoutDependency={isActive}
+                transition={GLIDE}
+                className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
+              />
+            )}
+            <Icon
+              className={`relative size-[18px] shrink-0 transition-[color,transform] duration-200 group-active:scale-90 ${
+                isActive ? "text-brand" : "text-muted-foreground"
+              }`}
+              strokeWidth={1.75}
             />
-          )}
-          <Icon
-            className={`relative size-[18px] transition-[color,transform] duration-200 group-active:scale-90 ${
-              isActive ? "text-brand" : "text-muted-foreground"
-            }`}
-            strokeWidth={1.75}
-          />
-          <span className="relative flex-1 truncate">{label}</span>
-        </>
-      )}
-    </NavLink>
+            {name}
+          </>
+        )}
+      </NavLink>
+    </Tooltip>
   );
 }

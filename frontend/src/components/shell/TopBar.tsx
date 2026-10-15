@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDownLeft, ArrowUpRight, Bell, CheckCircle2, Download, HardDrive, Loader2, XCircle } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Bell, CheckCircle2, Download, HardDrive, Loader2, PanelLeftClose, PanelLeftOpen, XCircle } from "lucide-react";
 import { FADE_OUT, GLIDE } from "../../lib/motion";
 import { useNotifications, type NoticeKind } from "../../lib/notifications";
+import { useSidebar } from "../../lib/sidebar";
 import { useUpdate } from "../../lib/update";
 import { useAgo, useT } from "../../i18n";
 import { useNow } from "../../lib/useNow";
@@ -15,17 +16,25 @@ export const TOP_BAR_HEIGHT = 52;
 
 /**
  * TopBar is the window's title bar over the page (the sidebar has its own
- * part, with the app's name): on the right the update on offer (only while
- * there is one) and the notifications. It is the window's drag area, and
+ * part, with the app's name): on the left the button that collapses the
+ * sidebar to its rail and back, on the right the update on offer (only
+ * while there is one) and the notifications. It is the window's drag area, and
  * leaves room for the window controls.
  */
 export default function TopBar() {
   const t = useT();
   const { state } = useUpdate();
   const { unread, markRead } = useNotifications();
+  const sidebar = useSidebar();
+  const sidebarLabel = sidebar.collapsed ? t("nav.expandSidebar") : t("nav.collapseSidebar");
 
   return (
     <header className="drag relative z-20 flex shrink-0 items-center gap-2 border-b border-border px-4" style={{ height: TOP_BAR_HEIGHT }}>
+      <Tooltip content={sidebarLabel}>
+        <button type="button" onClick={sidebar.toggle} aria-label={sidebarLabel} className="btn btn-ghost btn-icon -ml-2">
+          {sidebar.collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+        </button>
+      </Tooltip>
       <span className="flex-1" />
 
       {state.kind !== "hidden" && (
