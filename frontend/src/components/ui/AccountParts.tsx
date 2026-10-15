@@ -15,29 +15,50 @@ import { Tooltip } from "./Tooltip";
  * can be checked group by group against what the other party gave. The
  * shades are opacities, so it reads the same in muted text as in plain;
  * the gaps are blank boxes, not spaces, so it selects and copies whole.
- * `wrap` lets it break between groups where a line runs out.
+ * `wrap` lets it break between groups where a line runs out. `ends` keeps
+ * that many groups at each end, a dimmed ellipsis between, for a line too
+ * short for all of it (its shades still those of the whole).
  */
 export function GroupedAddress({
   address,
   wrap = false,
+  ends,
   className = "",
 }: {
   address: string;
   wrap?: boolean;
+  ends?: number;
   className?: string;
 }) {
   const digits = address.replace(/^0x/i, "");
   const groups = digits.match(/.{1,4}/g) ?? [digits];
+  const cut = ends !== undefined && groups.length > ends * 2;
+  const group = (i: number) => (
+    <span key={i} className={i % 2 ? "opacity-75" : ""}>
+      {groups[i]}
+    </span>
+  );
+  const gap = <span className="inline-block w-[0.3em]" />;
+  const run = (from: number, to: number) =>
+    groups.slice(from, to).map((_, k) => (
+      <span key={from + k}>
+        {group(from + k)}
+        {from + k < to - 1 && gap}
+      </span>
+    ));
   return (
     <span className={`selectable font-mono ${wrap ? "break-all" : "whitespace-nowrap"} ${className}`}>
       <span className="opacity-55">0x</span>
-      <span className="inline-block w-[0.3em]" />
-      {groups.map((g, i) => (
-        <span key={i} className={i % 2 ? "opacity-75" : ""}>
-          {g}
-          {i < groups.length - 1 && <span className="inline-block w-[0.3em]" />}
-        </span>
-      ))}
+      {gap}
+      {cut ? (
+        <>
+          {run(0, ends)}
+          <span className="mx-1 opacity-50">⋯</span>
+          {run(groups.length - ends, groups.length)}
+        </>
+      ) : (
+        run(0, groups.length)
+      )}
     </span>
   );
 }

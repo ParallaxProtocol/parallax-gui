@@ -231,7 +231,7 @@ export default function Settings() {
                 onClick={() => setSection(id)}
                 aria-current={section === id ? "page" : undefined}
                 className={`relative flex h-10 shrink-0 items-center rounded-lg px-2 text-left text-[15px] transition-colors ${
-                  section === id ? "font-medium" : "text-foreground/80 hover:bg-hover"
+                  section === id ? "font-medium" : "text-foreground/80"
                 }`}
               >
                 {section === id && (

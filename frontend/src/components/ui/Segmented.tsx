@@ -20,17 +20,23 @@ export function Segmented<T extends string>({
   value,
   onChange,
   size = "md",
+  fill = false,
   className = "",
 }: {
   options: SegmentOption<T>[];
   value: T;
   onChange: (v: T) => void;
   size?: "sm" | "md";
+  /** Spread across its width, the choices sharing it equally. */
+  fill?: boolean;
   className?: string;
 }) {
   const id = useId();
   return (
-    <div role="radiogroup" className={`inline-flex rounded-[10px] bg-segment-well p-[3px] ${className}`}>
+    <div
+      role="radiogroup"
+      className={`${fill ? "flex" : "inline-flex"} rounded-[10px] bg-segment-well p-[3px] ${className}`}
+    >
       {options.map((o) => {
         const here = o.value === value;
         const button = (
@@ -41,7 +47,7 @@ export function Segmented<T extends string>({
             aria-checked={here}
             disabled={o.disabled}
             onClick={() => !o.disabled && onChange(o.value)}
-            className={`relative min-w-20 rounded-[7px] font-medium transition-colors disabled:opacity-40 ${
+            className={`relative ${fill ? "min-w-0 flex-1 truncate" : "min-w-20"} rounded-[7px] font-medium transition-colors disabled:opacity-40 ${
               size === "sm" ? "h-6 px-3 text-sm" : "h-7 px-4"
             } ${here ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >

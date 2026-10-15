@@ -4,12 +4,19 @@ import { GLIDE } from "../../lib/motion";
 export type StepState = "done" | "current" | "todo" | "skipped";
 
 /**
- * StepMark is a checklist item's state: an empty ring to do, a disc
- * painted in the accent for the step at hand, and once done the same
- * disc with a check drawing itself in. A step passed without being done
+ * StepMark is a checklist item's state: an empty ring to do, the ring in
+ * the accent with a dot at its centre for the step at hand (a radio
+ * button's mark, set apart from the done ones' full discs), and once done
+ * a disc painted in the accent with a check drawing itself in. A step passed without being done
  * is a dashed ring with a dash in it, in grey.
  */
 export function StepMark({ state, size = 20 }: { state: StepState; size?: number }) {
+  // Whole pixels of the mark's own parity, so the dot and the dash sit at
+  // its exact centre rather than half a pixel off; and placed there
+  // absolutely, so one leaving as another arrives doesn't push it aside
+  const even = (n: number) => Math.round(n / 2) * 2 + (size % 2);
+  const dot = even(size * 0.36);
+  const dash = even(size * 0.4);
   return (
     <span className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }}>
       <motion.span
@@ -26,15 +33,27 @@ export function StepMark({ state, size = 20 }: { state: StepState; size?: number
           <motion.span
             key="skip"
             aria-hidden
-            className="h-[1.5px] rounded-full bg-muted-foreground"
-            style={{ width: size * 0.4 }}
+            className="absolute inset-0 m-auto h-[1.5px] rounded-full bg-muted-foreground"
+            style={{ width: dash }}
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
             exit={{ scaleX: 0 }}
             transition={GLIDE}
           />
         )}
-        {(state === "done" || state === "current") && (
+        {state === "current" && (
+          <motion.span
+            key="dot"
+            aria-hidden
+            className="absolute inset-0 m-auto rounded-full bg-brand-mark"
+            style={{ width: dot, height: dot }}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            transition={GLIDE}
+          />
+        )}
+        {state === "done" && (
           <motion.span
             key="fill"
             className="absolute inset-0 grid place-items-center rounded-full bg-brand-fill text-brand-foreground"
@@ -43,20 +62,18 @@ export function StepMark({ state, size = 20 }: { state: StepState; size?: number
             exit={{ scale: 0.4, opacity: 0 }}
             transition={GLIDE}
           >
-            {state === "done" && (
-              <svg viewBox="0 0 24 24" width={size * 0.6} height={size * 0.6} fill="none" aria-hidden>
-                <motion.path
-                  d="M5 12.5l4.5 4.5L19 7.5"
-                  stroke="currentColor"
-                  strokeWidth={3}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.35, delay: 0.08, ease: [0.65, 0, 0.35, 1] }}
-                />
-              </svg>
-            )}
+            <svg viewBox="0 0 24 24" width={size * 0.6} height={size * 0.6} fill="none" aria-hidden>
+              <motion.path
+                d="M5 12.5l4.5 4.5L19 7.5"
+                stroke="currentColor"
+                strokeWidth={3.75}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.35, delay: 0.08, ease: [0.65, 0, 0.35, 1] }}
+              />
+            </svg>
           </motion.span>
         )}
       </AnimatePresence>
