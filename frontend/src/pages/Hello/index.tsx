@@ -6,6 +6,7 @@ import { api, GUIConfig, NodeStatus, SeedCandidate, walletError } from "../../li
 import { formatInt } from "../../lib/format";
 import { syncProgress } from "../../lib/live";
 import { Counter } from "../../components/ui/Counter";
+import { EASE, Glow } from "../../components/ui/Glow";
 import { useAnimationsOff } from "../../lib/prefs";
 import { Lang, useLang, useT } from "../../i18n";
 import { LANG_NAMES } from "../../i18n/translations";
@@ -61,7 +62,6 @@ const SCAN_BATCH = 5;
 const LOGO_MS = 1900;
 /** How long each greeting stays, in ms. */
 const STEP_MS = 1150;
-const EASE = [0.16, 1, 0.3, 1] as const;
 
 type Stage =
   | "greet"
@@ -324,22 +324,6 @@ export default function Hello({
   );
 }
 
-/** Glow is a slow, soft drift of the brand's colours behind everything. */
-function Glow() {
-  return (
-    <motion.div
-      aria-hidden
-      className="pointer-events-none absolute top-1/2 left-1/2 size-[56rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
-      style={{
-        background:
-          "radial-gradient(closest-side, color-mix(in oklab, var(--app-brand-mark) 20%, transparent) 0%, color-mix(in oklab, var(--app-brand-mark) 14%, transparent) 20%, color-mix(in oklab, #5b5bf0 9%, transparent) 42%, color-mix(in oklab, #5b5bf0 4%, transparent) 64%, color-mix(in oklab, #5b5bf0 1.5%, transparent) 82%, transparent 100%)",
-      }}
-      animate={{ scale: [1, 1.08, 1], rotate: [0, 12, 0] }}
-      transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-    />
-  );
-}
-
 /**
  * Greeting shows the logo, alone, then the welcomes one after another,
  * then settles on the user's own language and reveals what to do next
@@ -483,7 +467,7 @@ function Screen({
         opacity: 1,
         x: 0,
         filter: "blur(0px)",
-        transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+        transition: { duration: 0.5, ease: EASE },
       }}
       exit={{
         opacity: 0,

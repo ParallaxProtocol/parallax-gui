@@ -4,7 +4,8 @@ import { Loader2, LockOpen } from "lucide-react";
 import { api, walletError } from "../../lib/api";
 import { useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
-import { BrandMark } from "../ui/BrandMark";
+import { EASE, Glow } from "../ui/Glow";
+import logo from "../../assets/logo.svg";
 import { Notice } from "../ui/bits";
 import { PasswordInput } from "../../pages/Wallet/common";
 
@@ -73,45 +74,68 @@ function LockScreen() {
   };
 
   return (
-    <div className="fixed inset-0 bg-background">
+    <div className="fixed inset-0 overflow-hidden bg-background">
+      <Glow />
       {/* The window's title bar: draggable, with room for its controls */}
       <div className="drag absolute inset-x-0 top-0 z-10 h-13" />
-      <div className="grid h-full place-items-center px-6">
-        <motion.form
-          className="flex w-full max-w-sm flex-col items-center gap-8"
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      <div className="relative grid h-full place-items-center px-6">
+        <form
+          className="flex w-full max-w-sm flex-col items-center gap-10"
           onSubmit={(e) => {
             e.preventDefault();
             unlock();
           }}
         >
-          <BrandMark size={56} />
-          <div className="flex flex-col items-center gap-2 text-center">
-            <h1 className="text-3xl font-semibold tracking-tight">{t("lock.title")}</h1>
-            <p className="text-muted-foreground">{t("lock.desc")}</p>
+          {/* The logo and the title come in as the welcome's do, then the rest after them */}
+          <div className="flex flex-col items-center gap-6">
+            <motion.span
+              aria-hidden
+              className="block size-20 bg-gradient-to-br from-foreground via-foreground to-[var(--app-brand)]"
+              style={{
+                mask: `url("${logo}") center / contain no-repeat`,
+                WebkitMask: `url("${logo}") center / contain no-repeat`,
+              }}
+              initial={{ opacity: 0, scale: 0.9, filter: "blur(12px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              transition={{ duration: 0.9, ease: EASE }}
+            />
+            <motion.h1
+              className="bg-gradient-to-br from-foreground via-foreground to-[var(--app-brand)] bg-clip-text px-2 pb-1 text-center text-5xl font-semibold tracking-tight text-transparent"
+              initial={{ opacity: 0, y: 14, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ delay: 0.15, duration: 0.55, ease: EASE }}
+            >
+              {t("lock.title")}
+            </motion.h1>
           </div>
-          <div className="flex w-full flex-col gap-3">
-            <label htmlFor={id} className="sr-only">
-              {t("wallet.walletPassword")}
-            </label>
-            <div className="[&_.input]:h-11 [&_.input]:text-base">
-              <PasswordInput
-                id={id}
-                value={password}
-                onChange={setPassword}
-                autoFocus
-                placeholder={t("wallet.walletPassword")}
-              />
+          <motion.div
+            className="flex w-full flex-col items-center gap-6"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45, duration: 0.6, ease: EASE }}
+          >
+            <p className="text-center text-muted-foreground">{t("lock.desc")}</p>
+            <div className="flex w-full flex-col gap-3">
+              <label htmlFor={id} className="sr-only">
+                {t("wallet.walletPassword")}
+              </label>
+              <div className="[&_.input]:h-11 [&_.input]:text-base">
+                <PasswordInput
+                  id={id}
+                  value={password}
+                  onChange={setPassword}
+                  autoFocus
+                  placeholder={t("wallet.walletPassword")}
+                />
+              </div>
+              {error && <Notice tone="critical">{error}</Notice>}
             </div>
-            {error && <Notice tone="critical">{error}</Notice>}
-          </div>
-          <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!password || busy}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <LockOpen className="size-4" />}
-            {t("lock.cta")}
-          </button>
-        </motion.form>
+            <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!password || busy}>
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <LockOpen className="size-4" />}
+              {t("lock.cta")}
+            </button>
+          </motion.div>
+        </form>
       </div>
     </div>
   );
