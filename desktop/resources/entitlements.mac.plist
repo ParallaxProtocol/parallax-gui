@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The hardened runtime's exceptions for the app itself, kept to what it
+  needs to run: V8's JIT, and, being ad-hoc signed (no Team ID), loading
+  Electron's own frameworks. DYLD_* variables stay ignored, and nothing
+  can attach to it as a debugger. The camera scans offline signing QR
+  codes.
+-->
+<plist version="1.0">
+  <dict>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.device.camera</key>
+    <true/>
+  </dict>
+</plist>

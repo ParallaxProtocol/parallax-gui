@@ -58,7 +58,14 @@ mac:
   # Apple Silicon refuses to run an unsigned app, and the in-app updater
   # opens the DMG for the user rather than replacing the app itself
   identity: "-"
-  hardenedRuntime: false
+  # The hardened runtime even so: DYLD_INSERT_LIBRARIES and the like are
+  # ignored and no debugger can attach, to the app or the backend, so
+  # nothing gets code into the processes passwords and keys go through.
+  # Ad-hoc signed frameworks carry no Team ID, so library validation is
+  # off (resources/entitlements.mac*.plist)
+  hardenedRuntime: true
+  entitlements: resources/entitlements.mac.plist
+  entitlementsInherit: resources/entitlements.mac.inherit.plist
   # The offline signer scans signing QR codes with the camera
   extendInfo:
     NSCameraUsageDescription: Parallax Wallet uses the camera to scan offline signing QR codes.
