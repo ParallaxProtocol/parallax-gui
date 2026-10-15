@@ -29,6 +29,7 @@ type App struct {
 	node     *backend.NodeController
 	wallet   *backend.Wallet
 	contacts *backend.Contacts
+	mcp      *backend.MCPServer
 	updater  *backend.Updater
 }
 
@@ -96,6 +97,24 @@ func (a *App) startup(ctx context.Context) {
 		if a.contacts, err = backend.OpenContacts(cfg.Dir()); err != nil {
 			logging.Error("Failed to open the address book", "err", err)
 		}
+		// Serves whichever node runs, so it starts before the node does
+		a.mcp = backend.NewMCPServer(cfg.Dir(), backend.AssistantDeps{
+			Host:     assistantHost{a},
+			Node:     a.node,
+			Wallet:   a.wallet,
+			Contacts: a.contacts,
+			Logs:     a.logs,
+		})
+		a.mcp.SetEmitter(func(st backend.MCPStatus) {
+			a.events.emit("mcp", st)
+		})
+		a.mcp.SetActivityEmitter(func(act *backend.MCPActivity) {
+			a.events.emit("mcp-activity", act)
+		})
+		a.mcp.Assistant().SetEmitter(func(pending []backend.AssistantRequest) {
+			a.events.emit("assistant-requests", pending)
+		})
+		a.mcp.Apply(conf)
 	}
 
 	// Auto-updater: check for new releases on startup and periodically.
@@ -121,6 +140,9 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) shutdown(ctx context.Context) {
 	if a.updater != nil {
 		a.updater.Stop()
+	}
+	if a.mcp != nil {
+		a.mcp.Close()
 	}
 	if a.node != nil {
 		_ = a.node.Stop()
@@ -172,6 +194,9 @@ func (a *App) UpdateConfig(c backend.GUIConfig) error {
 			logging.Warn("Failed to stop the node for offline signing", "err", err)
 		}
 	}
+	if a.mcp != nil {
+		a.mcp.Apply(c)
+	}
 	if c.LogLevel != cur.LogLevel {
 		level := c.LogLevel
 		if level == 0 {
@@ -181,6 +206,82 @@ func (a *App) UpdateConfig(c backend.GUIConfig) error {
 	}
 	return nil
 }
+
+// ---------------------------------------------------------------------------
+// AI assistants (MCP)
+// ---------------------------------------------------------------------------
+
+// MCPStatus reports the assistant server and how to connect to it.
+func (a *App) MCPStatus() backend.MCPStatus {
+	if a.mcp == nil {
+		return backend.MCPStatus{}
+	}
+	return a.mcp.Status()
+}
+
+// MCPResetToken replaces the assistant server's access token.
+func (a *App) MCPResetToken() (backend.MCPStatus, error) {
+	if a.mcp == nil {
+		return backend.MCPStatus{}, errors.New("the app's settings could not be loaded")
+	}
+	return a.mcp.ResetToken()
+}
+
+// MCPCancel stops the tool call the assistant bar shows.
+func (a *App) MCPCancel() bool {
+	if a.mcp == nil {
+		return false
+	}
+	return a.mcp.CancelActivity()
+}
+
+// AssistantRequests lists what assistants asked for and wait on the user.
+func (a *App) AssistantRequests() []backend.AssistantRequest {
+	if a.mcp == nil {
+		return []backend.AssistantRequest{}
+	}
+	return a.mcp.Assistant().Pending()
+}
+
+// AssistantApprove carries out a request; password is the wallet's, for a
+// request that makes an account, and empty otherwise.
+func (a *App) AssistantApprove(id, password string) (backend.AssistantRequest, error) {
+	if a.mcp == nil {
+		return backend.AssistantRequest{}, errors.New("no such request")
+	}
+	return a.mcp.Assistant().Approve(id, password)
+}
+
+// AssistantAllow answers a permission prompt: once, for the assistant
+// that asked, or always.
+func (a *App) AssistantAllow(id string, always bool) (backend.AssistantRequest, error) {
+	if a.mcp == nil {
+		return backend.AssistantRequest{}, errors.New("no such request")
+	}
+	return a.mcp.Assistant().Allow(id, always)
+}
+
+// AssistantReject turns a request down.
+func (a *App) AssistantReject(id string) error {
+	if a.mcp == nil {
+		return nil
+	}
+	return a.mcp.Assistant().Reject(id)
+}
+
+// assistantHost is the app as the assistant tools reach it. It is its own
+// type, not App methods, which the bridge would offer the frontend.
+type assistantHost struct{ a *App }
+
+func (h assistantHost) Config() backend.GUIConfig            { return h.a.cfg.Get() }
+func (h assistantHost) SaveConfig(c backend.GUIConfig) error { return h.a.UpdateConfig(c) }
+func (h assistantHost) StartNode() error {
+	if h.a.cfg.Get().OfflineSigner {
+		return errors.New("this app is an offline signer: its node never runs")
+	}
+	return h.a.node.Start(h.a.ctx)
+}
+func (h assistantHost) StopNode() error { return h.a.node.Stop() }
 
 // ---------------------------------------------------------------------------
 // Node lifecycle

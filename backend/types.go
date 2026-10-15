@@ -153,6 +153,15 @@ type GUIConfig struct {
 	// latest lines are kept across restarts (backend/logfile.go)
 	ClearLogsOnStartup bool `json:"clearLogsOnStartup"`
 
+	// MCPEnabled serves the node's chain data to AI assistants (Claude Code
+	// and other MCP clients) on 127.0.0.1:MCPPort (mcp.go). Applied at once,
+	// with no restart; off by default
+	MCPEnabled bool `json:"mcpEnabled"`
+	MCPPort    int  `json:"mcpPort"` // 0 = DefaultMCPPort
+	// MCPAllow is what assistants may see and do in the app beyond the
+	// chain (assistant.go)
+	MCPAllow MCPAllow `json:"mcpAllow"`
+
 	// OfflineSigner makes the whole app an air-gapped signer (offline.go):
 	// the node never starts, no update check runs, and the wallet signs
 	// requests from a watch-only wallet online. It takes effect on restart

@@ -452,6 +452,12 @@ func ValidateConfig(g GUIConfig) error {
 			return ErrOfflineFeeCap
 		}
 	}
+	if g.MCPPort < 0 || g.MCPPort > 65535 {
+		return errors.New("the AI assistant port must be between 1 and 65535")
+	}
+	if g.MCPEnabled && g.HTTPRPCEnabled && mcpPort(g) == g.HTTPRPCPort {
+		return errors.New("HTTP-RPC and the AI assistant server need different ports")
+	}
 	_, _, err := buildConfigs(g)
 	return err
 }

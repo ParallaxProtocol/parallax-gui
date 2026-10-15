@@ -114,13 +114,23 @@ func defaultGUIConfig() GUIConfig {
 		MaxPeers:         100,
 		Theme:            "system",
 		AutoStartNode:    true,
-		EnableSmartFee:   true,                    // matches the v2.0.0 CLI default (--gpo.smartfee).
-		ReportStats:      true,                    // on for new installs.
-		Notifications:    true,                    // configs saved before it existed load it off.
+		EnableSmartFee:   true, // matches the v2.0.0 CLI default (--gpo.smartfee).
+		ReportStats:      true, // on for new installs.
+		Notifications:    true, // configs saved before it existed load it off.
+		MCPAllow:         defaultMCPAllow(),
 		DatabaseCacheMB:  cacheTotalMB * 50 / 100, // 2048 MB
 		TrieCleanCacheMB: cacheTotalMB * 15 / 100, //  614 MB
 		TrieDirtyCacheMB: cacheTotalMB * 25 / 100, // 1024 MB
 		SnapshotCacheMB:  cacheTotalMB * 10 / 100, //  409 MB
+	}
+}
+
+// defaultMCPAllow asks the user before assistants use anything but the
+// node's status, and lets them ask for changes, each approved on its own.
+func defaultMCPAllow() MCPAllow {
+	return MCPAllow{
+		NodeStatus: ModeAllow, NodeLogs: ModeAsk, Wallet: ModeAsk, Contacts: ModeAsk, StartNode: ModeAsk,
+		StopNode: ModeAsk, Settings: ModeAsk, NewAccounts: ModeAsk, WatchOnly: ModeAsk, EditContacts: ModeAsk, SendTransactions: ModeAsk,
 	}
 }
 
