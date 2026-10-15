@@ -329,6 +329,8 @@ const zhSG: Dict = {
   "wallet.kind.in": "收到",
   "wallet.kind.out": "发送",
   "wallet.kind.self": "发给自己",
+  "wallet.kind.cancelling": "取消中",
+  "wallet.kind.cancelled": "已取消",
   "wallet.pending": "待处理",
   "wallet.inPool": "等待打包进区块",
   "wallet.unconfirmed": "未确认",
@@ -914,6 +916,17 @@ const zhSG: Dict = {
   "notify.synced.body": "您的节点已在区块 {block} 追上网络。",
   "notify.lowDisk": "节点已停止",
   "notify.lowDisk.body": "磁盘即将写满，节点已停止以保护数据库。请释放空间后重新启动。",
+  "wallet.replace.speedUp": "加速",
+  "wallet.replace.cancel": "取消",
+  "wallet.replace.speedUpTitle": "加速此交易",
+  "wallet.replace.cancelTitle": "取消此交易",
+  "wallet.replace.speedUpDesc": "以更高的手续费重新发送同一笔交易，让矿工更早打包。原交易将被替换。",
+  "wallet.replace.cancelDesc": "改为以更高的手续费向您自己的账户发送 0 LAX，让矿工打包这一笔。只会花费手续费。",
+  "wallet.replace.speedUpCta": "加速",
+  "wallet.replace.cancelCta": "取消交易",
+  "wallet.replace.race": "如果原交易先被打包进区块，此操作不会生效，也不会产生费用。",
+  "wallet.err.notWaiting": "此交易已不在等待中：它已在区块中，或已被替换。",
+  "wallet.err.notYourTx": "此交易不是从此账户发送的。",
 };
 
 export default zhSG;

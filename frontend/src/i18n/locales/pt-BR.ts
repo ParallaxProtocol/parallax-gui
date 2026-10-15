@@ -336,6 +336,8 @@ const ptBR: Dict = {
   "wallet.kind.in": "Recebido",
   "wallet.kind.out": "Enviado",
   "wallet.kind.self": "Enviado para si mesma",
+  "wallet.kind.cancelling": "Cancelando",
+  "wallet.kind.cancelled": "Cancelada",
   "wallet.pending": "Pendente",
   "wallet.inPool": "Aguardando um bloco",
   "wallet.unconfirmed": "Não confirmada",
@@ -962,6 +964,19 @@ const ptBR: Dict = {
   "notify.lowDisk": "Nó parado",
   "notify.lowDisk.body":
     "O disco está quase cheio, então o nó parou para proteger o banco de dados. Libere espaço e inicie-o novamente.",
+  "wallet.replace.speedUp": "Acelerar",
+  "wallet.replace.cancel": "Cancelar",
+  "wallet.replace.speedUpTitle": "Acelerar esta transação",
+  "wallet.replace.cancelTitle": "Cancelar esta transação",
+  "wallet.replace.speedUpDesc":
+    "Envia a mesma transação de novo com uma taxa maior, para que os mineradores a incluam antes. A original é substituída.",
+  "wallet.replace.cancelDesc":
+    "Envia 0 LAX para a sua própria conta no lugar dela, com uma taxa maior, para que os mineradores incluam esta. Só a taxa é gasta.",
+  "wallet.replace.speedUpCta": "Acelerar",
+  "wallet.replace.cancelCta": "Cancelar transação",
+  "wallet.replace.race": "Se a original entrar em um bloco antes, isto não tem efeito e não custa nada.",
+  "wallet.err.notWaiting": "Esta transação não está mais aguardando: já está em um bloco ou foi substituída.",
+  "wallet.err.notYourTx": "Esta transação não foi enviada desta conta.",
 };
 
 export default ptBR;

@@ -337,6 +337,8 @@ const fr: Dict = {
   "wallet.kind.in": "Reçu",
   "wallet.kind.out": "Envoyé",
   "wallet.kind.self": "Envoyé à soi-même",
+  "wallet.kind.cancelling": "Annulation en cours",
+  "wallet.kind.cancelled": "Annulée",
   "wallet.pending": "En attente",
   "wallet.inPool": "En attente d'un bloc",
   "wallet.unconfirmed": "Non confirmée",
@@ -971,6 +973,19 @@ const fr: Dict = {
   "notify.lowDisk": "Nœud arrêté",
   "notify.lowDisk.body":
     "Le disque est presque plein, le nœud s'est donc arrêté pour protéger sa base de données. Libérez de l'espace, puis redémarrez-le.",
+  "wallet.replace.speedUp": "Accélérer",
+  "wallet.replace.cancel": "Annuler",
+  "wallet.replace.speedUpTitle": "Accélérer cette transaction",
+  "wallet.replace.cancelTitle": "Annuler cette transaction",
+  "wallet.replace.speedUpDesc":
+    "Renvoie la même transaction avec des frais plus élevés, pour que les mineurs la prennent plus tôt. L'originale est remplacée.",
+  "wallet.replace.cancelDesc":
+    "Envoie à la place 0 LAX à votre propre compte, avec des frais plus élevés, pour que les mineurs la prennent à sa place. Seuls les frais sont dépensés.",
+  "wallet.replace.speedUpCta": "Accélérer",
+  "wallet.replace.cancelCta": "Annuler la transaction",
+  "wallet.replace.race": "Si l'originale entre d'abord dans un bloc, ceci n'a aucun effet et ne coûte rien.",
+  "wallet.err.notWaiting": "Cette transaction n'est plus en attente : elle est dans un bloc, ou a déjà été remplacée.",
+  "wallet.err.notYourTx": "Cette transaction n'est pas envoyée depuis ce compte.",
 };
 
 export default fr;

@@ -561,6 +561,31 @@ func (a *App) WalletSend(req backend.SendRequest) (backend.SentTx, error) {
 	return tx, err
 }
 
+// WalletQuoteReplace works out what speeding up or cancelling a waiting
+// transaction from one of the wallet's accounts costs; kind is "speedUp"
+// or "cancel".
+func (a *App) WalletQuoteReplace(from, hash, kind string) (backend.ReplaceQuote, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.ReplaceQuote{}, err
+	}
+	return w.QuoteReplace(from, hash, kind)
+}
+
+// WalletReplace signs a confirmed speed-up or cancel with the account's
+// password and hands it to the node.
+func (a *App) WalletReplace(req backend.ReplaceRequest) (backend.SentTx, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.SentTx{}, err
+	}
+	return w.Replace(req)
+}
+
+// DevSetHold holds the development chain's blocks back, or lets it seal
+// again (make dev only).
+func (a *App) DevSetHold(hold bool) error { return a.node.SetDevHold(hold) }
+
 // ---------------------------------------------------------------------------
 // Watch-only accounts and offline signing (backend/offline.go)
 // ---------------------------------------------------------------------------

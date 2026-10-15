@@ -329,6 +329,8 @@ const zhTW: Dict = {
   "wallet.kind.in": "收到",
   "wallet.kind.out": "送出",
   "wallet.kind.self": "傳給自己",
+  "wallet.kind.cancelling": "取消中",
+  "wallet.kind.cancelled": "已取消",
   "wallet.pending": "待處理",
   "wallet.inPool": "等待打包進區塊",
   "wallet.unconfirmed": "未確認",
@@ -915,6 +917,17 @@ const zhTW: Dict = {
   "notify.synced.body": "您的節點已在區塊 {block} 追上網路。",
   "notify.lowDisk": "節點已停止",
   "notify.lowDisk.body": "磁碟即將寫滿，節點已停止以保護資料庫。請釋放空間後再重新啟動。",
+  "wallet.replace.speedUp": "加速",
+  "wallet.replace.cancel": "取消",
+  "wallet.replace.speedUpTitle": "加速此交易",
+  "wallet.replace.cancelTitle": "取消此交易",
+  "wallet.replace.speedUpDesc": "以更高的手續費重新發送同一筆交易，讓礦工更早打包。原交易將被取代。",
+  "wallet.replace.cancelDesc": "改為以更高的手續費向您自己的帳戶發送 0 LAX，讓礦工打包這一筆。只會花費手續費。",
+  "wallet.replace.speedUpCta": "加速",
+  "wallet.replace.cancelCta": "取消交易",
+  "wallet.replace.race": "如果原交易先被打包進區塊，此操作不會生效，也不會產生費用。",
+  "wallet.err.notWaiting": "此交易已不在等待中：它已在區塊中，或已被取代。",
+  "wallet.err.notYourTx": "此交易不是從此帳戶發送的。",
 };
 
 export default zhTW;

@@ -336,6 +336,8 @@ const ru: Dict = {
   "wallet.kind.in": "Получено",
   "wallet.kind.out": "Отправлено",
   "wallet.kind.self": "Отправлено самому себе",
+  "wallet.kind.cancelling": "Отменяется",
+  "wallet.kind.cancelled": "Отменена",
   "wallet.pending": "Ожидает",
   "wallet.inPool": "Ожидает блока",
   "wallet.unconfirmed": "Не подтверждена",
@@ -961,6 +963,19 @@ const ru: Dict = {
   "notify.lowDisk": "Узел остановлен",
   "notify.lowDisk.body":
     "Диск почти заполнен, поэтому узел остановился, чтобы защитить базу данных. Освободите место и запустите его снова.",
+  "wallet.replace.speedUp": "Ускорить",
+  "wallet.replace.cancel": "Отменить",
+  "wallet.replace.speedUpTitle": "Ускорить транзакцию",
+  "wallet.replace.cancelTitle": "Отменить транзакцию",
+  "wallet.replace.speedUpDesc":
+    "Та же транзакция отправляется снова с большей комиссией, чтобы майнеры включили её раньше. Исходная заменяется.",
+  "wallet.replace.cancelDesc":
+    "Вместо неё на ваш собственный счёт отправляется 0 LAX с большей комиссией, чтобы майнеры включили именно её. Тратится только комиссия.",
+  "wallet.replace.speedUpCta": "Ускорить",
+  "wallet.replace.cancelCta": "Отменить транзакцию",
+  "wallet.replace.race": "Если исходная попадёт в блок первой, это ни на что не повлияет и ничего не будет стоить.",
+  "wallet.err.notWaiting": "Эта транзакция больше не ожидает: она уже в блоке или была заменена.",
+  "wallet.err.notYourTx": "Эта транзакция отправлена не с этого счёта.",
 };
 
 export default ru;

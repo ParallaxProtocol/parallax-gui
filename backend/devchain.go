@@ -162,3 +162,25 @@ func prepareDevChain(stack *node.Node, ks *keystore.KeyStore, g GUIConfig, prlCf
 	prlCfg.Genesis = genesis
 	return nil
 }
+
+// SetDevHold stops the development chain sealing blocks, or lets it seal
+// again, so sent transactions wait in the pool as they would on mainnet
+// between blocks: to see them pending, and to speed them up or cancel
+// them. Letting go seals what waits into the next block. Not kept across
+// restarts: the chain starts sealing again.
+func (n *NodeController) SetDevHold(hold bool) error {
+	n.mu.RLock()
+	prl, dev := n.parallax, n.dev
+	n.mu.RUnlock()
+	if prl == nil {
+		return ErrNodeStopped
+	}
+	if !dev {
+		return fmt.Errorf("only the development chain can hold its blocks")
+	}
+	if hold {
+		prl.StopMining()
+		return nil
+	}
+	return prl.StartMining(1)
+}

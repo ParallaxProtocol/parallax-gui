@@ -255,6 +255,7 @@ type NodeStatus struct {
 	ClientVersion string `json:"clientVersion"`
 	RPCEndpoint   string `json:"rpcEndpoint"` // empty if HTTP-RPC disabled
 	DevChain      bool   `json:"devChain"`    // running the private development chain
+	DevHeld       bool   `json:"devHeld"`     // the development chain holds its blocks back (SetDevHold)
 }
 
 // NodeEvent is broadcast as the "node" event.

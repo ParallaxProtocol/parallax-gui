@@ -198,7 +198,9 @@ export function useSummary(address: string | undefined) {
     };
   }, [running, address, head, tick]);
 
-  return { view: running ? view : null, err, running };
+  // Read again now, after something changed what the pool holds
+  const refresh = () => setTick((n) => n + 1);
+  return { view: running ? view : null, err, running, refresh };
 }
 
 /**

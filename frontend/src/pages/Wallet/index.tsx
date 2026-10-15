@@ -5,6 +5,7 @@ import {
   ArrowDownLeft,
   ArrowRight,
   ArrowUpRight,
+  Ban,
   ChevronRight,
   Clock,
   Eye,
@@ -15,8 +16,9 @@ import {
   Plus,
   ScrollText,
   Server,
+  Zap,
 } from "lucide-react";
-import { api, TxDetails, TxView } from "../../lib/api";
+import { api, ReplaceKind, TxDetails, TxView } from "../../lib/api";
 import { formatGwei, formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
 import { useNow } from "../../lib/useNow";
 import { STAGGER, useStagger } from "../../lib/motion";
@@ -39,9 +41,12 @@ import { RevealPhraseModal } from "./Phrase";
 import { Detail, DetailCard, Unfold } from "../Overview/parts";
 import { useContacts } from "../../lib/contacts";
 import { PendingRequests } from "../Offline/Requests";
+import { ReplaceModal } from "./Replace";
 
 type Activity = {
   kind: "in" | "out" | "self";
+  /** Nothing sent to the account itself: how a waiting transaction is cancelled. */
+  cancel: boolean;
   pending: boolean;
   block: number;
   time: number;
@@ -69,8 +74,9 @@ function Overview() {
   const ago = useAgo();
   const now = useNow(5000);
   const { info, account } = useWallet();
-  const { view, err, running } = useSummary(account?.address);
+  const { view, err, running, refresh } = useSummary(account?.address);
   const [backup, setBackup] = useState(false);
+  const [replace, setReplace] = useState<{ from: string; hash: string; kind: ReplaceKind } | null>(null);
   const [reveal, setReveal] = useState(false);
   // The activity row opened to its details, by hash, and the details read
   // so far (or why they couldn't be). A row opens once its details are in,
@@ -95,6 +101,7 @@ function Overview() {
       const kind = fromMe && toMe ? "self" : fromMe ? "out" : "in";
       return {
         kind,
+        cancel: kind === "self" && tx.kind === "transfer" && tx.valueWei === "0",
         pending,
         block: tx.block,
         time: tx.timestamp,
@@ -246,10 +253,12 @@ function Overview() {
                     aria-expanded={opened === a.hash}
                     className={`flex h-16 w-full items-center gap-3.5 px-4 text-left transition-colors hover:bg-hover ${opened === a.hash ? "bg-hover" : ""}`}
                   >
-                    <ActivityIcon kind={a.kind} pending={a.pending} />
+                    <ActivityIcon kind={a.kind} pending={a.pending} cancel={a.cancel} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 font-medium">
-                        {t(`wallet.kind.${a.kind}`)}
+                        {a.cancel
+                          ? t(a.pending ? "wallet.kind.cancelling" : "wallet.kind.cancelled")
+                          : t(`wallet.kind.${a.kind}`)}
                         {a.pending && <Pill tone="info">{t("wallet.pending")}</Pill>}
                       </div>
                       <div className="truncate text-sm text-muted-foreground tabular-nums">
@@ -279,7 +288,16 @@ function Overview() {
                   <AnimatePresence initial={false}>
                     {opened === a.hash && (
                       <Unfold>
-                        <ActivityDetails d={details[a.hash]} head={view?.headBlock ?? 0} />
+                        <ActivityDetails
+                          d={details[a.hash]}
+                          head={view?.headBlock ?? 0}
+                          // A hot account's own waiting send can be replaced at its nonce
+                          onReplace={
+                            a.pending && a.kind !== "in" && !account.watchOnly
+                              ? (kind) => setReplace({ from: account.address, hash: a.hash, kind })
+                              : undefined
+                          }
+                        />
                       </Unfold>
                     )}
                   </AnimatePresence>
@@ -290,14 +308,36 @@ function Overview() {
         </Panel>
       </Section>
 
+      <ReplaceModal
+        target={replace}
+        onClose={() => setReplace(null)}
+        onReplaced={(tx) => {
+          setReplace(null);
+          refresh();
+          // Follow the transaction to its replacement
+          load(tx.hash).then(() => setOpened(tx.hash));
+        }}
+      />
       <RevealPhraseModal open={reveal} onClose={() => setReveal(false)} seedId={account.seedId || null} />
       <BackupModal open={backup} onClose={() => setBackup(false)} account={account} label={label} />
     </div>
   );
 }
 
-/** ActivityDetails is an opened activity row: everything the node knows of the transaction. */
-function ActivityDetails({ d, head }: { d: TxDetails | string | undefined; head: number }) {
+/**
+ * ActivityDetails is an opened activity row: everything the node knows of
+ * the transaction, and for one of the account's own still waiting, the
+ * ways to speed it up or cancel it.
+ */
+function ActivityDetails({
+  d,
+  head,
+  onReplace,
+}: {
+  d: TxDetails | string | undefined;
+  head: number;
+  onReplace?: (kind: ReplaceKind) => void;
+}) {
   const t = useT();
   const { lang } = useLang();
 
@@ -325,6 +365,18 @@ function ActivityDetails({ d, head }: { d: TxDetails | string | undefined; head:
             {t(confirmations === 1 ? "wallet.tx.confirmation" : "wallet.tx.confirmations", {
               n: formatInt(confirmations),
             })}
+          </span>
+        )}
+        {pending && onReplace && (
+          <span className="ml-auto flex gap-2">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => onReplace("speedUp")}>
+              <Zap className="size-3.5" />
+              {t("wallet.replace.speedUp")}
+            </button>
+            <button type="button" className="btn btn-danger btn-sm" onClick={() => onReplace("cancel")}>
+              <Ban className="size-3.5" />
+              {t("wallet.replace.cancel")}
+            </button>
           </span>
         )}
       </div>
@@ -387,10 +439,10 @@ function Counterparty({ address }: { address: string }) {
   return <span className="font-mono">{shortHex(address, 8, 6)}</span>;
 }
 
-function ActivityIcon({ kind, pending }: { kind: Activity["kind"]; pending: boolean }) {
+function ActivityIcon({ kind, pending, cancel }: { kind: Activity["kind"]; pending: boolean; cancel: boolean }) {
   return (
     <IconBadge
-      icon={pending ? Clock : kind === "in" ? ArrowDownLeft : ArrowUpRight}
+      icon={pending ? Clock : cancel ? Ban : kind === "in" ? ArrowDownLeft : ArrowUpRight}
       tone={pending ? "info" : kind === "in" ? "good" : "neutral"}
     />
   );

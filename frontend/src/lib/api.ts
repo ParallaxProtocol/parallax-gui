@@ -177,6 +177,8 @@ export type NodeStatus = {
   rpcEndpoint: string;
   /** Running the private development chain (make dev only). */
   devChain: boolean;
+  /** The development chain holds its blocks back: what is sent waits in the pool. */
+  devHeld: boolean;
 };
 
 /**
@@ -458,6 +460,37 @@ export type SendRequest = {
 
 export type SentTx = { hash: string; nonce: number };
 
+/** Speeding up resends a waiting transaction at a higher fee; cancelling sends 0 LAX to the account itself at its nonce. */
+export type ReplaceKind = "speedUp" | "cancel";
+
+/** What a speed-up or cancel costs (backend/wallet_replace.go). Amounts are decimal wei. */
+export type ReplaceQuote = {
+  kind: ReplaceKind;
+  /** The waiting transaction it replaces. */
+  hash: string;
+  from: string;
+  /** The replacement's recipient: the account itself for a cancel. */
+  to: string;
+  nonce: number;
+  valueWei: string;
+  gasLimit: number;
+  oldPriceWei: string;
+  gasPriceWei: string;
+  oldFeeWei: string;
+  feeWei: string;
+  totalWei: string;
+  balanceWei: string;
+  sufficient: boolean;
+};
+
+export type ReplaceRequest = {
+  from: string;
+  hash: string;
+  kind: ReplaceKind;
+  gasPriceWei: string;
+  password: string;
+};
+
 /** A transfer as both sides of offline signing show it (backend/offline.go). Amounts are decimal wei. */
 export type OfflineTx = {
   id: string;
@@ -583,6 +616,8 @@ const WALLET_ERRORS: Record<string, string> = {
   "wallet: the wallet has no password yet": "wallet.err.noPassword",
   "wallet: set the wallet password first": "wallet.err.needsSetup",
   "wallet: this account is watch-only: its key is on an offline signer": "wallet.err.watchOnly",
+  "wallet: the transaction is no longer waiting: it is in a block or was replaced": "wallet.err.notWaiting",
+  "wallet: the transaction is not sent from this account": "wallet.err.notYourTx",
   "offline: this app is an offline signer: it never goes online": "offline.err.signer",
   "offline: not a signing request": "offline.err.format",
   "offline: the signing request is from a newer version of the app": "offline.err.version",
@@ -875,6 +910,11 @@ export const api = {
   walletQuote: (from: string, to: string, valueWei: string, gasPriceWei: string) =>
     call<SendQuote>("WalletQuote", from, to, valueWei, gasPriceWei),
   walletSend: (req: SendRequest) => call<SentTx>("WalletSend", req),
+  walletQuoteReplace: (from: string, hash: string, kind: ReplaceKind) =>
+    call<ReplaceQuote>("WalletQuoteReplace", from, hash, kind),
+  walletReplace: (req: ReplaceRequest) => call<SentTx>("WalletReplace", req),
+  /** Holds the development chain's blocks back, or lets it seal again (make dev only). */
+  devSetHold: (hold: boolean) => call<void>("DevSetHold", hold),
 
   getLogTail: (n: number) => call<LogLine[]>("GetLogTail", n),
   clearLogs: () => call<void>("ClearLogs"),

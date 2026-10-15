@@ -334,6 +334,7 @@ func (n *NodeController) Status() NodeStatus {
 	st.DevChain = dev
 	if dev {
 		st.NetworkID = devNetworkID
+		st.DevHeld = !parallax.IsMining()
 	}
 
 	st.DiskUsedBytes = n.diskUsage(st.DataDir)

@@ -339,6 +339,8 @@ const de: Dict = {
   "wallet.kind.in": "Empfangen",
   "wallet.kind.out": "Gesendet",
   "wallet.kind.self": "An sich selbst gesendet",
+  "wallet.kind.cancelling": "Wird abgebrochen",
+  "wallet.kind.cancelled": "Abgebrochen",
   "wallet.pending": "Ausstehend",
   "wallet.inPool": "Wartet auf einen Block",
   "wallet.unconfirmed": "Unbestätigt",
@@ -973,6 +975,19 @@ const de: Dict = {
   "notify.lowDisk": "Node gestoppt",
   "notify.lowDisk.body":
     "Die Festplatte ist fast voll, daher hat der Node gestoppt, um seine Datenbank zu schützen. Geben Sie Speicher frei und starten Sie ihn erneut.",
+  "wallet.replace.speedUp": "Beschleunigen",
+  "wallet.replace.cancel": "Abbrechen",
+  "wallet.replace.speedUpTitle": "Diese Transaktion beschleunigen",
+  "wallet.replace.cancelTitle": "Diese Transaktion abbrechen",
+  "wallet.replace.speedUpDesc":
+    "Sendet dieselbe Transaktion erneut mit höherer Gebühr, damit Miner sie früher aufnehmen. Das Original wird ersetzt.",
+  "wallet.replace.cancelDesc":
+    "Sendet stattdessen 0 LAX an Ihr eigenes Konto, mit höherer Gebühr, damit Miner diese aufnehmen. Nur die Gebühr wird ausgegeben.",
+  "wallet.replace.speedUpCta": "Beschleunigen",
+  "wallet.replace.cancelCta": "Transaktion abbrechen",
+  "wallet.replace.race": "Gelangt das Original zuerst in einen Block, bleibt dies ohne Wirkung und kostet nichts.",
+  "wallet.err.notWaiting": "Diese Transaktion wartet nicht mehr: Sie ist in einem Block oder wurde bereits ersetzt.",
+  "wallet.err.notYourTx": "Diese Transaktion wurde nicht von diesem Konto gesendet.",
 };
 
 export default de;

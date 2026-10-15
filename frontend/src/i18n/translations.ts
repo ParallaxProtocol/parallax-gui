@@ -355,6 +355,8 @@ export const en: Dict = {
   "wallet.kind.in": "Received",
   "wallet.kind.out": "Sent",
   "wallet.kind.self": "Sent to itself",
+  "wallet.kind.cancelling": "Canceling",
+  "wallet.kind.cancelled": "Canceled",
   "wallet.row.to": "to",
   "wallet.row.from": "from",
   "wallet.pending": "Pending",
@@ -539,6 +541,8 @@ export const en: Dict = {
   "offline.err.nonceUsed": "That transaction's nonce has already been used: it was sent, or replaced.",
   "offline.err.notWatch": "Signing requests are for watch-only accounts.",
   "wallet.err.watchOnly": "This account is watch-only: its key is on an offline signer.",
+  "wallet.err.notWaiting": "This transaction is no longer waiting: it's in a block, or was already replaced.",
+  "wallet.err.notYourTx": "This transaction isn't sent from this account.",
   "onboarding.mode.title": "How will you use this computer?",
   "onboarding.mode.desc": "You can change this later in Settings.",
   "onboarding.mode.online": "Wallet with my own node",
@@ -613,6 +617,17 @@ export const en: Dict = {
   "contacts.err.file": "That isn't an address book file. Use a JSON or CSV export with name and address columns.",
   "contacts.err.unavailable": "The address book couldn't be opened.",
   "wallet.tx.status.pending": "Pending",
+  "wallet.replace.speedUp": "Speed up",
+  "wallet.replace.cancel": "Cancel",
+  "wallet.replace.speedUpTitle": "Speed up this transaction",
+  "wallet.replace.cancelTitle": "Cancel this transaction",
+  "wallet.replace.speedUpDesc":
+    "This sends the same transaction again with a higher fee, so miners take it sooner. The original is replaced.",
+  "wallet.replace.cancelDesc":
+    "This sends 0 LAX to your own account in its place, with a higher fee, so miners take it instead. Only the fee is spent.",
+  "wallet.replace.speedUpCta": "Speed up",
+  "wallet.replace.cancelCta": "Cancel transaction",
+  "wallet.replace.race": "If the original makes it into a block first, this has no effect and costs nothing.",
   "wallet.tx.status.success": "Confirmed",
   "wallet.tx.status.failed": "Failed",
   "wallet.tx.confirmation": "{n} confirmation",
@@ -1427,6 +1442,9 @@ export const en: Dict = {
   "settings.devChain": "Run a local dev chain",
   "settings.devChain.desc":
     "Run a private chain instead of mainnet, like parallaxd --dev: no peers, and a block sealed for every transaction. Kept apart from your mainnet data.",
+  "settings.devHold": "Hold blocks",
+  "settings.devHold.desc":
+    "Stop sealing a block for each transaction, so sends wait in the pool: to try speeding them up or canceling them. Turning it off seals what waits.",
   "settings.devFund": "Funded address",
   "settings.devFund.desc":
     "Starts with 1,000,000 LAX. Each address gets its own chain, so changing it starts a fresh one.",

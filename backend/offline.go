@@ -747,8 +747,7 @@ func (w *Wallet) ReplaceRequest(id string) (SigningRequest, error) {
 	from := util.HexToAddress(old.Tx.From)
 	oldPrice, _ := parseDecimal(old.Tx.GasPriceWei)
 	// At least the pool's bump over the original, and the node's suggestion
-	price := new(big.Int).Mul(oldPrice, big.NewInt(100+priceBumpPercent))
-	price.Div(price, big.NewInt(100)).Add(price, big.NewInt(1))
+	price := bumpedPrice(oldPrice, priceBumpPercent)
 	if prl := w.node.Parallax(); prl != nil {
 		if ec, _, err := w.readyNode(); err == nil {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

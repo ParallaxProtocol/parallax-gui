@@ -42,6 +42,7 @@ import { useOfflineMode } from "../../lib/offline";
 import { useWallet } from "../../lib/wallet";
 import type { AvatarStyle } from "../../lib/prefs";
 import { PAGE_NARROW } from "../../lib/layout";
+import { useNode, useRefresh } from "../../lib/live";
 
 // Fields the app applies itself, at once or on its next action: changing
 // them needs no node restart. Every other field configures the node.
@@ -422,6 +423,7 @@ export default function Settings() {
                             />
                           </Setting>
                         )}
+                        <DevHold />
                       </Rows>
                     </Group>
                   )}
@@ -1757,4 +1759,35 @@ const SAMPLE_ADDRESS = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";
 function AvatarPreview({ style }: { style: AvatarStyle }) {
   const { account } = useWallet();
   return <AddressAvatar address={account?.address ?? SAMPLE_ADDRESS} size={24} style={style} className="mr-2" />;
+}
+
+/**
+ * DevHold stops the running development chain sealing a block for each
+ * transaction, so what is sent waits in the pool as it would between
+ * mainnet blocks: to see it pending, speed it up or cancel it. Letting go
+ * seals what waits. Not kept across restarts.
+ */
+function DevHold() {
+  const t = useT();
+  const node = useNode();
+  const refresh = useRefresh();
+  const [error, setError] = useState<string | null>(null);
+  if (!node?.running || !node.devChain) return null;
+  return (
+    <Setting title={t("settings.devHold")} desc={error ?? t("settings.devHold.desc")}>
+      <Toggle
+        checked={node.devHeld}
+        onChange={(v) =>
+          api
+            .devSetHold(v)
+            .then(() => {
+              setError(null);
+              refresh();
+            })
+            .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
+        }
+        label={t("settings.devHold")}
+      />
+    </Setting>
+  );
 }
