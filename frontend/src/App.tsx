@@ -36,7 +36,7 @@ const ImportAccountPage = lazy(() =>
 const Hello = lazy(() => import("./pages/Hello"));
 import Sidebar from "./components/shell/Sidebar";
 import { SidebarProvider } from "./lib/SidebarProvider";
-import Toolbar from "./components/shell/Toolbar";
+import Toolbar, { TOOLBAR_HEIGHT } from "./components/shell/Toolbar";
 import NodeBar, { NODE_BAR_ROOM, NodeSheetProvider, OfflineBar, useNodeSheet } from "./components/shell/NodeBar";
 import TopBar from "./components/shell/TopBar";
 import SettingsSheet, {
@@ -177,7 +177,6 @@ export default function App() {
                             <Sidebar />
                             <div className="flex min-w-0 flex-1 flex-col bg-background">
                               <TopBar />
-                              <Toolbar />
                               <RoutedContent animate={!animationsDisabled} />
                             </div>
                           </div>
@@ -318,16 +317,19 @@ function RoutedContent({ animate }: { animate: boolean }) {
     // scrolls on beneath the bar while its end can still scroll clear of it
     <main
       className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable]"
-      style={{ paddingBottom: NODE_BAR_ROOM, scrollPaddingBottom: NODE_BAR_ROOM }}
+      style={{ paddingBottom: NODE_BAR_ROOM, scrollPaddingTop: TOOLBAR_HEIGHT, scrollPaddingBottom: NODE_BAR_ROOM }}
     >
+      {/* The page's title bar, held at the top as the page scrolls on beneath it */}
+      <Toolbar />
       {/* A quick crossfade between pages. The wrapper stays when animations
           are off, only losing its motion props (Motion would commit `initial`
           for a frame even at duration 0): swapping it out would remount the
           page, losing its state, such as the Settings tab being toggled from.
           It grows with its page, so the room kept for the node's bar follows the
-          page's end; a grid, so a page can still fill (or center in) the window */}
+          page's end; a grid, so a page can still fill (or center in) the room
+          under the title bar */}
       <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={location.pathname} className="grid min-h-full" {...(animate ? PAGE : {})}>
+        <motion.div key={location.pathname} className="grid min-h-[calc(100%-3.5rem)]" {...(animate ? PAGE : {})}>
           {routes}
         </motion.div>
       </AnimatePresence>

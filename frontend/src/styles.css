@@ -414,7 +414,10 @@ button.glass:hover,
   }
 
   /* A push button */
-  .btn-secondary {
+  /* Glass: a control's frosted surface, and the toolbar's parts once the
+     page scrolls beneath them */
+  .btn-secondary,
+  .glass {
     border: 1px solid var(--glass-edge);
     background-color: var(--glass);
     color: var(--foreground);

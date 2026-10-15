@@ -7,6 +7,9 @@ import { useWallet } from "../../lib/wallet";
 import { useOfflineMode } from "../../lib/offline";
 import { useT } from "../../i18n";
 
+/** The title bar's height (h-14), which the page keeps clear when it scrolls to a field. */
+export const TOOLBAR_HEIGHT = 56;
+
 const TITLES: Record<string, string> = {
   "/": "nav.overview",
   "/send": "nav.send",
@@ -26,8 +29,10 @@ const TITLES: Record<string, string> = {
  * Toolbar is the content's title bar: the page's name, and on the right
  * whatever the page puts there (lib/toolbar.tsx): its progress, its
  * actions. It sits under the window's title bar (TopBar), which alone
- * drags the window: this is the page's, not the window's. Its separator
- * shows only once content scrolls beneath it, as on macOS.
+ * drags the window: this is the page's, not the window's. It stays at the
+ * top of the page's scroller, and once the page scrolls beneath it, the
+ * page fades and blurs away under it (as Apple's scroll edge effect does)
+ * rather than meeting a hard surface: its controls float there on glass.
  */
 export default function Toolbar() {
   const t = useT();
@@ -45,12 +50,16 @@ export default function Toolbar() {
         : (TITLES[pathname] ?? TITLES["/"]);
 
   return (
-    <header
-      className={`relative z-10 flex h-14 shrink-0 items-center gap-3 border-b bg-background pl-5 transition-[border-color,box-shadow] duration-200 ${
-        scrolled ? "border-border shadow-[0_6px_16px_-12px_rgb(0_0_0/40%)]" : "border-transparent"
-      }`}
-    >
-      <div className="relative h-9 flex-1 overflow-hidden">
+    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 pl-5">
+      {/* The scroll edge: frosted under the title, thinning out to nothing a
+          little past the bar's foot, its blur fading with it */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-x-0 top-0 -bottom-4 bg-background/80 backdrop-blur-md transition-opacity duration-300 [mask-image:linear-gradient(to_bottom,black_50%,transparent)] ${
+          scrolled ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      <div className="relative h-9 min-w-0 flex-1">
         <AnimatePresence initial={false}>
           <motion.h1
             key={`${pathname}:${title}`}
@@ -63,7 +72,7 @@ export default function Toolbar() {
           </motion.h1>
         </AnimatePresence>
       </div>
-      <div ref={slot} className="flex min-w-0 shrink-0 items-center" />
+      <div ref={slot} className="relative flex min-w-0 shrink-0 items-center" />
       <span className="w-5 shrink-0" />
     </header>
   );
