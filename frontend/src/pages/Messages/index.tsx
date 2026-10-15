@@ -175,7 +175,7 @@ export function SignMessagePage() {
                 {!watch && (
                   <div className="p-4">
                     <Field label={t("wallet.walletPassword")} hint={t("message.passwordHint")}>
-                      {(id) => <PasswordInput id={id} value={password} onChange={setPassword} />}
+                      {(id) => <PasswordInput id={id} value={password} onChange={setPassword} tall />}
                     </Field>
                   </div>
                 )}
@@ -417,7 +417,7 @@ export function VerifyMessagePage() {
                         {isAddress(addr) && <AddressAvatar address={addr} size={28} />}
                         <input
                           id={id}
-                          className="input flex-1 font-mono"
+                          className="input h-11 flex-1 font-mono"
                           value={address}
                           placeholder="0x…"
                           onChange={(e) => setAddress(e.target.value)}
@@ -433,7 +433,7 @@ export function VerifyMessagePage() {
                     {(id) => (
                       <input
                         id={id}
-                        className="input font-mono"
+                        className="input h-11 font-mono"
                         value={signature}
                         placeholder="0x…"
                         onChange={(e) => setSignature(e.target.value)}

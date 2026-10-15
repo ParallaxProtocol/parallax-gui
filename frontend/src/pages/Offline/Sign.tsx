@@ -173,7 +173,7 @@ function SignReview({
       >
         <Panel className="p-4">
           <Field label={t("wallet.walletPassword")} hint={t("offline.sign.passwordHint")}>
-            {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus />}
+            {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus tall />}
           </Field>
         </Panel>
         {error && <Notice tone="critical">{error}</Notice>}
@@ -267,7 +267,7 @@ function MessageReview({
       >
         <Panel className="p-4">
           <Field label={t("wallet.walletPassword")} hint={t("message.passwordHint")}>
-            {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus />}
+            {(id) => <PasswordInput id={id} value={password} onChange={setPassword} autoFocus tall />}
           </Field>
         </Panel>
         {error && <Notice tone="critical">{error}</Notice>}

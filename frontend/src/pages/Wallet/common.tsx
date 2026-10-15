@@ -59,6 +59,7 @@ export function PasswordInput({
   placeholder,
   disabled,
   inputRef,
+  tall,
 }: {
   id?: string;
   value: string;
@@ -69,6 +70,8 @@ export function PasswordInput({
   placeholder?: string;
   disabled?: boolean;
   inputRef?: React.Ref<HTMLInputElement>;
+  /** As tall as an account picker beside it (AccountSelect), rather than a button. */
+  tall?: boolean;
 }) {
   const t = useT();
   const [shown, setShown] = useState(false);
@@ -79,7 +82,7 @@ export function PasswordInput({
         ref={inputRef}
         disabled={disabled}
         type={shown ? "text" : "password"}
-        className="input pr-8"
+        className={`input ${tall ? "h-11 pr-10" : "pr-8"}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoFocus={autoFocus}
@@ -95,7 +98,7 @@ export function PasswordInput({
           type="button"
           tabIndex={-1}
           disabled={disabled}
-          className="btn btn-ghost btn-sm btn-icon absolute top-0.5 right-0.5"
+          className={`btn btn-ghost btn-sm btn-icon absolute inset-y-0 my-auto ${tall ? "right-2" : "right-0.5"}`}
           onClick={() => setShown((s) => !s)}
           aria-label={shown ? t("wallet.password.hide") : t("wallet.password.show")}
         >
