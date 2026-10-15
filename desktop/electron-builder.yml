@@ -23,6 +23,21 @@ extraResources:
 asar: true
 electronLanguages: [en-US, de, fr, pt-BR, ru, zh-CN, zh-TW]
 
+# Fuses flipped in the packaged Electron binary: nothing outside the app
+# can get code into the main process, which every password and recovery
+# phrase passes through on its way to the backend. ELECTRON_RUN_AS_NODE,
+# NODE_OPTIONS and --inspect (or SIGUSR1) are ignored, and only the
+# app.asar the build sealed loads, checked against its hash on macOS and
+# Windows (electron-builder records it in the bundle).
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  enableCookieEncryption: true
+  grantFileProtocolExtraPrivileges: false
+
 linux:
   target: [AppImage]
   executableName: parallax-wallet-app

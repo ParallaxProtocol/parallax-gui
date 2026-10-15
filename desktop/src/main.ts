@@ -462,6 +462,11 @@ function wireIpc() {
   ipcMain.on("power:keepAwake", (event, on: unknown) => {
     if (trusted(event) && typeof on === "boolean") keepAwake(on);
   });
+  // Kept out of screenshots, recordings and screen shares while a secret shows (macOS and Windows)
+  ipcMain.on("window:protect", (event, on: unknown) => {
+    if (trusted(event) && typeof on === "boolean")
+      BrowserWindow.fromWebContents(event.sender)?.setContentProtection(on);
+  });
   ipcMain.on("theme:set", (event, pref: unknown) => {
     if (trusted(event) && (pref === "system" || pref === "light" || pref === "dark")) {
       nativeTheme.themeSource = pref;

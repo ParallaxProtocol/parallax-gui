@@ -16,6 +16,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ParallaxProtocol/parallax-gui/backend"
+
 	// Side-effect imports — register the JS and native tracer factories
 	// so debug_traceTransaction / debug_traceCall and friends actually
 	// have tracers available over RPC. cmd/parallaxd does the same thing in
@@ -31,6 +33,12 @@ import (
 const handshakePrefix = "PARALLAX_BACKEND "
 
 func main() {
+	// Before anything secret is in memory. A failure leaves the app working,
+	// only less guarded, so it's reported and the backend carries on.
+	if err := backend.HardenProcess(); err != nil {
+		fmt.Fprintf(os.Stderr, "parallax-backend: hardening: %v\n", err)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

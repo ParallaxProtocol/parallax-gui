@@ -4,6 +4,7 @@ import { Eye, EyeOff, Loader2, ScrollText, ShieldCheck } from "lucide-react";
 import { api, walletError } from "../../lib/api";
 import { GLIDE, SPRING, STAGGER, useStagger } from "../../lib/motion";
 import { useWallet } from "../../lib/wallet";
+import { useHiddenFromCapture } from "../../lib/desktop";
 import { useT } from "../../i18n";
 import { Modal, ModalForm } from "../../components/ui/Modal";
 import { Notice } from "../../components/ui/bits";
@@ -26,6 +27,7 @@ export function PhraseGrid({ words }: { words: string[] }) {
   const t = useT();
   const stagger = useStagger();
   const [shown, setShown] = useState(false);
+  useHiddenFromCapture();
   return (
     <div className="relative">
       <motion.ol
@@ -86,6 +88,7 @@ export function PhraseQuiz({ words, onValid }: { words: string[]; onValid: (ok: 
   const t = useT();
   const positions = useMemo(() => pickPositions(words.length, 3), [words]);
   const [answers, setAnswers] = useState<string[]>(() => positions.map(() => ""));
+  useHiddenFromCapture();
   const right = positions.map((p, i) => answers[i].trim().toLowerCase() === words[p]);
 
   useEffect(() => {
@@ -179,6 +182,7 @@ function QuizWord({
 export function PhraseInput({ id, value, onChange }: { id?: string; value: string; onChange: (v: string) => void }) {
   const t = useT();
   const [shown, setShown] = useState(false);
+  useHiddenFromCapture(shown);
   const count = value.trim() ? value.trim().split(/\s+/).length : 0;
   return (
     <div className="flex flex-col gap-1.5">
@@ -390,6 +394,7 @@ function Reveal({ seedId, confirmed, onClose }: { seedId: string; confirmed: boo
 function ShownPassphrase({ value }: { value: string }) {
   const t = useT();
   const [shown, setShown] = useState(false);
+  useHiddenFromCapture();
   return (
     <div className="flex items-center gap-3 rounded-md border border-border bg-background/60 px-3 py-2">
       <span className="text-sm text-muted-foreground">{t("wallet.passphrase.label")}</span>

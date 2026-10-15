@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { Eye, EyeOff } from "lucide-react";
 import { api, AddressView } from "../../lib/api";
+import { useHiddenFromCapture } from "../../lib/desktop";
 import { useNode } from "../../lib/live";
 import { useT } from "../../i18n";
 import { Tooltip } from "../../components/ui/Tooltip";
@@ -75,6 +76,7 @@ export function PasswordInput({
 }) {
   const t = useT();
   const [shown, setShown] = useState(false);
+  useHiddenFromCapture(shown);
   return (
     <div className="relative">
       <input

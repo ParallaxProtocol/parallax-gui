@@ -58,6 +58,10 @@ contextBridge.exposeInMainWorld("parallax", {
   cameraAccess(): Promise<boolean> {
     return ipcRenderer.invoke("camera:access");
   },
+  /** Keeps the window out of screen captures while on (macOS and Windows). */
+  protectContent(on: boolean) {
+    ipcRenderer.send("window:protect", on);
+  },
   /** Holds off system sleep while on. */
   keepAwake(on: boolean) {
     ipcRenderer.send("power:keepAwake", on);

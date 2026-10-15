@@ -60,12 +60,17 @@ func NodeUsage() Usage {
 		return float64(gauge(name)) / 100 / float64(cores)
 	}
 	cpuSeconds, cpuCounted := processCPUSeconds()
+	// Read directly where the daemon can't, the process being non-dumpable (HardenProcess)
+	diskRead, diskWrite, ok := processDiskBytes()
+	if !ok {
+		diskRead, diskWrite = counterCount(diskReadCounter), counterCount(diskWriteCount)
+	}
 	return Usage{
 		Counted:        true,
 		InBytes:        meterCount(ingressMeter),
 		OutBytes:       meterCount(egressMeter),
-		DiskReadBytes:  counterCount(diskReadCounter),
-		DiskWriteBytes: counterCount(diskWriteCount),
+		DiskReadBytes:  diskRead,
+		DiskWriteBytes: diskWrite,
 		CPUCounted:     cpuCounted,
 		CPUSeconds:     cpuSeconds,
 		CPUSystem:      share(cpuSysGauge),

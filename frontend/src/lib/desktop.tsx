@@ -10,6 +10,25 @@ import { useT } from "../i18n";
 /** A sync shorter than this (a new block arriving at the tip) isn't worth a notification. */
 const LONG_SYNC_MS = 2 * 60 * 1000;
 
+/** How many mounted components want the window kept out of screen captures. */
+let hiding = 0;
+
+/**
+ * useHiddenFromCapture keeps the window out of screenshots, recordings and
+ * screen shares while on and mounted: for wherever a recovery phrase, a
+ * passphrase, a key or a password can be read on screen. macOS and Windows
+ * only; Linux has no way to ask it.
+ */
+export function useHiddenFromCapture(on = true) {
+  useEffect(() => {
+    if (!on) return;
+    if (hiding++ === 0) window.parallax?.protectContent?.(true);
+    return () => {
+      if (--hiding === 0) window.parallax?.protectContent?.(false);
+    };
+  }, [on]);
+}
+
 export function notify(title: string, body: string) {
   if (typeof Notification === "undefined" || Notification.permission === "denied") return;
   const n = new Notification(title, { body, silent: false });

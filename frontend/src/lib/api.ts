@@ -12,6 +12,7 @@ declare global {
       loginItem: () => Promise<{ supported: boolean; enabled: boolean }>;
       setLoginItem: (on: boolean) => Promise<void>;
       keepAwake: (on: boolean) => void;
+      protectContent: (on: boolean) => void;
       saveBackup: (fileName: string, contents: string) => Promise<boolean>;
       exportContacts: (format: "json" | "csv", contents: string) => Promise<boolean>;
       saveSigningDoc: (fileName: string, contents: string) => Promise<boolean>;
