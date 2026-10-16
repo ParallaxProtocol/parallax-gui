@@ -103,8 +103,8 @@ export default function AssistantBar() {
             height: NODE_BAR_HEIGHT,
             borderRadius: NODE_BAR_HEIGHT / 2,
           }}
-          // Fully rounded, unlike the node bar: a circle or a capsule at rest,
-          // opened on a request, the node bar's corners
+          // Fully rounded, as the node bar: a circle or a capsule at rest,
+          // opened on a request, the node bar's opened corners
           animate={{
             opacity: 1,
             y: 0,

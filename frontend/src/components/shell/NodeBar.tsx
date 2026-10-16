@@ -1,6 +1,6 @@
 import { createContext, lazy, ReactNode, Suspense, useContext, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Loader2, Maximize2, Minimize2, Power, Server, ShieldCheck } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, Power, Server, ShieldCheck, TriangleAlert } from "lucide-react";
 import { api } from "../../lib/api";
 import { formatDuration, formatInt } from "../../lib/format";
 import { nodeState, syncProgress, useNode, useRefresh } from "../../lib/live";
@@ -9,7 +9,6 @@ import { Indicator, type Grade } from "../ui/Indicator";
 import { Meter } from "../ui/bits";
 import { Counter } from "../ui/Counter";
 import { Tooltip } from "../ui/Tooltip";
-import { IconBadge } from "../ui/IconBadge";
 import { TOP_BAR_HEIGHT } from "./TopBar";
 import { useAssistant } from "../../lib/assistantContext";
 import { NodeSwitchContext } from "../../lib/nodeSwitch";
@@ -45,12 +44,13 @@ export const useNodeSheet = () => useContext(SheetContext);
 /**
  * NodeBar floats along the window's foot, under the sidebar too: the node at
  * a glance from every page (its state, the sync's progress, the best
- * block, peers and uptime) and its power switch. Opened, it rises into a
+ * block, peers and uptime) and its power switch, in a capsule as the
+ * assistant bar beside it. Opened, it rises into a
  * floating panel up to the window's title bar and becomes the node's page,
  * its bar staying on as the page's header; closed, it sinks back. Escape
  * closes it.
  */
-export default function NodeBar({ version }: { version: string }) {
+export default function NodeBar() {
   const t = useT();
   const node = useNode();
   const refresh = useRefresh();
@@ -113,36 +113,39 @@ export default function NodeBar({ version }: { version: string }) {
         aria-label={t("nav.network")}
         // At rest the cards' glass, as the empty wallet's Settings pill, lit under the pointer as it opens on a click; opened, the page's thicker glass
         className={`no-drag fixed z-40 flex flex-col overflow-hidden ${open ? BAR_SURFACE : `${BAR_GLASS} hover:bg-[var(--glass-hover)]`} ${BAR_FADE}`}
-        style={{ left: NODE_BAR_GAP, bottom: NODE_BAR_GAP, borderRadius: 16 }}
+        style={{ left: NODE_BAR_GAP, bottom: NODE_BAR_GAP }}
         initial={false}
+        // A capsule at rest, as the assistant bar; opened, a panel's corners
         animate={{
           right,
           height: open ? Math.max(NODE_BAR_HEIGHT, vh - TOP_BAR_HEIGHT - NODE_BAR_GAP) : NODE_BAR_HEIGHT,
+          borderRadius: open ? 16 : NODE_BAR_HEIGHT / 2,
         }}
         transition={{ type: "spring", bounce: 0, visualDuration: 0.35 }}
       >
-        {/* The bar: a click anywhere on it opens the page, whose header it then is */}
+        {/* The bar: a click anywhere on it opens the page, whose header it then is.
+            Its buttons sit as far from the end as from the top and bottom,
+            their circles concentric with the capsule's; its symbol, bare as
+            Apple leaves a status's, is inset as a glyph in the capsule's curve */}
         <div
-          className={`flex shrink-0 items-center gap-5 border-b pr-3 pl-3 text-sm text-muted-foreground tabular-nums transition-colors ${
-            open ? "border-border" : "cursor-pointer border-transparent"
+          className={`flex shrink-0 items-center gap-5 border-b pr-[15px] pl-5 text-sm text-muted-foreground tabular-nums transition-colors ${
+            open ? "border-border" : "border-transparent"
           }`}
           style={{ height: NODE_BAR_HEIGHT }}
           onClick={(e) => {
             if (!open && !(e.target as HTMLElement).closest("button")) setOpen(true);
           }}
         >
-          {/* What the node is doing: its badge, with the live dot on it, the
-            state, and a line of figures under it */}
+          {/* What the node is doing: its symbol, the state led by its live dot
+            (as System Settings marks a connection), and a line of figures under it */}
           <span className="flex min-w-0 items-center gap-3">
-            <span className="relative shrink-0">
-              <IconBadge icon={Server} />
-              <span className="absolute -right-0.5 -bottom-0.5 grid place-items-center rounded-full bg-popover p-[3px]">
-                <Indicator grade={STATE_GRADE[state]} ping={running} cause={state} />
-              </span>
-            </span>
+            <Server className="size-5 shrink-0" aria-hidden />
             <span className="flex min-w-0 flex-col">
-              <span className="truncate text-[15px] font-semibold text-foreground">
-                {open ? t("nav.network") : t(`node.state.${state}`)}
+              <span className="flex min-w-0 items-center gap-2">
+                <Indicator grade={STATE_GRADE[state]} ping={running} cause={state} />
+                <span className="truncate text-[15px] font-semibold text-foreground">
+                  {open ? t("nav.network") : t(`node.state.${state}`)}
+                </span>
               </span>
               <span className="truncate text-sm">
                 {running ? (
@@ -179,11 +182,22 @@ export default function NodeBar({ version }: { version: string }) {
             </span>
           )}
 
-          {/* Opened on a stopped node, the page shows the error by its button */}
-          {err && (running || !open) && <span className="selectable min-w-0 truncate text-critical-ink">{err}</span>}
-
           <span className="flex-1" />
-          {version && !open && <span className="text-sm text-faint">{version}</span>}
+
+          {/* A failed switch: its symbol, the message on hover. Opened on a
+              stopped node, the page shows the error by its button */}
+          {err && (running || !open) && (
+            <Tooltip content={err}>
+              <span
+                className="grid shrink-0 place-items-center text-critical-ink"
+                role="img"
+                aria-label={err}
+                tabIndex={0}
+              >
+                <TriangleAlert className="size-4" />
+              </span>
+            </Tooltip>
+          )}
 
           {running ? (
             <Tooltip content={switchLabel}>
@@ -202,7 +216,7 @@ export default function NodeBar({ version }: { version: string }) {
             node &&
             !open && (
               <button type="button" className="btn btn-primary rounded-full px-4" onClick={toggle} disabled={busy}>
-                {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Power className="size-3.5" />}
+                {busy && <Loader2 className="size-3.5 animate-spin" />}
                 {switchLabel}
               </button>
             )
@@ -215,7 +229,7 @@ export default function NodeBar({ version }: { version: string }) {
               aria-label={openLabel}
               aria-expanded={open}
             >
-              {open ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              {open ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
             </button>
           </Tooltip>
         </div>
@@ -245,26 +259,25 @@ export default function NodeBar({ version }: { version: string }) {
  * OfflineBar takes the node bar's place when the app is an offline signer:
  * there is no node to show, only the promise that nothing goes online.
  */
-export function OfflineBar({ version }: { version: string }) {
+export function OfflineBar() {
   const t = useT();
   return (
     <section
       aria-label={t("offline.mode")}
-      className={`no-drag fixed z-40 flex items-center gap-3 px-3 text-sm text-muted-foreground ${BAR_GLASS}`}
+      className={`no-drag fixed z-40 flex items-center gap-3 pr-[15px] pl-5 text-sm text-muted-foreground ${BAR_GLASS}`}
       style={{
         left: NODE_BAR_GAP,
         right: NODE_BAR_GAP,
         bottom: NODE_BAR_GAP,
         height: NODE_BAR_HEIGHT,
-        borderRadius: 16,
+        borderRadius: NODE_BAR_HEIGHT / 2,
       }}
     >
-      <IconBadge icon={ShieldCheck} tone="good" />
+      <ShieldCheck className="size-5 shrink-0 text-good-ink" aria-hidden />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[15px] font-semibold text-foreground">{t("offline.mode")}</span>
         <span className="truncate">{t("offline.mode.bar")}</span>
       </span>
-      {version && <span className="shrink-0 tabular-nums">{version}</span>}
     </section>
   );
 }

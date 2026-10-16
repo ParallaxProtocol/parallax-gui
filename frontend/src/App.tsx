@@ -67,7 +67,6 @@ export default function App() {
   const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>("jazzicon");
   const [desktop, setDesktop] = useState({ notifications: false, preventSleep: false });
   const [offline, setOffline] = useState(false);
-  const [version, setVersion] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -88,14 +87,6 @@ export default function App() {
         });
     };
     check();
-    // The backend answers "Parallax Wallet 0.2.3": the status bar shows just "v0.2.3"
-    api
-      .version()
-      .then((v) => {
-        const n = v.replace(/^Parallax Wallet\s*/, "");
-        if (!cancelled) setVersion(/^\d/.test(n) ? `v${n}` : n);
-      })
-      .catch(() => {});
     return () => {
       cancelled = true;
       clearTimeout(timer);
@@ -174,7 +165,7 @@ export default function App() {
                             <DesktopBehaviors {...desktop} />
                             {/* The whole window, behind the lock screen while the wallet is locked */}
                             <LockGate>
-                              <Shell offline={offline} version={version} animate={!animationsDisabled} />
+                              <Shell offline={offline} animate={!animationsDisabled} />
                             </LockGate>
                           </AssistantProvider>
                         </SettingsSheetProvider>
@@ -216,7 +207,7 @@ export default function App() {
  * (Arrival). Settings stays in one place across the change, so a flow in
  * it (a new key's backup, after the key is made) carries on.
  */
-function Shell({ offline, version, animate }: { offline: boolean; version: string; animate: boolean }) {
+function Shell({ offline, animate }: { offline: boolean; animate: boolean }) {
   const { info } = useWallet();
   const empty = !offline && !!info?.hasPassword && !info.locked && info.accounts.length === 0;
   const wasEmpty = useRef(false);
@@ -238,7 +229,7 @@ function Shell({ offline, version, animate }: { offline: boolean; version: strin
         </Arrival>
       )}
       <SettingsSheet />
-      {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
+      {offline ? <OfflineBar /> : <NodeBar />}
       {!empty && !offline && <AssistantBar />}
     </>
   );
