@@ -57,6 +57,7 @@ export function activityKey(tool: string): string {
     contacts: "contacts",
     app_settings: "settings",
     start_node: "startNode",
+    lock_app: "lockApp",
     supply_info: "mining",
     block_reward: "mining",
     mining_stats: "mining",

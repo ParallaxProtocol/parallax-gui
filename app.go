@@ -115,6 +115,10 @@ func (a *App) startup(ctx context.Context) {
 			a.wallet.SetOpenHooks(a.walletOpened, a.walletClosed)
 			a.wallet.SetAutoLock(conf.AutoLock())
 			a.wallet.SetLockEmitter(func(locked bool) {
+				// Assistants' calls still running end with the lock
+				if locked && a.mcp != nil {
+					a.mcp.AppLocked()
+				}
 				a.events.emit("wallet-lock", map[string]bool{"locked": locked})
 			})
 		}

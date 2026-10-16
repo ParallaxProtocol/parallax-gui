@@ -41,6 +41,9 @@ type MCPAllow struct {
 	StatusPage bool `json:"statusPage"` // status.parallaxprotocol.org
 	// What they may do
 	StartNode MCPMode `json:"startNode"`
+	// LockApp locks the app, as its lock button does: never unlocking it,
+	// which takes the wallet password
+	LockApp MCPMode `json:"lockApp"`
 	// What they may ask for: each request is approved in the app whatever
 	// the mode, so allow is the same as ask, and block stops them asking
 	StopNode     MCPMode `json:"stopNode"`
@@ -353,6 +356,18 @@ func (a *Assistant) Reject(id string) error {
 	return nil
 }
 
+// rejectAll turns down every request still waiting on the user, as the app
+// locks: one being carried out finishes.
+func (a *Assistant) rejectAll(result string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	for _, r := range a.requests {
+		if r.Status == RequestPending && !r.busy {
+			a.decideLocked(r, RequestRejected, result)
+		}
+	}
+}
+
 func (a *Assistant) decideLocked(r *assistantRequest, status, result string) {
 	r.Status, r.Result = status, result
 	close(r.done)
@@ -585,8 +600,32 @@ func (a *Assistant) Register(r *server.Registrar) {
 			return map[string]any{"running": a.deps.Node.Status().Running}, nil
 		})
 
+	server.Add(r, server.Spec{Group: GroupApp, Name: "lock_app", Timeout: a.permitTimeout(), Title: "Lock the app", Changes: true,
+		Description: `Locks Parallax Wallet, as its lock button does: the lock screen covers the app until the user unlocks it with the wallet password, which you can't do. While it is locked, this server refuses every other tool call until the user unlocks it. Returns whether it was locked already.` + permitNote},
+		func(ctx context.Context, _ noIn) (any, error) {
+			if err := a.permit(ctx, "lockApp"); err != nil {
+				return nil, err
+			}
+			w, err := a.wallet()
+			if err != nil {
+				return nil, err
+			}
+			if !w.Info().HasPassword {
+				return nil, server.Inputf("the wallet has no password yet, so the app has no lock: the user sets one up in the app first")
+			}
+			already := w.Locked()
+			w.Lock()
+			return map[string]any{"locked": true, "already_locked": already}, nil
+		})
+
 	a.registerRequests(r)
 	a.registerTransactions(r)
+}
+
+// Locked reports whether the app is locked: the wallet has a password and
+// isn't unlocked. Assistants can do nothing then but lock it (mcp.go).
+func (a *Assistant) Locked() bool {
+	return a.deps.Wallet != nil && a.deps.Wallet.Locked()
 }
 
 func (a *Assistant) logs(in logsIn) (any, error) {

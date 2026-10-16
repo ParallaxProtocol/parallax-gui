@@ -95,6 +95,8 @@ type MCPServer struct {
 	emit  func(MCPStatus)
 	// activity is the tool calls in progress, for the assistant bar
 	activity mcpActivity
+	// calls are the calls in progress, ended as the app locks (mcp_lock.go)
+	calls lockCalls
 }
 
 // NewMCPServer returns a stopped server keeping its token in dir. Beside
@@ -293,7 +295,7 @@ func (m *MCPServer) startLocked() error {
 		chain.Register, live.Register, mempool.Register, mining.Register, explorer.Register, network.Register,
 		tx.Register, docs.Register, resources.Register, prompts.Register,
 		m.assistant.Register)
-	reg.MCP().AddReceivingMiddleware(m.observe)
+	reg.MCP().AddReceivingMiddleware(m.lockGate, m.observe)
 
 	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return reg.MCP() }, &mcp.StreamableHTTPOptions{
 		SessionTimeout:      30 * time.Minute,
@@ -349,7 +351,9 @@ The chain tools answer from the node Parallax Wallet runs, never a public RPC. T
 
 To wait for a block, or for the chain to reach a height, call wait_for_new_block (after_block: the height before the one awaited) rather than checking again and again: it returns as soon as the block comes, or times out, and you can call it again.` + devText + `
 
-The app's own tools (node_status, node_logs, wallet_accounts, wallet_activity, contacts, start_node, app_settings and the request_ tools) work only as far as the user allows them in Parallax Wallet, Settings › AI assistants › Permissions. A tool the user hasn't allowed yet asks them in the app first, and the call waits up to 2 minutes for their answer: tell the user to look at Parallax Wallet when you call it. One they block, or turn down, says so; don't call it again in the hope of a different answer.
+While Parallax Wallet is locked, every call but lock_app is refused, a call still running as the user locks it is cancelled, saying so, and requests still waiting on the user are turned down: the user unlocks it in the app with the wallet password, which you can't do. lock_app locks it, as its lock button does, when the user asks you to or would want it locked.
+
+The app's own tools (node_status, node_logs, wallet_accounts, wallet_activity, contacts, start_node, lock_app, app_settings and the request_ tools) work only as far as the user allows them in Parallax Wallet, Settings › AI assistants › Permissions. A tool the user hasn't allowed yet asks them in the app first, and the call waits up to 2 minutes for their answer: tell the user to look at Parallax Wallet when you call it. One they block, or turn down, says so; don't call it again in the hope of a different answer.
 
 The request_ tools don't act: they ask the user, who approves or turns the request down in Parallax Wallet. Tell the user to look there, then call get_request with wait_seconds for the outcome. Never say a request was carried out before get_request says it was approved.
 

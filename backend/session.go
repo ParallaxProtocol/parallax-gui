@@ -57,6 +57,9 @@ type session struct {
 	idle  time.Duration
 	timer *time.Timer
 	gen   uint64
+	// holds counts what keeps the auto-lock off while it runs (Hold): the
+	// idle time starts once the last ends
+	holds int
 	// emit tells the app the wallet locked or unlocked
 	emit func(locked bool)
 }
@@ -171,6 +174,27 @@ func (w *Wallet) Touch() {
 	w.sess.resetLocked()
 }
 
+// Hold keeps the wallet from locking itself for being left idle until the
+// returned func is called, as an assistant's tool call does while it runs
+// (mcp_lock.go); the idle time starts over then. Locking it from the app,
+// or as the system sleeps, still locks it.
+func (w *Wallet) Hold() (release func()) {
+	s := &w.sess
+	s.mu.Lock()
+	s.holds++
+	s.resetLocked()
+	s.mu.Unlock()
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			s.mu.Lock()
+			s.holds--
+			s.resetLocked()
+			s.mu.Unlock()
+		})
+	}
+}
+
 // SetAutoLock sets how long the wallet stays unlocked with nothing done,
 // 0 for as long as the app runs.
 func (w *Wallet) SetAutoLock(idle time.Duration) {
@@ -281,7 +305,7 @@ func (s *session) resetLocked() {
 		s.timer.Stop()
 		s.timer = nil
 	}
-	if s.key == nil || s.idle <= 0 {
+	if s.key == nil || s.idle <= 0 || s.holds > 0 {
 		return
 	}
 	gen := s.gen

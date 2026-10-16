@@ -126,10 +126,11 @@ func defaultGUIConfig() GUIConfig {
 }
 
 // defaultMCPAllow asks the user before assistants use anything but the
-// node's status, and lets them ask for changes, each approved on its own.
+// node's status and the lock, and lets them ask for changes, each approved
+// on its own.
 func defaultMCPAllow() MCPAllow {
 	return MCPAllow{
-		NodeStatus: ModeAllow, NodeLogs: ModeAsk, Wallet: ModeAsk, Contacts: ModeAsk, StartNode: ModeAsk,
+		NodeStatus: ModeAllow, NodeLogs: ModeAsk, Wallet: ModeAsk, Contacts: ModeAsk, StartNode: ModeAsk, LockApp: ModeAllow,
 		StopNode: ModeAsk, Settings: ModeAsk, NewAccounts: ModeAsk, WatchOnly: ModeAsk, EditContacts: ModeAsk, SendTransactions: ModeAsk,
 	}
 }
@@ -141,6 +142,11 @@ func mergeDefaults(cfg *GUIConfig) {
 	}
 	if cfg.SyncMode == "" {
 		cfg.SyncMode = d.SyncMode
+	}
+	// Locking came after the other permissions: configs from before it
+	// let assistants lock, as new ones do
+	if cfg.MCPAllow.LockApp == "" {
+		cfg.MCPAllow.LockApp = d.MCPAllow.LockApp
 	}
 	if cfg.HTTPRPCPort == 0 {
 		cfg.HTTPRPCPort = d.HTTPRPCPort

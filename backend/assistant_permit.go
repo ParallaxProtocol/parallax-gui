@@ -83,6 +83,8 @@ func (a *MCPAllow) feature(name string) (mcpFeature, bool) {
 		return mcpFeature{&a.Contacts, "see the contacts", false}, true
 	case "startNode":
 		return mcpFeature{&a.StartNode, "start the node", false}, true
+	case "lockApp":
+		return mcpFeature{&a.LockApp, "lock the app", false}, true
 	case "stopNode":
 		return mcpFeature{&a.StopNode, "ask to stop the node", true}, true
 	case "settings":

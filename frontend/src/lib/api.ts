@@ -742,6 +742,8 @@ export type MCPAllow = {
   /** Ask the public status page; restarts the assistant server. */
   statusPage: boolean;
   startNode: MCPMode;
+  /** Lock the app; never unlock it, which takes the wallet password. */
+  lockApp: MCPMode;
   // Requests: ask lets assistants ask (each request approved), block stops them
   stopNode: MCPMode;
   settings: MCPMode;

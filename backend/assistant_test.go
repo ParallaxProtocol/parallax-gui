@@ -489,3 +489,154 @@ func TestLAXToWei(t *testing.T) {
 		}
 	}
 }
+
+// TestAssistantLock locks the app as an assistant would, and checks that
+// nothing else answers while it is locked, that a call the lock cuts short
+// says why, and that a running call keeps the wallet from locking itself.
+func TestAssistantLock(t *testing.T) {
+	dir := t.TempDir()
+	store, err := LoadConfigStore(filepath.Join(dir, "gui.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	node := NewNodeController(store)
+	w, err := NewWallet(dir, node)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SetupPassword(testPassword); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := defaultGUIConfig()
+	cfg.DataDir = filepath.Join(dir, "parallax")
+	cfg.MCPEnabled = true
+	cfg.MCPPort = freePort(t)
+	host := &testHost{cfg: cfg}
+	m := NewMCPServer(t.TempDir(), AssistantDeps{Host: host, Node: node, Wallet: w, Logs: NewLogTail(16)})
+	defer m.Close()
+	// As the app does (app.go)
+	w.SetLockEmitter(func(locked bool) {
+		if locked {
+			m.AppLocked()
+		}
+	})
+	m.Apply(cfg)
+	cs := connectMCP(t, m.Status())
+	call := func(name string, args map[string]any) (map[string]any, string) {
+		t.Helper()
+		return callMCP(t, cs, name, args)
+	}
+	as := m.Assistant()
+
+	// Allowed by default
+	if out, errText := call("lock_app", nil); errText != "" || out["locked"] != true || out["already_locked"] != false {
+		t.Fatalf("lock_app: %v %s", out, errText)
+	}
+	if w.Unlocked() {
+		t.Fatal("lock_app left the wallet unlocked")
+	}
+
+	// Locked, nothing but lock_app answers
+	for _, tool := range []string{"node_status", "wallet_accounts", "get_request", "chain_info"} {
+		if _, errText := call(tool, map[string]any{"id": "x"}); errText != errAppLocked {
+			t.Errorf("%s while locked: %q", tool, errText)
+		}
+	}
+	if _, err := cs.ReadResource(context.Background(), &mcp.ReadResourceParams{URI: "parallax://chain/head"}); err == nil || !strings.Contains(err.Error(), "locked") {
+		t.Errorf("reading a resource while locked: %v", err)
+	}
+	if out, errText := call("lock_app", nil); errText != "" || out["already_locked"] != true {
+		t.Fatalf("lock_app while locked: %v %s", out, errText)
+	}
+	if err := w.Unlock(testPassword); err != nil {
+		t.Fatal(err)
+	}
+	if _, errText := call("node_status", nil); errText != "" {
+		t.Fatalf("node_status once unlocked: %s", errText)
+	}
+
+	// A call waiting on a prompt holds the auto-lock off, and starts the
+	// idle time over as it ends
+	waitPrompt := func() AssistantRequest {
+		t.Helper()
+		deadline := time.Now().Add(5 * time.Second)
+		for len(as.Pending()) == 0 {
+			if time.Now().After(deadline) {
+				t.Fatal("no prompt")
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		return as.Pending()[0]
+	}
+	w.SetAutoLock(100 * time.Millisecond)
+	done := make(chan string)
+	go func() {
+		_, errText := callMCP(t, cs, "wallet_accounts", nil)
+		done <- errText
+	}()
+	prompt := waitPrompt()
+	time.Sleep(300 * time.Millisecond)
+	if !w.Unlocked() {
+		t.Fatal("the wallet locked itself during a call")
+	}
+	if err := as.Reject(prompt.ID); err != nil {
+		t.Fatal(err)
+	}
+	<-done
+	deadline := time.Now().Add(2 * time.Second)
+	for w.Unlocked() {
+		if time.Now().After(deadline) {
+			t.Fatal("never locked once the call ended")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// Locking ends a running call, telling the assistant why
+	w.SetAutoLock(0)
+	if err := w.Unlock(testPassword); err != nil {
+		t.Fatal(err)
+	}
+	go func() {
+		_, errText := callMCP(t, cs, "wallet_accounts", nil)
+		done <- errText
+	}()
+	waitPrompt()
+	w.Lock()
+	select {
+	case errText := <-done:
+		if errText != errLockedMidCall {
+			t.Fatalf("a call cut short by the lock: %q", errText)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the lock didn't end the call")
+	}
+
+	// Locking turns down the requests waiting on the user
+	if err := w.Unlock(testPassword); err != nil {
+		t.Fatal(err)
+	}
+	req, errText := call("request_watch_only", map[string]any{"address": "0x00000000000000000000000000000000000000aa", "reason": "x"})
+	if errText != "" {
+		t.Fatalf("request_watch_only: %s", errText)
+	}
+	w.Lock()
+	if len(as.Pending()) != 0 {
+		t.Fatal("a request still waits after the lock")
+	}
+	if err := w.Unlock(testPassword); err != nil {
+		t.Fatal(err)
+	}
+	if out, errText := call("get_request", map[string]any{"id": req["id"]}); errText != "" || out["status"] != RequestRejected || out["result"] != errLockedRequest {
+		t.Fatalf("get_request after the lock: %v %s", out, errText)
+	}
+
+	// Blocked, assistants can't lock it
+	host.allow(func(a *MCPAllow) { a.LockApp = ModeBlock })
+	if _, errText := call("lock_app", nil); !strings.Contains(errText, "doesn't let assistants lock") {
+		t.Fatalf("lock_app while blocked: %q", errText)
+	}
+	if !w.Unlocked() {
+		t.Fatal("a blocked lock_app locked the wallet")
+	}
+}
