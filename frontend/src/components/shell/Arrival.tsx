@@ -13,7 +13,16 @@ const SETTLE = 0.3;
  * that waits for it to settle, then dissolves. Otherwise (play false) it
  * is just there.
  */
-export function Arrival({ play, children }: { play: boolean; children: ReactNode }) {
+export function Arrival({
+  play,
+  coverClassName = "z-[1000]",
+  children,
+}: {
+  play: boolean;
+  /** Where the cover lies: over everything, or under what stays in place as the app arrives. */
+  coverClassName?: string;
+  children: ReactNode;
+}) {
   const [covered, setCovered] = useState(play);
   return (
     <>
@@ -21,7 +30,7 @@ export function Arrival({ play, children }: { play: boolean; children: ReactNode
       {covered && (
         <motion.div
           aria-hidden
-          className="pointer-events-none fixed inset-0 z-[1000] bg-background"
+          className={`pointer-events-none fixed inset-0 bg-background ${coverClassName}`}
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
           transition={{ delay: SETTLE, duration: 0.9, ease: [0.4, 0, 0.2, 1] }}

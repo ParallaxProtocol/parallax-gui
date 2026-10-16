@@ -32,9 +32,6 @@ import { CopyButton, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { BackupModal } from "./AccountForms";
 import { useSummary } from "./common";
-import { useSettingsSheet } from "../../components/shell/SettingsSheet";
-import { LinkRow, LinkRows } from "../../components/ui/LinkRow";
-import { LogoMark } from "../../components/ui/LogoMark";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
@@ -60,14 +57,15 @@ type Activity = {
 /**
  * WalletPage is the app's home: the selected account's balance, the way
  * to send and receive, and its activity, all read from the local node.
- * With no accounts yet it offers to make or import one.
+ * With no account yet the window is EmptyWallet's instead.
  */
 export default function WalletPage() {
   const wallet = useWallet();
   if (!wallet.info) return null;
   // A wallet without its password is the greeting's (Hello), shown in the app's place
   if (!wallet.info.hasPassword) return null;
-  return wallet.account ? <Overview /> : <Welcome />;
+  // With no account the window is EmptyWallet's (App's Shell), not a page's
+  return wallet.account ? <Overview /> : null;
 }
 
 /**
@@ -604,54 +602,4 @@ function ActivityIcon({ kind, pending, cancel }: { kind: Activity["kind"]; pendi
 /** Up to four decimals, without trailing zeros, as formatLax shows a balance. */
 function formatAmount(v: number): string {
   return v.toLocaleString("en-US", { maximumFractionDigits: 4, useGrouping: false });
-}
-
-/** Welcome is the wallet before it holds an account: make one, or bring one. */
-function Welcome() {
-  const t = useT();
-  const stagger = useStagger();
-  // Making and importing are Settings' Accounts section's, opened at the flow chosen
-  const { openAt } = useSettingsSheet();
-  return (
-    <div className="flex min-h-full flex-col items-center justify-center px-5 py-10">
-      {/* As setup's pages: the mark and title, then the ways on as rows of glass cards, each in turn */}
-      <motion.div {...stagger} className="flex w-full max-w-lg flex-col items-center gap-8">
-        <motion.div variants={STAGGER.item} className="flex flex-col items-center gap-5 text-center">
-          <LogoMark size={56} />
-          <div className="flex flex-col items-center gap-2">
-            <h2 className="text-3xl font-semibold tracking-tight">{t("wallet.welcome.title")}</h2>
-            <p className="text-muted-foreground">{t("wallet.welcome.desc")}</p>
-          </div>
-        </motion.div>
-        <motion.div variants={STAGGER.item} className="flex w-full flex-col gap-2">
-          <LinkRows>
-            <LinkRow
-              icon={Plus}
-              title={t("wallet.welcome.create")}
-              desc={t("wallet.welcome.createDesc")}
-              onClick={() => openAt("accounts", { kind: "accounts.add" })}
-              autoFocus
-            />
-            <LinkRow
-              icon={Download}
-              title={t("wallet.welcome.import")}
-              desc={t("wallet.welcome.importDesc")}
-              onClick={() => openAt("accounts", { kind: "accounts.import" })}
-            />
-          </LinkRows>
-          <p className="px-4 text-sm text-muted-foreground">{t("wallet.welcome.local")}</p>
-        </motion.div>
-        <motion.div variants={STAGGER.item} className="w-full">
-          <LinkRows>
-            <LinkRow
-              icon={Eye}
-              title={t("offline.watch.title")}
-              desc={t("wallet.welcome.watchDesc")}
-              onClick={() => openAt("accounts", { kind: "accounts.watch" })}
-            />
-          </LinkRows>
-        </motion.div>
-      </motion.div>
-    </div>
-  );
 }

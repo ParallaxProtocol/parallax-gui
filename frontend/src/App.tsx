@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { motion, MotionConfig, MotionGlobalConfig } from "motion/react";
 import { Loader2 } from "lucide-react";
@@ -40,6 +40,7 @@ import { NotificationsProvider } from "./lib/notifications";
 import AssistantBar from "./components/shell/AssistantBar";
 import { LockGate } from "./components/shell/LockScreen";
 import { Arrival } from "./components/shell/Arrival";
+import { EmptyWallet } from "./pages/Wallet/Empty";
 import { AssistantProvider } from "./lib/assistant";
 import { ContactsProvider } from "./lib/ContactsProvider";
 import { OfflineMode, useOfflineMode } from "./lib/offline";
@@ -173,19 +174,7 @@ export default function App() {
                             <DesktopBehaviors {...desktop} />
                             {/* The whole window, behind the lock screen while the wallet is locked */}
                             <LockGate>
-                              {/* The sidebar and the page run the window's whole height, the
-                              node's bar floating over their foot: the sidebar keeps room for
-                              it, the page scrolls on beneath it */}
-                              <div className="flex h-full">
-                                <Sidebar />
-                                <div className="flex min-w-0 flex-1 flex-col bg-background">
-                                  <TopBar />
-                                  <RoutedContent animate={!animationsDisabled} />
-                                </div>
-                              </div>
-                              <SettingsSheet />
-                              {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
-                              {!offline && <AssistantBar />}
+                              <Shell offline={offline} version={version} animate={!animationsDisabled} />
                             </LockGate>
                           </AssistantProvider>
                         </SettingsSheetProvider>
@@ -214,6 +203,44 @@ export default function App() {
         </AvatarStyleContext.Provider>
       </AnimationsOff.Provider>
     </OfflineMode.Provider>
+  );
+}
+
+/**
+ * Shell is the window behind the lock screen: the sidebar and the page,
+ * running the window's whole height, the node's bar floating over their
+ * foot (the sidebar keeps room for it, the page scrolls on beneath it).
+ * While the wallet, unlocked, holds no account, it is EmptyWallet's
+ * instead, as the greeting's pages, the node's bar still at its foot; the
+ * first account brings the app in
+ * (Arrival). Settings stays in one place across the change, so a flow in
+ * it (a new key's backup, after the key is made) carries on.
+ */
+function Shell({ offline, version, animate }: { offline: boolean; version: string; animate: boolean }) {
+  const { info } = useWallet();
+  const empty = !offline && !!info?.hasPassword && !info.locked && info.accounts.length === 0;
+  const wasEmpty = useRef(false);
+  if (empty) wasEmpty.current = true;
+  return (
+    <>
+      {empty ? (
+        <EmptyWallet />
+      ) : (
+        // Under Settings, which may be open over it as the first account is made
+        <Arrival play={wasEmpty.current} coverClassName="z-20">
+          <div className="flex h-full">
+            <Sidebar />
+            <div className="flex min-w-0 flex-1 flex-col bg-background">
+              <TopBar />
+              <RoutedContent animate={animate} />
+            </div>
+          </div>
+        </Arrival>
+      )}
+      <SettingsSheet />
+      {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
+      {!empty && !offline && <AssistantBar />}
+    </>
   );
 }
 
