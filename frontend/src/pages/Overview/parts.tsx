@@ -1,12 +1,17 @@
 import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { SPRING } from "../../lib/motion";
+import { sameAddress, shortHex } from "../../lib/format";
+import { accountLabel, useWallet } from "../../lib/wallet";
+import { useContacts } from "../../lib/contacts";
+import { useT } from "../../i18n";
 import { CopyButton } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 
 /**
- * The pieces the node page's lists share (the peers, the mempool): a row
- * unfolding its details, the inset card they sit in, and a line of them.
+ * The pieces the app's lists share (the peers, the mempool, an account's
+ * activity): a row unfolding its details, where they sit under the row,
+ * and the values in their grouped boxes (Facts, in Panel).
  */
 
 /** Unfold reveals its content by growing to its height. */
@@ -25,28 +30,54 @@ export function Unfold({ children }: { children: ReactNode }) {
 }
 
 /**
- * DetailCard is an opened row's details: an inset card under the row,
+ * Details is an opened row's details: its boxes stacked under the row,
  * indented to the row's main column (its padding, chevron, badge and
- * their gaps; `inset` for other rows), the row's highlight running on
- * behind it.
+ * their gaps), the row's highlight running on behind them.
  */
-export function DetailCard({ children, inset = "pr-5 pl-[90px]" }: { children: ReactNode; inset?: string }) {
+export function Details({ children }: { children: ReactNode }) {
+  return <div className="flex flex-col gap-3 bg-hover pr-5 pb-4 pl-[90px]">{children}</div>;
+}
+
+/** Hex is a hash or data, shortened: whole in its tooltip (unless too long to read there), and to copy. */
+export function Hex({ value }: { value: string }) {
   return (
-    <div className={`bg-hover pb-4 ${inset}`}>
-      <div className="rounded-xl bg-muted/60 p-4">{children}</div>
-    </div>
+    <span className="flex min-w-0 items-center gap-1">
+      <Tooltip content={value.length <= 258 ? value : null} mono>
+        <span className="selectable truncate font-mono">{shortHex(value, 10, 8)}</span>
+      </Tooltip>
+      <CopyButton value={value} className="-my-1 -mr-2" />
+    </span>
   );
 }
 
-/** Detail is one line of a DetailCard: a label, a value in monospace, and a copy button if asked. */
-export function Detail({ label, value, wrap, copy }: { label: string; value: string; wrap?: boolean; copy?: boolean }) {
+/** Mono is a value read as code (an address, a client string): whole, cut short only where it can't fit, then whole in its tooltip; to copy if asked. */
+export function Mono({ value, copy }: { value: string; copy?: boolean }) {
   return (
-    <div className="grid grid-cols-[120px_1fr_auto] items-baseline gap-3">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
+    <span className="flex min-w-0 items-center gap-1">
       <Tooltip content={value} mono overflowOnly>
-        <dd className={`font-mono text-sm ${wrap ? "break-all" : "truncate"}`}>{value || "—"}</dd>
+        <span className="selectable truncate font-mono">{value}</span>
       </Tooltip>
-      {copy && value ? <CopyButton value={value} className="-my-1" /> : <span />}
-    </div>
+      {copy && <CopyButton value={value} className="-my-1 -mr-2" />}
+    </span>
+  );
+}
+
+/** Party is an address of a transaction: its name when the wallet knows one, the address shortened, to copy. */
+export function Party({ address }: { address: string }) {
+  const t = useT();
+  const { info } = useWallet();
+  const { byAddress } = useContacts();
+  const own = info?.accounts.find((x) => sameAddress(x.address, address));
+  const name = own && info ? accountLabel(own, info.accounts, t) : byAddress(address)?.name;
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      {name && <span className="truncate text-foreground/80">{name}</span>}
+      <span className="flex shrink-0 items-center gap-1">
+        <Tooltip content={address} mono>
+          <span className="selectable font-mono">{shortHex(address, 6, 4)}</span>
+        </Tooltip>
+        <CopyButton value={address} className="-my-1 -mr-2" />
+      </span>
+    </span>
   );
 }

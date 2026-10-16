@@ -37,7 +37,7 @@ import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { GroupedAddress } from "../../components/ui/AccountParts";
 import { RevealPhraseModal } from "./Phrase";
-import { Unfold } from "../Overview/parts";
+import { Hex, Party, Unfold } from "../Overview/parts";
 import { useContacts } from "../../lib/contacts";
 import { PendingRequests } from "../Offline/Requests";
 import { ReplaceModal } from "./Replace";
@@ -538,38 +538,6 @@ function ActivityDetails({
         </div>
       </div>
     </div>
-  );
-}
-
-/** Hex is a hash or data, shortened: whole in its tooltip (unless too long to read there), and to copy. */
-function Hex({ value }: { value: string }) {
-  return (
-    <span className="flex min-w-0 items-center gap-1">
-      <Tooltip content={value.length <= 258 ? value : null} mono>
-        <span className="selectable truncate font-mono">{shortHex(value, 10, 8)}</span>
-      </Tooltip>
-      <CopyButton value={value} className="-my-1 -mr-2" />
-    </span>
-  );
-}
-
-/** Party is an address of a transaction: its name when the wallet knows one, the address shortened, to copy. */
-function Party({ address }: { address: string }) {
-  const t = useT();
-  const { info } = useWallet();
-  const { byAddress } = useContacts();
-  const own = info?.accounts.find((x) => sameAddress(x.address, address));
-  const name = own && info ? accountLabel(own, info.accounts, t) : byAddress(address)?.name;
-  return (
-    <span className="flex min-w-0 items-center gap-2">
-      {name && <span className="truncate text-foreground/80">{name}</span>}
-      <span className="flex shrink-0 items-center gap-1">
-        <Tooltip content={address} mono>
-          <span className="selectable font-mono">{shortHex(address, 6, 4)}</span>
-        </Tooltip>
-        <CopyButton value={address} className="-my-1 -mr-2" />
-      </span>
-    </span>
   );
 }
 

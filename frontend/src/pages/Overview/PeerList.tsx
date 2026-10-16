@@ -21,10 +21,12 @@ import { useLang, useT } from "../../i18n";
 import { Segmented } from "../../components/ui/Segmented";
 import { Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
+import { Swapping } from "../../components/ui/Swapping";
 import { Select } from "../../components/ui/Select";
 import { Pill } from "../../components/ui/Pill";
 import { IconBadge } from "../../components/ui/IconBadge";
-import { Detail, DetailCard, Unfold } from "./parts";
+import { Fact, Facts } from "../../components/ui/Panel";
+import { Details, Hex, Mono, Unfold } from "./parts";
 
 type Filter = "all" | "in" | "out" | "blocked";
 
@@ -176,32 +178,35 @@ export default function PeerList({
         )}
       </AnimatePresence>
 
-      {filter === "blocked" ? (
-        <Blocked bans={bans} busy={busy} run={run} />
-      ) : shown.length === 0 ? (
-        <p className="border-t border-border py-12 text-center text-muted-foreground">{t("peers.empty")}</p>
-      ) : (
-        <ul className="divide-y divide-border border-t border-border">
-          {/* Column heads over the rows' grid */}
-          <li className={`grid ${ROW} gap-3 px-5 pt-2.5 pb-2 text-xs font-medium text-muted-foreground`} aria-hidden>
-            <span className="col-start-3">{t("peers.col.client")}</span>
-            <span>{t("peers.col.address")}</span>
-            <span className="text-right">{t("peers.col.latency")}</span>
-          </li>
-          <AnimatePresence initial={false}>
-            {shown.map((p) => (
-              <PeerRow
-                key={p.fullId}
-                peer={p}
-                open={expanded === p.fullId}
-                onToggle={() => setExpanded((e) => (e === p.fullId ? null : p.fullId))}
-                busy={busy}
-                run={run}
-              />
-            ))}
-          </AnimatePresence>
-        </ul>
-      )}
+      {/* Switching filter fades one list into the other, its height gliding */}
+      <Swapping swap={filter}>
+        {filter === "blocked" ? (
+          <Blocked bans={bans} busy={busy} run={run} />
+        ) : shown.length === 0 ? (
+          <p className="border-t border-border py-12 text-center text-muted-foreground">{t("peers.empty")}</p>
+        ) : (
+          <ul className="divide-y divide-border border-t border-border">
+            {/* Column heads over the rows' grid */}
+            <li className={`grid ${ROW} gap-3 px-5 pt-2.5 pb-2 text-xs font-medium text-muted-foreground`} aria-hidden>
+              <span className="col-start-3">{t("peers.col.client")}</span>
+              <span>{t("peers.col.address")}</span>
+              <span className="text-right">{t("peers.col.latency")}</span>
+            </li>
+            <AnimatePresence initial={false}>
+              {shown.map((p) => (
+                <PeerRow
+                  key={p.fullId}
+                  peer={p}
+                  open={expanded === p.fullId}
+                  onToggle={() => setExpanded((e) => (e === p.fullId ? null : p.fullId))}
+                  busy={busy}
+                  run={run}
+                />
+              ))}
+            </AnimatePresence>
+          </ul>
+        )}
+      </Swapping>
     </div>
   );
 }
@@ -306,36 +311,56 @@ function PeerRow({
       <AnimatePresence initial={false}>
         {open && (
           <Unfold>
-            <DetailCard>
-              <dl className="space-y-2.5">
-                {/* The client's own string, which the row above summarises */}
-                <Detail label={t("overview.client")} value={p.name} wrap />
-                <Detail label={t("peers.fullId")} value={p.fullId} copy />
-                {/* v2 nodes have no enode URL: leave the row out rather than show a dash */}
-                {p.enode && <Detail label={t("peers.enode")} value={p.enode} wrap copy />}
-                <Detail label={t("peers.remoteAddr")} value={p.remoteAddr} />
-                <Detail label={t("peers.localAddr")} value={p.localAddr} />
-                <Detail label={t("peers.network")} value={p.network || "—"} />
-                <Detail label={t("peers.minPing")} value={p.minPingMs ? `${p.minPingMs.toFixed(1)} ms` : "—"} />
-                <div className="grid grid-cols-[120px_1fr_auto] items-center gap-3">
-                  <dt className="text-sm text-muted-foreground">{t("peers.caps")}</dt>
-                  <dd className="flex flex-wrap gap-1">
-                    {p.caps.length > 0 ? (
-                      p.caps.map((c) => (
-                        <Pill key={c} className="font-mono">
-                          {c}
-                        </Pill>
-                      ))
-                    ) : (
-                      <span className="text-sm text-muted-foreground">{t("peers.none")}</span>
+            <Details>
+              {/* Two columns where there's room, as an account's activity:
+                  who the peer is on the left, how it's reached on the right */}
+              <div className="grid items-start gap-3 lg:grid-cols-2">
+                <div className="flex flex-col gap-3">
+                  <Facts>
+                    {/* The client's own string, which the row above summarises */}
+                    <Fact label={t("overview.client")}>
+                      <Mono value={p.name || "—"} />
+                    </Fact>
+                    <Fact label={t("peers.caps")}>
+                      {p.caps.length > 0 ? (
+                        <span className="flex flex-wrap justify-end gap-1">
+                          {p.caps.map((c) => (
+                            <Pill key={c} className="font-mono">
+                              {c}
+                            </Pill>
+                          ))}
+                        </span>
+                      ) : (
+                        t("peers.none")
+                      )}
+                    </Fact>
+                  </Facts>
+                  <Facts>
+                    <Fact label={t("peers.fullId")}>
+                      <Hex value={p.fullId} />
+                    </Fact>
+                    {/* v2 nodes have no enode URL: leave the line out rather than show a dash */}
+                    {p.enode && (
+                      <Fact label={t("peers.enode")}>
+                        <Hex value={p.enode} />
+                      </Fact>
                     )}
-                  </dd>
-                  <span />
+                  </Facts>
                 </div>
-              </dl>
+                <Facts>
+                  <Fact label={t("peers.remoteAddr")}>
+                    <Mono value={p.remoteAddr} copy />
+                  </Fact>
+                  <Fact label={t("peers.localAddr")}>
+                    <Mono value={p.localAddr} />
+                  </Fact>
+                  <Fact label={t("peers.network")}>{p.network || "—"}</Fact>
+                  <Fact label={t("peers.minPing")}>{p.minPingMs ? `${p.minPingMs.toFixed(1)} ms` : "—"}</Fact>
+                </Facts>
+              </div>
 
               {/* What can be done about this peer */}
-              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+              <div className="flex flex-wrap items-center gap-2">
                 <Action
                   busy={busy === `disconnect:${id}`}
                   disabled={!!busy}
@@ -376,7 +401,7 @@ function PeerRow({
                   {t("peers.block")}
                 </Action>
               </div>
-            </DetailCard>
+            </Details>
           </Unfold>
         )}
       </AnimatePresence>
@@ -407,7 +432,7 @@ function AddPeer({ busy, onAdd, onCancel }: { busy: boolean; onAdd: (target: str
           autoFocus
           aria-label={t("peers.add")}
         />
-        <button type="button" className="btn btn-tinted" onClick={onCancel}>
+        <button type="button" className="btn btn-secondary" onClick={onCancel}>
           {t("common.cancel")}
         </button>
         <button type="submit" className="btn btn-primary" disabled={busy || !value.trim()}>

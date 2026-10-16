@@ -8,8 +8,10 @@ import { useT } from "../../i18n";
 import { Segmented } from "../../components/ui/Segmented";
 import { Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
+import { Swapping } from "../../components/ui/Swapping";
 import { IconBadge } from "../../components/ui/IconBadge";
-import { Detail, DetailCard, Unfold } from "./parts";
+import { Fact, Facts } from "../../components/ui/Panel";
+import { Details, Hex, Party, Unfold } from "./parts";
 
 type Filter = "all" | "pending" | "queued";
 
@@ -120,33 +122,36 @@ export default function MempoolList({ known }: { known?: { pending: number; queu
         </Notice>
       )}
 
-      {!view && !knownEmpty ? (
-        <Placeholder rows={Math.min(Math.max(total, 1), 6)} />
-      ) : knownEmpty || shown.length === 0 ? (
-        <p className="border-t border-border py-12 text-center text-muted-foreground">
-          {search || filter !== "all" ? t("mempool.noMatch") : t("mempool.empty")}
-        </p>
-      ) : (
-        <ul className="divide-y divide-border border-t border-border">
-          {/* Column heads over the rows' grid */}
-          <li className={`grid ${ROW} gap-3 px-5 pt-2.5 pb-2 text-xs font-medium text-muted-foreground`} aria-hidden>
-            <span className="col-start-3">{t("mempool.col.tx")}</span>
-            <span>{t("mempool.col.parties")}</span>
-            <span className="text-right">{t("mempool.value")}</span>
-            <span className="text-right">{t("mempool.gasPrice")}</span>
-          </li>
-          <AnimatePresence initial={false}>
-            {shown.map((tx) => (
-              <Row
-                key={tx.hash}
-                tx={tx}
-                open={expanded === tx.hash}
-                onToggle={() => setExpanded((h) => (h === tx.hash ? null : tx.hash))}
-              />
-            ))}
-          </AnimatePresence>
-        </ul>
-      )}
+      {/* Switching filter fades one list into the other, its height gliding */}
+      <Swapping swap={filter}>
+        {!view && !knownEmpty ? (
+          <Placeholder rows={Math.min(Math.max(total, 1), 6)} />
+        ) : knownEmpty || shown.length === 0 ? (
+          <p className="border-t border-border py-12 text-center text-muted-foreground">
+            {search || filter !== "all" ? t("mempool.noMatch") : t("mempool.empty")}
+          </p>
+        ) : (
+          <ul className="divide-y divide-border border-t border-border">
+            {/* Column heads over the rows' grid */}
+            <li className={`grid ${ROW} gap-3 px-5 pt-2.5 pb-2 text-xs font-medium text-muted-foreground`} aria-hidden>
+              <span className="col-start-3">{t("mempool.col.tx")}</span>
+              <span>{t("mempool.col.parties")}</span>
+              <span className="text-right">{t("mempool.value")}</span>
+              <span className="text-right">{t("mempool.gasPrice")}</span>
+            </li>
+            <AnimatePresence initial={false}>
+              {shown.map((tx) => (
+                <Row
+                  key={tx.hash}
+                  tx={tx}
+                  open={expanded === tx.hash}
+                  onToggle={() => setExpanded((h) => (h === tx.hash ? null : tx.hash))}
+                />
+              ))}
+            </AnimatePresence>
+          </ul>
+        )}
+      </Swapping>
 
       {view && view.matched > txs.length && (
         <p className="border-t border-border px-5 py-2.5 text-center text-sm text-muted-foreground">
@@ -255,23 +260,40 @@ function Row({ tx, open, onToggle }: { tx: MempoolTx; open: boolean; onToggle: (
       <AnimatePresence initial={false}>
         {open && (
           <Unfold>
-            <DetailCard>
-              <dl className="space-y-2.5">
-                <Detail label={t("mempool.hash")} value={tx.hash} copy />
-                <Detail label={t("mempool.from")} value={tx.from} copy />
-                <Detail label={t("mempool.to")} value={tx.to || t("mempool.creation")} copy={!!tx.to} />
-                <Detail label={t("mempool.nonce")} value={String(tx.nonce)} />
-                <Detail label={t("mempool.value")} value={`${formatLax(tx.valueWei, 18)} LAX`} />
-                <Detail label={t("mempool.gasPrice")} value={formatGwei(tx.gasPriceWei)} />
-                <Detail label={t("mempool.gas")} value={formatInt(tx.gas)} />
-                <Detail label={t("mempool.maxFee")} value={`${formatLax(maxFeeWei(tx), 8)} LAX`} />
-                <Detail
-                  label={t("mempool.data")}
-                  value={tx.dataBytes ? t("mempool.bytes", { n: formatInt(tx.dataBytes) }) : t("peers.none")}
-                />
-                <Detail label={t("mempool.size")} value={t("mempool.bytes", { n: formatInt(tx.sizeBytes) })} />
-              </dl>
-            </DetailCard>
+            <Details>
+              {/* Two columns where there's room, as an account's activity:
+                  who and what it is on the left, what it costs on the right */}
+              <div className="grid items-start gap-3 lg:grid-cols-2">
+                <div className="flex flex-col gap-3">
+                  <Facts>
+                    <Fact label={t("mempool.from")}>
+                      <Party address={tx.from} />
+                    </Fact>
+                    <Fact label={t("mempool.to")}>{tx.to ? <Party address={tx.to} /> : t("mempool.creation")}</Fact>
+                  </Facts>
+                  <Facts>
+                    <Fact label={t("mempool.hash")}>
+                      <Hex value={tx.hash} />
+                    </Fact>
+                    <Fact label={t("mempool.nonce")}>{formatInt(tx.nonce)}</Fact>
+                    <Fact label={t("mempool.data")}>
+                      {tx.dataBytes ? t("mempool.bytes", { n: formatInt(tx.dataBytes) }) : t("peers.none")}
+                    </Fact>
+                  </Facts>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Facts>
+                    <Fact label={t("mempool.value")}>{formatLax(tx.valueWei, 18)} LAX</Fact>
+                    <Fact label={t("mempool.maxFee")}>{formatLax(maxFeeWei(tx), 18)} LAX</Fact>
+                    <Fact label={t("mempool.gasPrice")}>{formatGwei(tx.gasPriceWei)}</Fact>
+                    <Fact label={t("mempool.gas")}>{formatInt(tx.gas)}</Fact>
+                  </Facts>
+                  <Facts>
+                    <Fact label={t("mempool.size")}>{t("mempool.bytes", { n: formatInt(tx.sizeBytes) })}</Fact>
+                  </Facts>
+                </div>
+              </div>
+            </Details>
           </Unfold>
         )}
       </AnimatePresence>

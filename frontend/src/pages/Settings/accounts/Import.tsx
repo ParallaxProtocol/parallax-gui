@@ -1,13 +1,12 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useId, useRef, useState } from "react";
 import { FileKey2, Loader2, TriangleAlert } from "lucide-react";
 import { api, SeedCandidate, SeedScheme, walletError } from "../../../lib/api";
-import { FADE_IN, FADE_OUT, SPRING } from "../../../lib/motion";
 import { useWallet } from "../../../lib/wallet";
 import { useT } from "../../../i18n";
 import { Notice } from "../../../components/ui/bits";
 import { Panel, Row, Rows } from "../../../components/ui/Panel";
 import { Segmented } from "../../../components/ui/Segmented";
+import { Swapping } from "../../../components/ui/Swapping";
 import { PasswordInput } from "../../Wallet/common";
 import { useBusy, useDefaultName, useNamePicks } from "../../Wallet/accountActions";
 import { PhraseInput } from "../../Wallet/Phrase";
@@ -164,39 +163,6 @@ export function ImportKey({ lead, onBack, onDone }: { lead: string; onBack: () =
         </StepFooter>
       </Step>
     </SettingsFlow>
-  );
-}
-
-/**
- * Swapping changes what it holds as the switch above it changes: the old
- * fading out as the new fades in, and its height gliding from the one's
- * to the other's.
- */
-function Swapping({ swap, children }: { swap: string; children: ReactNode }) {
-  const inner = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number | "auto">("auto");
-  useLayoutEffect(() => {
-    const el = inner.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setHeight(el.offsetHeight));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return (
-    <motion.div className="relative overflow-hidden" initial={false} animate={{ height }} transition={SPRING}>
-      <div ref={inner}>
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.div
-            key={swap}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: FADE_IN }}
-            exit={{ opacity: 0, transition: FADE_OUT }}
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    </motion.div>
   );
 }
 
