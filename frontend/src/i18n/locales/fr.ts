@@ -579,6 +579,8 @@ const fr: Dict = {
   "wallet.review.feeDetail": "{gas} gas à {price}",
   "wallet.review.total": "Total",
   "wallet.review.toSelf": "Cet envoi est destiné au même compte : seuls les frais sont dépensés.",
+  "wallet.review.ownAccount": "Votre compte",
+  "wallet.review.contact": "Contact",
   "wallet.review.toContract":
     "Le destinataire est un contrat. Il exécute du code lorsqu'il reçoit des LAX ; assurez-vous qu'il est prévu pour cela.",
   "wallet.review.dear": "Ce prix est plus de trois fois supérieur aux {price} suggérés par votre nœud.",
@@ -690,6 +692,10 @@ const fr: Dict = {
   "wallet.err.nodeStopped": "Connectez-vous pour envoyer.",
   "wallet.err.syncing": "Attendez que le nœud ait fini de se synchroniser avant d'envoyer.",
   "wallet.err.noPeers": "Le nœud n'a encore aucun pair auquel relayer une transaction.",
+  "wallet.send.syncing": "Synchronisation…",
+  "wallet.send.findingPeers": "Recherche de pairs…",
+  "wallet.send.connectHint":
+    "L’envoi passe par votre nœud. Connectez-le pour vérifier cet envoi ; ce que vous avez saisi est conservé.",
   "wallet.err.insufficient": "Le solde ne couvre pas le montant et les frais.",
   "wallet.err.seedExists": "Cette phrase de récupération est déjà dans le portefeuille.",
   "wallet.err.badMnemonic": "Phrase de récupération non valide. Vérifiez chaque mot et leur ordre.",

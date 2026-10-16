@@ -28,7 +28,13 @@ import Sidebar from "./components/shell/Sidebar";
 import { SidebarProvider } from "./lib/SidebarProvider";
 import Toolbar from "./components/shell/Toolbar";
 import { TOOLBAR_HEIGHT } from "./lib/layout";
-import NodeBar, { NODE_BAR_ROOM, NodeSheetProvider, OfflineBar, useNodeSheet } from "./components/shell/NodeBar";
+import NodeBar, {
+  NODE_BAR_ROOM,
+  NodeSheetProvider,
+  NodeSwitchProvider,
+  OfflineBar,
+  useNodeSheet,
+} from "./components/shell/NodeBar";
 import TopBar from "./components/shell/TopBar";
 import SettingsSheet, {
   SettingsSheetProvider,
@@ -159,17 +165,19 @@ export default function App() {
                 <NotificationsProvider>
                   <UpdateProvider>
                     <NodeSheetProvider>
-                      <SidebarProvider>
-                        <SettingsSheetProvider>
-                          <AssistantProvider enabled={!offline}>
-                            <DesktopBehaviors {...desktop} />
-                            {/* The whole window, behind the lock screen while the wallet is locked */}
-                            <LockGate>
-                              <Shell offline={offline} animate={!animationsDisabled} />
-                            </LockGate>
-                          </AssistantProvider>
-                        </SettingsSheetProvider>
-                      </SidebarProvider>
+                      <NodeSwitchProvider>
+                        <SidebarProvider>
+                          <SettingsSheetProvider>
+                            <AssistantProvider enabled={!offline}>
+                              <DesktopBehaviors {...desktop} />
+                              {/* The whole window, behind the lock screen while the wallet is locked */}
+                              <LockGate>
+                                <Shell offline={offline} animate={!animationsDisabled} />
+                              </LockGate>
+                            </AssistantProvider>
+                          </SettingsSheetProvider>
+                        </SidebarProvider>
+                      </NodeSwitchProvider>
                     </NodeSheetProvider>
                   </UpdateProvider>
                 </NotificationsProvider>

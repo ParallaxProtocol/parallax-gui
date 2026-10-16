@@ -44,10 +44,12 @@ export function GroupedAddress({
       <span key={from + k}>
         {group(from + k)}
         {from + k < to - 1 && gap}
+        {/* Wrapped, a line breaks only between groups */}
+        {wrap && from + k < to - 1 && <wbr />}
       </span>
     ));
   return (
-    <span className={`selectable font-mono ${wrap ? "break-all" : "whitespace-nowrap"} ${className}`}>
+    <span className={`selectable font-mono ${wrap ? "" : "whitespace-nowrap"} ${className}`}>
       <span className="opacity-55">0x</span>
       {gap}
       {cut ? (

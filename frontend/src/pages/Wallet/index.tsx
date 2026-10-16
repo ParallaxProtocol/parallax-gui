@@ -11,6 +11,7 @@ import {
   Download,
   Eye,
   HardDrive,
+  History,
   KeyRound,
   Lock,
   Plus,
@@ -301,7 +302,8 @@ function Overview() {
         <Panel className="overflow-hidden">
           {confirmed.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-14 text-center text-muted-foreground">
-              <EmptySymbol icon={NODE_ICON} />
+              {/* The node's tower when it's off, the reason; an account's history otherwise, only empty */}
+              <EmptySymbol icon={running ? History : NODE_ICON} />
               <p>{!running ? t("wallet.activityOffline") : view ? t("wallet.activityEmpty") : "…"}</p>
             </div>
           ) : (

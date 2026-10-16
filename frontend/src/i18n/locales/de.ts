@@ -586,6 +586,8 @@ const de: Dict = {
   "wallet.review.feeDetail": "{gas} Gas zu je {price}",
   "wallet.review.total": "Gesamt",
   "wallet.review.toSelf": "Dies sendet an dasselbe Konto: Nur die Gebühr wird ausgegeben.",
+  "wallet.review.ownAccount": "Ihr Konto",
+  "wallet.review.contact": "Kontakt",
   "wallet.review.toContract":
     "Der Empfänger ist ein Vertrag. Er führt Code aus, wenn er LAX erhält; stellen Sie sicher, dass er dafür vorgesehen ist.",
   "wallet.review.dear": "Dieser Preis ist mehr als dreimal so hoch wie die {price}, die Ihr Node vorschlägt.",
@@ -695,6 +697,10 @@ const de: Dict = {
   "wallet.err.nodeStopped": "Verbinden Sie sich, um zu senden.",
   "wallet.err.syncing": "Warten Sie vor dem Senden, bis der Node die Synchronisierung abgeschlossen hat.",
   "wallet.err.noPeers": "Der Node hat noch keine Peers, an die er eine Transaktion weiterleiten kann.",
+  "wallet.send.syncing": "Synchronisiert…",
+  "wallet.send.findingPeers": "Sucht Peers…",
+  "wallet.send.connectHint":
+    "Gesendet wird über Ihren Node. Verbinden Sie ihn, um diese Zahlung zu prüfen; Ihre Eingaben bleiben erhalten.",
   "wallet.err.insufficient": "Das Guthaben deckt Betrag und Gebühr nicht.",
   "wallet.err.seedExists": "Diese Wiederherstellungsphrase ist bereits in der Wallet.",
   "wallet.err.badMnemonic": "Keine gültige Wiederherstellungsphrase. Prüfen Sie jedes Wort und deren Reihenfolge.",

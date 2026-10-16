@@ -20,7 +20,7 @@ import { Counter } from "../ui/Counter";
 import { Tooltip } from "../ui/Tooltip";
 import { TOP_BAR_HEIGHT } from "./TopBar";
 import { useAssistant } from "../../lib/assistantContext";
-import { NodeSwitchContext } from "../../lib/nodeSwitch";
+import { NodeSwitchContext, useNodeSwitch } from "../../lib/nodeSwitch";
 import { BAR_FADE, BAR_GLASS, BAR_SURFACE } from "./barSurface";
 
 const NodePage = lazy(() => import("../../pages/Overview"));
@@ -55,6 +55,29 @@ export function NodeSheetProvider({ children }: { children: ReactNode }) {
 
 export const useNodeSheet = () => useContext(SheetContext);
 
+/** NodeSwitchProvider holds the node's power switch for the whole shell: the bar, the node's page and Send's Connect show one state. */
+export function NodeSwitchProvider({ children }: { children: ReactNode }) {
+  const node = useNode();
+  const refresh = useRefresh();
+  const running = !!node?.running;
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const toggle = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      if (running) await api.stopNode();
+      else await api.startNode();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+      refresh();
+    }
+  };
+  return <NodeSwitchContext.Provider value={{ busy, err, toggle }}>{children}</NodeSwitchContext.Provider>;
+}
+
 /**
  * NodeBar floats along the window's foot, under the sidebar too: the node at
  * a glance from every page (its state, the sync's progress, the best
@@ -67,12 +90,11 @@ export const useNodeSheet = () => useContext(SheetContext);
 export default function NodeBar() {
   const t = useT();
   const node = useNode();
-  const refresh = useRefresh();
   const { open, setOpen } = useNodeSheet();
   const state = nodeState(node);
   const progress = syncProgress(node);
   const running = !!node?.running;
-  const [busy, setBusy] = useState(false);
+  const { busy, err, toggle } = useNodeSwitch();
   // The window's height, which the open panel fills under the title bar
   const [vh, setVh] = useState(window.innerHeight);
   useEffect(() => {
@@ -80,7 +102,6 @@ export default function NodeBar() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  const [err, setErr] = useState<string | null>(null);
   // The assistant bar sits at the right end of the foot: this bar keeps
   // clear of it, moving aside as it opens on a request. Opened into the
   // node's page it takes the whole width, the assistant bar stepping
@@ -98,19 +119,6 @@ export default function NodeBar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, setOpen]);
 
-  const toggle = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      if (running) await api.stopNode();
-      else await api.startNode();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
-      refresh();
-    }
-  };
   const switchLabel = busy
     ? running
       ? t("node.stopping")
@@ -121,8 +129,7 @@ export default function NodeBar() {
   const openLabel = open ? t("node.collapse") : t("node.expand");
 
   return (
-    // The switch is the page's too: its button and this bar's show one state
-    <NodeSwitchContext.Provider value={{ busy, err, toggle }}>
+    <>
       <motion.section
         aria-label={t("nav.network")}
         // At rest the cards' glass, as the empty wallet's Settings pill, lit under the pointer as it opens on a click; opened, the page's thicker glass
@@ -267,7 +274,7 @@ export default function NodeBar() {
           )}
         </AnimatePresence>
       </motion.section>
-    </NodeSwitchContext.Provider>
+    </>
   );
 }
 

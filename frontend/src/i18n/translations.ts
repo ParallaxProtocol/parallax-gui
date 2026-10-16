@@ -874,6 +874,8 @@ export const en: Dict = {
   "wallet.review.feeDetail": "{gas} gas at {price}",
   "wallet.review.total": "Total",
   "wallet.review.toSelf": "This sends to the same account: only the fee is spent.",
+  "wallet.review.ownAccount": "Your account",
+  "wallet.review.contact": "Contact",
   "wallet.review.toContract":
     "The recipient is a contract. It runs code when it receives LAX; make sure it is meant to.",
   "wallet.review.dear": "This price is more than three times the {price} your node suggests.",
@@ -981,6 +983,9 @@ export const en: Dict = {
   "wallet.err.nodeStopped": "Connect to send.",
   "wallet.err.syncing": "Wait for the node to finish syncing before sending.",
   "wallet.err.noPeers": "The node has no peers yet to relay a transaction to.",
+  "wallet.send.syncing": "Syncing…",
+  "wallet.send.findingPeers": "Finding peers…",
+  "wallet.send.connectHint": "Sending goes through your node. Connect it to review this send; what you've typed stays.",
   "wallet.err.insufficient": "The balance doesn't cover the amount and the fee.",
   "wallet.err.seedExists": "This recovery phrase is already in the wallet.",
   "wallet.err.badMnemonic": "Not a valid recovery phrase. Check each word and their order.",

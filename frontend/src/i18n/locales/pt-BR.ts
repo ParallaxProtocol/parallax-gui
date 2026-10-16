@@ -577,6 +577,8 @@ const ptBR: Dict = {
   "wallet.review.feeDetail": "{gas} de gas a {price}",
   "wallet.review.total": "Total",
   "wallet.review.toSelf": "Isto envia para a mesma conta: só a taxa é gasta.",
+  "wallet.review.ownAccount": "Sua conta",
+  "wallet.review.contact": "Contato",
   "wallet.review.toContract":
     "O destinatário é um contrato. Ele executa código ao receber LAX; confirme que ele foi feito para isso.",
   "wallet.review.dear": "Este preço é mais de três vezes os {price} que seu nó sugere.",
@@ -684,6 +686,10 @@ const ptBR: Dict = {
   "wallet.err.nodeStopped": "Conecte-se para enviar.",
   "wallet.err.syncing": "Espere o nó terminar de sincronizar antes de enviar.",
   "wallet.err.noPeers": "O nó ainda não tem pares para os quais retransmitir uma transação.",
+  "wallet.send.syncing": "Sincronizando…",
+  "wallet.send.findingPeers": "Procurando pares…",
+  "wallet.send.connectHint":
+    "O envio passa pelo seu nó. Conecte-o para revisar este envio; o que você digitou continua aqui.",
   "wallet.err.insufficient": "O saldo não cobre o valor e a taxa.",
   "wallet.err.seedExists": "Esta frase de recuperação já está na carteira.",
   "wallet.err.badMnemonic": "Frase de recuperação inválida. Verifique cada palavra e a ordem delas.",

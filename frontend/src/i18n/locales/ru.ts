@@ -577,6 +577,8 @@ const ru: Dict = {
   "wallet.review.feeDetail": "{gas} газа по {price}",
   "wallet.review.total": "Итого",
   "wallet.review.toSelf": "Отправка на этот же аккаунт: тратится только комиссия.",
+  "wallet.review.ownAccount": "Ваш аккаунт",
+  "wallet.review.contact": "Контакт",
   "wallet.review.toContract":
     "Получатель — контракт. При получении LAX он выполняет код; убедитесь, что он для этого предназначен.",
   "wallet.review.dear": "Эта цена более чем втрое выше {price}, предлагаемых вашим узлом.",
@@ -685,6 +687,10 @@ const ru: Dict = {
   "wallet.err.nodeStopped": "Подключитесь, чтобы отправить.",
   "wallet.err.syncing": "Дождитесь окончания синхронизации узла, прежде чем отправлять.",
   "wallet.err.noPeers": "У узла пока нет пиров, которым можно передать транзакцию.",
+  "wallet.send.syncing": "Синхронизация…",
+  "wallet.send.findingPeers": "Поиск пиров…",
+  "wallet.send.connectHint":
+    "Отправка идёт через ваш узел. Подключите его, чтобы проверить перевод; введённое сохранится.",
   "wallet.err.insufficient": "Баланса не хватает на сумму и комиссию.",
   "wallet.err.seedExists": "Эта фраза восстановления уже есть в кошельке.",
   "wallet.err.badMnemonic": "Недействительная фраза восстановления. Проверьте каждое слово и их порядок.",

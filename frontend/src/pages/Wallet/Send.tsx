@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
@@ -15,13 +15,23 @@ import {
   X,
 } from "lucide-react";
 import { api, SendQuote, SentTx, SigningRequest, walletError, type AddressView } from "../../lib/api";
-import { formatGwei, formatInt, formatUnits, isAddress, parseUnits, sameAddress, shortHex } from "../../lib/format";
+import {
+  formatGwei,
+  formatInt,
+  formatPercent,
+  formatUnits,
+  isAddress,
+  parseUnits,
+  sameAddress,
+  shortHex,
+} from "../../lib/format";
 import { useContacts } from "../../lib/contacts";
 import { FADE_IN, FADE_OUT, POPUP, POPUP_ROW, POPUP_ROWS, SPRING, useStagger } from "../../lib/motion";
 import { DocCard } from "../../components/offline/parts";
 import { docFileName } from "../../lib/offline";
 import { BroadcastFlow } from "../Offline/Broadcast";
-import { useNode } from "../../lib/live";
+import { syncProgress, useNode } from "../../lib/live";
+import { useNodeSwitch } from "../../lib/nodeSwitch";
 import { PAGE } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { ToolbarAccessory } from "../../lib/toolbar";
@@ -29,6 +39,7 @@ import { useAgo, useT } from "../../i18n";
 import { Panel, Property, Rows } from "../../components/ui/Panel";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Segmented } from "../../components/ui/Segmented";
+import { Pill } from "../../components/ui/Pill";
 import { Address, DrawnCheck, Field, useSummary } from "./common";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { Steps } from "./flow";
@@ -293,15 +304,72 @@ function FeeSwitch({
   );
 }
 
+type NotReady = { kind: "stopped" | "noPeers" | "syncing"; hint: string };
+
 /** The node's readiness to send: why not, or null when it can. */
-function useNotReady(): string | null {
+function useNotReady(): NotReady | null {
   const t = useT();
   const node = useNode();
-  if (!node?.running) return t("wallet.err.nodeStopped");
+  if (!node?.running) return { kind: "stopped", hint: t("wallet.send.connectHint") };
   // The development chain has no peers: it seals what it is sent itself
-  if (node.peers === 0 && !node.devChain) return t("wallet.err.noPeers");
-  if (node.syncing) return t("wallet.err.syncing");
+  if (node.peers === 0 && !node.devChain) return { kind: "noPeers", hint: t("wallet.err.noPeers") };
+  if (node.syncing) return { kind: "syncing", hint: t("wallet.err.syncing") };
   return null;
+}
+
+/**
+ * SendButton is the form's one button: Review once the node can send.
+ * Before, it says why not where the eye already is: Connect while the node
+ * is off, a click away, or what the node is waiting on, with the reason
+ * under it. What's typed stays meanwhile.
+ */
+function SendButton({ notReady, ready, busy }: { notReady: NotReady | null; ready: boolean; busy: boolean }) {
+  const t = useT();
+  const node = useNode();
+  const { busy: connecting, err, toggle: connect } = useNodeSwitch();
+  const progress = syncProgress(node);
+
+  let button: ReactNode;
+  if (notReady?.kind === "stopped") {
+    button = (
+      <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={connect} disabled={connecting}>
+        {connecting && <Loader2 className="size-4 animate-spin" />}
+        {connecting ? t("node.starting") : t("node.start")}
+      </button>
+    );
+  } else if (notReady) {
+    button = (
+      <button type="button" className="btn btn-primary btn-lg min-w-64" disabled>
+        <Loader2 className="size-4 animate-spin" />
+        {notReady.kind === "syncing" ? t("wallet.send.syncing") : t("wallet.send.findingPeers")}
+        {notReady.kind === "syncing" && progress > 0 && <span className="tabular-nums">{formatPercent(progress)}</span>}
+      </button>
+    );
+  } else {
+    button = (
+      <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!ready || busy}>
+        {busy && <Loader2 className="size-4 animate-spin" />}
+        {t("wallet.send.review")}
+        {!busy && <ArrowRight className="size-4" />}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-2.5">
+      {notReady?.kind === "stopped" && err && (
+        <Notice tone="critical" className="w-full">
+          {err}
+        </Notice>
+      )}
+      {button}
+      {notReady && (
+        <p className="max-w-md text-center text-sm text-muted-foreground" role="status">
+          {notReady.hint}
+        </p>
+      )}
+    </div>
+  );
 }
 
 function SendForm({
@@ -372,8 +440,6 @@ function SendForm({
         review();
       }}
     >
-      {notReady && <Notice tone="info">{notReady}</Notice>}
-
       {/* The amount, large, as the page's subject */}
       <GlowCard>
         <div className="flex flex-col items-center gap-3 py-4">
@@ -439,13 +505,7 @@ function SendForm({
       </Panel>
 
       {error && <Notice tone="critical">{error}</Notice>}
-      <div className="flex justify-center">
-        <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!ready || busy !== null}>
-          {busy === "quote" && <Loader2 className="size-4 animate-spin" />}
-          {t("wallet.send.review")}
-          {busy !== "quote" && <ArrowRight className="size-4" />}
-        </button>
-      </div>
+      <SendButton notReady={notReady} ready={ready} busy={busy !== null} />
     </form>
   );
 }
@@ -467,7 +527,16 @@ function Review({
 }) {
   const t = useT();
   const { byAddress } = useContacts();
-  const contact = byAddress(quote.to);
+  const { info } = useWallet();
+  // Named where the wallet knows it: one of its own accounts first, as Sent names it, else a contact
+  const own = info?.accounts.find((a) => sameAddress(a.address, quote.to));
+  const named =
+    own && info
+      ? { name: accountLabel(own, info.accounts, t), kind: t("wallet.review.ownAccount") }
+      : (() => {
+          const c = byAddress(quote.to);
+          return c ? { name: c.name, kind: t("wallet.review.contact") } : null;
+        })();
   const [memo, setMemo] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -531,21 +600,24 @@ function Review({
               <span className="text-3xl font-medium text-muted-foreground">LAX</span>
             </span>
           </div>
-          <div className="flex w-full max-w-md flex-col items-center gap-2">
+          <div className="flex w-full max-w-2xl flex-col items-center gap-2">
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <ArrowDown className="size-3.5" />
               {t("wallet.send.to")}
             </span>
-            {contact ? (
-              // A saved contact: its name is what to recognise, its address a
-              // line under it to match against the book
+            {named ? (
+              // One of the wallet's accounts or a contact: its name is what to
+              // recognise, what it is beside it, its whole address under it to check
               <span className="flex items-center gap-3.5 rounded-2xl bg-muted px-5 py-3.5">
                 <AddressAvatar address={quote.to} size={40} />
-                <span className="flex min-w-0 flex-col items-start">
-                  <span className="max-w-full truncate text-2xl font-semibold tracking-tight">{contact.name}</span>
-                  <span className="selectable font-mono text-sm text-muted-foreground">
-                    {shortHex(quote.to, 10, 8)}
+                <span className="flex min-w-0 flex-col items-start gap-0.5">
+                  <span className="flex max-w-full items-center gap-2">
+                    <span className="truncate text-2xl font-semibold tracking-tight">{named.name}</span>
+                    <Pill tone="brand" className="shrink-0">
+                      {named.kind}
+                    </Pill>
                   </span>
+                  <Address value={quote.to} className="text-left text-sm text-muted-foreground" />
                 </span>
               </span>
             ) : (
