@@ -124,7 +124,7 @@ export default function NodeInfo({
                       }
                     />
                     <Stat
-                      label={t("details.clientVersion")}
+                      label={t("details.daemonVersion")}
                       value={
                         <Tooltip content={d.clientName} mono>
                           <span>v{d.daemonRelease}</span>

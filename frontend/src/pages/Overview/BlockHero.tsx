@@ -1,13 +1,14 @@
-import { useState } from "react";
 import { motion } from "motion/react";
-import { Loader2, Power } from "lucide-react";
-import { api, BlockView, NodeStatus } from "../../lib/api";
+import { Loader2 } from "lucide-react";
+import type { BlockView, NodeStatus } from "../../lib/api";
 import { formatInt, TARGET_BLOCK_SECONDS } from "../../lib/format";
-import { nodeState, syncProgress, useBlocks, useNode, useRefresh } from "../../lib/live";
+import { nodeState, syncProgress, useBlocks, useNode } from "../../lib/live";
 import { STAGGER, useStagger } from "../../lib/motion";
+import { useNodeSwitch } from "../../lib/nodeSwitch";
 import { useNow } from "../../lib/useNow";
 import { useT } from "../../i18n";
-import { BrandMark } from "../../components/ui/BrandMark";
+import { Glow } from "../../components/ui/Glow";
+import { LogoMark } from "../../components/ui/LogoMark";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { Counter } from "../../components/ui/Counter";
 import { Indicator, type Grade } from "../../components/ui/Indicator";
@@ -34,44 +35,40 @@ export default function BlockHero() {
 export function Stopped() {
   const t = useT();
   const stagger = useStagger();
-  const refresh = useRefresh();
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  // Shared with the node bar above, so a start from either shows on both
+  const { busy, err, toggle: start } = useNodeSwitch();
 
-  const start = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      await api.startNode();
-    } catch (e: any) {
-      setErr(e?.message || String(e));
-    } finally {
-      setBusy(false);
-      refresh();
-    }
-  };
-
+  // Laid out as the greeting's pages: the glow behind, the mark, a big
+  // title over a line, and the one button
   return (
-    <motion.div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center" {...stagger}>
-      <motion.div variants={STAGGER.item} className="mb-2">
-        <BrandMark size={64} />
+    <div className="relative h-full overflow-hidden">
+      <Glow />
+      <motion.div
+        className="relative flex h-full flex-col items-center justify-center gap-8 p-8 text-center"
+        {...stagger}
+      >
+        <motion.div variants={STAGGER.item} className="flex flex-col items-center gap-6">
+          <LogoMark size={72} />
+          <div className="flex flex-col items-center gap-3">
+            <h2 className="text-4xl font-semibold tracking-tight">{t("overview.stopped.title")}</h2>
+            <p className="max-w-md text-muted-foreground">{t("overview.stopped.desc")}</p>
+          </div>
+        </motion.div>
+        {err && (
+          <motion.div variants={STAGGER.item} className="w-full max-w-md">
+            <Notice tone="critical" className="text-left">
+              {err}
+            </Notice>
+          </motion.div>
+        )}
+        <motion.div variants={STAGGER.item}>
+          <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={start} disabled={busy} autoFocus>
+            {busy && <Loader2 className="size-4 animate-spin" />}
+            {busy ? t("node.starting") : t("node.start")}
+          </button>
+        </motion.div>
       </motion.div>
-      <motion.div variants={STAGGER.item} className="flex max-w-sm flex-col gap-1.5">
-        <h2 className="text-3xl font-semibold tracking-tight">{t("overview.stopped.title")}</h2>
-        <p className="text-muted-foreground">{t("overview.stopped.desc")}</p>
-      </motion.div>
-      <motion.div variants={STAGGER.item}>
-        <button type="button" className="btn btn-primary btn-lg min-w-56" onClick={start} disabled={busy}>
-          {busy ? <Loader2 className="size-4 animate-spin" /> : <Power className="size-4" />}
-          {busy ? t("node.starting") : t("node.start")}
-        </button>
-      </motion.div>
-      {err && (
-        <Notice tone="critical" className="max-w-md text-left">
-          {err}
-        </Notice>
-      )}
-    </motion.div>
+    </div>
   );
 }
 

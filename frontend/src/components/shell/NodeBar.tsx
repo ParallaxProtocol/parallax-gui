@@ -12,6 +12,7 @@ import { Tooltip } from "../ui/Tooltip";
 import { IconBadge } from "../ui/IconBadge";
 import { TOP_BAR_HEIGHT } from "./TopBar";
 import { useAssistant } from "../../lib/assistantContext";
+import { NodeSwitchContext } from "../../lib/nodeSwitch";
 import { BAR_FADE, BAR_GLASS, BAR_SURFACE } from "./barSurface";
 
 const NodePage = lazy(() => import("../../pages/Overview"));
@@ -106,129 +107,137 @@ export default function NodeBar({ version }: { version: string }) {
   const openLabel = open ? t("node.collapse") : t("node.expand");
 
   return (
-    <motion.section
-      aria-label={t("nav.node")}
-      // At rest the cards' glass, as the empty wallet's Settings pill, lit under the pointer as it opens on a click; opened, the page's thicker glass
-      className={`no-drag fixed z-40 flex flex-col overflow-hidden ${open ? BAR_SURFACE : `${BAR_GLASS} hover:bg-[var(--glass-hover)]`} ${BAR_FADE}`}
-      style={{ left: NODE_BAR_GAP, bottom: NODE_BAR_GAP, borderRadius: 16 }}
-      initial={false}
-      animate={{
-        right,
-        height: open ? Math.max(NODE_BAR_HEIGHT, vh - TOP_BAR_HEIGHT - NODE_BAR_GAP) : NODE_BAR_HEIGHT,
-      }}
-      transition={{ type: "spring", bounce: 0, visualDuration: 0.35 }}
-    >
-      {/* The bar: a click anywhere on it opens the page, whose header it then is */}
-      <div
-        className={`flex shrink-0 items-center gap-5 border-b pr-3 pl-3 text-sm text-muted-foreground tabular-nums transition-colors ${
-          open ? "border-border" : "cursor-pointer border-transparent"
-        }`}
-        style={{ height: NODE_BAR_HEIGHT }}
-        onClick={(e) => {
-          if (!open && !(e.target as HTMLElement).closest("button")) setOpen(true);
+    // The switch is the page's too: its button and this bar's show one state
+    <NodeSwitchContext.Provider value={{ busy, err, toggle }}>
+      <motion.section
+        aria-label={t("nav.network")}
+        // At rest the cards' glass, as the empty wallet's Settings pill, lit under the pointer as it opens on a click; opened, the page's thicker glass
+        className={`no-drag fixed z-40 flex flex-col overflow-hidden ${open ? BAR_SURFACE : `${BAR_GLASS} hover:bg-[var(--glass-hover)]`} ${BAR_FADE}`}
+        style={{ left: NODE_BAR_GAP, bottom: NODE_BAR_GAP, borderRadius: 16 }}
+        initial={false}
+        animate={{
+          right,
+          height: open ? Math.max(NODE_BAR_HEIGHT, vh - TOP_BAR_HEIGHT - NODE_BAR_GAP) : NODE_BAR_HEIGHT,
         }}
+        transition={{ type: "spring", bounce: 0, visualDuration: 0.35 }}
       >
-        {/* What the node is doing: its badge, with the live dot on it, the
+        {/* The bar: a click anywhere on it opens the page, whose header it then is */}
+        <div
+          className={`flex shrink-0 items-center gap-5 border-b pr-3 pl-3 text-sm text-muted-foreground tabular-nums transition-colors ${
+            open ? "border-border" : "cursor-pointer border-transparent"
+          }`}
+          style={{ height: NODE_BAR_HEIGHT }}
+          onClick={(e) => {
+            if (!open && !(e.target as HTMLElement).closest("button")) setOpen(true);
+          }}
+        >
+          {/* What the node is doing: its badge, with the live dot on it, the
             state, and a line of figures under it */}
-        <span className="flex min-w-0 items-center gap-3">
-          <span className="relative shrink-0">
-            <IconBadge icon={Server} />
-            <span className="absolute -right-0.5 -bottom-0.5 grid place-items-center rounded-full bg-popover p-[3px]">
-              <Indicator grade={STATE_GRADE[state]} ping={running} cause={state} />
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="relative shrink-0">
+              <IconBadge icon={Server} />
+              <span className="absolute -right-0.5 -bottom-0.5 grid place-items-center rounded-full bg-popover p-[3px]">
+                <Indicator grade={STATE_GRADE[state]} ping={running} cause={state} />
+              </span>
             </span>
-          </span>
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate text-[15px] font-semibold text-foreground">
-              {open ? t("nav.node") : t(`node.state.${state}`)}
-            </span>
-            <span className="truncate text-sm">
-              {running ? (
-                <>
-                  <Tooltip content={t("clock.bestBlock")}>
-                    <span>
-                      {t("status.block")} <Counter value={node.currentBlock} format={(v) => formatInt(Math.round(v))} />
-                    </span>
-                  </Tooltip>
-                  {" · "}
-                  {t(node.peers === 1 ? "node.peer" : "node.peers", { n: node.peers })}
-                  <span className="hidden lg:inline">
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate text-[15px] font-semibold text-foreground">
+                {open ? t("nav.network") : t(`node.state.${state}`)}
+              </span>
+              <span className="truncate text-sm">
+                {running ? (
+                  <>
+                    <Tooltip content={t("clock.bestBlock")}>
+                      <span>
+                        {t("status.block")}{" "}
+                        <Counter value={node.currentBlock} format={(v) => formatInt(Math.round(v))} />
+                      </span>
+                    </Tooltip>
                     {" · "}
-                    {t("status.uptime", { time: formatDuration(node.uptimeSeconds) })}
-                  </span>
-                </>
-              ) : (
-                node && t("node.offlineHint")
-              )}
+                    {t(node.peers === 1 ? "node.peer" : "node.peers", { n: node.peers })}
+                    <span className="hidden lg:inline">
+                      {" · "}
+                      {t("status.uptime", { time: formatDuration(node.uptimeSeconds) })}
+                    </span>
+                  </>
+                ) : (
+                  // Opened, the page under it says why and offers the switch
+                  node && !open && t("node.offlineHint")
+                )}
+              </span>
             </span>
           </span>
-        </span>
 
-        {running && state === "syncing" && (
-          <span className="flex items-center gap-2.5">
-            <Meter value={progress} live thick className="w-56" label={t("node.state.syncing")} />
-            <Counter
-              value={progress * 100}
-              format={(v) => `${v.toFixed(1)}%`}
-              className="font-medium text-foreground"
-            />
-          </span>
-        )}
+          {running && state === "syncing" && (
+            <span className="flex items-center gap-2.5">
+              <Meter value={progress} live thick className="w-56" label={t("node.state.syncing")} />
+              <Counter
+                value={progress * 100}
+                format={(v) => `${v.toFixed(1)}%`}
+                className="font-medium text-foreground"
+              />
+            </span>
+          )}
 
-        {err && <span className="selectable min-w-0 truncate text-critical-ink">{err}</span>}
+          {/* Opened on a stopped node, the page shows the error by its button */}
+          {err && (running || !open) && <span className="selectable min-w-0 truncate text-critical-ink">{err}</span>}
 
-        <span className="flex-1" />
-        {version && !open && <span className="text-sm text-faint">{version}</span>}
+          <span className="flex-1" />
+          {version && !open && <span className="text-sm text-faint">{version}</span>}
 
-        {running ? (
-          <Tooltip content={switchLabel}>
+          {running ? (
+            <Tooltip content={switchLabel}>
+              <button
+                type="button"
+                className="btn btn-tinted btn-icon"
+                onClick={toggle}
+                disabled={busy || !node}
+                aria-label={switchLabel}
+              >
+                {busy ? <Loader2 className="size-4 animate-spin" /> : <Power className="size-4" />}
+              </button>
+            </Tooltip>
+          ) : (
+            // Opened, the page's own button is the one; a second would compete with it
+            node &&
+            !open && (
+              <button type="button" className="btn btn-primary rounded-full px-4" onClick={toggle} disabled={busy}>
+                {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Power className="size-3.5" />}
+                {switchLabel}
+              </button>
+            )
+          )}
+          <Tooltip content={openLabel}>
             <button
               type="button"
               className="btn btn-tinted btn-icon"
-              onClick={toggle}
-              disabled={busy || !node}
-              aria-label={switchLabel}
+              onClick={() => setOpen(!open)}
+              aria-label={openLabel}
+              aria-expanded={open}
             >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <Power className="size-4" />}
+              {open ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             </button>
           </Tooltip>
-        ) : (
-          node && (
-            <button type="button" className="btn btn-primary rounded-full px-4" onClick={toggle} disabled={busy}>
-              {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Power className="size-3.5" />}
-              {switchLabel}
-            </button>
-          )
-        )}
-        <Tooltip content={openLabel}>
-          <button
-            type="button"
-            className="btn btn-tinted btn-icon"
-            onClick={() => setOpen(!open)}
-            aria-label={openLabel}
-            aria-expanded={open}
-          >
-            {open ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-          </button>
-        </Tooltip>
-      </div>
+        </div>
 
-      {/* The node's page, arriving as the bar rises */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="page"
-            className="min-h-0 flex-1 [scrollbar-gutter:stable] overflow-y-auto"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.4, ease: [0.16, 1, 0.3, 1] } }}
-            exit={{ opacity: 0, transition: { duration: 0.15 } }}
-          >
-            <Suspense fallback={null}>
-              <NodePage />
-            </Suspense>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.section>
+        {/* The node's page, arriving as the bar rises */}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              key="page"
+              className="min-h-0 flex-1 [scrollbar-gutter:stable] overflow-y-auto"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.4, ease: [0.16, 1, 0.3, 1] } }}
+              exit={{ opacity: 0, transition: { duration: 0.15 } }}
+            >
+              <Suspense fallback={null}>
+                <NodePage />
+              </Suspense>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.section>
+    </NodeSwitchContext.Provider>
   );
 }
 

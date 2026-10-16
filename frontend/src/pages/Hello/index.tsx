@@ -1377,7 +1377,7 @@ function Sync({ onNext }: { onNext: () => void }) {
         done
           ? t("hello.sync.doneDesc")
           : stopped
-            ? t("overview.stopped.title")
+            ? t("hello.sync.stoppedDesc")
             : searching
               ? t("overview.sync.searchingDesc")
               : t("overview.sync.desc")
