@@ -236,6 +236,10 @@ func (w *Wallet) Replace(req ReplaceRequest) (SentTx, error) {
 	if err != nil {
 		return SentTx{}, err
 	}
+	// A hardware wallet may have waited on the user longer than the reads
+	// were given
+	ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	if err := ec.SendTransaction(ctx, signed); err != nil {
 		// Mined, or replaced elsewhere, between the read above and now
 		if strings.Contains(err.Error(), validation.ErrNonceTooLow.Error()) {

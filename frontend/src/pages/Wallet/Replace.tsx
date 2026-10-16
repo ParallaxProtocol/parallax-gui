@@ -3,6 +3,9 @@ import { Ban, Loader2, Zap } from "lucide-react";
 import { api, ReplaceKind, ReplaceQuote, SentTx, walletError } from "../../lib/api";
 import { formatGwei, formatInt, formatLax } from "../../lib/format";
 import { useT } from "../../i18n";
+import { useWallet } from "../../lib/wallet";
+import { sameAddress } from "../../lib/format";
+import { DEVICE_NAME, HardwareReady } from "../../components/hardware/Device";
 import { Notice } from "../../components/ui/bits";
 import { Modal, ModalForm } from "../../components/ui/Modal";
 
@@ -25,6 +28,9 @@ export function ReplaceModal({
   const [quote, setQuote] = useState<ReplaceQuote | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // From a hardware wallet's account, the replacement is confirmed on its device
+  const { info } = useWallet();
+  const hardware = target ? info?.accounts.find((a) => sameAddress(a.address, target.from))?.hardware : undefined;
 
   useEffect(() => {
     setQuote(null);
@@ -74,6 +80,7 @@ export function ReplaceModal({
         <ModalForm
           // Quoting first, then replacing: the dialog holds a spinner through both
           busy={busy || (!quote && !error)}
+          busyLabel={busy && hardware ? t("hardware.confirm.short", { device: DEVICE_NAME[hardware] }) : undefined}
           onSubmit={go}
           footer={
             <>
@@ -112,6 +119,7 @@ export function ReplaceModal({
               <p className="text-sm text-muted-foreground">{t("wallet.replace.race")}</p>
             </>
           )}
+          {hardware && <HardwareReady kind={hardware} active={!busy} />}
           {error && <Notice tone="critical">{error}</Notice>}
         </ModalForm>
       )}

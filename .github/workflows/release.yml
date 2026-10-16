@@ -73,7 +73,9 @@ jobs:
           [ -z "$VERSION" ] && VERSION="0.0.0"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      # The backend (pure Go, cross-compiled), the frontend, and the
+      # The backend (Go with cgo for the hardware wallets' USB library,
+      # built on each platform's own runner; darwin/amd64 by clang on the
+      # arm64 runner), the frontend, and the
       # Electron shell packaged by electron-builder: the AppImage on Linux,
       # the DMG on macOS, the installer and the portable executable on
       # Windows, named as the in-app updater expects

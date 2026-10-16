@@ -4,6 +4,7 @@
 package backend
 
 import (
+	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -189,7 +190,9 @@ func VerifyMessage(address, message, signature string) (MessageCheck, error) {
 	return MessageCheck{Valid: signer == addr, Recovered: signer.Hex()}, nil
 }
 
-// SignMessage signs message with one of the wallet's keys and its password.
+// SignMessage signs message with one of the wallet's keys and its password,
+// or on the hardware wallet that holds the account, once the user confirms
+// it there.
 func (w *Wallet) SignMessage(address, message, password string) (SignedMessage, error) {
 	if err := w.requireOpen(); err != nil {
 		return SignedMessage{}, err
@@ -211,14 +214,22 @@ func (w *Wallet) signMessage(acc wallet.Account, message, password string) (Sign
 	if len(password) > maxPasswordLen {
 		return SignedMessage{}, ErrWrongPassword
 	}
-	w.keyMu.Lock()
-	key, err := w.signingKey(acc, password)
-	var sig []byte
-	if err == nil {
-		sig, err = crypto.Sign(wallet.TextHash([]byte(message)), key)
-		zeroPrivateKey(key)
+	var (
+		sig []byte
+		err error
+	)
+	if isHardware(acc) {
+		// The device hashes it the same way (EIP-191)
+		sig, err = w.signTextHardware(acc, []byte(message))
+	} else {
+		w.keyMu.Lock()
+		var key *ecdsa.PrivateKey
+		if key, err = w.signingKey(acc, password); err == nil {
+			sig, err = crypto.Sign(wallet.TextHash([]byte(message)), key)
+			zeroPrivateKey(key)
+		}
+		w.keyMu.Unlock()
 	}
-	w.keyMu.Unlock()
 	if err != nil {
 		return SignedMessage{}, err
 	}

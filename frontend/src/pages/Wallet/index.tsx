@@ -31,7 +31,7 @@ import { useSummary } from "./common";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
-import { GroupedAddress } from "../../components/ui/AccountParts";
+import { AccountBadge, GroupedAddress } from "../../components/ui/AccountParts";
 import { RevealPhraseModal } from "./Phrase";
 import { PendingRequests } from "../Offline/Requests";
 import { PendingSection, RecentActivity } from "./Activity";
@@ -160,11 +160,7 @@ function Overview() {
             <div className="@container flex min-w-0 flex-1 flex-col">
               <span className="flex items-center gap-2">
                 <span className="truncate font-semibold">{label}</span>
-                {account.watchOnly && (
-                  <Tooltip content={t("offline.watchOnly.desc")}>
-                    <Pill tone="neutral">{t("offline.watchOnly")}</Pill>
-                  </Tooltip>
-                )}
+                <AccountBadge account={account} />
               </span>
               <span className="flex items-center gap-1 text-sm text-muted-foreground">
                 <span className="hidden @md:inline">

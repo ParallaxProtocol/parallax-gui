@@ -2,11 +2,15 @@ import { Loader2, Trash2 } from "lucide-react";
 import { api, WalletAccount } from "../../lib/api";
 import { useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
+import { DEVICE_NAME } from "../../components/hardware/Device";
 import { Notice } from "../../components/ui/bits";
 import { Modal, ModalForm } from "../../components/ui/Modal";
 import { useBusy } from "./accountActions";
 
-/** RemoveWatchOnlyModal stops following a watch-only account: nothing of its key is here, so no password. */
+/**
+ * RemoveWatchOnlyModal stops following a watch-only account, or a hardware
+ * wallet's: nothing of its key is here, so no password.
+ */
 export function RemoveWatchOnlyModal({
   account,
   label,
@@ -23,7 +27,7 @@ export function RemoveWatchOnlyModal({
     <Modal
       open={!!account}
       onClose={onClose}
-      title={t("offline.watch.removeTitle")}
+      title={t(account?.hardware ? "hardware.remove.title" : "offline.watch.removeTitle")}
       subtitle={label}
       icon={<Trash2 className="size-4" />}
       tone="danger"
@@ -33,7 +37,9 @@ export function RemoveWatchOnlyModal({
           busy={busy}
           onSubmit={async () => {
             const ok = await run(async () => {
-              await api.walletRemoveWatchOnly(account.address);
+              await (account.hardware
+                ? api.walletRemoveHardware(account.address)
+                : api.walletRemoveWatchOnly(account.address));
               return true;
             });
             if (ok) {
@@ -53,7 +59,11 @@ export function RemoveWatchOnlyModal({
             </>
           }
         >
-          <p className="text-muted-foreground">{t("offline.watch.removeDesc")}</p>
+          <p className="text-muted-foreground">
+            {account.hardware
+              ? t("hardware.remove.desc", { device: DEVICE_NAME[account.hardware] })
+              : t("offline.watch.removeDesc")}
+          </p>
           {error && <Notice tone="critical">{error}</Notice>}
         </ModalForm>
       )}

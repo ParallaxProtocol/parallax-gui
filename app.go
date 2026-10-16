@@ -879,6 +879,81 @@ func (a *App) WalletAddWatchOnly(name, address string) (backend.WalletAccount, e
 	return w.AddWatchOnly(name, address)
 }
 
+// HardwareDevices lists the Ledgers and Trezors connected, each with its
+// state.
+func (a *App) HardwareDevices() ([]backend.HardwareDevice, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return nil, err
+	}
+	return w.HardwareDevices()
+}
+
+// HardwareUnlock gives a Trezor One the PIN or passphrase it asked for.
+func (a *App) HardwareUnlock(id, secret string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.HardwareUnlock(id, secret)
+}
+
+// HardwareScan lists accounts a connected device holds, to pick from.
+func (a *App) HardwareScan(id, scheme string, from, count uint32) ([]backend.SeedCandidate, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return nil, err
+	}
+	return w.HardwareScan(id, scheme, from, count)
+}
+
+// HardwareAddAccounts brings in the accounts picked from a device's scan.
+func (a *App) HardwareAddAccounts(id string, picks []backend.SeedPick) (backend.WalletAccount, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.WalletAccount{}, err
+	}
+	return w.AddHardwareAccounts(id, picks)
+}
+
+// HardwareShowAddress shows a hardware wallet account's address on its
+// device, returning once the user confirms it there.
+func (a *App) HardwareShowAddress(address string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.HardwareShowAddress(address)
+}
+
+// HardwareSetupUSB installs the udev rules Linux needs for the app to open
+// Ledgers and Trezors, asking for an administrator's password.
+func (a *App) HardwareSetupUSB() error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.HardwareSetupUSB()
+}
+
+// WalletRenameHardware names a hardware wallet.
+func (a *App) WalletRenameHardware(id, name string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.RenameHardwareWallet(id, name)
+}
+
+// WalletRemoveHardware stops following a hardware wallet account.
+func (a *App) WalletRemoveHardware(address string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.RemoveHardware(address)
+}
+
 // WalletRemoveWatchOnly stops following a watch-only account.
 func (a *App) WalletRemoveWatchOnly(address string) error {
 	w, err := a.walletOrErr()

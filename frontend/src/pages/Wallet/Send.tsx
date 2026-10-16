@@ -14,7 +14,16 @@ import {
   Send as SendIcon,
   X,
 } from "lucide-react";
-import { api, SendQuote, SentTx, SigningRequest, walletError, type AddressView } from "../../lib/api";
+import {
+  api,
+  SendQuote,
+  SentTx,
+  SigningRequest,
+  walletError,
+  type AddressView,
+  type HardwareKind,
+} from "../../lib/api";
+import { DEVICE_NAME, HardwareReady, SignOnDevice } from "../../components/hardware/Device";
 import {
   formatGwei,
   formatInt,
@@ -160,6 +169,7 @@ export default function SendPage() {
               quote={quote}
               label={label}
               watchOnly={watch}
+              hardware={account.hardware || undefined}
               onBack={() => setQuote(null)}
               onSent={setSent}
               onRequest={setRequest}
@@ -514,6 +524,7 @@ function Review({
   quote,
   label,
   watchOnly,
+  hardware,
   onBack,
   onSent,
   onRequest,
@@ -521,6 +532,8 @@ function Review({
   quote: SendQuote;
   label: string;
   watchOnly: boolean;
+  /** The kind of device that signs, once the user confirms on it, for a hardware wallet's account. */
+  hardware?: HardwareKind;
   onBack: () => void;
   onSent: (tx: SentTx) => void;
   onRequest: (r: SigningRequest) => void;
@@ -682,6 +695,8 @@ function Review({
             </Field>
           </Panel>
         )}
+        {/* A device to confirm on: how it stands until it's ready, then what to check on it */}
+        {hardware && (busy ? <SignOnDevice kind={hardware} /> : <HardwareReady kind={hardware} active={!busy} />)}
         {error && <Notice tone="critical">{error}</Notice>}
         <div className="flex justify-center gap-3">
           <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onBack} disabled={busy}>
@@ -701,7 +716,11 @@ function Review({
               autoFocus
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
-              {busy ? t("wallet.review.signing") : t("wallet.review.cta")}
+              {hardware
+                ? t(busy ? "hardware.send.busy" : "hardware.send.cta", { device: DEVICE_NAME[hardware] })
+                : busy
+                  ? t("wallet.review.signing")
+                  : t("wallet.review.cta")}
             </button>
           )}
         </div>

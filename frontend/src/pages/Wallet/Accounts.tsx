@@ -13,12 +13,22 @@ import {
   Search,
   Timer,
   Trash2,
+  Usb,
   X,
 } from "lucide-react";
-import { api, SeedInfo, walletError, WalletAccount } from "../../lib/api";
+import {
+  api,
+  SeedInfo,
+  walletError,
+  WalletAccount,
+  type HardwareKind,
+  type HardwareWalletInfo,
+  type SeedScheme,
+} from "../../lib/api";
+import { DEVICE_NAME } from "../../components/hardware/Device";
 import { shortHex } from "../../lib/format";
 import { STAGGER, useStagger } from "../../lib/motion";
-import { accountLabel, groupAccounts, useWallet } from "../../lib/wallet";
+import { accountLabel, groupAccounts, groupKey, hardwarePlace, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Panel, Section } from "../../components/ui/Panel";
 import { Pill } from "../../components/ui/Pill";
@@ -27,7 +37,7 @@ import { CopyButton, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { BackupModal, DeriveModal, PasswordModal, RemoveModal, RemoveSeedModal } from "./AccountForms";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
-import { GroupedAddress } from "../../components/ui/AccountParts";
+import { GroupedAddress, HardwareBadge } from "../../components/ui/AccountParts";
 import { RevealPhraseModal } from "./Phrase";
 import { useSettingsSheet, type SettingsPage } from "../../components/shell/SettingsSheet";
 import { AccountPage } from "../Settings/accounts";
@@ -71,6 +81,7 @@ export function AccountsSettings() {
   const groups = groupAccounts(info);
   const ofSeed = (id: string) => groups.find((g) => g.kind === "phrase" && g.seed.id === id)?.accounts ?? [];
   const keys = groups.find((g) => g.kind === "keys")?.accounts ?? [];
+  const hardware = groups.flatMap((g) => (g.kind === "hardware" && g.accounts.length > 0 ? [g] : []));
   const watched = groups.find((g) => g.kind === "watch")?.accounts ?? [];
   const row = (a: WalletAccount) => (
     <AccountRow
@@ -133,6 +144,23 @@ export function AccountsSettings() {
         </Section>
       )}
 
+      {hardware.length > 0 && (
+        <Section title={t("hardware.group")} count={hardware.length}>
+          {/* A panel for each hardware wallet, headed as a phrase's is */}
+          {hardware.map((g) => (
+            <Panel key={groupKey(g)} className="overflow-hidden">
+              <HardwareRow
+                kind={g.device}
+                wallet={g.wallet}
+                count={g.accounts.length}
+                onFind={() => drill({ kind: "accounts.findHardware", device: g.device, wallet: g.wallet?.id ?? "" })}
+              />
+              <HardwareRows device={g.device} accounts={g.accounts} row={row} />
+            </Panel>
+          ))}
+        </Section>
+      )}
+
       {watched.length > 0 && (
         <Section title={t("offline.watchOnly")} count={watched.length}>
           <Panel className="overflow-hidden">
@@ -163,13 +191,13 @@ export function AccountsSettings() {
         seed={seedAction?.seed ?? null}
       />
       <RemoveModal
-        open={action?.kind === "remove" && !target?.watchOnly}
+        open={action?.kind === "remove" && !target?.watchOnly && !target?.hardware}
         onClose={close}
         account={target}
         label={target ? label(target) : ""}
       />
       <RemoveWatchOnlyModal
-        account={action?.kind === "remove" && target?.watchOnly ? target : null}
+        account={action?.kind === "remove" && (target?.watchOnly || target?.hardware) ? target : null}
         label={target ? label(target) : ""}
         onClose={close}
       />
@@ -243,7 +271,8 @@ function AccountRow({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(account.name);
   const [error, setError] = useState<string | null>(null);
-  const single = !account.watchOnly && !account.fromSeed;
+  const single = !account.watchOnly && !account.fromSeed && !account.hardware;
+  const place = account.hardware ? hardwarePlace(account) : null;
 
   const rename = async () => {
     try {
@@ -301,6 +330,15 @@ function AccountRow({
             </Tooltip>
             <CopyButton value={account.address} className="-my-1" />
             {/* Where under its phrase: a number along the standard path, the path itself along another */}
+            {/* Where on its device: a number along its path, its group naming the
+                path where it has several; a path of none of them in full */}
+            {account.hardware && (
+              <Tooltip content={account.hardwarePath} mono>
+                <span className={`ml-1 truncate ${place ? "" : "font-mono"}`}>
+                  {place ? `#${place.index + 1}` : account.hardwarePath}
+                </span>
+              </Tooltip>
+            )}
             {account.fromSeed && (
               <Tooltip content={account.seedPath} mono>
                 <span className={`ml-1 truncate ${account.seedStandard ? "" : "font-mono"}`}>
@@ -399,6 +437,137 @@ function SeedRow({ seed, onAction }: { seed: SeedInfo; onAction: (a: SeedAction 
             onRemove={() => onAction("remove")}
             removeLabel={t("wallet.removeSeed.title")}
           />
+        </div>
+      </div>
+      {error && <Notice tone="critical">{error}</Notice>}
+    </div>
+  );
+}
+
+/** The paths a device's accounts are gathered by, its default first; "other" for a path of none of them. */
+const PLACES: Record<HardwareKind, (SeedScheme | "other")[]> = {
+  ledger: ["ledgerlive", "standard", "legacy", "other"],
+  trezor: ["standard", "ledgerlive", "legacy", "other"],
+};
+
+/**
+ * HardwareRows lists a hardware wallet's accounts by the path they are on,
+ * each path's in index order under its name, where they are on more than
+ * one; on one, they are one list as a phrase's are.
+ */
+function HardwareRows({
+  device,
+  accounts,
+  row,
+}: {
+  device: HardwareKind;
+  accounts: WalletAccount[];
+  row: (a: WalletAccount) => ReactNode;
+}) {
+  const t = useT();
+  const placed = accounts.map((a) => ({ a, place: hardwarePlace(a) }));
+  const groups = PLACES[device]
+    .map((scheme) => ({
+      scheme,
+      accounts: placed
+        .filter(({ place }) => (place?.scheme ?? "other") === scheme)
+        .sort((x, y) => (x.place?.index ?? 0) - (y.place?.index ?? 0))
+        .map(({ a }) => a),
+    }))
+    .filter((g) => g.accounts.length > 0);
+  if (groups.length < 2) return <Rows accounts={groups[0]?.accounts ?? []} row={row} />;
+  return (
+    <>
+      {groups.map((g) => (
+        <div key={g.scheme}>
+          <div className="border-b border-border px-4 pt-3 pb-1.5 text-sm font-medium text-muted-foreground">
+            {g.scheme === "other" ? t("hardware.place.other") : t(`wallet.import.scheme.${g.scheme}`)}
+          </div>
+          <Rows accounts={g.accounts} row={row} />
+        </div>
+      ))}
+    </>
+  );
+}
+
+/**
+ * HardwareRow heads a hardware wallet's group: its name (renamable), the
+ * kind of device it is on, how many of its accounts the wallet has, and
+ * finding more of them on the device. Accounts no device has said the
+ * wallet of yet are headed by the kind of device alone.
+ */
+function HardwareRow({
+  kind,
+  wallet: hw,
+  count,
+  onFind,
+}: {
+  kind: HardwareKind;
+  wallet: HardwareWalletInfo | null;
+  count: number;
+  onFind: () => void;
+}) {
+  const t = useT();
+  const wallet = useWallet();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(hw?.name ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  const rename = async () => {
+    if (!hw) return;
+    try {
+      await api.walletRenameHardware(hw.id, name);
+      setEditing(false);
+      setError(null);
+      await wallet.refresh();
+    } catch (e) {
+      setError(walletError(e, t));
+    }
+  };
+
+  return (
+    <div className="group flex flex-col gap-2 border-b border-border bg-background/30 px-4 py-3.5">
+      <div className="flex items-center gap-3.5">
+        <Usb className="size-5 shrink-0 text-brand" strokeWidth={1.75} aria-hidden />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          {editing && hw ? (
+            <RenameForm
+              value={name}
+              onChange={setName}
+              onSave={rename}
+              onCancel={() => {
+                setName(hw.name);
+                setEditing(false);
+              }}
+            />
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="truncate font-semibold">{hw?.name ?? DEVICE_NAME[kind]}</span>
+              {hw && <HardwareBadge kind={kind} />}
+            </div>
+          )}
+          <span className="text-sm text-muted-foreground">
+            {count === 1 ? t("wallet.phrase.account") : t("wallet.phrase.accounts", { n: count })}
+            {!hw && ` · ${t("hardware.wallet.unknown", { device: DEVICE_NAME[kind] })}`}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <button type="button" className="btn btn-tinted btn-sm" onClick={onFind}>
+            <Search className="size-3.5" />
+            {t("wallet.find.cta")}
+          </button>
+          {hw && (
+            <Tooltip content={t("wallet.accounts.rename")}>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm btn-icon opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+                onClick={() => setEditing(true)}
+                aria-label={t("wallet.accounts.rename")}
+              >
+                <Pencil className="size-3.5" />
+              </button>
+            </Tooltip>
+          )}
         </div>
       </div>
       {error && <Notice tone="critical">{error}</Notice>}

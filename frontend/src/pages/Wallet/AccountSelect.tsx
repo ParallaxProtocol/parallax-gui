@@ -7,7 +7,7 @@ import { GLIDE, POPUP, POPUP_ROW, POPUP_ROWS, useStagger } from "../../lib/motio
 import { accountLabel, useBalances, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
-import { Balance, GroupedAddress, ShortAddress, WatchOnlyBadge } from "../../components/ui/AccountParts";
+import { AccountBadge, Balance, GroupedAddress, ShortAddress } from "../../components/ui/AccountParts";
 import { usePopup } from "../../components/ui/popup";
 
 /**
@@ -202,7 +202,7 @@ function Row({
       <span className="@container relative flex min-w-0 flex-1 flex-col">
         <span className="flex min-w-0 items-center gap-1.5">
           <span className={`truncate ${here === false ? "" : "font-medium"}`}>{label}</span>
-          {account.watchOnly && <WatchOnlyBadge />}
+          <AccountBadge account={account} />
         </span>
         {address && (
           <>

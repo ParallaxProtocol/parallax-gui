@@ -329,8 +329,9 @@ func (a *Assistant) Approve(id, password string) (AssistantRequest, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	r.busy = false
-	if err != nil && errors.Is(err, ErrWrongPassword) {
-		// Left pending: the user can try again
+	if err != nil && (errors.Is(err, ErrWrongPassword) || hardwareRetry(err)) {
+		// Left pending: the user can try again (with the hardware wallet
+		// connected and ready, for a send from one)
 		return r.AssistantRequest, err
 	}
 	if err != nil {
@@ -703,6 +704,7 @@ func (a *Assistant) walletAccounts() (any, error) {
 		Address        string `json:"address"`
 		Name           string `json:"name,omitempty"`
 		WatchOnly      bool   `json:"watch_only"`
+		HardwareWallet string `json:"hardware_wallet,omitempty"` // "ledger" or "trezor": it signs on the device
 		BackedUp       bool   `json:"backed_up"`
 		RecoveryPhrase string `json:"recovery_phrase_id,omitempty"`
 		BalanceWei     string `json:"balance_wei,omitempty"`
@@ -715,7 +717,7 @@ func (a *Assistant) walletAccounts() (any, error) {
 	}
 	accounts := []accountOut{}
 	for _, acc := range info.Accounts {
-		o := accountOut{Address: acc.Address, Name: acc.Name, WatchOnly: acc.WatchOnly, BackedUp: acc.BackedUp}
+		o := accountOut{Address: acc.Address, Name: acc.Name, WatchOnly: acc.WatchOnly, HardwareWallet: acc.Hardware, BackedUp: acc.BackedUp}
 		if acc.FromSeed {
 			o.RecoveryPhrase = acc.SeedID
 		}

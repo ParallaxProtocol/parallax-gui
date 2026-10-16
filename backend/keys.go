@@ -17,7 +17,7 @@ import (
 	"github.com/ParallaxProtocol/parallax/v2/wallet/keystore"
 )
 
-// The wallet's accounts are of three kinds, and only one has a key file:
+// The wallet's accounts are of four kinds, and only one has a key file:
 //
 //   - a single key, imported or made on its own, is a keystore file, its
 //     own backup (Backup);
@@ -26,6 +26,8 @@ import (
 //     where it is along the phrase's path (seedRef, sealed with the
 //     labels): its key is derived from the phrase each time it signs, and
 //     zeroed once it has. Its address is nowhere on disk in the clear;
+//   - a hardware wallet's account has its key on the device, which signs
+//     once the user confirms there (hardware.go);
 //   - a watch-only account has no key here at all (offline.go).
 //
 // An address both a phrase makes and a key file holds (the key imported on
@@ -35,7 +37,8 @@ import (
 const phraseScheme = "phrase"
 
 // find returns the account that signs for a checksummed or plain address:
-// a key file's, or a phrase's. A watch-only account isn't one.
+// a key file's, a phrase's, or a hardware wallet's (its URL the device's
+// scheme and its path). A watch-only account isn't one.
 func (w *Wallet) find(address string) (wallet.Account, error) {
 	address = strings.TrimSpace(address)
 	if !util.IsHexAddress(address) {
@@ -47,9 +50,13 @@ func (w *Wallet) find(address string) (wallet.Account, error) {
 	}
 	w.mu.Lock()
 	_, ok := w.meta.SeedOf[addr.Hex()]
+	ref, hw := w.hardwareOfLocked(addr.Hex())
 	w.mu.Unlock()
 	if ok {
 		return wallet.Account{Address: addr, URL: wallet.URL{Scheme: phraseScheme}}, nil
+	}
+	if hw {
+		return wallet.Account{Address: addr, URL: wallet.URL{Scheme: ref.Device, Path: ref.Path}}, nil
 	}
 	return wallet.Account{}, ErrUnknownAccount
 }
@@ -57,7 +64,8 @@ func (w *Wallet) find(address string) (wallet.Account, error) {
 // hasKeyFile reports whether acc signs with a key file.
 func hasKeyFile(acc wallet.Account) bool { return acc.URL.Scheme == keystore.KeyStoreScheme }
 
-// hasAccount reports whether addr is a key file's or a phrase's account.
+// hasAccount reports whether addr is a key file's, a phrase's or a hardware
+// wallet's account.
 func (w *Wallet) hasAccount(addr util.Address) bool {
 	if w.keys().HasAddress(addr) {
 		return true
@@ -65,7 +73,8 @@ func (w *Wallet) hasAccount(addr util.Address) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	_, ok := w.meta.SeedOf[addr.Hex()]
-	return ok
+	_, hw := w.hardwareOfLocked(addr.Hex())
+	return ok || hw
 }
 
 // phraseAccountsLocked lists the phrases' accounts that have no key file,

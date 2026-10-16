@@ -101,6 +101,14 @@ type WalletAccount struct {
 	SeedPath     string `json:"seedPath"`
 	SeedIndex    uint32 `json:"seedIndex"`
 	SeedStandard bool   `json:"seedStandard"`
+	// Hardware is the kind of device ("ledger" or "trezor") whose key the
+	// account is, at HardwarePath; empty for one whose key is here
+	// (hardware.go)
+	Hardware     string `json:"hardware"`
+	HardwarePath string `json:"hardwarePath"`
+	// HardwareWallet is the hardware wallet it is on (HardwareWalletInfo's
+	// ID), empty until a device that holds it has said which
+	HardwareWallet string `json:"hardwareWallet"`
 }
 
 // WalletInfo is the wallet as a whole: its accounts in creation order, the
@@ -118,6 +126,9 @@ type WalletInfo struct {
 	Locked bool `json:"locked"`
 	// Seeds are the recovery phrases, in the order they were added.
 	Seeds []SeedInfo `json:"seeds"`
+	// HardwareWallets are the hardware wallets it has accounts of, in the
+	// order they were first seen (hardware.go)
+	HardwareWallets []HardwareWalletInfo `json:"hardwareWallets"`
 	// Damaged names what was found damaged as the wallet opened, and set
 	// aside or taken from its previous version (sealed.go), until the app
 	// has told the user (DismissDamaged): "vault", "labels", "contacts",
@@ -138,6 +149,11 @@ type walletMeta struct {
 	SeedOf map[string]seedRef  `json:"seedOf"`
 	// Watch lists the watch-only accounts, in the order they were added
 	Watch []string `json:"watch"`
+	// Hardware lists the hardware wallet accounts, in the order they were
+	// added: where each is on its device, nothing secret (hardware.go)
+	Hardware []hardwareRef `json:"hardware"`
+	// HardwareWallets names the hardware wallets those accounts are on
+	HardwareWallets []hardwareWalletMeta `json:"hardwareWallets"`
 }
 
 // Wallet is the app's own wallet. It is safe for concurrent use.
@@ -177,6 +193,9 @@ type Wallet struct {
 
 	// The wallet password, kept while the wallet is unlocked (session.go)
 	sess session
+
+	// The Ledgers and Trezors connected (hardware.go)
+	hw hardware
 }
 
 // NewWallet opens the wallet kept in configDir: the keystore in
@@ -349,8 +368,8 @@ func (w *Wallet) saveMeta() error {
 
 // Info lists the wallet's accounts: the key files, which the keystore
 // orders by file name (it starts with the time each key was made or
-// imported), the phrases' accounts, phrase by phrase, and the watch-only
-// ones.
+// imported), the phrases' accounts, phrase by phrase, the hardware wallets'
+// and the watch-only ones.
 func (w *Wallet) Info() WalletInfo {
 	accs := w.keys().Accounts()
 	v, err := w.loadVault()
@@ -361,7 +380,7 @@ func (w *Wallet) Info() WalletInfo {
 	defer w.mu.Unlock()
 	// Locked, nothing about the accounts is told: not even how many
 	if v != nil && !w.metaOpen {
-		return WalletInfo{Accounts: []WalletAccount{}, KeystoreDir: w.dir, HasPassword: true, Locked: true, Seeds: []SeedInfo{}, Damaged: []string{}}
+		return WalletInfo{Accounts: []WalletAccount{}, KeystoreDir: w.dir, HasPassword: true, Locked: true, Seeds: []SeedInfo{}, HardwareWallets: []HardwareWalletInfo{}, Damaged: []string{}}
 	}
 	info := WalletInfo{
 		Accounts:    make([]WalletAccount, 0, len(accs)),
@@ -370,7 +389,9 @@ func (w *Wallet) Info() WalletInfo {
 		NeedsSetup:  v == nil && err == nil && len(accs) > 0,
 		Locked:      v != nil && !w.Unlocked(),
 		Seeds:       w.seedInfosLocked(v),
-		Damaged:     w.damagedStores(),
+		// Named in the order they were first seen
+		HardwareWallets: w.hardwareInfosLocked(),
+		Damaged:         w.damagedStores(),
 	}
 	selected := false
 	for _, a := range accs {
@@ -383,6 +404,12 @@ func (w *Wallet) Info() WalletInfo {
 	for _, addr := range w.phraseAccountsLocked(v) {
 		info.Accounts = append(info.Accounts, w.viewLocked(addr))
 		if addr == w.meta.Selected {
+			selected = true
+		}
+	}
+	for _, ref := range w.meta.Hardware {
+		info.Accounts = append(info.Accounts, w.viewLocked(ref.Address))
+		if ref.Address == w.meta.Selected {
 			selected = true
 		}
 	}
@@ -429,8 +456,8 @@ func (w *Wallet) isWatched(addr util.Address) bool {
 	return false
 }
 
-// addresses lists every wallet account: the keys, then the watch-only
-// ones; none while the wallet is locked.
+// addresses lists every wallet account: the keys, the hardware wallets',
+// then the watch-only ones; none while the wallet is locked.
 func (w *Wallet) addresses() []util.Address {
 	if !w.opened() {
 		return nil
@@ -444,6 +471,9 @@ func (w *Wallet) addresses() []util.Address {
 	defer w.mu.Unlock()
 	for _, a := range w.phraseAccountsLocked(v) {
 		out = append(out, util.HexToAddress(a))
+	}
+	for _, ref := range w.meta.Hardware {
+		out = append(out, util.HexToAddress(ref.Address))
 	}
 	for _, a := range w.meta.Watch {
 		out = append(out, util.HexToAddress(a))
@@ -768,6 +798,10 @@ func (w *Wallet) Remove(address, password string) error {
 	acc, err := w.find(address)
 	if err != nil {
 		return err
+	}
+	if isHardware(acc) {
+		// Its key isn't here to prove anything with
+		return w.RemoveHardware(acc.Address.Hex())
 	}
 	if len(password) > maxPasswordLen {
 		return ErrWrongPassword
@@ -1150,6 +1184,10 @@ func (w *Wallet) Send(req SendRequest) (SentTx, error) {
 	if err != nil {
 		return SentTx{}, err
 	}
+	// A hardware wallet may have waited on the user longer than the reads
+	// were given
+	ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	if err := ec.SendTransaction(ctx, signed); err != nil {
 		return SentTx{}, fmt.Errorf("wallet: the node refused the transaction: %w", err)
 	}
@@ -1159,16 +1197,25 @@ func (w *Wallet) Send(req SendRequest) (SentTx, error) {
 }
 
 // sign signs tx for chainID with the account's key, decrypted for this one
-// signature, and checks the result. The caller holds w.keyMu.
+// signature, or on the hardware wallet that holds it once the user confirms
+// there, and checks the result. The caller holds w.keyMu.
 func (w *Wallet) sign(acc wallet.Account, password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
-	key, err := w.signingKey(acc, password)
-	if err != nil {
-		return nil, err
-	}
-	signed, err := types.SignTx(tx, types.LatestSignerForChainID(chainID), key)
-	zeroPrivateKey(key)
-	if err != nil {
-		return nil, err
+	var signed *types.Transaction
+	if isHardware(acc) {
+		var err error
+		if signed, err = w.signHardware(acc, tx, chainID); err != nil {
+			return nil, err
+		}
+	} else {
+		key, err := w.signingKey(acc, password)
+		if err != nil {
+			return nil, err
+		}
+		signed, err = types.SignTx(tx, types.LatestSignerForChainID(chainID), key)
+		zeroPrivateKey(key)
+		if err != nil {
+			return nil, err
+		}
 	}
 	// Belt and braces: the signature must be replay-protected for this
 	// chain and recover to the account it was meant to come from

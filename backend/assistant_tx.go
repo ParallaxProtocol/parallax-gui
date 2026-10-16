@@ -23,8 +23,11 @@ type TxProposal struct {
 	FromName string `json:"fromName"`
 	// WatchOnly sends make a signing request for the offline signer
 	// instead, as the app's Send page does for those accounts
-	WatchOnly bool   `json:"watchOnly"`
-	To        string `json:"to"`
+	WatchOnly bool `json:"watchOnly"`
+	// Hardware is the kind of device that signs a send from a hardware
+	// wallet account, once the user confirms it there, with no password
+	Hardware string `json:"hardware,omitempty"`
+	To       string `json:"to"`
 	// Recipient says who the address is to the wallet: one of its own
 	// accounts ("own"), a contact ("contact", with its name), or an
 	// address it has never seen ("new")
@@ -126,7 +129,7 @@ func (a *Assistant) registerTransactions(r *server.Registrar) {
 			for _, acc := range info.Accounts {
 				switch acc.Address {
 				case q.From:
-					prop.FromName = acc.Name
+					prop.FromName, prop.Hardware = acc.Name, acc.Hardware
 				case q.To:
 					prop.Recipient, prop.ToName = "own", acc.Name
 				}

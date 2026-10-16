@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight, FileCheck, Loader2, PenLine, QrCode, ScanLine, X } from "lucide-react";
 import { api, MessageCheck, MessageRequest, SignedMessage, walletError } from "../../lib/api";
+import { DEVICE_NAME, HardwareReady, SignOnDevice } from "../../components/hardware/Device";
 import { isAddress, sameAddress, shortHex } from "../../lib/format";
 import { docKind, messageFileName, useOfflineMode } from "../../lib/offline";
 import { useContacts } from "../../lib/contacts";
@@ -168,6 +169,13 @@ export function SignMessagePage() {
               </Panel>
 
               <Notice tone="info">{t("message.caution")}</Notice>
+              {/* A device to confirm on: how it stands until it's ready, then what to check on it */}
+              {account.hardware &&
+                (busy ? (
+                  <SignOnDevice kind={account.hardware} message />
+                ) : (
+                  <HardwareReady kind={account.hardware} active />
+                ))}
               {error && <Notice tone="critical">{error}</Notice>}
               <div className="flex justify-center">
                 <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!ready}>
@@ -178,7 +186,11 @@ export function SignMessagePage() {
                   ) : (
                     <PenLine className="size-4" />
                   )}
-                  {watch ? t("message.createRequest") : t("message.signCta")}
+                  {watch
+                    ? t("message.createRequest")
+                    : account.hardware
+                      ? t("hardware.send.cta", { device: DEVICE_NAME[account.hardware] })
+                      : t("message.signCta")}
                 </button>
               </div>
             </form>

@@ -1,6 +1,7 @@
 import { createContext, lazy, ReactNode, Suspense, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Minimize2, Settings2 } from "lucide-react";
+import type { HardwareKind } from "../../lib/api";
 import { useT } from "../../i18n";
 import { FADE_IN, FADE_OUT } from "../../lib/motion";
 import { useSidebar } from "../../lib/sidebar";
@@ -39,10 +40,17 @@ export type SettingsPage =
   | { kind: "accounts.import" }
   /** Importing, at following a watch-only account (an offline signer's) */
   | { kind: "accounts.watch" }
-  | { kind: "accounts.find"; seedId: string };
+  | { kind: "accounts.find"; seedId: string }
+  /** Finding more of a hardware wallet's accounts ("" for those of no known wallet), on a device of its kind */
+  | { kind: "accounts.findHardware"; device: HardwareKind; wallet: string };
 
 /** pageKey tells pages apart, for their transitions: by what they show, not the secrets they hold. */
-export const pageKey = (p: SettingsPage) => (p.kind === "accounts.find" ? `${p.kind}:${p.seedId}` : p.kind);
+export const pageKey = (p: SettingsPage) =>
+  p.kind === "accounts.find"
+    ? `${p.kind}:${p.seedId}`
+    : p.kind === "accounts.findHardware"
+      ? `${p.kind}:${p.device}:${p.wallet}`
+      : p.kind;
 
 // Whether Settings is open, over the page it was opened from, and the
 // section it shows (kept while closed, so it reopens where it was left),

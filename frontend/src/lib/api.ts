@@ -452,6 +452,47 @@ export type WalletAccount = {
   seedPath: string;
   seedIndex: number;
   seedStandard: boolean;
+  /** The kind of hardware wallet whose key it is, at hardwarePath; "" for one whose key is here. */
+  hardware: "" | HardwareKind;
+  hardwarePath: string;
+  /** The hardware wallet it is on (HardwareWalletInfo's id); "" until a device that holds it has said. */
+  hardwareWallet: string;
+};
+
+/** A hardware wallet the wallet has accounts of: the wallet a device holds, told apart by the address it derives first. */
+export type HardwareWalletInfo = {
+  id: string;
+  kind: HardwareKind;
+  name: string;
+  accounts: number;
+};
+
+// ---------------------------------------------------------------------------
+// Hardware wallets (backend/hardware.go)
+// ---------------------------------------------------------------------------
+
+export type HardwareKind = "ledger" | "trezor";
+
+/**
+ * What a connected device is doing: ready to sign; locked behind its PIN;
+ * a Ledger without its Ethereum app open; a Trezor One waiting for its PIN
+ * (on the pad it shows) or its passphrase, typed here; waiting on the user
+ * at the device; asked to sign and waiting there; one the system won't let
+ * the app open; or failed.
+ */
+export type HardwareState = "ready" | "locked" | "app" | "pin" | "passphrase" | "confirm" | "busy" | "access" | "error";
+
+export type HardwareDevice = {
+  /** Tells the device apart while it stays plugged in. */
+  id: string;
+  kind: HardwareKind;
+  state: HardwareState;
+  /** Why, when the state is a failure: a wrong PIN, a device the app may not open. */
+  error: string;
+  /** On Linux, the app may not open it until its udev rules are installed (hardwareSetupUSB). */
+  setupUsb: boolean;
+  /** The hardware wallet it holds (HardwareWalletInfo's id), once it has said; "" until then. */
+  wallet: string;
 };
 
 export type WalletInfo = {
@@ -466,6 +507,8 @@ export type WalletInfo = {
   locked: boolean;
   /** The recovery phrases, in the order they were added. */
   seeds: SeedInfo[];
+  /** The hardware wallets it has accounts of, in the order they were first seen. */
+  hardwareWallets: HardwareWalletInfo[];
   /** What was found damaged as the wallet opened, and set aside or taken from its last good copy (backend/sealed.go). */
   damaged?: DamagedStore[];
 };
@@ -691,6 +734,20 @@ const WALLET_ERRORS: Record<string, string> = {
   "wallet: the wallet has no password yet": "wallet.err.noPassword",
   "wallet: set the wallet password first": "wallet.err.needsSetup",
   "wallet: this account is watch-only: its key is on an offline signer": "wallet.err.watchOnly",
+  "hardware: this build of the app can't reach USB devices": "hardware.err.unsupported",
+  "hardware: connect the device that holds this account": "hardware.err.noDevice",
+  "hardware: the device is no longer connected": "hardware.err.unknown",
+  "hardware: the device connected doesn't hold this account": "hardware.err.mismatch",
+  "hardware: the request was turned down on the device": "hardware.err.denied",
+  "hardware: unlock the device first": "hardware.err.locked",
+  "hardware: open the Ethereum app on the device": "hardware.err.appClosed",
+  "hardware: the device isn't ready yet": "hardware.err.notReady",
+  "hardware: the device is busy with another request": "hardware.err.busy",
+  "hardware: wrong PIN": "hardware.err.pin",
+  "hardware: the app isn't allowed to open the device": "hardware.err.access",
+  "hardware: allow blind signing in the device's Ethereum app": "hardware.err.blind",
+  "hardware: the USB access setup was cancelled": "hardware.err.setupCancelled",
+  "hardware: no such hardware wallet in this wallet": "hardware.err.unknownWallet",
   "wallet: the transaction is no longer waiting: it is in a block or was replaced": "wallet.err.notWaiting",
   "wallet: the transaction is not sent from this account": "wallet.err.notYourTx",
   "history: the history is still being indexed": "wallet.history.err.partial",
@@ -828,6 +885,8 @@ export type TxProposal = {
   fromName: string;
   /** From a watch-only account: approving makes a signing request for the offline signer. */
   watchOnly: boolean;
+  /** From a hardware wallet account: approving has the device sign, once confirmed there, with no password. */
+  hardware?: HardwareKind;
   to: string;
   /** Who the address is to the wallet: one of its accounts, a contact, or never seen. */
   recipient: "own" | "contact" | "new";
@@ -1003,6 +1062,18 @@ export const api = {
   walletBalances: () => call<Record<string, string>>("WalletBalances"),
   walletAddWatchOnly: (name: string, address: string) => call<WalletAccount>("WalletAddWatchOnly", name, address),
   walletRemoveWatchOnly: (address: string) => call<void>("WalletRemoveWatchOnly", address),
+  walletRemoveHardware: (address: string) => call<void>("WalletRemoveHardware", address),
+  walletRenameHardware: (id: string, name: string) => call<void>("WalletRenameHardware", id, name),
+  hardwareDevices: () => call<HardwareDevice[]>("HardwareDevices"),
+  /** A Trezor One's PIN (the pad's positions, 1–9) or passphrase; returns at once, the state tells how it went. */
+  hardwareUnlock: (id: string, secret: string) => call<void>("HardwareUnlock", id, secret),
+  hardwareScan: (id: string, scheme: SeedScheme, from: number, count: number) =>
+    call<SeedCandidate[]>("HardwareScan", id, scheme, from, count),
+  hardwareAddAccounts: (id: string, picks: SeedPick[]) => call<WalletAccount>("HardwareAddAccounts", id, picks),
+  /** Shows the account's address on its device; resolves once the user confirms it there. */
+  hardwareShowAddress: (address: string) => call<void>("HardwareShowAddress", address),
+  /** Installs the udev rules Linux needs, asking for an administrator's password. */
+  hardwareSetupUSB: () => call<void>("HardwareSetupUSB"),
   offlineBuildRequest: (input: OfflineRequestInput) => call<SigningRequest>("OfflineBuildRequest", input),
   offlinePendingRequests: () => call<PendingRequest[]>("OfflinePendingRequests"),
   offlineDiscardRequest: (id: string) => call<void>("OfflineDiscardRequest", id),

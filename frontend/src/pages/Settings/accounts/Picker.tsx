@@ -35,6 +35,8 @@ export function PhrasePicker({
   onScan,
   error,
   aside,
+  pathDesc,
+  initialScheme = "standard",
 }: {
   found: Found;
   picked: Set<string>;
@@ -43,11 +45,15 @@ export function PhrasePicker({
   error?: string | null;
   /** What acts on the picks, across from the accounts' title. */
   aside?: ReactNode;
+  /** What the paths are, where they aren't a phrase's. */
+  pathDesc?: string;
+  /** The path shown first. */
+  initialScheme?: SeedScheme;
 }) {
   const t = useT();
   const node = useNode();
   const stagger = useStagger();
-  const [scheme, setScheme] = useState<SeedScheme>("standard");
+  const [scheme, setScheme] = useState<SeedScheme>(initialScheme);
   const [loading, setLoading] = useState(false);
   const load = async (s: SeedScheme, from: number) => {
     setLoading(true);
@@ -66,7 +72,7 @@ export function PhrasePicker({
 
   return (
     <>
-      <Group title={t("wallet.find.pathGroup")} desc={t("wallet.find.pathDesc")}>
+      <Group title={t("wallet.find.pathGroup")} desc={pathDesc ?? t("wallet.find.pathDesc")}>
         <Rows>
           <Row
             title={t("wallet.find.path")}

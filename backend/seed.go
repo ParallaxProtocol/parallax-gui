@@ -252,6 +252,15 @@ func (w *Wallet) ScanWalletSeed(seedID, password, scheme string, from, count uin
 // scan is ScanSeed once the phrase is read: its entropy, and its
 // passphrase normalised.
 func (w *Wallet) scan(entropy []byte, passphrase, scheme string, from, count uint32) ([]SeedCandidate, error) {
+	return w.candidates(scheme, from, count, func(path wallet.DerivationPath) (string, error) {
+		return deriveAddress(entropy, passphrase, path)
+	})
+}
+
+// candidates lists count accounts under scheme from index from, each's
+// address told by derive (from a phrase, or on a hardware wallet), with
+// what it holds at the chain head.
+func (w *Wallet) candidates(scheme string, from, count uint32, derive func(wallet.DerivationPath) (string, error)) ([]SeedCandidate, error) {
 	// The head state, if the node has one: missing while stopped or snap
 	// syncing, when the scan shows addresses only
 	type reader interface {
@@ -273,7 +282,7 @@ func (w *Wallet) scan(entropy []byte, passphrase, scheme string, from, count uin
 		if err != nil {
 			return nil, err
 		}
-		hexAddr, err := deriveAddress(entropy, passphrase, path)
+		hexAddr, err := derive(path)
 		if err != nil {
 			return nil, err
 		}
@@ -900,6 +909,7 @@ func (w *Wallet) accountView(address string) WalletAccount {
 func (w *Wallet) viewLocked(address string) WalletAccount {
 	ref, fromSeed := w.meta.SeedOf[address]
 	index, standard := standardIndex(ref.Path)
+	hw, _ := w.hardwareOfLocked(address)
 	watch := false
 	for _, a := range w.meta.Watch {
 		if a == address {
@@ -907,15 +917,18 @@ func (w *Wallet) viewLocked(address string) WalletAccount {
 		}
 	}
 	return WalletAccount{
-		Address:      address,
-		Name:         w.meta.Names[address],
-		WatchOnly:    watch,
-		BackedUp:     w.meta.BackedUp[address] || fromSeed && w.meta.Seeds[ref.Seed].Confirmed,
-		FromSeed:     fromSeed,
-		SeedID:       ref.Seed,
-		SeedPath:     ref.Path,
-		SeedIndex:    index,
-		SeedStandard: fromSeed && standard,
+		Address:        address,
+		Name:           w.meta.Names[address],
+		WatchOnly:      watch,
+		BackedUp:       w.meta.BackedUp[address] || fromSeed && w.meta.Seeds[ref.Seed].Confirmed,
+		FromSeed:       fromSeed,
+		SeedID:         ref.Seed,
+		SeedPath:       ref.Path,
+		SeedIndex:      index,
+		SeedStandard:   fromSeed && standard,
+		Hardware:       hw.Device,
+		HardwarePath:   hw.Path,
+		HardwareWallet: hw.Wallet,
 	}
 }
 

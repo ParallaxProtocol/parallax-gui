@@ -1,4 +1,6 @@
+import type { HardwareKind, WalletAccount } from "../../lib/api";
 import { formatLax } from "../../lib/format";
+import { DEVICE_NAME } from "../hardware/Device";
 import { useT } from "../../i18n";
 import { Counter } from "./Counter";
 import { Pill } from "./Pill";
@@ -84,6 +86,23 @@ export function WatchOnlyBadge({ className = "" }: { className?: string }) {
       <Pill className={`shrink-0 ${className}`}>{t("offline.watchOnly")}</Pill>
     </Tooltip>
   );
+}
+
+/** HardwareBadge marks an account whose key is on a Ledger or a Trezor, by the device's name. */
+export function HardwareBadge({ kind, className = "" }: { kind: HardwareKind; className?: string }) {
+  const t = useT();
+  return (
+    <Tooltip content={t("hardware.badge.desc", { device: DEVICE_NAME[kind] })}>
+      <Pill className={`shrink-0 ${className}`}>{DEVICE_NAME[kind]}</Pill>
+    </Tooltip>
+  );
+}
+
+/** AccountBadge is the badge an account's kind takes, if any: watch-only, or its hardware wallet. */
+export function AccountBadge({ account, className }: { account: WalletAccount; className?: string }) {
+  if (account.watchOnly) return <WatchOnlyBadge className={className} />;
+  if (account.hardware) return <HardwareBadge kind={account.hardware} className={className} />;
+  return null;
 }
 
 /** Balance is an amount of LAX, or a dash until it is known. Counted, it glides to each new amount. */

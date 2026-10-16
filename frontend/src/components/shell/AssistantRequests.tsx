@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { api, type AssistantRequest } from "../../lib/api";
+import { DEVICE_NAME, HardwareReady, SignOnDevice } from "../hardware/Device";
 import { useT } from "../../i18n";
 import { CONFIG_UPDATED_EVENT } from "../../App";
 import { accountLabel, useWallet } from "../../lib/wallet";
@@ -193,7 +194,9 @@ function RequestForm({ req }: { req: AssistantRequest }) {
   const [err, setErr] = useState<string | null>(null);
   const send = req.kind === "transaction";
   const { hold, showSent } = useAssistant();
-  const needsPassword = req.kind === "newAccount" || (send && !req.transaction?.watchOnly);
+  // A hardware wallet's send is confirmed on the device instead
+  const hardware = send ? req.transaction?.hardware : undefined;
+  const needsPassword = req.kind === "newAccount" || (send && !req.transaction?.watchOnly && !hardware);
   useEffect(() => () => setPassword(""), []);
 
   const approve = async () => {
@@ -255,6 +258,7 @@ function RequestForm({ req }: { req: AssistantRequest }) {
         <Item>
           <p className="text-sm text-muted-foreground">{t("assistant.caution")}</p>
         </Item>
+        {hardware && <Item>{busy ? <SignOnDevice kind={hardware} /> : <HardwareReady kind={hardware} active />}</Item>}
         {needsPassword && (
           <Item>
             <Field
@@ -596,6 +600,11 @@ function TxDetails({ tx }: { tx: NonNullable<AssistantRequest["transaction"]> })
       {tx.watchOnly && (
         <Item>
           <Notice tone="info">{t("assistant.transaction.watchOnly")}</Notice>
+        </Item>
+      )}
+      {tx.hardware && (
+        <Item>
+          <Notice tone="info">{t("assistant.transaction.hardware", { device: DEVICE_NAME[tx.hardware] })}</Notice>
         </Item>
       )}
     </>

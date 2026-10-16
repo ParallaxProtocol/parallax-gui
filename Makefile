@@ -31,12 +31,27 @@ BACKEND_DIR := build/backend/$(EB_OS)-$(EB_ARCH)
 GOEXPERIMENT_FLAGS := $(if $(filter linux,$(GOOS)),runtimesecret,)
 BACKEND_EXE := parallax-backend$(if $(filter windows,$(GOOS)),.exe,)
 
-# backend builds the Go engine (the node and updater behind the
-# bridge). Pure Go, so it cross-compiles with no C toolchain.
+# The backend reaches Ledgers and Trezors through the daemon's USB
+# library, C (hidapi and libusb) built with cgo: it needs a C compiler for
+# the platform built for, so a build for another one takes CGO=0, without
+# hardware wallets.
+CGO ?= 1
+# On Linux it is linked statically, glibc too, so it runs on systems older
+# than the one that built it, as a pure Go build did; netgo and osusergo
+# keep the resolver and user lookups out of glibc's NSS, which can't be.
+ifeq ($(GOOS)$(CGO),linux1)
+BACKEND_TAGS   := -tags netgo,osusergo
+BACKEND_LINK   := -linkmode external -extldflags -static
+endif
+# On macOS the C parts take the oldest system Go itself supports, not the
+# one that built them
+export MACOSX_DEPLOYMENT_TARGET ?= 12.0
+
+# backend builds the Go engine (the node and updater behind the bridge).
 backend:
 	@mkdir -p $(BACKEND_DIR)
-	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) GOEXPERIMENT=$(GOEXPERIMENT_FLAGS) go build -trimpath \
-	  -ldflags "$(LDFLAGS) -X github.com/ParallaxProtocol/parallax-gui/backend.GUIVersion=$(VERSION) -X github.com/ParallaxProtocol/parallax-gui/backend.DaemonCommit=$(DAEMON_COMMIT)" \
+	CGO_ENABLED=$(CGO) GOOS=$(GOOS) GOARCH=$(GOARCH) GOEXPERIMENT=$(GOEXPERIMENT_FLAGS) go build -trimpath $(BACKEND_TAGS) \
+	  -ldflags "$(LDFLAGS) $(BACKEND_LINK) -X github.com/ParallaxProtocol/parallax-gui/backend.GUIVersion=$(VERSION) -X github.com/ParallaxProtocol/parallax-gui/backend.DaemonCommit=$(DAEMON_COMMIT)" \
 	  -o $(BACKEND_DIR)/$(BACKEND_EXE) .
 
 frontend:

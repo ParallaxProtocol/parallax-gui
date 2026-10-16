@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { motion } from "motion/react";
-import { Eye, FileKey2, KeyRound, Plus, ScrollText } from "lucide-react";
+import { Eye, FileKey2, KeyRound, Plus, ScrollText, Usb } from "lucide-react";
 import { usePageSwap, useStagger } from "../../../lib/motion";
 import { useOfflineMode } from "../../../lib/offline";
 import { useWallet } from "../../../lib/wallet";
@@ -10,6 +10,7 @@ import { Group } from "../fields";
 import { CreateKey, CreateWallet } from "./Create";
 import { ImportKey, PhraseImport } from "./Import";
 import { AddWatchOnly } from "./WatchOnly";
+import { HardwareImport } from "./Hardware";
 import { SettingsFlow, useDrillBack } from "./flow";
 import { ChoiceRow } from "./common";
 
@@ -71,7 +72,8 @@ export function AddAccounts({ onLeave, onDone }: { onLeave: () => void; onDone: 
 /**
  * ImportAccounts brings in accounts that exist elsewhere: a recovery phrase
  * and the accounts it holds, a single key (from a keystore file or typed
- * in), or the address alone of one whose key stays on an offline signer.
+ * in), the accounts a Ledger or Trezor holds, their keys staying on it, or
+ * the address alone of one whose key stays on an offline signer.
  */
 export function ImportAccounts({
   initial = null,
@@ -79,13 +81,13 @@ export function ImportAccounts({
   onDone,
 }: {
   /** The source to open at, rather than the choice of one (Back still comes to the choice). */
-  initial?: "phrase" | "key" | "watch" | null;
+  initial?: "phrase" | "key" | "hardware" | "watch" | null;
   onLeave: () => void;
   onDone: () => void;
 }) {
   const t = useT();
   const offline = useOfflineMode();
-  const [kind, setKind] = useState<"phrase" | "key" | "watch" | null>(initial);
+  const [kind, setKind] = useState<"phrase" | "key" | "hardware" | "watch" | null>(initial);
   const back = () => setKind(null);
 
   const lead = t("wallet.import.step.source");
@@ -102,6 +104,8 @@ export function ImportAccounts({
         <PhraseImport lead={lead} onBack={back} onDone={onDone} />
       ) : kind === "key" ? (
         <ImportKey lead={lead} onBack={back} onDone={onDone} />
+      ) : kind === "hardware" ? (
+        <HardwareImport lead={lead} onBack={back} onDone={onDone} />
       ) : kind === "watch" ? (
         <AddWatchOnly lead={lead} onLeave={back} onDone={onDone} />
       ) : (
@@ -123,7 +127,15 @@ export function ImportAccounts({
             desc={t("wallet.add.importKeyDesc")}
             onClick={() => setKind("key")}
           />
-          {/* An offline signer holds keys only; following one is for a wallet online */}
+          {/* An offline signer holds keys only; a device's, and following one, are for a wallet online */}
+          {!offline && (
+            <ChoiceRow
+              icon={Usb}
+              title={t("wallet.add.hardware")}
+              desc={t("wallet.add.hardwareDesc")}
+              onClick={() => setKind("hardware")}
+            />
+          )}
           {!offline && (
             <ChoiceRow
               icon={Eye}

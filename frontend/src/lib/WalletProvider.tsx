@@ -24,6 +24,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             needsSetup: false,
             locked: false,
             seeds: [],
+            hardwareWallets: [],
           },
       );
     }

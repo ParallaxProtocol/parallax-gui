@@ -20,13 +20,14 @@ import { useOfflineMode } from "../../lib/offline";
 import { SIDEBAR_RAIL, SIDEBAR_RAIL_MAC, SIDEBAR_WIDTH, useSidebar } from "../../lib/sidebar";
 import { api } from "../../lib/api";
 import { FADE_IN, FADE_OUT, GLIDE, ROW_IN, SPRING, useStagger } from "../../lib/motion";
-import { accountLabel, groupAccounts, useBalances, useWallet, type AccountGroup } from "../../lib/wallet";
+import { accountLabel, groupAccounts, groupKey, useBalances, useWallet, type AccountGroup } from "../../lib/wallet";
+import { DEVICE_NAME } from "../hardware/Device";
 import { useT } from "../../i18n";
 import logo from "../../assets/logo.svg";
 import { NODE_BAR_ROOM } from "./NodeBar";
 import { SettingsButton, useSettingsSheet } from "./SettingsSheet";
 import { AddressAvatar } from "../ui/AddressAvatar";
-import { Balance, GroupedAddress, WatchOnlyBadge } from "../ui/AccountParts";
+import { AccountBadge, Balance, GroupedAddress } from "../ui/AccountParts";
 import { CopyButton } from "../ui/bits";
 import { Tooltip } from "../ui/Tooltip";
 import { Segmented } from "../ui/Segmented";
@@ -47,11 +48,12 @@ const LIST_WIDTH = 320;
  */
 const SHEET_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35, restDelta: 0.01, restSpeed: 0.1 } as const;
 /** The switcher's tabs: the kinds of account, as Settings groups them. */
-type Tab = "phrase" | "keys" | "watch";
-const TABS: Tab[] = ["phrase", "keys", "watch"];
+type Tab = "phrase" | "keys" | "hardware" | "watch";
+const TABS: Tab[] = ["phrase", "keys", "hardware", "watch"];
 const TAB_LABEL: Record<Tab, string> = {
   phrase: "nav.tab.phrases",
   keys: "wallet.accounts.keys",
+  hardware: "hardware.tab",
   watch: "offline.watchOnly",
 };
 const tabOf = (g: AccountGroup): Tab => (g.kind === "phrase" ? "phrase" : g.kind);
@@ -252,9 +254,11 @@ function AccountSwitcher() {
   const kinds = TABS.filter((k) => groups.some((g) => tabOf(g) === k && g.accounts.length > 0));
   const current: Tab = account.watchOnly
     ? "watch"
-    : account.fromSeed && groups.some((g) => g.kind === "phrase" && g.seed.id === account.seedId)
-      ? "phrase"
-      : "keys";
+    : account.hardware
+      ? "hardware"
+      : account.fromSeed && groups.some((g) => g.kind === "phrase" && g.seed.id === account.seedId)
+        ? "phrase"
+        : "keys";
   const kind: Tab = tab && kinds.includes(tab) ? tab : current;
   const shown = groups.filter((g) => kinds.length < 2 || tabOf(g) === kind).filter((g) => g.accounts.length > 0);
 
@@ -287,11 +291,12 @@ function AccountSwitcher() {
           {...stagger}
         >
           {shown.map((g) => (
-            <Fragment key={g.kind === "phrase" ? g.seed.id : g.kind}>
+            <Fragment key={groupKey(g)}>
               {/* What keeps the accounts under it, a hairline above it parting it
                 from the group before, on the list's own glass */}
-              {/* A tab of single keys or watch-only accounts is named by its tab */}
-              {(g.kind === "phrase" || kinds.length < 2) && (
+              {/* A tab of single keys or watch-only accounts is named by its tab;
+                  a phrase or a hardware wallet by its own name */}
+              {(g.kind === "phrase" || g.kind === "hardware" || kinds.length < 2) && (
                 <motion.div
                   variants={ROW_IN}
                   className="mt-1.5 shrink-0 truncate border-t border-border px-2.5 pt-3 pb-1.5 font-semibold text-foreground/75 first:mt-0 first:border-t-0 first:pt-1.5"
@@ -300,7 +305,9 @@ function AccountSwitcher() {
                     ? g.seed.name
                     : g.kind === "keys"
                       ? t("wallet.accounts.keys")
-                      : t("offline.watchOnly")}
+                      : g.kind === "hardware"
+                        ? (g.wallet?.name ?? DEVICE_NAME[g.device])
+                        : t("offline.watchOnly")}
                 </motion.div>
               )}
               {g.accounts.map((a) => {
@@ -471,9 +478,9 @@ function AccountSwitcher() {
                   >
                     <div className="flex min-w-0 items-center gap-1.5">
                       <span className="truncate text-[15px] font-semibold">{name}</span>
-                      {account.watchOnly && (
+                      {(account.watchOnly || account.hardware) && (
                         <span className={collapsed ? "" : "pointer-events-auto"}>
-                          <WatchOnlyBadge className="h-4 px-1.5 text-[10px]" />
+                          <AccountBadge account={account} className="h-4 px-1.5 text-[10px]" />
                         </span>
                       )}
                     </div>
@@ -581,9 +588,9 @@ function AccountSwitcher() {
                       <span className="flex h-9 min-w-0 flex-1 flex-col justify-center">
                         <span className="flex min-w-0 items-center gap-1.5">
                           <span className="truncate text-[15px] font-semibold">{name}</span>
-                          {account.watchOnly && (
+                          {(account.watchOnly || account.hardware) && (
                             <span className="pointer-events-auto">
-                              <WatchOnlyBadge className="h-4 px-1.5 text-[10px]" />
+                              <AccountBadge account={account} className="h-4 px-1.5 text-[10px]" />
                             </span>
                           )}
                         </span>
