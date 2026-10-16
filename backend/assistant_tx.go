@@ -17,7 +17,8 @@ import (
 const RequestTransaction = "transaction"
 
 // TxProposal is a send an assistant asks for, as quoted when it asked:
-// what the user reviews before approving it with the wallet password.
+// what the user reviews before approving it with the wallet password, or
+// on their hardware wallet's screen for an account whose key is on one.
 type TxProposal struct {
 	From     string `json:"from"`
 	FromName string `json:"fromName"`
@@ -69,7 +70,7 @@ func laxToWei(s string) (*big.Int, bool) {
 
 func (a *Assistant) registerTransactions(r *server.Registrar) {
 	server.Add(r, server.Spec{Group: GroupApp, Name: "request_transaction", Title: "Ask to send LAX", Changes: true, Destructive: true, Timeout: a.permitTimeout(),
-		Description: `Asks the user to send LAX from one of the wallet's accounts to an address. The app quotes it first (fee at the node's suggested gas price, total, balance) and refuses what the balance doesn't cover or what would pay more than the user's fee cap. The user reviews the amount, the recipient (one of their accounts, a contact, or an address they have never used), the fee and the total, and approves it with the wallet password, which you never see. Once approved it returns the transaction's hash; from a watch-only account it makes a signing request the user signs on their offline signer. Plain transfers only: no contract calls.` + requestNote + requestPermitNote},
+		Description: `Asks the user to send LAX from one of the wallet's accounts to an address. The app quotes it first (fee at the node's suggested gas price, total, balance) and refuses what the balance doesn't cover or what would pay more than the user's fee cap. The user reviews the amount, the recipient (one of their accounts, a contact, or an address they have never used), the fee and the total, and approves it with the wallet password, which you never see. From a hardware wallet account (hardware_wallet in wallet_accounts) there is no password: approving sends it to the user's Ledger or Trezor, where they check it and confirm or reject it, so it waits on them there; if the device isn't connected and ready (unlocked, a Ledger's Ethereum app open), the request stays pending for them to try again, and if they reject it on the device, the call says so. Once approved it returns the transaction's hash; from a watch-only account it makes a signing request the user signs on their offline signer. Plain transfers only: no contract calls.` + requestNote + requestPermitNote},
 		func(ctx context.Context, in txIn) (any, error) {
 			if err := a.permit(ctx, "sendTransactions"); err != nil {
 				return nil, err
@@ -160,6 +161,9 @@ func (a *Assistant) registerTransactions(r *server.Registrar) {
 				}
 				if a.deps.Contacts != nil {
 					a.deps.Contacts.SentTo(prop.To)
+				}
+				if prop.Hardware != "" {
+					return fmt.Sprintf("sent transaction %s (nonce %d), confirmed by the user on their %s; get_receipt tells once it is mined", sent.Hash, sent.Nonce, deviceName(prop.Hardware)), nil
 				}
 				return fmt.Sprintf("sent transaction %s (nonce %d); get_receipt tells once it is mined", sent.Hash, sent.Nonce), nil
 			})

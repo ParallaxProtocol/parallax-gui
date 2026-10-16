@@ -540,7 +540,7 @@ func (a *Assistant) Register(r *server.Registrar) {
 		})
 
 	server.Add(r, server.Spec{Group: GroupApp, Name: "wallet_accounts", Timeout: a.permitTimeout(), Title: "Wallet accounts",
-		Description: `The accounts in the Parallax Wallet app: address, name, balance in wei and LAX (while the node has the chain's state), whether it is watch-only (its key on an offline signer), whether it is backed up, and the recovery phrase it comes from; which account the app shows; and the recovery phrases by id and name (never their words).` + permitNote},
+		Description: `The accounts in the Parallax Wallet app: address, name, balance in wei and LAX (while the node has the chain's state), whether it is watch-only (its key on an offline signer), whether its key is on a hardware wallet (a Ledger or a Trezor, which signs on its own screen: hardware_wallet is the kind of device, hardware_wallet_id the wallet it is on, hardware_path its derivation path there), whether it is backed up, and the recovery phrase it comes from; which account the app shows; the recovery phrases by id and name (never their words); and the hardware wallets by id, name and kind of device. A hardware wallet account with no hardware_wallet_id was added before the app told devices apart, until its device is next connected.` + permitNote},
 		func(ctx context.Context, _ noIn) (any, error) {
 			if err := a.permit(ctx, "wallet"); err != nil {
 				return nil, err
@@ -705,6 +705,8 @@ func (a *Assistant) walletAccounts() (any, error) {
 		Name           string `json:"name,omitempty"`
 		WatchOnly      bool   `json:"watch_only"`
 		HardwareWallet string `json:"hardware_wallet,omitempty"` // "ledger" or "trezor": it signs on the device
+		HardwareID     string `json:"hardware_wallet_id,omitempty"`
+		HardwarePath   string `json:"hardware_path,omitempty"`
 		BackedUp       bool   `json:"backed_up"`
 		RecoveryPhrase string `json:"recovery_phrase_id,omitempty"`
 		BalanceWei     string `json:"balance_wei,omitempty"`
@@ -715,9 +717,18 @@ func (a *Assistant) walletAccounts() (any, error) {
 		Name     string `json:"name"`
 		Accounts int    `json:"accounts"`
 	}
+	type hardwareOut struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		Device   string `json:"device"`
+		Accounts int    `json:"accounts"`
+	}
 	accounts := []accountOut{}
 	for _, acc := range info.Accounts {
-		o := accountOut{Address: acc.Address, Name: acc.Name, WatchOnly: acc.WatchOnly, HardwareWallet: acc.Hardware, BackedUp: acc.BackedUp}
+		o := accountOut{
+			Address: acc.Address, Name: acc.Name, WatchOnly: acc.WatchOnly, BackedUp: acc.BackedUp,
+			HardwareWallet: acc.Hardware, HardwareID: acc.HardwareWallet, HardwarePath: acc.HardwarePath,
+		}
 		if acc.FromSeed {
 			o.RecoveryPhrase = acc.SeedID
 		}
@@ -730,7 +741,11 @@ func (a *Assistant) walletAccounts() (any, error) {
 	for _, s := range info.Seeds {
 		phrases = append(phrases, phraseOut{ID: s.ID, Name: s.Name, Accounts: s.Accounts})
 	}
-	out := map[string]any{"accounts": accounts, "selected": info.Selected, "recovery_phrases": phrases}
+	hardware := []hardwareOut{}
+	for _, hw := range info.HardwareWallets {
+		hardware = append(hardware, hardwareOut{ID: hw.ID, Name: hw.Name, Device: hw.Kind, Accounts: hw.Accounts})
+	}
+	out := map[string]any{"accounts": accounts, "selected": info.Selected, "recovery_phrases": phrases, "hardware_wallets": hardware}
 	if balErr != nil {
 		out["balances_unavailable"] = balErr.Error()
 	}

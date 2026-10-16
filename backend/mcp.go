@@ -357,7 +357,7 @@ The app's own tools (node_status, node_logs, wallet_accounts, wallet_activity, c
 
 The request_ tools don't act: they ask the user, who approves or turns the request down in Parallax Wallet. Tell the user to look there, then call get_request with wait_seconds for the outcome. Never say a request was carried out before get_request says it was approved.
 
-request_transaction asks the user to send LAX from one of their accounts: they review it in the app and approve it with the wallet password, which you never see. Nothing is sent without their approval. You can't see recovery phrases, keys or the password, or remove anything. build_unsigned_tx builds a transaction for the user to sign elsewhere.
+request_transaction asks the user to send LAX from one of their accounts: they review it in the app and approve it with the wallet password, which you never see, or, from an account whose key is on a hardware wallet (a Ledger or a Trezor), confirm it on the device's own screen, with no password. Nothing is sent without their approval. You can't see recovery phrases, keys or the password, or remove anything. build_unsigned_tx builds a transaction for the user to sign elsewhere.
 
 ` + server.Conventions
 }

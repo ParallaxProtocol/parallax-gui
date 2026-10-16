@@ -596,6 +596,17 @@ func (h *hardware) account(ref hardwareRef, fn func(d *hwDevice, acc wallet.Acco
 	return util.Address{}, why
 }
 
+// deviceName is a kind of device as people call it.
+func deviceName(kind string) string {
+	switch kind {
+	case DeviceLedger:
+		return "Ledger"
+	case DeviceTrezor:
+		return "Trezor"
+	}
+	return kind
+}
+
 // hardwareRetry reports whether err is a hardware wallet that wasn't ready
 // to sign (not connected, locked, without its app open, busy): one the
 // user can put right and try again, as they can't a request turned down.
