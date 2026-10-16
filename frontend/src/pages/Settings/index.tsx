@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   Activity,
   Check,
+  ExternalLink,
   Globe,
   HardDrive,
   Info,
@@ -17,7 +18,7 @@ import {
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
-import { api, GUIConfig, UpdateInfo } from "../../lib/api";
+import { api, GUIConfig, openExternal, UpdateInfo } from "../../lib/api";
 import { formatUnits, parseUnits } from "../../lib/format";
 import { applyTheme } from "../../lib/theme";
 import { FADE_IN, FADE_OUT, GLIDE, SPRING, usePageSwap } from "../../lib/motion";
@@ -1624,7 +1625,7 @@ function About() {
 
       <Rows>
         <Row
-          title={t("settings.about.backend")}
+          title={t("details.daemonVersion")}
           desc={
             client && (client.meta || client.commit) ? (
               <span className="flex items-center gap-1.5">
@@ -1673,9 +1674,26 @@ function About() {
           )}
         </Row>
       </Rows>
+
+      <Rows>
+        {ABOUT_LINKS.map((l) => (
+          <Row key={l.url} title={t(l.title)} desc={l.url.replace(/^https:\/\//, "")}>
+            <button type="button" className="btn btn-tinted btn-sm" onClick={() => openExternal(l.url)}>
+              <ExternalLink className="size-3" />
+              {t("settings.about.open")}
+            </button>
+          </Row>
+        ))}
+      </Rows>
     </div>
   );
 }
+
+// The project's own pages, opened in the user's browser
+const ABOUT_LINKS = [
+  { title: "settings.about.website", url: "https://parallaxprotocol.org" },
+  { title: "settings.about.status", url: "https://status.parallaxprotocol.org" },
+] as const;
 
 function SaveBar({
   dirty,
