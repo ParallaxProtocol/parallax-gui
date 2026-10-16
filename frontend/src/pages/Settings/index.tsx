@@ -91,6 +91,12 @@ export default function Settings() {
   const [restartPending, setRestartPending] = useState(false);
   const [appRestartPending, setAppRestartPending] = useState(false);
   const [restarting, setRestarting] = useState(false);
+  // A stopped node reads the saved settings when it next starts: nothing
+  // waits on its restart then
+  const nodeRunning = !!useNode()?.running;
+  useEffect(() => {
+    if (!nodeRunning) setRestartPending(false);
+  }, [nodeRunning]);
   const { section: chosen, setSection, page } = useSettingsSheet();
   // An offline signer never runs its node: its sections aren't shown, and
   // one left open shows General instead
@@ -164,10 +170,10 @@ export default function Settings() {
   const restart = (...ks: (keyof GUIConfig)[]): boolean | "app" => {
     const ch = ks.filter((k) => changed(k) && !LIVE_FIELDS.has(k));
     if (ch.some((k) => APP_FIELDS.has(k))) return "app";
-    return ch.length > 0;
+    return nodeRunning && ch.length > 0;
   };
   const dirty = keys.some(changed);
-  const dirtyNeedsRestart = keys.some((k) => changed(k) && !LIVE_FIELDS.has(k) && !APP_FIELDS.has(k));
+  const dirtyNeedsRestart = nodeRunning && keys.some((k) => changed(k) && !LIVE_FIELDS.has(k) && !APP_FIELDS.has(k));
   const dirtyNeedsAppRestart = keys.some((k) => changed(k) && APP_FIELDS.has(k));
 
   const save = async () => {
