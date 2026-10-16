@@ -19,16 +19,19 @@ export const TILE = {
 /**
  * IconTile is an icon on a coloured, softly lit rounded square, as in
  * System Settings' list: the mark of a place in the app. Small beside a
- * name in a list, large as a page's header.
+ * name in a sidebar, as System Settings' own, the middle size beside one in
+ * a list, large as a page's header.
  */
 export function IconTile({
   icon: Icon,
   color,
+  small,
   large,
   className = "",
 }: {
   icon: LucideIcon;
   color: string;
+  small?: boolean;
   large?: boolean;
   className?: string;
 }) {
@@ -36,11 +39,11 @@ export function IconTile({
     <span
       aria-hidden
       className={`grid shrink-0 place-items-center text-white shadow-[inset_0_1px_0_rgb(255_255_255/25%),0_1px_2px_rgb(0_0_0/25%)] ${
-        large ? "size-12 rounded-[14px]" : "size-7 rounded-[8px]"
+        large ? "size-12 rounded-[14px]" : small ? "size-5 rounded-[5px]" : "size-7 rounded-[8px]"
       } ${className}`}
       style={{ background: `linear-gradient(180deg, color-mix(in oklab, ${color}, white 18%), ${color})` }}
     >
-      <Icon className={large ? "size-6" : "size-4"} strokeWidth={2} />
+      <Icon className={large ? "size-6" : small ? "size-3" : "size-4"} strokeWidth={small ? 2.25 : 2} />
     </span>
   );
 }

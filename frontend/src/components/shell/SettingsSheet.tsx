@@ -106,7 +106,7 @@ export function SettingsButton() {
   const { open, setOpen } = useSettingsSheet();
   // In the sidebar's rail, the icon alone, its name in a tooltip
   const { collapsed } = useSidebar();
-  if (open) return <div className="h-9" />;
+  if (open) return <div className="h-8" />;
   return (
     <Tooltip content={collapsed ? t("nav.settings") : null}>
       <motion.button
@@ -115,7 +115,7 @@ export function SettingsButton() {
         transition={SETTINGS_SPRING}
         onClick={() => setOpen(true)}
         aria-label={collapsed ? t("nav.settings") : undefined}
-        className="group flex h-9 w-full items-center overflow-hidden px-2.5 text-left text-[15px] whitespace-nowrap text-foreground/80"
+        className="group flex h-8 w-full items-center overflow-hidden px-3 text-left text-base whitespace-nowrap text-foreground/80"
         style={{ borderRadius: 10 }}
       >
         <SettingsTitle label={t("nav.settings")} hidden={collapsed} />
@@ -126,8 +126,8 @@ export function SettingsButton() {
 
 function SettingsTitle({ label, large, hidden }: { label: string; large?: boolean; hidden?: boolean }) {
   return (
-    <motion.span layoutId="settings-title" transition={SETTINGS_SPRING} className="flex items-center gap-3">
-      <Settings2 className="size-[18px] shrink-0 text-brand" strokeWidth={1.75} />
+    <motion.span layoutId="settings-title" transition={SETTINGS_SPRING} className="flex items-center gap-2.5">
+      <Settings2 className="size-4 shrink-0 text-brand" strokeWidth={1.75} />
       <motion.span
         className={large ? "text-base font-semibold text-foreground" : ""}
         initial={false}

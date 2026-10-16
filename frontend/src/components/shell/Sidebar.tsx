@@ -788,9 +788,9 @@ function NavItem({
       <Tooltip content={collapsed ? label : null}>
         <span
           aria-disabled="true"
-          className="flex h-9 shrink-0 cursor-default items-center gap-3 rounded-lg px-2.5 text-[15px] text-foreground/35"
+          className="flex h-8 shrink-0 cursor-default items-center gap-2.5 rounded-lg px-3 text-base text-foreground/35"
         >
-          <Icon className="size-[18px] shrink-0 text-brand opacity-35" strokeWidth={1.75} />
+          <Icon className="size-4 shrink-0 text-brand opacity-35" strokeWidth={1.75} />
           {name}
         </span>
       </Tooltip>
@@ -806,7 +806,7 @@ function NavItem({
           // As a macOS sidebar's rows: the selection alone drawn (no hover),
           // every symbol in the accent colour, the chosen one's name brighter and
           // bolder, as in Settings' own list
-          `group relative flex h-9 items-center gap-3 rounded-lg px-2.5 text-[15px] transition-colors duration-200 ${
+          `group relative flex h-8 items-center gap-2.5 rounded-lg px-3 text-base transition-colors duration-200 ${
             isActive ? "font-medium text-foreground" : "text-foreground/80"
           }`
         }
@@ -825,7 +825,7 @@ function NavItem({
               />
             )}
             <Icon
-              className="relative size-[18px] shrink-0 text-brand transition-transform duration-200 group-active:scale-90"
+              className="relative size-4 shrink-0 text-brand transition-transform duration-200 group-active:scale-90"
               strokeWidth={1.75}
             />
             {name}

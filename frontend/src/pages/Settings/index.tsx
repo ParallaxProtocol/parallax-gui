@@ -280,7 +280,7 @@ export default function Settings() {
       >
         {NAV_GROUPS.filter((g) => !offline || !g.sections.some((x) => NODE_SECTIONS.has(x))).map((group, gi) => (
           <div key={group.title} className="flex flex-col gap-px">
-            <h3 className={`px-2.5 pb-1.5 text-sm font-semibold text-muted-foreground ${gi === 0 ? "" : "pt-5"}`}>
+            <h3 className={`px-2.5 pb-1 text-xs font-semibold text-muted-foreground ${gi === 0 ? "" : "pt-5"}`}>
               {t(group.title)}
             </h3>
             {group.sections
@@ -291,7 +291,7 @@ export default function Settings() {
                   type="button"
                   onClick={() => setSection(id)}
                   aria-current={section === id ? "page" : undefined}
-                  className={`relative flex h-10 shrink-0 items-center rounded-lg px-2 text-left text-[15px] transition-colors ${
+                  className={`relative flex h-8 shrink-0 items-center rounded-lg px-2 text-left text-base transition-colors ${
                     section === id ? "font-medium" : "text-foreground/80"
                   }`}
                 >
@@ -303,8 +303,8 @@ export default function Settings() {
                       className="absolute inset-0 rounded-lg bg-selected"
                     />
                   )}
-                  <span className="relative flex items-center gap-3">
-                    <SectionTile id={id} />
+                  <span className="relative flex items-center gap-2">
+                    <SectionTile id={id} small />
                     {t(`settings.section.${id}`)}
                   </span>
                 </button>
@@ -1795,9 +1795,9 @@ const SECTION_LOOK: Record<SettingsSection, { icon: LucideIcon; color: string }>
 };
 
 /** SectionTile is a section's icon on its coloured tile. */
-function SectionTile({ id, large }: { id: SettingsSection; large?: boolean }) {
+function SectionTile({ id, small, large }: { id: SettingsSection; small?: boolean; large?: boolean }) {
   const { icon, color } = SECTION_LOOK[id];
-  return <IconTile icon={icon} color={color} large={large} />;
+  return <IconTile icon={icon} color={color} small={small} large={large} />;
 }
 
 /** An address to preview avatars with while the wallet has no account: EIP-55's example. */
