@@ -1,4 +1,4 @@
-import type { ElementType, ReactNode } from "react";
+import type { CSSProperties, ElementType, ReactNode } from "react";
 
 export type Tone = "warn" | "critical" | null;
 
@@ -24,7 +24,9 @@ export function Panel({
   className?: string;
   tone?: Tone;
   id?: string;
-  children: ReactNode;
+  style?: CSSProperties;
+  /** None for a panel drawn behind what's laid over it. */
+  children?: ReactNode;
   [attr: `aria-${string}`]: string | undefined;
 }) {
   return (

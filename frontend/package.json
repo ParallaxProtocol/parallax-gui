@@ -13,6 +13,7 @@
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
+    "@tanstack/react-virtual": "3.14.21",
     "ethereum-blockies-base64": "1.0.2",
     "jsqr": "1.4.0",
     "lucide-react": "^1.56.0",

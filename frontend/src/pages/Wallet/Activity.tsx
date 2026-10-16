@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowDownLeft,
   ArrowUp,
@@ -142,7 +143,10 @@ export function useTxDetails(rows: Activity[]) {
       a.mined ? Promise.resolve(setOpened(a.key)) : load(a.hash, a.block, a.index).then(() => setOpened(a.key)),
     [load],
   );
-  const toggle = (a: Activity) => (opened === a.key ? setOpened(null) : open(a));
+  // Stable, so a memoized row isn't drawn again for another row opening
+  const openedNow = useRef(opened);
+  openedNow.current = opened;
+  const toggle = useCallback((a: Activity) => (openedNow.current === a.key ? setOpened(null) : open(a)), [open]);
 
   const openedRow = rows.find((a) => a.key === opened);
   const openedBlock = openedRow?.block;
@@ -221,7 +225,7 @@ function queryOf(address: string, v: HistoryView, cursor = ""): HistoryQuery {
  * above that and not in it is one a reorg took off, and one in both is
  * shown where the first page has it.
  */
-function useHistory(query: HistoryQuery | null) {
+function useHistory(query: HistoryQuery | null, address: string) {
   const node = useNode();
   const running = !!node?.running;
   // While syncing the head moves on every poll: read again only every few hundred blocks then
@@ -229,7 +233,7 @@ function useHistory(query: HistoryQuery | null) {
   const key = JSON.stringify(query);
   const base = useMemo(() => query, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [first, setFirst] = useState<{ key: string; page: HistoryPage } | null>(null);
+  const [first, setFirst] = useState<{ key: string; address: string; page: HistoryPage } | null>(null);
   const [older, setOlder] = useState<{ key: string; items: HistoryTx[]; next: string } | null>(null);
   const [err, setErr] = useState<{ key: string; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -242,7 +246,7 @@ function useHistory(query: HistoryQuery | null) {
       .walletHistory(base)
       .then((page) => {
         if (!alive) return;
-        setFirst({ key, page });
+        setFirst({ key, address: base.address, page });
         setErr(null);
       })
       .catch((e: unknown) => alive && setErr({ key, text: e instanceof Error ? e.message : String(e) }));
@@ -251,7 +255,11 @@ function useHistory(query: HistoryQuery | null) {
     };
   }, [key, base, running, head, tick]);
 
-  const page = running && first?.key === key ? first.page : null;
+  // Another view of the same account shows the one before until its own is
+  // read, rather than a moment's spinner; the list swaps once it's in
+  const errNow = err?.key === key ? err.text : null;
+  const page = running && first && (first.key === key || (first.address === address && !errNow)) ? first.page : null;
+  const stale = !!page && first?.key !== key;
   const building = !!page && !page.complete && page.indexing;
   useEffect(() => {
     if (!building) return;
@@ -259,7 +267,7 @@ function useHistory(query: HistoryQuery | null) {
     return () => clearInterval(id);
   }, [building]);
 
-  const more = older?.key === key ? older : null;
+  const more = older?.key === first?.key ? older : null;
   const list = useMemo(() => {
     if (!page) return { items: [] as HistoryTx[], next: "" };
     if (!more) return { items: page.transactions, next: page.next };
@@ -270,7 +278,7 @@ function useHistory(query: HistoryQuery | null) {
   }, [page, more]);
 
   const loadMore = () => {
-    if (!base || !page || !list.next || loading) return;
+    if (!base || !page || stale || !list.next || loading) return;
     const at = key;
     const shown = more ? list.items : page.transactions;
     setLoading(true);
@@ -289,10 +297,14 @@ function useHistory(query: HistoryQuery | null) {
   return {
     running,
     page,
+    /** Whether what's shown is the view before, the one asked for still being read. */
+    stale,
+    /** Which view's list is shown, to key it by. */
+    shown: stale ? first!.key : key,
     items: list.items,
-    next: list.next,
+    next: stale ? "" : list.next,
     loading,
-    err: err?.key === key ? err.text : null,
+    err: errNow,
     loadMore,
     retry,
   };
@@ -320,18 +332,23 @@ function useNearEnd(enabled: boolean, cb: () => void) {
   return setEl;
 }
 
-/** dayOf is a local day's key, and its heading: today, yesterday, a date this year, or one of another. */
-function useDay() {
+/** dayKey is the local day a unix time falls on, to group rows by. */
+function dayKey(time: number): string {
+  const d = new Date(time * 1000);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+/** useDayLabel is a local day's heading: today, yesterday, a date this year, or one of another. */
+function useDayLabel() {
   const t = useT();
   const { lang } = useLang();
   return (time: number, now: number) => {
     const d = new Date(time * 1000);
-    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     const today = new Date(now);
     const yesterday = new Date(now - 86_400_000);
     const same = (a: Date, b: Date) =>
       a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-    const label = same(d, today)
+    return same(d, today)
       ? t("wallet.history.today")
       : same(d, yesterday)
         ? t("wallet.history.yesterday")
@@ -341,8 +358,168 @@ function useDay() {
             day: "numeric",
             ...(d.getFullYear() === today.getFullYear() ? {} : { year: "numeric" }),
           });
-    return { key, label };
   };
+}
+
+/**
+ * nowFor is the time a row tells its age from: the page's own, ticking
+ * every few seconds, while the row is under a minute old, and coarser as
+ * it ages, to the step its age is told in. A row whose age reads the same
+ * gets the same time, so it isn't drawn again on every tick.
+ */
+function nowFor(time: number, now: number): number {
+  const age = now / 1000 - time;
+  const step = age < 60 ? 0 : age < 3600 ? 10_000 : age < 86_400 ? 60_000 : 3_600_000;
+  return step ? Math.floor(now / step) * step : now;
+}
+
+/** An item of the virtualized history: a day's heading, or one of its rows. */
+type ListItem =
+  | { kind: "day"; key: string; time: number; day: number; top: boolean }
+  | { kind: "row"; key: string; a: Activity; day: number; first: boolean; last: boolean };
+
+/**
+ * HistoryList is the history's rows by local day, each day its own
+ * grouped panel under its date, as a Mac's grouped lists. Only the rows
+ * in and near view are mounted, however long the history: each day's
+ * panel is drawn behind its rows as one box, spanning them, so the rows
+ * can come and go while it stays whole. Rows mounted as the list shows
+ * (the page opening, or another view of it) arrive one after another;
+ * those scrolled to later are just there.
+ */
+function HistoryList({
+  rows,
+  head,
+  now,
+  opened,
+  details,
+  onToggle,
+}: {
+  rows: Activity[];
+  head: number;
+  now: number;
+  opened: string | null;
+  details: Record<string, TxDetails | string>;
+  onToggle: (a: Activity) => void;
+}) {
+  const stagger = useStagger();
+  const dayLabel = useDayLabel();
+  const list = useRef<HTMLDivElement>(null);
+
+  const { items, days } = useMemo(() => {
+    const items: ListItem[] = [];
+    const days: { from: number; to: number }[] = [];
+    for (const a of rows) {
+      const key = dayKey(a.time);
+      const prev = items[items.length - 1];
+      if (prev?.kind !== "row" || dayKey(prev.a.time) !== key) {
+        if (prev?.kind === "row") prev.last = true;
+        days.push({ from: items.length + 1, to: items.length + 1 });
+        items.push({ kind: "day", key: `day:${key}`, time: a.time, day: days.length - 1, top: items.length === 0 });
+        items.push({ kind: "row", key: a.key, a, day: days.length - 1, first: true, last: false });
+      } else {
+        items.push({ kind: "row", key: a.key, a, day: days.length - 1, first: false, last: false });
+      }
+      days[days.length - 1].to = items.length - 1;
+    }
+    const tail = items[items.length - 1];
+    if (tail?.kind === "row") tail.last = true;
+    return { items, days };
+  }, [rows]);
+
+  // Where the list starts in the page's scroller, which holds what's above it too
+  const [margin, setMargin] = useState(0);
+  useLayoutEffect(() => {
+    const el = list.current;
+    const main = el?.closest("main");
+    if (!el || !main) return;
+    const measure = () => {
+      let top = 0;
+      for (let n: HTMLElement | null = el; n && n !== main; n = n.offsetParent as HTMLElement | null)
+        top += n.offsetTop;
+      setMargin(top);
+    };
+    // What's above growing or shrinking grows or shrinks one of the list's parents
+    const ro = new ResizeObserver(measure);
+    for (let n = el.parentElement; n && n !== main; n = n.parentElement) ro.observe(n);
+    measure();
+    return () => ro.disconnect();
+  }, []);
+
+  const estimate = useCallback(
+    (i: number) => {
+      const it = items[i];
+      // A heading: its line and the gap under it, and the gap between days over it but the first's
+      if (it.kind === "day") return it.top ? 28 : 48;
+      // A row, and the hairline over it (the panel's top border over the first) and under the last
+      return 64 + 1 + (it.last ? 1 : 0);
+    },
+    [items],
+  );
+  const keyOfItem = useCallback((i: number) => items[i].key, [items]);
+  const v = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => list.current?.closest("main") ?? null,
+    estimateSize: estimate,
+    getItemKey: keyOfItem,
+    overscan: 8,
+    scrollMargin: margin,
+  });
+  const shown = v.getVirtualItems();
+
+  // Rows mounted once the list has first shown don't arrive: they're scrolled to
+  const [intro, setIntro] = useState(true);
+  const any = shown.length > 0;
+  useEffect(() => {
+    if (any) setIntro(false);
+  }, [any]);
+
+  // The days in view, for their panels
+  const panels = [...new Set(shown.map((s) => items[s.index].day))].map((d) => {
+    const from = v.measurementsCache[days[d].from];
+    const to = v.measurementsCache[days[d].to];
+    return { key: items[days[d].from - 1].key, top: from.start - margin, height: to.end - from.start };
+  });
+
+  return (
+    <motion.div {...stagger} ref={list} className="relative" style={{ height: v.getTotalSize() }}>
+      {panels.map((p) => (
+        <Panel key={p.key} aria-hidden="true" className="absolute inset-x-0" style={{ top: p.top, height: p.height }} />
+      ))}
+      {shown.map((s) => {
+        const it = items[s.index];
+        return (
+          <div
+            key={s.key}
+            data-index={s.index}
+            ref={v.measureElement}
+            className={`absolute inset-x-0 top-0 ${it.kind === "row" ? `px-px ${it.first ? "pt-px" : ""} ${it.last ? "pb-px" : ""}` : `pb-2 ${it.top ? "" : "pt-5"}`}`}
+            style={{ transform: `translateY(${s.start - margin}px)` }}
+          >
+            {it.kind === "day" ? (
+              <h3 className="px-1 text-sm font-semibold text-muted-foreground">{dayLabel(it.time, now)}</h3>
+            ) : (
+              <ActivityRow
+                as="div"
+                a={it.a}
+                opened={opened === it.a.key}
+                onToggle={onToggle}
+                details={details[it.a.hash]}
+                // What a row shows of the head: a reward's maturity until it's
+                // spendable, an opened one's confirmations. Others get none, so
+                // a new block doesn't draw them all again
+                head={opened === it.a.key ? head : it.a.mined ? Math.min(head, it.a.mined.maturesAt ?? 0) : 0}
+                now={nowFor(it.a.time, now)}
+                arrive={intro}
+                // The panel's corners, which its hover and opened backgrounds keep within; a hairline between rows
+                className={`${it.first ? "rounded-t-[15px]" : "border-t border-border"} ${it.last ? "rounded-b-[15px]" : ""} overflow-hidden`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </motion.div>
+  );
 }
 
 /**
@@ -372,8 +549,6 @@ export function ActivitySection({
 }) {
   const t = useT();
   const { lang } = useLang();
-  const stagger = useStagger();
-  const day = useDay();
   const node = useNode();
   const nodeSwitch = useNodeSwitch();
   const { info } = useWallet();
@@ -392,8 +567,20 @@ export function ActivitySection({
     [address, view, resolved, found],
   );
 
-  const h = useHistory(query);
-  const rows = useMemo(() => h.items.map((tx) => toActivity(tx, address, false)), [h.items, address]);
+  const h = useHistory(query, address);
+
+  // Each item's row made once: a page loaded keeps the items before it, and
+  // so their rows, which a memoized row then needn't draw again
+  const made = useMemo(() => new WeakMap<HistoryTx, Activity>(), [address]);
+  const rows = useMemo(
+    () =>
+      h.items.map((tx) => {
+        let a = made.get(tx);
+        if (!a) made.set(tx, (a = toActivity(tx, address, false)));
+        return a;
+      }),
+    [h.items, address, made],
+  );
   const tx = useTxDetails(rows);
   const sentinel = useNearEnd(!!h.next && !h.loading && !h.err, h.loadMore);
 
@@ -479,18 +666,6 @@ export function ActivitySection({
         : t("wallet.history.fromTx", { hash: shortHex(view.jump.hash, 8, 6) });
   const complete = !!h.page?.complete;
   const exportPct = exporting && exporting.total > 0 ? Math.floor((exporting.done / exporting.total) * 100) : null;
-
-  // The rows by local day, each day a group of its own under its date, as a Mac's grouped lists
-  const days = useMemo(() => {
-    const out: { key: string; label: string; rows: Activity[] }[] = [];
-    for (const a of rows) {
-      const d = day(a.time, now);
-      if (out.length > 0 && out[out.length - 1].key === d.key) out[out.length - 1].rows.push(a);
-      else out.push({ ...d, rows: [a] });
-    }
-    return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, now, lang]);
 
   const retry = (
     <>
@@ -609,28 +784,19 @@ export function ActivitySection({
         </Panel>
       ) : (
         <>
-          <motion.div {...stagger} className="flex flex-col gap-5">
-            {days.map((d) => (
-              <section key={d.key} className="flex flex-col gap-2">
-                <h3 className="px-1 text-sm font-semibold text-muted-foreground">{d.label}</h3>
-                <Panel as="ul" className="flex flex-col divide-y divide-border overflow-hidden">
-                  {d.rows.map((a) => (
-                    <ActivityRow
-                      key={a.key}
-                      a={a}
-                      opened={tx.opened === a.key}
-                      onToggle={() => tx.toggle(a)}
-                      details={tx.details[a.hash]}
-                      head={head}
-                      now={now}
-                      // Off screen, a row isn't laid out: a long history stays light
-                      className="[contain-intrinsic-size:auto_4rem] [content-visibility:auto]"
-                    />
-                  ))}
-                </Panel>
-              </section>
-            ))}
-          </motion.div>
+          {/* The view before, while the one asked for is read: dimmed only if that takes a moment */}
+          <div className={h.stale ? "opacity-50 transition-opacity delay-200 duration-200" : ""}>
+            <HistoryList
+              // Another view's list is a new one, its rows arriving as the page's first did
+              key={h.shown}
+              rows={rows}
+              head={head}
+              now={now}
+              opened={tx.opened}
+              details={tx.details}
+              onToggle={tx.toggle}
+            />
+          </div>
           {/* Older pages load as the end comes near; while the history is indexed, why there's no more yet */}
           {(h.next || h.err || !complete) && (
             <div
@@ -697,7 +863,7 @@ export function PendingSection({
                   id={`pending-${a.hash}`}
                   a={a}
                   opened={opened === a.key}
-                  onToggle={() => toggle(a)}
+                  onToggle={toggle}
                   details={details[a.hash]}
                   head={view?.headBlock ?? 0}
                   now={now}
@@ -788,7 +954,7 @@ export function RecentActivity({ view, running, now }: { view: AddressView | nul
                 key={a.key}
                 a={a}
                 opened={opened === a.key}
-                onToggle={() => toggle(a)}
+                onToggle={toggle}
                 details={details[a.hash]}
                 head={head}
                 now={now}
@@ -1102,7 +1268,7 @@ function HistorySearch({
  * and for how much, opening to its details. One of the account's own still
  * waiting has the ways to speed it up or cancel it beside them.
  */
-export function ActivityRow({
+export const ActivityRow = memo(function ActivityRow({
   a,
   opened,
   onToggle,
@@ -1111,30 +1277,37 @@ export function ActivityRow({
   now,
   onReplace,
   id,
+  as = "li",
+  arrive = true,
   className = "",
 }: {
   a: Activity;
   opened: boolean;
-  onToggle: () => void;
+  onToggle: (a: Activity) => void;
   details: TxDetails | string | undefined;
   head: number;
   now: number;
   onReplace?: (kind: ReplaceKind) => void;
   id?: string;
+  /** A div for a list that isn't a ul, as the virtualized history's. */
+  as?: "li" | "div";
+  /** Whether it arrives as its list's stagger has it; one scrolled to later is just there. */
+  arrive?: boolean;
   className?: string;
 }) {
   const t = useT();
   const ago = useAgo();
   const label = useId();
+  const Row = as === "div" ? motion.div : motion.li;
   return (
-    <motion.li id={id} variants={STAGGER.item} className={className}>
+    <Row id={id} variants={STAGGER.item} initial={arrive ? undefined : false} className={className}>
       {/* The whole row opens it: a button beneath the row's contents, so
           the buttons to speed up or cancel can sit in the row beside them.
           It lights up wherever on the row the pointer is, those included */}
       <div className="group relative flex h-16 items-center gap-3.5 px-4">
         <button
           type="button"
-          onClick={onToggle}
+          onClick={() => onToggle(a)}
           aria-expanded={opened}
           aria-labelledby={label}
           className={`absolute inset-0 transition-colors group-hover:bg-hover ${opened ? "bg-hover" : ""}`}
@@ -1213,9 +1386,9 @@ export function ActivityRow({
           </Unfold>
         )}
       </AnimatePresence>
-    </motion.li>
+    </Row>
   );
-}
+});
 
 /**
  * ActivityDetails is an opened activity row: everything the node knows of
