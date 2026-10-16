@@ -403,7 +403,7 @@ func buildConfigs(g GUIConfig) (node.Config, nodeconfig.Config, error) {
 		g = devGUIConfig(g)
 	}
 	nodeCfg := node.DefaultConfig
-	nodeCfg.Name = "ParallaxGUI"
+	nodeCfg.Name = "Parallax"
 	// The node goes by the Parallax client's version, as parallaxd does
 	// (2.1.3-stable-71d7cead), not the app's: it is the client peers and
 	// the logs should know it by
