@@ -37,6 +37,8 @@ export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 export type SettingsPage =
   | { kind: "accounts.add" }
   | { kind: "accounts.import" }
+  /** Importing, at following a watch-only account (an offline signer's) */
+  | { kind: "accounts.watch" }
   | { kind: "accounts.find"; seedId: string };
 
 /** pageKey tells pages apart, for their transitions: by what they show, not the secrets they hold. */

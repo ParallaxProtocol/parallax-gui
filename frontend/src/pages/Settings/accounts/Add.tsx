@@ -73,10 +73,19 @@ export function AddAccounts({ onLeave, onDone }: { onLeave: () => void; onDone: 
  * and the accounts it holds, a single key (from a keystore file or typed
  * in), or the address alone of one whose key stays on an offline signer.
  */
-export function ImportAccounts({ onLeave, onDone }: { onLeave: () => void; onDone: () => void }) {
+export function ImportAccounts({
+  initial = null,
+  onLeave,
+  onDone,
+}: {
+  /** The source to open at, rather than the choice of one (Back still comes to the choice). */
+  initial?: "phrase" | "key" | "watch" | null;
+  onLeave: () => void;
+  onDone: () => void;
+}) {
   const t = useT();
   const offline = useOfflineMode();
-  const [kind, setKind] = useState<"phrase" | "key" | "watch" | null>(null);
+  const [kind, setKind] = useState<"phrase" | "key" | "watch" | null>(initial);
   const back = () => setKind(null);
 
   const lead = t("wallet.import.step.source");

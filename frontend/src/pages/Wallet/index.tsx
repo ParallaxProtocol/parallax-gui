@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowDownLeft,
@@ -8,6 +8,7 @@ import {
   Ban,
   ChevronRight,
   Clock,
+  Download,
   Eye,
   HardDrive,
   KeyRound,
@@ -29,9 +30,11 @@ import { IconBadge } from "../../components/ui/IconBadge";
 import { Pill } from "../../components/ui/Pill";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
-import { BrandMark } from "../../components/ui/BrandMark";
 import { BackupModal } from "./AccountForms";
 import { useSummary } from "./common";
+import { useSettingsSheet } from "../../components/shell/SettingsSheet";
+import { LinkRow, LinkRows } from "../../components/ui/LinkRow";
+import { LogoMark } from "../../components/ui/LogoMark";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
@@ -62,8 +65,8 @@ type Activity = {
 export default function WalletPage() {
   const wallet = useWallet();
   if (!wallet.info) return null;
-  // A wallet without its password shows only the welcome, until it has one
-  if (!wallet.info.hasPassword) return <Locked existing={wallet.info.needsSetup} />;
+  // A wallet without its password is the greeting's (Hello), shown in the app's place
+  if (!wallet.info.hasPassword) return null;
   return wallet.account ? <Overview /> : <Welcome />;
 }
 
@@ -606,111 +609,49 @@ function formatAmount(v: number): string {
 /** Welcome is the wallet before it holds an account: make one, or bring one. */
 function Welcome() {
   const t = useT();
-  const navigate = useNavigate();
-  return (
-    <div className="flex min-h-full flex-col items-center justify-center gap-6 px-5 py-10">
-      <BrandMark size={56} />
-      <div className="flex max-w-lg flex-col items-center gap-2 text-center">
-        <h2 className="text-3xl font-semibold tracking-tight">{t("wallet.welcome.title")}</h2>
-        <p className="text-muted-foreground">{t("wallet.welcome.desc")}</p>
-      </div>
-      <div className="grid w-full max-w-2xl gap-3 sm:grid-cols-2">
-        <Choice
-          icon={Plus}
-          title={t("wallet.welcome.create")}
-          desc={t("wallet.welcome.createDesc")}
-          onClick={() => navigate("/accounts/new")}
-          primary
-        />
-        <Choice
-          icon={KeyRound}
-          title={t("wallet.welcome.import")}
-          desc={t("wallet.welcome.importDesc")}
-          onClick={() => navigate("/accounts/import")}
-        />
-      </div>
-      <button type="button" className="btn btn-ghost" onClick={() => navigate("/accounts/watch")}>
-        <Eye className="size-4" />
-        {t("offline.watch.welcome")}
-      </button>
-      <p className="max-w-lg text-center text-sm text-muted-foreground">{t("wallet.welcome.local")}</p>
-    </div>
-  );
-}
-
-function Choice({
-  icon: Icon,
-  title,
-  desc,
-  onClick,
-  primary,
-}: {
-  icon: typeof Plus;
-  title: string;
-  desc: string;
-  onClick: () => void;
-  primary?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="glass group flex items-start gap-3.5 p-5 text-left transition-colors"
-    >
-      <IconBadge icon={Icon} tone={primary ? "brand" : "neutral"} />
-      <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="font-medium">{title}</span>
-        <span className="text-sm text-muted-foreground">{desc}</span>
-      </span>
-    </button>
-  );
-}
-
-/**
- * Locked is the app before the wallet has its password: what the app is,
- * and the one way on, Get started, which sets the password. Nothing else
- * of the wallet shows until then. A wallet that has keys but no password
- * yet (from an earlier build) gets the same, worded for it.
- */
-function Locked({ existing }: { existing: boolean }) {
-  const t = useT();
-  const navigate = useNavigate();
   const stagger = useStagger();
+  // Making and importing are Settings' Accounts section's, opened at the flow chosen
+  const { openAt } = useSettingsSheet();
   return (
-    <div className="flex min-h-full flex-col items-center justify-center gap-8 px-5 py-10">
-      <motion.div {...stagger} className="flex w-full max-w-2xl flex-col items-center gap-8">
-        <motion.div variants={STAGGER.item}>
-          <BrandMark size={56} />
+    <div className="flex min-h-full flex-col items-center justify-center px-5 py-10">
+      {/* As setup's pages: the mark and title, then the ways on as rows of glass cards, each in turn */}
+      <motion.div {...stagger} className="flex w-full max-w-lg flex-col items-center gap-8">
+        <motion.div variants={STAGGER.item} className="flex flex-col items-center gap-5 text-center">
+          <LogoMark size={56} />
+          <div className="flex flex-col items-center gap-2">
+            <h2 className="text-3xl font-semibold tracking-tight">{t("wallet.welcome.title")}</h2>
+            <p className="text-muted-foreground">{t("wallet.welcome.desc")}</p>
+          </div>
         </motion.div>
-        <motion.div variants={STAGGER.item} className="flex flex-col items-center gap-2 text-center">
-          <h2 className="text-3xl font-semibold tracking-tight">{t("wallet.locked.title")}</h2>
-          <p className="max-w-lg text-muted-foreground">
-            {existing ? t("wallet.locked.existing") : t("wallet.locked.desc")}
-          </p>
+        <motion.div variants={STAGGER.item} className="flex w-full flex-col gap-2">
+          <LinkRows>
+            <LinkRow
+              icon={Plus}
+              title={t("wallet.welcome.create")}
+              desc={t("wallet.welcome.createDesc")}
+              onClick={() => openAt("accounts", { kind: "accounts.add" })}
+              autoFocus
+            />
+            <LinkRow
+              icon={Download}
+              title={t("wallet.welcome.import")}
+              desc={t("wallet.welcome.importDesc")}
+              onClick={() => openAt("accounts", { kind: "accounts.import" })}
+            />
+          </LinkRows>
+          <p className="px-4 text-sm text-muted-foreground">{t("wallet.welcome.local")}</p>
         </motion.div>
-        <motion.ul variants={STAGGER.item} className="grid w-full gap-5 sm:grid-cols-3">
-          <Point icon={Server} title={t("wallet.locked.node")} desc={t("wallet.locked.nodeDesc")} />
-          <Point icon={HardDrive} title={t("wallet.locked.keys")} desc={t("wallet.locked.keysDesc")} />
-          <Point icon={Lock} title={t("wallet.locked.password")} desc={t("wallet.locked.passwordDesc")} />
-        </motion.ul>
-        <motion.div variants={STAGGER.item} className="flex flex-col items-center gap-2">
-          <button type="button" className="btn btn-primary btn-lg" onClick={() => navigate("/setup")} autoFocus>
-            {t("wallet.locked.cta")}
-            <ArrowRight className="size-4" />
-          </button>
-          <span className="text-sm text-muted-foreground">{t("wallet.locked.ctaHint")}</span>
+        <motion.div variants={STAGGER.item} className="w-full">
+          <LinkRows>
+            <LinkRow
+              icon={Eye}
+              title={t("offline.watch.title")}
+              desc={t("wallet.welcome.watchDesc")}
+              onClick={() => openAt("accounts", { kind: "accounts.watch" })}
+            />
+          </LinkRows>
         </motion.div>
       </motion.div>
     </div>
-  );
-}
-
-function Point({ icon: Icon, title, desc }: { icon: typeof Lock; title: string; desc: string }) {
-  return (
-    <li className="flex flex-col items-center gap-2 text-center">
-      <IconBadge icon={Icon} tone="brand" className="ring-1 ring-brand/25" />
-      <span className="font-medium">{title}</span>
-      <span className="text-sm text-muted-foreground">{desc}</span>
-    </li>
   );
 }

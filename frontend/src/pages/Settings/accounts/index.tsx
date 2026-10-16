@@ -36,10 +36,14 @@ export function AccountPage({ page, onLeave }: { page: SettingsPage; onLeave: ()
       </DrillIn>
     );
   }
-  if (page.kind === "accounts.import") {
+  if (page.kind === "accounts.import" || page.kind === "accounts.watch") {
     return (
       <DrillIn title={t("wallet.accounts.importTitle")} parent={parent} onLeave={onLeave}>
-        <ImportAccounts onLeave={onLeave} onDone={onLeave} />
+        <ImportAccounts
+          initial={page.kind === "accounts.watch" ? "watch" : undefined}
+          onLeave={onLeave}
+          onDone={onLeave}
+        />
       </DrillIn>
     );
   }

@@ -16,10 +16,6 @@ const TITLES: Record<string, string> = {
   "/messages/sign": "nav.signMessage",
   "/messages/verify": "nav.verifyMessage",
   "/broadcast": "offline.nav.broadcast",
-  "/accounts/watch": "offline.watch.title",
-  "/accounts/new": "wallet.create.title",
-  "/accounts/import": "wallet.import.title",
-  "/setup": "wallet.setup.title",
 };
 
 /**

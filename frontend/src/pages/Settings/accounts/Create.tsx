@@ -40,7 +40,8 @@ export function CreateWallet({ lead, onBack, onDone }: { lead: string; onBack: (
   const [stage, setStage] = useState<PhraseStage>("intro");
   const [words, setWords] = useState<string[]>([]);
   const [valid, setValid] = useState(false);
-  const [long, setLong] = useState(false);
+  // 24 words unless the shorter phrase is asked for
+  const [short, setShort] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const [passphrase, setPassphrase] = useState("");
   // Whether the words were typed back, or left for later (the quiz skipped)
@@ -79,21 +80,21 @@ export function CreateWallet({ lead, onBack, onDone }: { lead: string; onBack: (
       <SettingsFlow title={t("wallet.create.step.intro")} steps={steps} current={1}>
         <CreateIntro
           kind="phrase"
-          words={long ? 24 : 12}
+          words={short ? 12 : 24}
           extra={
             <Rows>
               <ToggleRow
-                title={t("wallet.create.words24")}
-                desc={t("wallet.create.words24Desc")}
-                checked={long}
-                onChange={setLong}
+                title={t("wallet.create.words12")}
+                desc={t("wallet.create.words12Desc")}
+                checked={short}
+                onChange={setShort}
               />
             </Rows>
           }
           busy={busy}
           onBack={onBack}
           onContinue={async () => {
-            const made = await run(() => api.walletNewSeedWords(long ? 24 : 12));
+            const made = await run(() => api.walletNewSeedWords(short ? 12 : 24));
             if (made) {
               setWords(made);
               setStage("phrase");

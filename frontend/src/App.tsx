@@ -23,16 +23,6 @@ const SignMessagePage = lazy(() => import("./pages/Messages").then((m) => ({ def
 const VerifyMessagePage = lazy(() => import("./pages/Messages").then((m) => ({ default: m.VerifyMessagePage })));
 const SignerHome = lazy(() => import("./pages/Offline/SignerHome"));
 const BroadcastPage = lazy(() => import("./pages/Offline/Broadcast"));
-const AddWatchOnlyPage = lazy(() => import("./pages/Wallet/WatchOnly").then((m) => ({ default: m.AddWatchOnlyPage })));
-const CreateAccountPage = lazy(() =>
-  import("./pages/Wallet/AddAccount").then((m) => ({ default: m.CreateAccountPage })),
-);
-const SetupPasswordPage = lazy(() =>
-  import("./pages/Wallet/AddAccount").then((m) => ({ default: m.SetupPasswordPage })),
-);
-const ImportAccountPage = lazy(() =>
-  import("./pages/Wallet/AddAccount").then((m) => ({ default: m.ImportAccountPage })),
-);
 const Hello = lazy(() => import("./pages/Hello"));
 import Sidebar from "./components/shell/Sidebar";
 import { SidebarProvider } from "./lib/SidebarProvider";
@@ -43,6 +33,7 @@ import TopBar from "./components/shell/TopBar";
 import SettingsSheet, {
   SettingsSheetProvider,
   useSettingsSheet,
+  type SettingsPage,
   type SettingsSection,
 } from "./components/shell/SettingsSheet";
 import { NotificationsProvider } from "./lib/notifications";
@@ -65,9 +56,10 @@ export default function App() {
   const [bootChecked, setBootChecked] = useState(false);
   const [needsBootstrap, setNeedsBootstrap] = useState(false);
   // The greeting shows first on a new install (the node's setup) or while
-  // the wallet is new (no password, no keys), until it is through, for this
-  // run of the app
+  // the wallet has no password (a new one, or one with keys from an earlier
+  // version), until it is through, for this run of the app
   const [hello, setHello] = useState(false);
+  const [existing, setExisting] = useState(false);
   // Whether the greeting just finished: the app then arrives rather than appearing
   const [arrived, setArrived] = useState(false);
   const [animationsDisabled, setAnimationsDisabled] = useState(false);
@@ -85,7 +77,8 @@ export default function App() {
         .then(([needs, info]) => {
           if (cancelled) return;
           setNeedsBootstrap(needs);
-          setHello(!!info && !info.hasPassword && !info.needsSetup && info.accounts.length === 0);
+          setHello(!!info && !info.hasPassword);
+          setExisting(!!info?.needsSetup);
           setBootChecked(true);
         })
         .catch(() => {
@@ -154,6 +147,7 @@ export default function App() {
         <Hello
           node={needsBootstrap}
           wallet={hello}
+          existing={existing}
           onDone={() => {
             setArrived(true);
             setHello(false);
@@ -274,16 +268,13 @@ function RoutedContent({ animate }: { animate: boolean }) {
           }
         />
         <Route path="/accounts" element={<OpenSettings section="accounts" />} />
-        <Route path="/accounts/new" element={<CreateAccountPage />} />
-        <Route path="/accounts/import" element={<ImportAccountPage />} />
+        {/* Making and importing accounts are Settings' Accounts section's */}
+        <Route path="/accounts/new" element={<OpenSettings section="accounts" page={{ kind: "accounts.add" }} />} />
         <Route
-          path="/accounts/watch"
-          element={
-            <WithPassword>
-              <AddWatchOnlyPage />
-            </WithPassword>
-          }
+          path="/accounts/import"
+          element={<OpenSettings section="accounts" page={{ kind: "accounts.import" }} />}
         />
+        <Route path="/accounts/watch" element={<OpenSettings section="accounts" page={{ kind: "accounts.watch" }} />} />
         <Route
           path="/messages/sign"
           element={
@@ -321,7 +312,6 @@ function RoutedContent({ animate }: { animate: boolean }) {
             )
           }
         />
-        <Route path="/setup" element={<SetupPasswordPage />} />
         <Route path="/node" element={<OpenNode />} />
         <Route path="/settings" element={<OpenSettings />} />
         {/* Older routes, from before the redesign */}
@@ -386,9 +376,13 @@ function OpenNode() {
 }
 
 /** OpenSettings is where /settings (and /accounts) lead: Settings, opened over the home page. */
-function OpenSettings({ section }: { section?: SettingsSection }) {
+function OpenSettings({ section, page }: { section?: SettingsSection; page?: SettingsPage }) {
   const { setOpen, openAt } = useSettingsSheet();
-  useEffect(() => (section ? openAt(section) : setOpen(true)), [section, openAt, setOpen]);
+  useEffect(
+    () => (section ? openAt(section, page) : setOpen(true)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [section, page?.kind, openAt, setOpen],
+  );
   return <Navigate to="/" replace />;
 }
 

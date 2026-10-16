@@ -16,7 +16,6 @@ const de: Dict = {
   // Hello: the first launch
   "hello.leadNode": "Richten wir Ihren Node ein. Das dauert nur eine Minute.",
   "hello.create": "Wallet-Passwort erstellen",
-  "hello.skip": "Vorerst überspringen",
   "hello.wallet.title": "Wallet einrichten",
   "hello.wallet.desc": "Legen Sie ein Wallet-Passwort fest, um Ihre Wallet zu nutzen.",
   "hello.sync.title": "Ihre Node wird synchronisiert",
@@ -361,52 +360,33 @@ const de: Dict = {
   "wallet.pending": "Ausstehend",
   "wallet.inPool": "Wartet auf einen Block",
   "wallet.unconfirmed": "Unbestätigt",
-  "wallet.noAccount": "Die Wallet hat noch kein Konto.",
+  "wallet.noAccount": "Fügen Sie ein Konto hinzu, um LAX zu senden und zu empfangen.",
 
   // Wallet: first run
-  "wallet.welcome.title": "Ihre Parallax-Wallet",
+  "wallet.welcome.title": "Fügen Sie Ihr erstes Konto hinzu",
   "wallet.welcome.desc":
-    "Verwahren, senden und empfangen Sie LAX über Ihren eigenen Node. Kein Dritter sieht Ihr Guthaben oder leitet Ihre Transaktionen weiter.",
+    "Erstellen Sie ein neues oder bringen Sie eines mit, das Sie schon haben. Ihr eigener Node verfolgt sein Guthaben und sendet dafür, ohne jemanden dazwischen.",
   "wallet.welcome.create": "Konto erstellen",
-  "wallet.welcome.createDesc": "Eine neue Wiederherstellungsphrase und ein Konto, auf diesem Computer erstellt.",
+  "wallet.welcome.createDesc":
+    "Eine neue Wiederherstellungsphrase oder ein einzelner Schlüssel, erstellt auf diesem Computer.",
   "wallet.welcome.import": "Konto importieren",
   "wallet.welcome.importDesc":
     "Aus einer Wiederherstellungsphrase, einer Keystore-Datei oder einem privaten Schlüssel.",
+  "wallet.welcome.watchDesc":
+    "Einem Konto folgen, dessen Schlüssel auf einem Offline-Signierer bleibt, und per Signieranfrage davon senden.",
   "wallet.welcome.local":
-    "Schlüssel werden nur verschlüsselt auf diesem Computer gespeichert und niemals irgendwohin gesendet. Ihre Wiederherstellungsphrase ist die Sicherung: Niemand kann sie für Sie wiederherstellen.",
-  "wallet.welcome.cta": "Wallet einrichten",
+    "Schlüssel bleiben verschlüsselt auf diesem Computer und werden nie gesendet. Ihre Sicherung ist Ihre Wiederherstellungsphrase oder Keystore-Datei, und niemand kann sie für Sie wiederherstellen.",
+  "wallet.welcome.cta": "Konto hinzufügen",
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Wallet-Passwort",
-  "wallet.locked.title": "Willkommen bei Parallax",
-  "wallet.locked.desc":
-    "Ein vollständiger Parallax-Node und eine Wallet in einer App. Halten, senden und empfangen Sie LAX über Ihren eigenen Node, ohne Dritte dazwischen.",
   "wallet.locked.existing":
     "Diese Wallet hat bereits Schlüssel aus einer früheren Version. Legen Sie ihr Passwort fest, um sie weiter zu nutzen: Es muss das sein, mit dem sie erstellt wurden.",
-  "wallet.locked.node": "Ihr eigener Node",
-  "wallet.locked.nodeDesc":
-    "Er prüft jeden Block selbst und leitet Ihre Transaktionen weiter, sodass niemand sonst Ihr Guthaben sieht.",
-  "wallet.locked.keys": "Schlüssel bleiben hier",
-  "wallet.locked.keysDesc":
-    "Konten werden auf diesem Computer erstellt und verschlüsselt aufbewahrt und nirgendwohin gesendet.",
-  "wallet.locked.password": "Ein Passwort",
-  "wallet.locked.passwordDesc":
-    "Ein einziges Wallet-Passwort schützt alle Konten. Niemand kann es für Sie zurücksetzen.",
-  "wallet.locked.cta": "Loslegen",
-  "wallet.locked.ctaHint": "Zuerst legen Sie Ihr Wallet-Passwort fest.",
   "wallet.setup.title": "Wallet-Passwort festlegen",
-  "wallet.setup.desc":
-    "Ein einziges Passwort schützt jedes Konto und jede Wiederherstellungsphrase in dieser Wallet. Sie geben es ein, um die Wallet zu entsperren, und erneut, um eine Wiederherstellungsphrase anzuzeigen oder ein Konto zu entfernen.",
   "wallet.setup.existingDesc":
     "Diese Wallet enthält bereits Schlüssel. Geben Sie das Passwort ein, mit dem sie erstellt wurden: Es wird zum Wallet-Passwort.",
   "wallet.setup.noRecovery":
     "Dieses Passwort verschlüsselt Ihre Schlüssel auf diesem Computer und kann weder zurückgesetzt noch wiederhergestellt werden. Wenn Sie es verlieren, können nur Ihre Wiederherstellungsphrasen und Sicherungsdateien Ihre Konten zurückholen.",
-  "wallet.setup.cta": "Passwort festlegen",
-  "wallet.setup.step": "Passwort",
-  "wallet.offer.title": "Wiederherstellungsphrase erstellen",
-  "wallet.offer.desc":
-    "Ihr Wallet-Passwort ist festgelegt. Erstellen Sie jetzt eine Wiederherstellungsphrase: 12 Wörter, die jedes daraus erstellte Konto sichern.",
-  "wallet.offer.later": "Sie können das auch später unter Konten erledigen.",
   "wallet.offer.cta": "Wiederherstellungsphrase erstellen",
   "wallet.securityDesc": "Schützt jedes Konto und jede Wiederherstellungsphrase in dieser Wallet.",
   "wallet.autoLock": "Automatisch sperren",
@@ -431,18 +411,10 @@ const de: Dict = {
   "wallet.name.hint": "Wird nur in dieser App angezeigt.",
 
   // Wallet: create
-  "wallet.create.title": "Konto erstellen",
-  "wallet.create.introNext": "Als Nächstes wählen Sie einen Namen.",
   "wallet.create.kindTitle": "Typ wählen",
-  "wallet.create.kindDesc": "Wie soll dieses Konto gesichert werden?",
-  "wallet.create.kind.derive": "Weiteres Konto aus einer Wiederherstellungsphrase",
-  "wallet.create.kind.deriveDesc": "Aus einer Phrase, die bereits in dieser Wallet ist und es bereits sichert.",
   "wallet.create.kind.phrase": "Neue Wiederherstellungsphrase",
-  "wallet.create.kind.phraseDesc":
-    "12 Wörter, die dieses Konto und alle später hinzugefügten sichern. Sie funktionieren in MetaMask und den meisten anderen Wallets.",
   "wallet.create.kind.phraseDescAny":
     "12 oder 24 Wörter, die jedes daraus erstellte Konto sichern, jetzt oder später. Sie funktionieren in MetaMask und den meisten anderen Wallets.",
-  "wallet.create.kind.key": "Einzelner Schlüssel",
   "wallet.create.kind.keyDesc": "Ein Konto mit eigenem Schlüssel, gesichert als verschlüsselte Keystore-Datei.",
   "wallet.create.recommended": "Empfohlen",
   "wallet.create.keyFact1": "Ein neuer Schlüssel",
@@ -456,20 +428,17 @@ const de: Dict = {
   "wallet.create.step.backup": "Sicherung",
   "wallet.create.lead": "Ein neues Konto wird auf diesem Computer erstellt, in drei Schritten, die zugleich geschehen:",
   "wallet.create.fact1": "Eine Wiederherstellungsphrase",
-  "wallet.create.fact1Desc":
-    "12 Wörter, hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihnen stellen Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wieder her.",
   "wallet.create.fact1DescN":
     "{n} Wörter, hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihnen stellen Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wieder her.",
-  "wallet.create.words24": "Stattdessen 24 Wörter verwenden",
-  "wallet.create.words24Desc":
-    "256 Bit. Doppelt so viel zum Aufschreiben, und schon 12 Wörter sind weit jenseits des Erratbaren. Beide funktionieren in MetaMask und anderen Wallets.",
+  "wallet.create.words12": "Stattdessen 12 Wörter verwenden",
+  "wallet.create.words12Desc":
+    "128 Bit: halb so viel zum Aufschreiben und dennoch weit jenseits des Erratbaren. Beide funktionieren in MetaMask und anderen Wallets.",
   "wallet.create.fact2": "Mit Ihrem Passwort gesperrt",
   "wallet.create.fact2Desc":
     "Die Phrase und der Schlüssel Ihres Kontos werden mit Ihrem Wallet-Passwort verschlüsselt.",
   "wallet.create.fact3": "Auf diesem Computer aufbewahrt",
   "wallet.create.fact3Desc":
     "Nur der verschlüsselte Schlüssel wird gespeichert, hier. Nichts wird irgendwohin gesendet.",
-  "wallet.create.optional": "Optional",
   "wallet.create.req.length": "Mindestens {n} Zeichen",
   "wallet.create.req.match": "Beide Passwörter stimmen überein",
   "wallet.create.strength.short": "Zu kurz",
@@ -478,16 +447,13 @@ const de: Dict = {
   "wallet.create.strength.strong": "Stark",
   "wallet.create.next": "Als Nächstes schreiben Sie Ihre Wiederherstellungsphrase auf.",
   "wallet.create.cta": "Konto erstellen",
-  "wallet.create.detailsTitle": "Kontodetails",
   "wallet.derive.title": "Neues Konto",
   "wallet.derive.cta": "Neues Konto aus dieser Phrase",
   "wallet.derive.which": "Wiederherstellungsphrase",
   "wallet.derive.desc":
     "Es wird aus der Wiederherstellungsphrase abgeleitet, die es bereits sichert: Eine separate Sicherung ist nicht nötig.",
-  "wallet.create.busy": "Wird erstellt…",
   "wallet.created.later": "Später erledigen",
   "wallet.created.savedDesc": "Bewahren Sie Datei und Passwort sicher und getrennt auf.",
-  "wallet.created.open": "Zur Wallet",
   "wallet.create.step.type": "Art",
   "wallet.create.step.intro": "So funktioniert's",
   "wallet.create.step.details": "Details",
@@ -495,11 +461,9 @@ const de: Dict = {
   "wallet.create.step.confirm": "Bestätigen",
 
   // Wallet: import
-  "wallet.import.title": "Konto importieren",
   "wallet.import.cta": "Importieren",
   "wallet.import.busy": "Wird importiert…",
   "wallet.import.step.source": "Quelle",
-  "wallet.import.step.details": "Details",
   "wallet.import.choose.desc": "Woher stammt das Konto, das Sie importieren möchten?",
   "wallet.import.phrase": "Wiederherstellungsphrase",
   "wallet.import.phraseDesc":
@@ -523,8 +487,6 @@ const de: Dict = {
   "wallet.import.inWallet": "Bereits in der Wallet",
   "wallet.import.more": "Mehr anzeigen",
   "wallet.import.picked": "{n} ausgewählt",
-  "wallet.import.detailsLead":
-    "Die Wiederherstellungsphrase und die {n} ausgewählten Konten werden auf diesem Computer mit Ihrem Wallet-Passwort verschlüsselt. Ihr Name gilt für das erste Konto.",
   "wallet.import.keyDesc": "Der Rohschlüssel des Kontos: 64 Hexadezimalzeichen.",
   "wallet.import.keyfile": "Keystore-Datei",
   "wallet.import.key": "Privater Schlüssel",

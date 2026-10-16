@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ChevronRight, Download, Loader2, Plus, Server, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Plus, Server, ShieldCheck } from "lucide-react";
 import { CONFIG_UPDATED_EVENT } from "../../App";
 import { api, GUIConfig, NodeStatus, SeedCandidate, walletError } from "../../lib/api";
 import { formatInt } from "../../lib/format";
@@ -18,6 +18,7 @@ import Toggle from "../../components/ui/Toggle";
 import { CheckMark, DrawnCheck, FLAT, FLAT_FIELD, MIN_PASSWORD, PasswordInput } from "../Wallet/common";
 import { Requirement, StrengthMeter } from "../Wallet/CreateStep";
 import { Choice } from "../../components/ui/Choice";
+import { LinkRow, LinkRows } from "../../components/ui/LinkRow";
 import { PhraseGrid, PhraseInput, PhraseQuiz, PhraseWarning } from "../Wallet/Phrase";
 import { AccountPicker, Found, PHRASE_LENGTHS, pickKey, picksOf } from "../Wallet/PhraseImport";
 import { rate, useDefaultName, useNamePicks } from "../Wallet/accountActions";
@@ -116,6 +117,7 @@ const BACK: Partial<Record<Stage, Stage>> = {
 export default function Hello({
   node,
   wallet,
+  existing = false,
   resume,
   onDone,
 }: {
@@ -123,6 +125,8 @@ export default function Hello({
   node: boolean;
   /** Whether the wallet is new: no password, no keys. */
   wallet: boolean;
+  /** Whether the wallet has keys from an earlier version but no password: the password set opens them, and no phrase follows. */
+  existing?: boolean;
   /** Whether this is a setup left after its password, picked up again at the recovery phrase. */
   resume?: boolean;
   onDone: (created: boolean) => void;
@@ -229,7 +233,7 @@ export default function Hello({
               key="greet"
               settled={stage === "choose"}
               onSettle={settle}
-              lead={node ? t("hello.leadNode") : t("hello.wallet.desc")}
+              lead={node ? t("hello.leadNode") : existing ? t("wallet.locked.existing") : t("hello.wallet.desc")}
             >
               {node ? (
                 <button
@@ -275,11 +279,22 @@ export default function Hello({
           ) : stage === "sync" ? (
             <Sync key="sync" onNext={() => (wallet ? setStage("wallet") : leave(false))} />
           ) : stage === "wallet" ? (
-            <Screen key="wallet" title={t("hello.wallet.title")} desc={t("hello.wallet.desc")} top={<DrawnCheck />}>
+            <Screen
+              key="wallet"
+              title={t("hello.wallet.title")}
+              desc={existing ? t("wallet.locked.existing") : t("hello.wallet.desc")}
+              top={<DrawnCheck />}
+            >
               {createPassword}
             </Screen>
           ) : stage === "password" ? (
-            <ChoosePassword key="password" value={password} onChange={setPassword} onNext={() => setStage("confirm")} />
+            <ChoosePassword
+              key="password"
+              existing={existing}
+              value={password}
+              onChange={setPassword}
+              onNext={() => setStage("confirm")}
+            />
           ) : stage === "confirm" ? (
             <ConfirmPassword key="confirm" password={password} onNext={() => setStage("understand")} />
           ) : stage === "understand" ? (
@@ -291,7 +306,11 @@ export default function Hello({
               onDone={() => {
                 // Set: the wallet is unlocked with it, and nothing here needs it again
                 setPassword("");
-                setStage("offer");
+                // Keys from an earlier version are the wallet already: no phrase to make, nothing to resume
+                if (existing) {
+                  setSetupPending(false);
+                  leave(true);
+                } else setStage("offer");
               }}
             />
           ) : stage === "offer" ? (
@@ -545,10 +564,13 @@ function Screen({
 }
 
 function ChoosePassword({
+  existing,
   value,
   onChange,
   onNext,
 }: {
+  /** Keys are already in the wallet: the password must be the one they were made with. */
+  existing: boolean;
   value: string;
   onChange: (v: string) => void;
   onNext: () => void;
@@ -557,7 +579,10 @@ function ChoosePassword({
   const id = useId();
   const longEnough = [...value].length >= MIN_PASSWORD;
   return (
-    <Screen title={t("hello.password.title")} desc={t("hello.password.desc")}>
+    <Screen
+      title={existing ? t("wallet.setup.title") : t("hello.password.title")}
+      desc={existing ? t("wallet.setup.existingDesc") : t("hello.password.desc")}
+    >
       <form
         className="flex w-full flex-col gap-4"
         onSubmit={(e) => {
@@ -760,8 +785,8 @@ function Offer({ onMade, onImport }: { onMade: (words: string[]) => void; onImpo
     <Screen title={t("hello.offer.title")} desc={t("hello.offer.desc")} top={<DrawnCheck />} wide>
       {/* As a Mac's setup assistant: the ways on as rows of one card, each opening its own step */}
       <div className="flex w-full flex-col gap-2">
-        <div className="glass flex w-full flex-col divide-y divide-border overflow-hidden text-left">
-          <OfferRow
+        <LinkRows>
+          <LinkRow
             icon={Plus}
             title={t("wallet.offer.cta")}
             desc={t("hello.offer.createDesc")}
@@ -770,57 +795,17 @@ function Offer({ onMade, onImport }: { onMade: (words: string[]) => void; onImpo
             onClick={create}
             autoFocus
           />
-          <OfferRow
+          <LinkRow
             icon={Download}
             title={t("hello.offer.import")}
             desc={t("wallet.import.phraseDesc")}
             disabled={busy}
             onClick={onImport}
           />
-        </div>
+        </LinkRows>
         {error && <Notice tone="critical">{error}</Notice>}
       </div>
     </Screen>
-  );
-}
-
-/** OfferRow is one way on from Offer: its symbol, its name and line, and a chevron, or a spinner while it works. */
-function OfferRow({
-  icon: Icon,
-  title,
-  desc,
-  busy,
-  disabled,
-  onClick,
-  autoFocus,
-}: {
-  icon: typeof Plus;
-  title: string;
-  desc: string;
-  busy?: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-  autoFocus?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      autoFocus={autoFocus}
-      className="group flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors enabled:hover:bg-[var(--glass-hover)] disabled:opacity-60"
-    >
-      <Icon className="size-5 shrink-0 text-brand" strokeWidth={1.75} />
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="font-medium">{title}</span>
-        <span className="text-sm text-muted-foreground">{desc}</span>
-      </span>
-      {busy ? (
-        <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
-      ) : (
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-enabled:group-hover:translate-x-0.5" />
-      )}
-    </button>
   );
 }
 

@@ -22,7 +22,7 @@ export default function ReceivePage() {
         <Notice
           tone="info"
           action={
-            <Link to="/" className="btn btn-secondary">
+            <Link to="/" className="btn btn-tinted">
               {t("wallet.welcome.cta")}
             </Link>
           }

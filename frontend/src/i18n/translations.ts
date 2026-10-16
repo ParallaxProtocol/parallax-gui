@@ -34,7 +34,6 @@ export const en: Dict = {
   // Hello: the first launch
   "hello.leadNode": "Let's set up your node. It only takes a minute.",
   "hello.create": "Create wallet password",
-  "hello.skip": "Skip for now",
   "hello.wallet.title": "Set up your wallet",
   "hello.wallet.desc": "Set a wallet password to start using your wallet.",
   "hello.sync.title": "Syncing your node",
@@ -524,7 +523,6 @@ export const en: Dict = {
     "A later request from this account waits on this one's nonce. Cancel this one with a replacement instead, or the later one will never confirm.",
   "offline.pending.discardCta": "Discard",
   "offline.watch.title": "Add a watch-only account",
-  "offline.watch.welcome": "Or follow an account kept on an offline signer",
   "offline.watch.desc":
     "Follow an account whose key is on an offline signer. This wallet shows its balance and activity, and sends from it by signing request.",
   "offline.watch.addressHint":
@@ -659,49 +657,31 @@ export const en: Dict = {
   "wallet.tx.gas": "Gas used",
   "wallet.tx.events": "Events",
   "wallet.tx.blockHash": "Block hash",
-  "wallet.noAccount": "The wallet has no account yet.",
+  "wallet.noAccount": "Add an account to send and receive LAX.",
 
   // Wallet: first run
-  "wallet.welcome.title": "Your Parallax wallet",
+  "wallet.welcome.title": "Add your first account",
   "wallet.welcome.desc":
-    "Hold, send and receive LAX through your own node. No third party sees your balance or relays your transactions.",
+    "Create a new one, or bring in one you already have. Your own node keeps its balance and sends for it, with no one in between.",
   "wallet.welcome.create": "Create an account",
-  "wallet.welcome.createDesc": "A new recovery phrase and account, made on this computer.",
+  "wallet.welcome.createDesc": "A new recovery phrase, or a single key, made on this computer.",
   "wallet.welcome.import": "Import an account",
   "wallet.welcome.importDesc": "From a recovery phrase, a keystore file or a private key.",
+  "wallet.welcome.watchDesc":
+    "Follow an account whose key stays on an offline signer, and send from it by signing request.",
   "wallet.welcome.local":
-    "Keys are stored encrypted on this computer only and are never sent anywhere. Your recovery phrase is the backup: nobody can recover it for you.",
-  "wallet.welcome.cta": "Set up the wallet",
+    "Keys stay encrypted on this computer and are never sent anywhere. Their backup is your recovery phrase or keystore file, and nobody can recover it for you.",
+  "wallet.welcome.cta": "Add an account",
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Wallet password",
-  "wallet.locked.title": "Welcome to Parallax",
-  "wallet.locked.desc":
-    "A full Parallax node and a wallet in one app. Hold, send and receive LAX through your own node, with no third party in between.",
   "wallet.locked.existing":
     "This wallet already has keys from an earlier version. Set its password to keep using them: it must be the one they were made with.",
-  "wallet.locked.node": "Your own node",
-  "wallet.locked.nodeDesc":
-    "It verifies every block itself and relays your transactions, so nobody else sees your balance.",
-  "wallet.locked.keys": "Keys stay here",
-  "wallet.locked.keysDesc": "Accounts are made and kept on this computer, encrypted, and never sent anywhere.",
-  "wallet.locked.password": "One password",
-  "wallet.locked.passwordDesc": "A single wallet password protects every account. Nobody can reset it for you.",
-  "wallet.locked.cta": "Get started",
-  "wallet.locked.ctaHint": "First, you'll set your wallet password.",
   "wallet.setup.title": "Set your wallet password",
-  "wallet.setup.desc":
-    "One password protects every account and recovery phrase in this wallet. You'll type it to unlock the wallet, and again to show a recovery phrase or remove an account.",
   "wallet.setup.existingDesc":
     "This wallet already has keys. Enter the password they were made with: it becomes the wallet password.",
   "wallet.setup.noRecovery":
     "This password encrypts your keys on this computer and can't be reset or recovered. If you lose it, only your recovery phrases and backup files can bring your accounts back.",
-  "wallet.setup.cta": "Set password",
-  "wallet.setup.step": "Password",
-  "wallet.offer.title": "Create your recovery phrase",
-  "wallet.offer.desc":
-    "Your wallet password is set. Now make a recovery phrase: 12 words that back up every account made from them.",
-  "wallet.offer.later": "You can also do this later, from Accounts.",
   "wallet.offer.cta": "Create recovery phrase",
   "wallet.securityDesc": "Protects every account and recovery phrase in this wallet.",
   "wallet.autoLock": "Lock automatically",
@@ -725,18 +705,10 @@ export const en: Dict = {
   "wallet.name.hint": "Only shown in this app.",
 
   // Wallet: create
-  "wallet.create.title": "Create an account",
-  "wallet.create.introNext": "Next, you'll choose a name.",
   "wallet.create.kindTitle": "Choose a type",
-  "wallet.create.kindDesc": "How should this account be backed up?",
-  "wallet.create.kind.derive": "Another account from a recovery phrase",
-  "wallet.create.kind.deriveDesc": "From a phrase already in this wallet, which already backs it up.",
   "wallet.create.kind.phrase": "New recovery phrase",
-  "wallet.create.kind.phraseDesc":
-    "12 words that back up this account and any you add later. They work in MetaMask and most other wallets.",
   "wallet.create.kind.phraseDescAny":
     "12 or 24 words that back up every account made from them, now or later. They work in MetaMask and most other wallets.",
-  "wallet.create.kind.key": "Single key",
   "wallet.create.kind.keyDesc": "One account with a key of its own, backed up as an encrypted keystore file.",
   "wallet.create.recommended": "Recommended",
   "wallet.create.keyFact1": "A new key",
@@ -749,18 +721,15 @@ export const en: Dict = {
   "wallet.create.step.backup": "Backup",
   "wallet.create.lead": "A new account is made on this computer, in three steps that happen at once:",
   "wallet.create.fact1": "A recovery phrase",
-  "wallet.create.fact1Desc":
-    "12 words, generated here from your system's secure random source. They restore your accounts in this or any compatible wallet.",
   "wallet.create.fact1DescN":
     "{n} words, generated here from your system's secure random source. They restore your accounts in this or any compatible wallet.",
-  "wallet.create.words24": "Use 24 words instead",
-  "wallet.create.words24Desc":
-    "256 bits. Twice as much to write down, and 12 words are already far beyond guessing. Both work in MetaMask and other wallets.",
+  "wallet.create.words12": "Use 12 words instead",
+  "wallet.create.words12Desc":
+    "128 bits, half as much to write down and still far beyond guessing. Both work in MetaMask and other wallets.",
   "wallet.create.fact2": "Locked with your password",
   "wallet.create.fact2Desc": "The phrase and your account's key are encrypted with your wallet password.",
   "wallet.create.fact3": "Kept on this computer",
   "wallet.create.fact3Desc": "Only the encrypted key is stored, here. Nothing is sent anywhere.",
-  "wallet.create.optional": "Optional",
   "wallet.create.req.length": "At least {n} characters",
   "wallet.create.req.match": "Both passwords match",
   "wallet.create.strength.short": "Too short",
@@ -769,15 +738,12 @@ export const en: Dict = {
   "wallet.create.strength.strong": "Strong",
   "wallet.create.next": "Next, you'll write down your recovery phrase.",
   "wallet.create.cta": "Create account",
-  "wallet.create.detailsTitle": "Account details",
   "wallet.derive.title": "New account",
   "wallet.derive.cta": "New account from this phrase",
   "wallet.derive.which": "Recovery phrase",
   "wallet.derive.desc": "It comes from the recovery phrase, which already backs it up: no separate backup needed.",
-  "wallet.create.busy": "Creating…",
   "wallet.created.later": "I'll do it later",
   "wallet.created.savedDesc": "Keep the file and the password safe, and apart.",
-  "wallet.created.open": "Go to wallet",
   "wallet.create.step.type": "Type",
   "wallet.create.step.intro": "How it works",
   "wallet.create.step.details": "Details",
@@ -785,11 +751,9 @@ export const en: Dict = {
   "wallet.create.step.confirm": "Confirm",
 
   // Wallet: import
-  "wallet.import.title": "Import an account",
   "wallet.import.cta": "Import",
   "wallet.import.busy": "Importing…",
   "wallet.import.step.source": "Source",
-  "wallet.import.step.details": "Details",
   "wallet.import.choose.desc": "Where is the account you want to bring in?",
   "wallet.import.phrase": "Recovery phrase",
   "wallet.import.phraseDesc": "12 to 24 words from MetaMask or another wallet. Restores the same accounts.",
@@ -812,8 +776,6 @@ export const en: Dict = {
   "wallet.import.inWallet": "Already in the wallet",
   "wallet.import.more": "Show more",
   "wallet.import.picked": "{n} selected",
-  "wallet.import.detailsLead":
-    "The recovery phrase and the {n} accounts you picked will be encrypted with your wallet password on this computer. Your name goes to the first account.",
   "wallet.import.keyDesc": "The account's raw key: 64 hexadecimal characters.",
   "wallet.import.keyfile": "Keystore file",
   "wallet.import.key": "Private key",

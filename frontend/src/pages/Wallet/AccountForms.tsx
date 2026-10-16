@@ -14,7 +14,7 @@ import { AddressAvatar } from "../../components/ui/AddressAvatar";
 /**
  * The actions on one account, each a dialog over the page it is taken
  * from: saving its backup, changing its password, removing it. Some pieces
- * are shared with the add-account pages (AddAccount.tsx).
+ * are shared with Settings' Accounts section.
  * Passwords stay in the form's own state, sent to the backend for the one
  * action they are typed for, and are gone when the form closes.
  */

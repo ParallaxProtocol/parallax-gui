@@ -16,7 +16,6 @@ const ptBR: Dict = {
   // Hello: the first launch
   "hello.leadNode": "Vamos configurar seu nó. Leva só um minuto.",
   "hello.create": "Criar senha da carteira",
-  "hello.skip": "Pular por enquanto",
   "hello.wallet.title": "Configure sua carteira",
   "hello.wallet.desc": "Defina uma senha da carteira para começar a usá-la.",
   "hello.sync.title": "Sincronizando seu nó",
@@ -356,51 +355,31 @@ const ptBR: Dict = {
   "wallet.pending": "Pendente",
   "wallet.inPool": "Aguardando um bloco",
   "wallet.unconfirmed": "Não confirmada",
-  "wallet.noAccount": "A carteira ainda não tem nenhuma conta.",
+  "wallet.noAccount": "Adicione uma conta para enviar e receber LAX.",
 
   // Wallet: first run
-  "wallet.welcome.title": "Sua carteira Parallax",
+  "wallet.welcome.title": "Adicione sua primeira conta",
   "wallet.welcome.desc":
-    "Guarde, envie e receba LAX pelo seu próprio nó. Nenhum terceiro vê seu saldo ou retransmite suas transações.",
+    "Crie uma nova ou traga uma que você já tem. Seu próprio nó acompanha o saldo e envia por ela, sem ninguém no meio.",
   "wallet.welcome.create": "Criar uma conta",
-  "wallet.welcome.createDesc": "Uma nova frase de recuperação e uma conta, criadas neste computador.",
+  "wallet.welcome.createDesc": "Uma nova frase de recuperação, ou uma única chave, criada neste computador.",
   "wallet.welcome.import": "Importar uma conta",
   "wallet.welcome.importDesc": "De uma frase de recuperação, um arquivo keystore ou uma chave privada.",
+  "wallet.welcome.watchDesc":
+    "Acompanhe uma conta cuja chave fica em um assinador offline e envie a partir dela por pedido de assinatura.",
   "wallet.welcome.local":
-    "As chaves ficam armazenadas criptografadas somente neste computador e nunca são enviadas a lugar nenhum. Sua frase de recuperação é o backup: ninguém pode recuperá-la para você.",
-  "wallet.welcome.cta": "Configurar a carteira",
+    "As chaves ficam criptografadas neste computador e nunca são enviadas. O backup delas é sua frase de recuperação ou arquivo keystore, e ninguém pode recuperá-lo para você.",
+  "wallet.welcome.cta": "Adicionar uma conta",
 
   // Wallet: the wallet password
   "wallet.walletPassword": "Senha da carteira",
-  "wallet.locked.title": "Bem-vindo ao Parallax",
-  "wallet.locked.desc":
-    "Um nó Parallax completo e uma carteira em um só app. Guarde, envie e receba LAX pelo seu próprio nó, sem intermediários.",
   "wallet.locked.existing":
     "Esta carteira já tem chaves de uma versão anterior. Defina a senha dela para continuar usando-as: precisa ser a senha com que foram criadas.",
-  "wallet.locked.node": "Seu próprio nó",
-  "wallet.locked.nodeDesc":
-    "Ele verifica cada bloco por conta própria e repassa suas transações, para que ninguém mais veja seu saldo.",
-  "wallet.locked.keys": "As chaves ficam aqui",
-  "wallet.locked.keysDesc":
-    "As contas são criadas e guardadas criptografadas neste computador e nunca são enviadas a lugar nenhum.",
-  "wallet.locked.password": "Uma senha",
-  "wallet.locked.passwordDesc":
-    "Uma única senha da carteira protege todas as contas. Ninguém pode redefini-la para você.",
-  "wallet.locked.cta": "Começar",
-  "wallet.locked.ctaHint": "Primeiro, você vai definir a senha da carteira.",
   "wallet.setup.title": "Defina a senha da carteira",
-  "wallet.setup.desc":
-    "Uma única senha protege todas as contas e frases de recuperação desta carteira. Você vai digitá-la para desbloquear a carteira e de novo para mostrar uma frase de recuperação ou remover uma conta.",
   "wallet.setup.existingDesc":
     "Esta carteira já tem chaves. Digite a senha com que elas foram criadas: ela passa a ser a senha da carteira.",
   "wallet.setup.noRecovery":
     "Esta senha criptografa suas chaves neste computador e não pode ser redefinida nem recuperada. Se você a perder, só suas frases de recuperação e seus arquivos de backup poderão trazer suas contas de volta.",
-  "wallet.setup.cta": "Definir senha",
-  "wallet.setup.step": "Senha",
-  "wallet.offer.title": "Crie sua frase de recuperação",
-  "wallet.offer.desc":
-    "A senha da sua carteira está definida. Agora crie uma frase de recuperação: 12 palavras que fazem o backup de cada conta criada a partir delas.",
-  "wallet.offer.later": "Você também pode fazer isso depois, em Contas.",
   "wallet.offer.cta": "Criar frase de recuperação",
   "wallet.securityDesc": "Protege todas as contas e frases de recuperação desta carteira.",
   "wallet.autoLock": "Bloquear automaticamente",
@@ -425,18 +404,10 @@ const ptBR: Dict = {
   "wallet.name.hint": "Exibido apenas neste app.",
 
   // Wallet: create
-  "wallet.create.title": "Criar uma conta",
-  "wallet.create.introNext": "Em seguida, você vai escolher um nome.",
   "wallet.create.kindTitle": "Escolha um tipo",
-  "wallet.create.kindDesc": "Como esta conta deve ser protegida por backup?",
-  "wallet.create.kind.derive": "Outra conta de uma frase de recuperação",
-  "wallet.create.kind.deriveDesc": "De uma frase que já está nesta carteira e que já serve de backup para ela.",
   "wallet.create.kind.phrase": "Nova frase de recuperação",
-  "wallet.create.kind.phraseDesc":
-    "12 palavras que fazem o backup desta conta e de todas que você adicionar depois. Funcionam no MetaMask e na maioria das outras carteiras.",
   "wallet.create.kind.phraseDescAny":
     "12 ou 24 palavras que fazem o backup de todas as contas criadas a partir delas, agora ou depois. Funcionam no MetaMask e na maioria das outras carteiras.",
-  "wallet.create.kind.key": "Chave única",
   "wallet.create.kind.keyDesc": "Uma conta com chave própria, com backup em um arquivo keystore criptografado.",
   "wallet.create.recommended": "Recomendado",
   "wallet.create.keyFact1": "Uma nova chave",
@@ -450,18 +421,15 @@ const ptBR: Dict = {
   "wallet.create.step.backup": "Backup",
   "wallet.create.lead": "Uma nova conta é criada neste computador, em três etapas que acontecem juntas:",
   "wallet.create.fact1": "Uma frase de recuperação",
-  "wallet.create.fact1Desc":
-    "12 palavras, geradas aqui a partir da fonte aleatória segura do seu sistema. Elas restauram suas contas nesta ou em qualquer carteira compatível.",
   "wallet.create.fact1DescN":
     "{n} palavras, geradas aqui a partir da fonte aleatória segura do seu sistema. Elas restauram suas contas nesta ou em qualquer carteira compatível.",
-  "wallet.create.words24": "Usar 24 palavras",
-  "wallet.create.words24Desc":
-    "256 bits. O dobro para anotar, e 12 palavras já estão muito além de qualquer adivinhação. Ambas funcionam no MetaMask e em outras carteiras.",
+  "wallet.create.words12": "Usar 12 palavras",
+  "wallet.create.words12Desc":
+    "128 bits: metade para anotar e ainda muito além de qualquer adivinhação. Ambas funcionam no MetaMask e em outras carteiras.",
   "wallet.create.fact2": "Protegida pela sua senha",
   "wallet.create.fact2Desc": "A frase e a chave da sua conta são criptografadas com a senha da carteira.",
   "wallet.create.fact3": "Guardada neste computador",
   "wallet.create.fact3Desc": "Só a chave criptografada é armazenada, aqui. Nada é enviado a lugar nenhum.",
-  "wallet.create.optional": "Opcional",
   "wallet.create.req.length": "Pelo menos {n} caracteres",
   "wallet.create.req.match": "As duas senhas coincidem",
   "wallet.create.strength.short": "Curta demais",
@@ -470,16 +438,13 @@ const ptBR: Dict = {
   "wallet.create.strength.strong": "Forte",
   "wallet.create.next": "Em seguida, você vai anotar sua frase de recuperação.",
   "wallet.create.cta": "Criar conta",
-  "wallet.create.detailsTitle": "Detalhes da conta",
   "wallet.derive.title": "Nova conta",
   "wallet.derive.cta": "Nova conta desta frase",
   "wallet.derive.which": "Frase de recuperação",
   "wallet.derive.desc":
     "Ela vem da frase de recuperação, que já serve de backup para ela: não é preciso um backup separado.",
-  "wallet.create.busy": "Criando…",
   "wallet.created.later": "Fazer depois",
   "wallet.created.savedDesc": "Guarde o arquivo e a senha em segurança, e separados.",
-  "wallet.created.open": "Ir para a carteira",
   "wallet.create.step.type": "Tipo",
   "wallet.create.step.intro": "Como funciona",
   "wallet.create.step.details": "Detalhes",
@@ -487,11 +452,9 @@ const ptBR: Dict = {
   "wallet.create.step.confirm": "Confirmar",
 
   // Wallet: import
-  "wallet.import.title": "Importar uma conta",
   "wallet.import.cta": "Importar",
   "wallet.import.busy": "Importando…",
   "wallet.import.step.source": "Origem",
-  "wallet.import.step.details": "Detalhes",
   "wallet.import.choose.desc": "De onde vem a conta que você quer importar?",
   "wallet.import.phrase": "Frase de recuperação",
   "wallet.import.phraseDesc": "12 a 24 palavras do MetaMask ou de outra carteira. Restaura as mesmas contas.",
@@ -514,8 +477,6 @@ const ptBR: Dict = {
   "wallet.import.inWallet": "Já na carteira",
   "wallet.import.more": "Mostrar mais",
   "wallet.import.picked": "{n} selecionada(s)",
-  "wallet.import.detailsLead":
-    "A frase de recuperação e as {n} contas escolhidas serão criptografadas com a senha da carteira neste computador. O nome vai para a primeira conta.",
   "wallet.import.keyDesc": "A chave bruta da conta: 64 caracteres hexadecimais.",
   "wallet.import.keyfile": "Arquivo keystore",
   "wallet.import.key": "Chave privada",

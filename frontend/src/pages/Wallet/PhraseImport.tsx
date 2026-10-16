@@ -1,28 +1,22 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { ArrowRight, Loader2 } from "lucide-react";
-import { api, SeedCandidate, SeedPick, SeedScheme, walletError } from "../../lib/api";
+import { Loader2 } from "lucide-react";
+import { SeedCandidate, SeedPick, SeedScheme } from "../../lib/api";
 import { formatLax, shortHex } from "../../lib/format";
 import { useNode } from "../../lib/live";
 import { STAGGER, useStagger } from "../../lib/motion";
-import { useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { Notice } from "../../components/ui/bits";
 import { Segmented } from "../../components/ui/Segmented";
-import { Checkbox, Field, PasswordInput } from "./common";
-import { NameField } from "./AccountForms";
-import { useBusy, useNamePicks, useRescanUnread } from "./accountActions";
-import { FlowPage, Part, StepFooter, StepPanel } from "./flow";
-import { PhraseInput } from "./Phrase";
+import { useRescanUnread } from "./accountActions";
+import { Part } from "./flow";
 import { Pill } from "../../components/ui/Pill";
 
 /** How many accounts a scan shows at a time. */
 const BATCH = 5;
 const SCHEMES: SeedScheme[] = ["standard", "ledgerlive", "legacy"];
 
-type Stage = "phrase" | "accounts" | "details";
 export type Found = Record<SeedScheme, SeedCandidate[]>;
 /** The word counts a recovery phrase can have. */
 export const PHRASE_LENGTHS = [12, 15, 18, 21, 24];
@@ -38,215 +32,6 @@ export function picksOf(found: Found, picked: Set<string>): SeedPick[] {
     found[scheme]
       .filter((c) => picked.has(pickKey(c)) && !seen.has(c.address) && seen.add(c.address))
       .map((c) => ({ scheme, index: c.index })),
-  );
-}
-
-/**
- * PhraseImport restores the wallet from a recovery phrase, as a hardware
- * wallet's companion app does: the words, then the accounts the phrase
- * holds, found along the paths wallets use (MetaMask's standard one,
- * Ledger Live's, the legacy one) with what each holds on chain, for the
- * user to pick, then the first account's name; the wallet password
- * protects them. Nothing is stored until the last step.
- */
-export function PhraseImport({ onBack }: { onBack: () => void }) {
-  const t = useT();
-  const namePicks = useNamePicks();
-  const navigate = useNavigate();
-  const wallet = useWallet();
-  const [stage, setStage] = useState<Stage>("phrase");
-  const [words, setWords] = useState("");
-  const [advanced, setAdvanced] = useState(false);
-  const [passphrase, setPassphrase] = useState("");
-  const [found, setFound] = useState<Found>({ standard: [], ledgerlive: [], legacy: [] });
-  const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [name, setName] = useState("");
-  const { busy, error, setError, run } = useBusy();
-
-  // Nothing typed here outlives the page
-  useEffect(
-    () => () => {
-      setWords("");
-      setPassphrase("");
-    },
-    [],
-  );
-
-  const steps = [
-    t("wallet.import.step.source"),
-    t("wallet.create.step.phrase"),
-    t("wallet.import.step.accounts"),
-    t("wallet.create.step.details"),
-  ];
-  const pass = advanced ? passphrase : "";
-  const count = words.trim() ? words.trim().split(/\s+/).length : 0;
-
-  /** scan reads the next batch of a scheme, and picks the used accounts in it. */
-  const scan = async (scheme: SeedScheme, from: number) => {
-    const batch = await api.walletScanSeed(words, pass, scheme, from, BATCH);
-    setFound((f) => ({
-      ...f,
-      [scheme]: [
-        ...f[scheme].filter((c) => c.index < from),
-        ...batch,
-        ...f[scheme].filter((c) => c.index >= from + batch.length),
-      ],
-    }));
-    setPicked((p) => {
-      const next = new Set(p);
-      for (const c of batch) if (c.used && !c.inWallet) next.add(pickKey(c));
-      return next;
-    });
-    return batch;
-  };
-
-  if (stage === "phrase") {
-    return (
-      <FlowPage title={t("wallet.import.phrase")} steps={steps} current={1}>
-        <StepPanel
-          onSubmit={async () => {
-            if (busy || !PHRASE_LENGTHS.includes(count) || (advanced && !passphrase)) return;
-            const batch = await run(async () => {
-              setFound({ standard: [], ledgerlive: [], legacy: [] });
-              setPicked(new Set());
-              return scan("standard", 0);
-            });
-            if (!batch) return;
-            // The first standard account is always offered, used or not
-            if (!batch[0].inWallet) setPicked((p) => new Set(p).add(pickKey(batch[0])));
-            setStage("accounts");
-          }}
-        >
-          <Part className="gap-4">
-            <p className="text-sm text-muted-foreground">{t("wallet.import.phraseLead")}</p>
-            <Field label={t("wallet.import.phraseLabel")}>
-              {(id) => <PhraseInput id={id} value={words} onChange={setWords} />}
-            </Field>
-          </Part>
-          <Part className="gap-3">
-            <Checkbox checked={advanced} onChange={setAdvanced}>
-              <span className="font-medium">{t("wallet.passphrase.importToggle")}</span>
-              <span className="block text-sm text-muted-foreground">{t("wallet.passphrase.importToggleDesc")}</span>
-            </Checkbox>
-            {advanced && (
-              <Field label={t("wallet.passphrase.label")} hint={t("wallet.passphrase.importHint")}>
-                {(id) => <PasswordInput id={id} value={passphrase} onChange={setPassphrase} />}
-              </Field>
-            )}
-            {error && <Notice tone="critical">{error}</Notice>}
-          </Part>
-          <StepFooter onBack={onBack}>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={busy || !PHRASE_LENGTHS.includes(count) || (advanced && !passphrase)}
-            >
-              {busy && <Loader2 className="size-3.5 animate-spin" />}
-              {t("common.continue")}
-              {!busy && <ArrowRight className="size-3.5" />}
-            </button>
-          </StepFooter>
-        </StepPanel>
-      </FlowPage>
-    );
-  }
-
-  if (stage === "accounts") {
-    return (
-      <FlowPage title={t("wallet.import.chooseTitle")} steps={steps} current={2}>
-        <ChooseAccounts
-          found={found}
-          picked={picked}
-          onToggle={(c) =>
-            setPicked((p) => {
-              const next = new Set(p);
-              if (next.has(pickKey(c))) next.delete(pickKey(c));
-              else next.add(pickKey(c));
-              return next;
-            })
-          }
-          onScan={async (scheme, from) => {
-            setError(null);
-            try {
-              await scan(scheme, from);
-            } catch (e) {
-              setError(walletError(e, t));
-            }
-          }}
-          error={error}
-          onBack={() => setStage("phrase")}
-          onContinue={() => setStage("details")}
-        />
-      </FlowPage>
-    );
-  }
-
-  const picks = picksOf(found, picked);
-
-  return (
-    <FlowPage title={t("wallet.create.detailsTitle")} steps={steps} current={3}>
-      <StepPanel
-        onSubmit={async () => {
-          if (busy || picks.length === 0) return;
-          const acc = await run(() => api.walletImportSeed("", words, pass, namePicks(picks, name)));
-          if (acc) {
-            setWords("");
-            await wallet.refresh();
-            navigate("/", { replace: true });
-          }
-        }}
-      >
-        <Part>
-          <p className="text-muted-foreground">{t("wallet.import.detailsLead", { n: picks.length })}</p>
-        </Part>
-        <Part className="gap-4">
-          <NameField value={name} onChange={setName} />
-          {error && <Notice tone="critical">{error}</Notice>}
-        </Part>
-        <StepFooter onBack={() => setStage("accounts")}>
-          <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy && <Loader2 className="size-3.5 animate-spin" />}
-            {busy ? t("wallet.import.busy") : t("wallet.import.cta")}
-          </button>
-        </StepFooter>
-      </StepPanel>
-    </FlowPage>
-  );
-}
-
-/** ChooseAccounts is the accounts step of the import page: the picker, with the step's footer. */
-function ChooseAccounts({
-  found,
-  picked,
-  onToggle,
-  onScan,
-  error,
-  onBack,
-  onContinue,
-}: {
-  found: Found;
-  picked: Set<string>;
-  onToggle: (c: SeedCandidate) => void;
-  onScan: (scheme: SeedScheme, from: number) => Promise<void>;
-  error: string | null;
-  onBack: () => void;
-  onContinue: () => void;
-}) {
-  const t = useT();
-  const total = picked.size;
-  return (
-    <StepPanel>
-      <Part className="gap-3">
-        <p className="text-muted-foreground">{t("wallet.import.chooseDesc")}</p>
-      </Part>
-      <AccountPicker found={found} picked={picked} onToggle={onToggle} onScan={onScan} error={error} />
-      <StepFooter onBack={onBack} hint={t("wallet.import.picked", { n: total })}>
-        <button type="button" className="btn btn-primary" disabled={total === 0} onClick={onContinue}>
-          {t("common.continue")}
-          <ArrowRight className="size-3.5" />
-        </button>
-      </StepFooter>
-    </StepPanel>
   );
 }
 
