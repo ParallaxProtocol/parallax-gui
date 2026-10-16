@@ -15,7 +15,7 @@ import {
   Server,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import { formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
+import { formatBalanceAmount, formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
 import { useNow } from "../../lib/useNow";
 import { useNodeSwitch } from "../../lib/nodeSwitch";
 import { STAGGER, useStagger } from "../../lib/motion";
@@ -187,7 +187,7 @@ function Overview() {
             <span className="flex items-baseline gap-2.5">
               <span className="bg-gradient-to-br from-foreground via-foreground to-[var(--app-brand)] bg-clip-text text-6xl font-semibold tracking-tight text-transparent tabular-nums">
                 {balanceKnown ? (
-                  <Counter value={Number(formatLax(view!.balanceWei, 4))} format={(v) => formatAmount(v)} />
+                  <Counter value={Number(formatLax(view!.balanceWei, 4))} format={formatBalanceAmount} />
                 ) : (
                   "—"
                 )}
@@ -230,9 +230,4 @@ function Overview() {
       <BackupModal open={backup} onClose={() => setBackup(false)} account={account} label={label} />
     </div>
   );
-}
-
-/** Up to four decimals, without trailing zeros, as formatLax shows a balance. */
-function formatAmount(v: number): string {
-  return v.toLocaleString("en-US", { maximumFractionDigits: 4, useGrouping: false });
 }

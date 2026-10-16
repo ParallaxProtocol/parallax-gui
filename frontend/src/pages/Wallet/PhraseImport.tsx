@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Loader2 } from "lucide-react";
 import { SeedCandidate, SeedPick, SeedScheme } from "../../lib/api";
-import { formatLax, shortHex } from "../../lib/format";
+import { formatBalance, shortHex } from "../../lib/format";
 import { useNode } from "../../lib/live";
 import { STAGGER, useStagger } from "../../lib/motion";
 import { useT } from "../../i18n";
@@ -154,7 +154,7 @@ function Candidate({ c, picked, onToggle }: { c: SeedCandidate; picked: boolean;
       <span className="shrink-0 text-right tabular-nums">
         {c.balanceWei !== "" ? (
           <>
-            {formatLax(c.balanceWei, 6)} <span className="text-muted-foreground">LAX</span>
+            {formatBalance(c.balanceWei, 6)} <span className="text-muted-foreground">LAX</span>
           </>
         ) : (
           <span className="text-muted-foreground">—</span>

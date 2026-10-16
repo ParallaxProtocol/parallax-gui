@@ -21,7 +21,15 @@ import { accountLabel, useWallet } from "../../lib/wallet";
 import { useContacts } from "../../lib/contacts";
 import { useAssistant } from "../../lib/assistantContext";
 import { nodeState, useNode } from "../../lib/live";
-import { formatDuration, formatGwei, formatInt, formatUnits, sameAddress, shortHex } from "../../lib/format";
+import {
+  formatDuration,
+  formatGwei,
+  formatInt,
+  formatUnits,
+  groupThousands,
+  sameAddress,
+  shortHex,
+} from "../../lib/format";
 import { SPRING, STAGGER, useStagger } from "../../lib/motion";
 import { ModalForm } from "../ui/Modal";
 import { AddressAvatar } from "../ui/AddressAvatar";
@@ -593,7 +601,7 @@ function TxDetails({ tx }: { tx: NonNullable<AssistantRequest["transaction"]> })
             <span className="font-semibold text-foreground">{formatUnits(tx.totalWei, LAX_DECIMALS)} LAX</span>
           </Property>
           <Property label={t("assistant.transaction.after")}>
-            {formatUnits((after < 0n ? 0n : after).toString(), LAX_DECIMALS)} LAX
+            {groupThousands(formatUnits((after < 0n ? 0n : after).toString(), LAX_DECIMALS))} LAX
           </Property>
         </Rows>
       </Item>

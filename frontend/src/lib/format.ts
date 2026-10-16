@@ -110,6 +110,23 @@ export function formatDuration(seconds: number): string {
 
 const intFormat = new Intl.NumberFormat("en-US");
 
+/** groupThousands puts commas between a decimal's thousands, its decimals as they are: 1234567.5 → 1,234,567.5. */
+export function groupThousands(s: string): string {
+  const [whole, frac] = s.split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return frac === undefined ? grouped : `${grouped}.${frac}`;
+}
+
+/** formatBalance is formatLax with its thousands grouped: 1,234.5678 LAX's number. */
+export function formatBalance(weiStr: string, digits = 4): string {
+  return groupThousands(formatLax(weiStr, digits));
+}
+
+/** formatBalanceAmount is a balance's number as a counter draws it: up to four decimals, without trailing zeros, its thousands grouped. */
+export function formatBalanceAmount(v: number): string {
+  return v.toLocaleString("en-US", { maximumFractionDigits: 4 });
+}
+
 /** formatInt groups thousands: 59,707. */
 export function formatInt(n: number): string {
   return intFormat.format(Math.round(n));

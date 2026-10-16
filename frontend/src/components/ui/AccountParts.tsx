@@ -1,5 +1,5 @@
 import type { HardwareKind, WalletAccount } from "../../lib/api";
-import { formatLax } from "../../lib/format";
+import { formatBalance, formatBalanceAmount, formatLax } from "../../lib/format";
 import { DEVICE_NAME } from "../hardware/Device";
 import { useT } from "../../i18n";
 import { Counter } from "./Counter";
@@ -108,16 +108,10 @@ export function AccountBadge({ account, className }: { account: WalletAccount; c
 /** Balance is an amount of LAX, or a dash until it is known. Counted, it glides to each new amount. */
 export function Balance({ wei, counted }: { wei?: string; counted?: boolean }) {
   if (wei === undefined) return <span className="text-muted-foreground">—</span>;
-  const amount = formatLax(wei, 4);
   return (
     <>
-      {counted ? <Counter value={Number(amount)} format={formatAmount} /> : amount}{" "}
+      {counted ? <Counter value={Number(formatLax(wei, 4))} format={formatBalanceAmount} /> : formatBalance(wei, 4)}{" "}
       <span className="text-muted-foreground">LAX</span>
     </>
   );
-}
-
-/** Up to four decimals, without trailing zeros, as formatLax shows a balance. */
-function formatAmount(v: number): string {
-  return v.toLocaleString("en-US", { maximumFractionDigits: 4, useGrouping: false });
 }
