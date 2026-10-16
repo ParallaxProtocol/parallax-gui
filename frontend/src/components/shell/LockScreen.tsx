@@ -64,6 +64,11 @@ export function LockGate({ children }: { children: ReactNode }) {
   const { info } = useWallet();
   const locked = !!info?.locked;
   const unlocked = !!info?.hasPassword && !locked;
+  // The lock shuts itself only when the wallet locks while the app is open: launched locked, the screen is simply there
+  const opened = useRef(false);
+  useEffect(() => {
+    if (unlocked) opened.current = true;
+  }, [unlocked]);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -81,7 +86,7 @@ export function LockGate({ children }: { children: ReactNode }) {
   }, [unlocked]);
 
   if (!info) return null;
-  if (locked) return <LockScreen />;
+  if (locked) return <LockScreen shutting={opened.current} />;
   return <>{children}</>;
 }
 
@@ -89,8 +94,11 @@ export function LockGate({ children }: { children: ReactNode }) {
  * LockScreen shows the app's name, and asks for the wallet password once
  * the user starts typing it: the first key brings the form in, and goes in
  * the field. Away from the window a while, it shows only the name again.
+ * Shutting, it first plays the lock shutting itself and lands on "Wallet
+ * locked"; otherwise it opens on the name, which soon gives way to the form
+ * by itself, and the form stays out.
  */
-function LockScreen() {
+function LockScreen({ shutting }: { shutting: boolean }) {
   const t = useT();
   const { refresh } = useWallet();
   const id = useId();
@@ -98,7 +106,8 @@ function LockScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // First the lock alone, on black, shutting itself; then the screen
-  const [intro, setIntro] = useState(!useAnimationsOff());
+  const animationsOff = useAnimationsOff();
+  const [intro, setIntro] = useState(shutting && !animationsOff);
   // The lock lands on "Wallet locked", which soon gives way to the app's name
   const [named, setNamed] = useState(!intro);
   useEffect(() => {
@@ -106,8 +115,13 @@ function LockScreen() {
     const id = setTimeout(() => setNamed(true), NAME_MS);
     return () => clearTimeout(id);
   }, [intro, named]);
-  // Whether the form is out: typing brings it, being away puts it back
+  // Whether the form is out: typing brings it, being away puts it back; launched locked, it comes by itself and stays
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (shutting) return;
+    const id = setTimeout(() => setOpen(true), NAME_MS);
+    return () => clearTimeout(id);
+  }, [shutting]);
   const away = useAway(password ? AWAY_TYPED_MS : AWAY_MS);
   // Only the title's first entrance waits for the lock to rise
   const settled = useRef(false);
@@ -118,11 +132,11 @@ function LockScreen() {
   const locked = open || !named;
   useEffect(() => () => setPassword(""), []);
   useEffect(() => {
-    if (!away) return;
+    if (!away || !shutting) return;
     setOpen(false);
     setPassword("");
     setError(null);
-  }, [away]);
+  }, [away, shutting]);
   useEffect(() => {
     if (intro || open) return;
     const type = (e: KeyboardEvent) => {
@@ -245,7 +259,7 @@ function LockScreen() {
                   }}
                   exit={{ opacity: 0, y: -14, filter: "blur(10px)", transition: { duration: 0.3, ease: "easeIn" } }}
                 >
-                  {locked ? t("lock.title") : APP_NAME}
+                  {locked ? t(shutting ? "lock.title" : "lock.unlockTitle") : APP_NAME}
                 </motion.h1>
               </AnimatePresence>
             </motion.div>

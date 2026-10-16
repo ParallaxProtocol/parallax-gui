@@ -8,6 +8,7 @@ const fr: Dict = {
   "nav.expandSidebar": "Développer la barre latérale",
   "splash.loading": "Chargement",
   "lock.title": "Portefeuille verrouillé",
+  "lock.unlockTitle": "Déverrouiller le portefeuille",
   "lock.desc": "Saisissez le mot de passe du portefeuille pour le déverrouiller.",
   "lock.cta": "Déverrouiller",
   "lock.now": "Verrouiller le portefeuille",
@@ -656,6 +657,7 @@ const fr: Dict = {
     "Toute personne qui possède ces mots peut prendre vos LAX. Ne les saisissez jamais sur un site web, ne les partagez pas et ne les enregistrez pas dans une capture d'écran ou une note sur cet ordinateur.",
   "wallet.phrase.laterWarn": "Tant que vous ne l'avez pas confirmée, la phrase n'est pas considérée comme sauvegardée.",
   "wallet.phrase.written": "Je l'ai notée",
+  "wallet.phrase.backupLater": "Sauvegarder plus tard",
   "wallet.phrase.quizTitle": "Confirmez votre phrase de récupération",
   "wallet.phrase.quizDesc":
     "Saisissez ces mots de votre phrase de récupération, pour vérifier qu'elle est correctement notée.",

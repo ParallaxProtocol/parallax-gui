@@ -296,7 +296,10 @@ export default function Hello({
                 <PhraseGrid words={phrase.words} />
                 <PhraseWarning />
               </div>
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button type="button" className="btn btn-secondary btn-lg" onClick={finish}>
+                  {t("wallet.phrase.backupLater")}
+                </button>
                 <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={() => setStage("quiz")}>
                   {t("wallet.phrase.written")}
                   <ArrowRight className="size-4" />

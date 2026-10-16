@@ -8,6 +8,7 @@ const de: Dict = {
   "nav.expandSidebar": "Seitenleiste ausklappen",
   "splash.loading": "Lädt",
   "lock.title": "Wallet gesperrt",
+  "lock.unlockTitle": "Wallet entsperren",
   "lock.desc": "Geben Sie Ihr Wallet-Passwort ein, um sie zu entsperren.",
   "lock.cta": "Entsperren",
   "lock.now": "Wallet sperren",
@@ -660,6 +661,7 @@ const de: Dict = {
     "Jeder, der diese Wörter hat, kann Ihre LAX an sich bringen. Geben Sie sie niemals auf einer Website ein, teilen Sie sie nicht und speichern Sie sie nicht in einem Screenshot oder einer Notiz auf diesem Computer.",
   "wallet.phrase.laterWarn": "Bis Sie sie bestätigen, gilt die Phrase nicht als gesichert.",
   "wallet.phrase.written": "Ich habe sie aufgeschrieben",
+  "wallet.phrase.backupLater": "Später sichern",
   "wallet.phrase.quizTitle": "Wiederherstellungsphrase bestätigen",
   "wallet.phrase.quizDesc":
     "Geben Sie diese Wörter aus Ihrer Wiederherstellungsphrase ein, um sicherzustellen, dass sie richtig aufgeschrieben ist.",

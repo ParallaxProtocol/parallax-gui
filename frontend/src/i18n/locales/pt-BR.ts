@@ -8,6 +8,7 @@ const ptBR: Dict = {
   "nav.expandSidebar": "Expandir barra lateral",
   "splash.loading": "Carregando",
   "lock.title": "Carteira bloqueada",
+  "lock.unlockTitle": "Desbloquear carteira",
   "lock.desc": "Digite a senha da carteira para desbloqueá-la.",
   "lock.cta": "Desbloquear",
   "lock.now": "Bloquear carteira",
@@ -654,6 +655,7 @@ const ptBR: Dict = {
     "Qualquer pessoa com estas palavras pode levar seus LAX. Nunca as digite em um site, não as compartilhe e não as guarde em uma captura de tela ou em uma nota neste computador.",
   "wallet.phrase.laterWarn": "Até você confirmá-la, a frase não conta como backup feito.",
   "wallet.phrase.written": "Já anotei",
+  "wallet.phrase.backupLater": "Fazer backup depois",
   "wallet.phrase.quizTitle": "Confirme sua frase de recuperação",
   "wallet.phrase.quizDesc":
     "Digite estas palavras da sua frase de recuperação para garantir que ela foi anotada corretamente.",
