@@ -1248,7 +1248,10 @@ export const en: Dict = {
   "settings.mcp.newToken": "New token",
   "settings.mcp.connect": "Connect an assistant",
   "settings.mcp.jsonConfig": "JSON config",
-  "settings.mcp.claude.desc": "Run this in a terminal to add the server to Claude Code.",
+  "settings.mcp.run.desc": "Run this in a terminal to add the server to {app}.",
+  "settings.mcp.file.desc": "Add this to {file}, alongside any servers already there.",
+  "settings.mcp.bridge.desc":
+    "Add this to {file}. Claude Desktop reaches the server through mcp-remote, which needs Node.js.",
   "settings.mcp.json.desc": "Add this to an MCP client's config, such as a project's .mcp.json.",
   "settings.mcp.tools": "{n} tools available.",
   "settings.section.assistants": "Overview",

@@ -1253,7 +1253,10 @@ const fr: Dict = {
   "settings.mcp.newToken": "Nouveau jeton",
   "settings.mcp.connect": "Connecter un assistant",
   "settings.mcp.jsonConfig": "Configuration JSON",
-  "settings.mcp.claude.desc": "Exécutez ceci dans un terminal pour ajouter le serveur à Claude Code.",
+  "settings.mcp.run.desc": "Exécutez ceci dans un terminal pour ajouter le serveur à {app}.",
+  "settings.mcp.file.desc": "Ajoutez ceci à {file}, à côté des serveurs qui s’y trouvent déjà.",
+  "settings.mcp.bridge.desc":
+    "Ajoutez ceci à {file}. Claude Desktop atteint le serveur via mcp-remote, qui nécessite Node.js.",
   "settings.mcp.json.desc":
     "Ajoutez ceci à la configuration d’un client MCP, par exemple au fichier .mcp.json d’un projet.",
   "settings.mcp.tools": "{n} outils disponibles.",
