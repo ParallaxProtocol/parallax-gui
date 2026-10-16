@@ -5,10 +5,11 @@ import { api, walletError } from "../../lib/api";
 import { GLIDE, SPRING, STAGGER, useStagger } from "../../lib/motion";
 import { useWallet } from "../../lib/wallet";
 import { useHiddenFromCapture } from "../../lib/desktop";
+import { useAnimationsOff } from "../../lib/prefs";
 import { useT } from "../../i18n";
 import { Modal, ModalForm } from "../../components/ui/Modal";
 import { Notice } from "../../components/ui/bits";
-import { Field, PasswordInput } from "./common";
+import { DrawnCheck, FLAT_FIELD, WalletPasswordPrompt } from "./common";
 
 /**
  * The recovery phrase on screen: its words, a check that they were written
@@ -31,18 +32,21 @@ export function PhraseGrid({ words }: { words: string[] }) {
   useHiddenFromCapture();
   return (
     <div className="relative">
-      <motion.ol
-        {...stagger}
-        className={`grid grid-cols-3 gap-x-6 gap-y-3 transition-[filter] duration-300 select-none ${shown ? "" : "blur-md"}`}
-        aria-hidden={!shown}
+      {/* Revealed, the veil's blur lifts as a lens coming into focus */}
+      <motion.div
+        initial={false}
+        animate={shown ? { filter: "blur(0px)", opacity: 1 } : { filter: "blur(8px)", opacity: 0.8 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        {words.map((w, i) => (
-          <motion.li key={i} variants={STAGGER.item} className="flex items-baseline gap-2.5">
-            <span className="w-5 shrink-0 text-right text-xs text-muted-foreground tabular-nums">{i + 1}</span>
-            <span className="font-mono font-medium">{w}</span>
-          </motion.li>
-        ))}
-      </motion.ol>
+        <motion.ol {...stagger} className="grid grid-cols-3 gap-x-6 gap-y-3 select-none" aria-hidden={!shown}>
+          {words.map((w, i) => (
+            <motion.li key={i} variants={STAGGER.item} className="flex items-baseline gap-2.5">
+              <span className="w-5 shrink-0 text-right text-xs text-muted-foreground tabular-nums">{i + 1}</span>
+              <span className="font-mono font-medium">{w}</span>
+            </motion.li>
+          ))}
+        </motion.ol>
+      </motion.div>
       <AnimatePresence>
         {!shown && (
           <motion.button
@@ -51,7 +55,7 @@ export function PhraseGrid({ words }: { words: string[] }) {
             className="group absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, scale: 1.06, transition: { duration: 0.25, ease: "easeOut" } }}
             transition={GLIDE}
           >
             <Eye className="size-5 transition-transform group-hover:scale-110" />
@@ -91,11 +95,11 @@ export function PhraseQuiz({ words, onValid }: { words: string[]; onValid: (ok: 
   }, [right.join(), onValid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    // As a Mac's settings group: a row for each word, its place on the left, a check drawn at its end once it's right
+    <div className={`glass flex flex-col divide-y divide-border overflow-hidden ${FLAT_FIELD}`}>
       {positions.map((p, i) => (
         <QuizWord
           key={p}
-          n={p + 1}
           value={answers[i]}
           right={right[i]}
           autoFocus={i === 0}
@@ -108,14 +112,12 @@ export function PhraseQuiz({ words, onValid }: { words: string[]; onValid: (ok: 
 }
 
 function QuizWord({
-  n,
   value,
   right,
   autoFocus,
   onChange,
   label,
 }: {
-  n: number;
   value: string;
   right: boolean;
   autoFocus?: boolean;
@@ -124,48 +126,44 @@ function QuizWord({
 }) {
   const id = useId();
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium">
+    <div className="flex items-center gap-4 py-1 pr-3 pl-4">
+      <label htmlFor={id} className="w-24 shrink-0 text-sm">
         {label}
       </label>
-      <div className="relative">
-        <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-xs text-muted-foreground tabular-nums">
-          {n}
-        </span>
-        <input
-          id={id}
-          className={`input pl-8 font-mono transition-colors ${right ? "border-brand-mark" : ""}`}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          autoFocus={autoFocus}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck={false}
-        />
-        <AnimatePresence>
-          {right && (
-            <motion.span
-              className="absolute top-1/2 right-2 grid size-4 -translate-y-1/2 place-items-center rounded-full bg-brand-fill text-brand-foreground"
-              initial={{ scale: 0.4, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.4, opacity: 0 }}
-              transition={GLIDE}
-              aria-hidden
-            >
-              <svg viewBox="0 0 24 24" className="size-2.5" fill="none">
-                <path
-                  d="M5 12.5l4.5 4.5L19 7.5"
-                  stroke="currentColor"
-                  strokeWidth={3.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </div>
+      <input
+        id={id}
+        className="input min-w-0 flex-1 font-mono"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoFocus={autoFocus}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+      />
+      <span
+        aria-hidden
+        className={`grid size-5 shrink-0 place-items-center rounded-full transition-colors duration-200 ${
+          right ? "bg-brand-fill text-brand-foreground" : ""
+        }`}
+      >
+        <svg viewBox="0 0 24 24" className="size-3" fill="none">
+          <AnimatePresence initial={false}>
+            {right && (
+              <motion.path
+                d="M5 12.5l4.5 4.5L19 7.5"
+                stroke="currentColor"
+                strokeWidth={3.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1, transition: { duration: 0.25, ease: "easeOut" } }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
+              />
+            )}
+          </AnimatePresence>
+        </svg>
+      </span>
     </div>
   );
 }
@@ -240,7 +238,7 @@ export function RevealPhraseModal({
     <Modal
       open={open && !!seed}
       onClose={onClose}
-      title={t("wallet.phrase.title")}
+      title={t("wallet.phrase.show")}
       subtitle={seed?.name}
       icon={<ScrollText className="size-4" />}
     >
@@ -320,9 +318,14 @@ function Reveal({ seedId, confirmed, onClose }: { seedId: string; confirmed: boo
           ? t("wallet.phrase.confirm")
           : t("common.done");
 
+  // While the password opens the phrase, the dialog holds only a spinner (ModalForm)
+  const opening = busy && step === "password";
+  const off = useAnimationsOff();
+
   return (
     <ModalForm
       onSubmit={submit}
+      busy={opening}
       footer={
         <>
           {step !== "done" && (
@@ -353,18 +356,31 @@ function Reveal({ seedId, confirmed, onClose }: { seedId: string; confirmed: boo
           {step === "password" && (
             <>
               <p>{t("wallet.phrase.openDesc")}</p>
-              <Field label={t("wallet.walletPassword")}>
-                {(id) => <PasswordInput id={id} value={password} onChange={setPassword} />}
-              </Field>
+              <WalletPasswordPrompt value={password} onChange={setPassword} autoFocus />
             </>
           )}
           {step === "words" && (
-            <>
-              <p>{t("wallet.phrase.writeDown")}</p>
-              <PhraseGrid words={words} />
-              {passphrase && <ShownPassphrase value={passphrase} />}
-              <PhraseWarning />
-            </>
+            // As setup's words: one card, the passphrase a row of it, the warning its footnote; each in turn
+            <motion.div
+              className="flex flex-col gap-4"
+              variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
+              initial={off ? false : "hidden"}
+              animate="visible"
+            >
+              <motion.p variants={STAGGER.item}>{t("wallet.phrase.writeDown")}</motion.p>
+              <motion.div variants={STAGGER.item} className="flex flex-col gap-2">
+                <div className="glass flex flex-col divide-y divide-border overflow-hidden">
+                  <div className="px-5 py-4">
+                    <PhraseGrid words={words} />
+                  </div>
+                  {passphrase && <ShownPassphrase value={passphrase} />}
+                </div>
+                <div className="flex flex-col gap-1.5 px-4">
+                  {passphrase && <p className="text-sm text-muted-foreground">{t("wallet.passphrase.remember")}</p>}
+                  <PhraseWarning />
+                </div>
+              </motion.div>
+            </motion.div>
           )}
           {step === "quiz" && (
             <>
@@ -373,9 +389,12 @@ function Reveal({ seedId, confirmed, onClose }: { seedId: string; confirmed: boo
             </>
           )}
           {step === "done" && (
-            <div className="flex flex-col items-center gap-2 py-3 text-center">
-              <span className="text-[15px] font-semibold text-good-ink">{t("wallet.phrase.confirmed")}</span>
-              <span className="max-w-xs text-muted-foreground">{t("wallet.phrase.confirmedDesc")}</span>
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <DrawnCheck />
+              <div className="flex flex-col gap-1">
+                <span className="text-[15px] font-semibold">{t("wallet.phrase.confirmed")}</span>
+                <span className="max-w-xs text-sm text-muted-foreground">{t("wallet.phrase.confirmedDesc")}</span>
+              </div>
             </div>
           )}
           {error && <Notice tone="critical">{error}</Notice>}
@@ -391,9 +410,16 @@ function ShownPassphrase({ value }: { value: string }) {
   const [shown, setShown] = useState(false);
   useHiddenFromCapture();
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border bg-background/60 px-3 py-2">
+    <div className="flex items-center gap-4 py-2 pr-2 pl-5">
       <span className="text-sm text-muted-foreground">{t("wallet.passphrase.label")}</span>
-      <span className={`min-w-0 flex-1 truncate font-mono select-none ${shown ? "" : "blur-sm"}`}>{value}</span>
+      <motion.span
+        className="min-w-0 flex-1 truncate font-mono select-none"
+        initial={false}
+        animate={{ filter: shown ? "blur(0px)" : "blur(4px)" }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {value}
+      </motion.span>
       <button
         type="button"
         className="btn btn-ghost btn-sm btn-icon"

@@ -78,12 +78,19 @@ const NOTICE = {
   critical: { icon: OctagonAlert },
 } as const;
 
-const tint = (tone: keyof typeof NOTICE) => `color-mix(in oklab, var(--${tone}) 7%, transparent)`;
+/** The ink each tone's symbol is drawn in. */
+const INK: Record<keyof typeof NOTICE, string> = {
+  info: "text-info-ink",
+  warn: "text-warn-ink",
+  critical: "text-critical-ink",
+};
 
 /**
  * Notice is an inline message: an error, a warning, or a note worth reading
- * first. A card of frosted glass, faintly tinted by its tone, with the
- * tone's icon in a round badge.
+ * first. As a Mac's "Finish setting up" row in System Settings: plain
+ * glass with no wash of colour, the tone carried by its symbol alone, a
+ * title over a muted line, and its action (a button) at the end, under the
+ * text where the row is narrow.
  */
 export function Notice({
   tone,
@@ -98,23 +105,29 @@ export function Notice({
   action?: ReactNode;
   className?: string;
 }) {
-  const n = NOTICE[tone];
-  const Icon = n.icon;
+  const Icon = NOTICE[tone].icon;
   return (
     <div
-      className={`glass flex items-center gap-3.5 px-4 py-3.5 ${className}`}
-      // The tint lies over the glass, whose own colour it can't replace
-      style={{ backgroundImage: `linear-gradient(${tint(tone)}, ${tint(tone)})` }}
+      className={`glass @container flex flex-col gap-3 px-4 py-3.5 ${className}`}
       role={tone === "critical" ? "alert" : "status"}
     >
-      <IconBadge icon={Icon} tone={tone} className="self-start" />
-      <div className="selectable flex min-w-0 flex-1 flex-col gap-0.5 self-center">
-        {title && <div className="font-semibold">{title}</div>}
-        {children && (
-          <div className={`break-words ${title ? "text-muted-foreground" : "text-foreground/90"}`}>{children}</div>
-        )}
+      <div className="flex flex-col gap-3 @md:flex-row @md:items-center @md:gap-3.5">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          {/* Centred on the first line, whatever its height: a nudge would be right for one line height only */}
+          <span className="flex h-[1lh] shrink-0 items-center">
+            <Icon className={`size-5 ${INK[tone]}`} strokeWidth={1.75} />
+          </span>
+          <div className="selectable flex min-w-0 flex-col gap-0.5">
+            {title && <span className="font-medium">{title}</span>}
+            {children && (
+              <div className={`break-words ${title ? "text-sm text-muted-foreground" : "text-foreground/90"}`}>
+                {children}
+              </div>
+            )}
+          </div>
+        </div>
+        {action && <div className="shrink-0 self-end @md:self-center">{action}</div>}
       </div>
-      {action && <div className="shrink-0 self-center">{action}</div>}
     </div>
   );
 }

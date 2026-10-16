@@ -1,18 +1,19 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { X } from "lucide-react";
 import { FADE_OUT, SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
 import { TONE_WASH } from "./tone";
+import { ActivitySpinner } from "./ActivitySpinner";
 
 /**
  * Modal is a dialog over the whole window, for a decision that must be
  * made before going on: removing something for good, confirming a
- * consequence. It rises from a hair below over a dimmed window; Escape,
- * the close button or a click outside dismisses it. Focus moves into it
- * when it opens, stays within it while open, and goes back where it was
- * when it closes. Detail that only accompanies a page goes in a Drawer.
+ * consequence. A sheet of frosted glass, it rises from a hair below over
+ * a dimmed window; Escape, the close button or a click outside dismisses
+ * it. Focus moves into it when it opens, stays within it while open, and
+ * goes back where it was when it closes. Detail that only accompanies a page goes in a Drawer.
  */
 export function Modal({
   open,
@@ -83,7 +84,8 @@ export function Modal({
       {open && (
         <div className="no-drag fixed inset-0 z-[100] grid place-items-center p-6">
           <motion.div
-            className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+            // Dimmed lightly enough for the window to show through the dialog's glass
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: FADE_OUT }}
@@ -95,7 +97,8 @@ export function Modal({
             aria-modal="true"
             aria-label={title}
             tabIndex={-1}
-            className="relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border-strong bg-popover shadow-[var(--shadow-popover)] outline-none"
+            // Frosted glass, as the Settings sheet and drawers: what's behind shows through, blurred
+            className="relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl border border-glass-edge bg-popover/80 shadow-[var(--glass-shine),var(--shadow-popover)] backdrop-blur-2xl backdrop-saturate-150 outline-none"
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: 4, transition: FADE_OUT }}
@@ -135,29 +138,93 @@ export function Modal({
 
 /**
  * ModalForm is a dialog's content as a form: its fields, then a footer
- * holding its actions, the default one last.
+ * holding its actions, the default one last. While busy, as a Mac's sheet
+ * while it works, the form gives way to a large spinner (and busyLabel
+ * under it), coming back as it was once done: its fields' values live with
+ * the dialog, so nothing typed is lost. The dialog glides to each one's
+ * height rather than jumping.
  */
 export function ModalForm({
   onSubmit,
   footer,
   footerClassName = "border-border bg-surface/60",
+  busy = false,
+  busyLabel,
   children,
 }: {
   onSubmit: () => void;
   footer: ReactNode;
   /** The footer's separator and ground, for a form on another surface than a dialog's. */
   footerClassName?: string;
+  /** Whether what the form asked for is under way: the spinner shows in its place. */
+  busy?: boolean;
+  /** What is under way, under the spinner. */
+  busyLabel?: ReactNode;
   children: ReactNode;
 }) {
+  const t = useT();
+  const [measure, height] = useHeight();
+  const form = useRef<HTMLFormElement>(null);
+  // Back from the spinner, the focus goes back into the form, which it left as the form went
+  const wasBusy = useRef(busy);
+  useEffect(() => {
+    if (wasBusy.current && !busy) {
+      requestAnimationFrame(() => form.current?.querySelector<HTMLElement>("input:not(:disabled), textarea")?.focus());
+    }
+    wasBusy.current = busy;
+  }, [busy]);
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit();
-      }}
-    >
-      <div className="flex flex-col gap-4 px-5 pt-4 pb-5">{children}</div>
-      <div className={`flex justify-end gap-2 border-t px-5 py-3 ${footerClassName}`}>{footer}</div>
-    </form>
+    <motion.div className="overflow-hidden" animate={{ height: height ?? "auto" }} transition={SPRING}>
+      <div ref={measure}>
+        <AnimatePresence mode="wait" initial={false}>
+          {busy ? (
+            <motion.div
+              key="busy"
+              className="flex flex-col items-center gap-4 px-5 py-16 text-foreground/70"
+              initial={{ opacity: 0, scale: 0.6, filter: "blur(6px)" }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                filter: "blur(0px)",
+                transition: { type: "spring", bounce: 0.3, visualDuration: 0.45 },
+              }}
+              exit={{ opacity: 0, scale: 0.85, filter: "blur(6px)", transition: { duration: 0.18, ease: "easeIn" } }}
+            >
+              <ActivitySpinner size={72} label={typeof busyLabel === "string" ? busyLabel : t("splash.loading")} />
+              {busyLabel && <p className="text-center text-sm text-muted-foreground">{busyLabel}</p>}
+            </motion.div>
+          ) : (
+            <motion.form
+              key="form"
+              ref={form}
+              onSubmit={(e) => {
+                e.preventDefault();
+                onSubmit();
+              }}
+              initial={{ opacity: 0, scale: 0.98, filter: "blur(4px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)", transition: SPRING }}
+              exit={{ opacity: 0, scale: 0.98, filter: "blur(4px)", transition: { duration: 0.15, ease: "easeIn" } }}
+            >
+              <div className="flex flex-col gap-4 px-5 pt-4 pb-5">{children}</div>
+              <div className={`flex justify-end gap-2 border-t px-5 py-3 ${footerClassName}`}>{footer}</div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
+}
+
+/** useHeight measures an element's height as it changes, for a container to glide to. */
+function useHeight(): [(el: HTMLDivElement | null) => void, number | undefined] {
+  const [height, setHeight] = useState<number>();
+  const observer = useRef<ResizeObserver | null>(null);
+  const measure = useCallback((el: HTMLDivElement | null) => {
+    observer.current?.disconnect();
+    if (!el) return;
+    observer.current = new ResizeObserver(([entry]) => setHeight(entry.borderBoxSize[0].blockSize));
+    observer.current.observe(el);
+  }, []);
+  useEffect(() => () => observer.current?.disconnect(), []);
+  return [measure, height];
 }

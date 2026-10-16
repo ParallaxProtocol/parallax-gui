@@ -98,6 +98,7 @@ function ContactFormBody({
 
   return (
     <ModalForm
+      busy={busy}
       onSubmit={save}
       footer={
         <>
@@ -197,6 +198,7 @@ export function RemoveContactModal({ contact, onClose }: { contact: Contact | nu
     >
       {contact && (
         <ModalForm
+          busy={busy}
           onSubmit={async () => {
             if (busy) return;
             const ok = await run(async () => {

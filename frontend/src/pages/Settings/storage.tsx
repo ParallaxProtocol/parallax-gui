@@ -10,7 +10,7 @@ import { CopyButton, Meter, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { Panel, Rows } from "../../components/ui/Panel";
 import { IconTile, TILE } from "../../components/ui/IconTile";
-import { Field, PasswordInput } from "../Wallet/common";
+import { Field, WalletPasswordPrompt } from "../Wallet/common";
 import { useBusy } from "../Wallet/accountActions";
 import { Advanced, Setting } from "./fields";
 
@@ -274,6 +274,7 @@ function ClearChainModal({ open, onClose }: { open: boolean; onClose: () => void
       tone="danger"
     >
       <ModalForm
+        busy={busy}
         onSubmit={clear}
         footer={<DangerFooter busy={busy} onClose={onClose} label={t("storage.node.clearSubmit")} />}
       >
@@ -328,6 +329,8 @@ function Wipe({ onClose, restarting, onWiped }: { onClose: () => void; restartin
 
   return (
     <ModalForm
+      busy={held}
+      busyLabel={restarting ? t("storage.wallet.restarting") : undefined}
       onSubmit={wipe}
       footer={
         <DangerFooter
@@ -356,11 +359,7 @@ function Wipe({ onClose, restarting, onWiped }: { onClose: () => void; restartin
         )}
       </Field>
       {/* The password opens once the word is typed, as removing an account's does once it's acknowledged */}
-      <div className={`transition-opacity duration-200 ${typed ? "" : "opacity-50"}`}>
-        <Field label={t("wallet.walletPassword")}>
-          {(id) => <PasswordInput id={id} value={password} onChange={setPassword} disabled={!typed || held} />}
-        </Field>
-      </div>
+      <WalletPasswordPrompt value={password} onChange={setPassword} locked={!typed || held} />
       {error && <Notice tone="critical">{error}</Notice>}
     </ModalForm>
   );

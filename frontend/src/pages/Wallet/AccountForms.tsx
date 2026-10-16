@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { FileKey2, KeyRound, Loader2, Plus, Trash2 } from "lucide-react";
 import { SPRING } from "../../lib/motion";
@@ -8,7 +8,7 @@ import { useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Modal, ModalForm } from "../../components/ui/Modal";
 import { Notice } from "../../components/ui/bits";
-import { Address, Checkbox, DrawnCheck, Field, NewPassword, PasswordInput } from "./common";
+import { Address, DrawnCheck, Field, NewPassword, PasswordInput, WalletPasswordPrompt } from "./common";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 
 /**
@@ -70,6 +70,7 @@ function Backup({ account, onClose }: { account: WalletAccount; onClose: () => v
 
   return (
     <ModalForm
+      busy={busy}
       onSubmit={async () => {
         if (busy || saved) return;
         const ok = await run(() => backUp(account.address));
@@ -170,6 +171,8 @@ function ChangePassword({ onClose }: { onClose: () => void }) {
 
   return (
     <ModalForm
+      busy={busy}
+      busyLabel={t("wallet.changePassword.busy")}
       onSubmit={async () => {
         if (busy || !current || !next) return;
         const ok = await run(async () => {
@@ -226,18 +229,10 @@ function Remove({ account, label, onClose }: { account: WalletAccount; label: st
   const t = useT();
   const wallet = useWallet();
   const [password, setPassword] = useState("");
+  // The password opens only once the consequence is acknowledged (WalletPasswordPrompt)
   const [understood, setUnderstood] = useState(false);
   const { busy, error, run } = useBusy();
-  const passwordInput = useRef<HTMLInputElement>(null);
   useEffect(() => () => setPassword(""), []);
-
-  // The password unlocks only once the consequence is acknowledged, and
-  // locks (and empties) again if the acknowledgement is taken back
-  const acknowledge = (on: boolean) => {
-    setUnderstood(on);
-    if (on) requestAnimationFrame(() => passwordInput.current?.focus());
-    else setPassword("");
-  };
 
   const remove = async () => {
     if (busy || !password || !understood) return;
@@ -253,6 +248,7 @@ function Remove({ account, label, onClose }: { account: WalletAccount; label: st
 
   return (
     <ModalForm
+      busy={busy}
       onSubmit={remove}
       footer={
         <>
@@ -276,22 +272,11 @@ function Remove({ account, label, onClose }: { account: WalletAccount; label: st
           <Address value={account.address} className="text-sm" />
         </div>
       </div>
-      <Checkbox checked={understood} onChange={acknowledge}>
-        {t("wallet.remove.confirm")}
-      </Checkbox>
-      <div className={`transition-opacity duration-200 ${understood ? "" : "opacity-50"}`}>
-        <Field label={t("wallet.walletPassword")}>
-          {(id) => (
-            <PasswordInput
-              id={id}
-              value={password}
-              onChange={setPassword}
-              disabled={!understood}
-              inputRef={passwordInput}
-            />
-          )}
-        </Field>
-      </div>
+      <WalletPasswordPrompt
+        value={password}
+        onChange={setPassword}
+        acknowledge={{ label: t("wallet.remove.confirm"), checked: understood, onChange: setUnderstood }}
+      />
       {error && <Notice tone="critical">{error}</Notice>}
     </ModalForm>
   );
@@ -331,6 +316,7 @@ function Derive({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) {
   const { busy, error, run } = useBusy();
   return (
     <ModalForm
+      busy={busy}
       onSubmit={async () => {
         if (busy) return;
         const acc = await run(() => api.walletDeriveAccount(seed.id, defaultName));
@@ -391,17 +377,11 @@ function RemoveSeed({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) 
   const [password, setPassword] = useState("");
   const [understood, setUnderstood] = useState(false);
   const { busy, error, run } = useBusy();
-  const passwordInput = useRef<HTMLInputElement>(null);
   useEffect(() => () => setPassword(""), []);
-
-  const acknowledge = (on: boolean) => {
-    setUnderstood(on);
-    if (on) requestAnimationFrame(() => passwordInput.current?.focus());
-    else setPassword("");
-  };
 
   return (
     <ModalForm
+      busy={busy}
       onSubmit={async () => {
         if (busy || !password || !understood) return;
         const ok = await run(async () => {
@@ -430,22 +410,11 @@ function RemoveSeed({ seed, onClose }: { seed: SeedInfo; onClose: () => void }) 
           ? t("wallet.removeSeed.warn", { n: seed.accounts })
           : t("wallet.removeSeed.warnUnconfirmed", { n: seed.accounts })}
       </p>
-      <Checkbox checked={understood} onChange={acknowledge}>
-        {t("wallet.removeSeed.confirm")}
-      </Checkbox>
-      <div className={`transition-opacity duration-200 ${understood ? "" : "opacity-50"}`}>
-        <Field label={t("wallet.walletPassword")}>
-          {(id) => (
-            <PasswordInput
-              id={id}
-              value={password}
-              onChange={setPassword}
-              disabled={!understood}
-              inputRef={passwordInput}
-            />
-          )}
-        </Field>
-      </div>
+      <WalletPasswordPrompt
+        value={password}
+        onChange={setPassword}
+        acknowledge={{ label: t("wallet.removeSeed.confirm"), checked: understood, onChange: setUnderstood }}
+      />
       {error && <Notice tone="critical">{error}</Notice>}
     </ModalForm>
   );

@@ -715,6 +715,7 @@ export const en: Dict = {
   // Wallet: passwords
   "wallet.password.new": "Password",
   "wallet.password.current": "Current password",
+  "wallet.password.required": "Required",
   "wallet.password.confirm": "Confirm password",
   "wallet.password.rule": "At least {n} characters. A few unrelated words make a strong one.",
   "wallet.password.mismatch": "The passwords don't match",
@@ -950,25 +951,24 @@ export const en: Dict = {
 
   // Wallet: recovery phrase
   "wallet.phrase.section": "Recovery phrase",
-  "wallet.phrase.title": "Recovery phrase",
   "wallet.phrase.yours": "Your recovery phrase",
   "wallet.phrase.writeDown":
-    "Write these words down on paper, in this order, and keep them somewhere safe. They are the backup of every account made from them.",
-  "wallet.phrase.reveal": "Click to reveal",
+    "Write these words on paper, in order, and keep them somewhere safe. They restore every account made from this phrase, in this wallet or any other.",
+  "wallet.phrase.reveal": "Click to show the words",
   "wallet.phrase.warning":
-    "Anyone with these words can take your LAX. Never type them into a website, share them, or store them in a screenshot or a note on this computer.",
+    "Anyone with these words can take your LAX. Never type them into a website, share them, or keep them in a screenshot or a note on any device.",
   "wallet.phrase.laterWarn": "Until you confirm it, the phrase isn't counted as backed up.",
   "wallet.phrase.written": "I've written it down",
   "wallet.phrase.backupLater": "Back up later",
   "wallet.phrase.quizTitle": "Confirm your recovery phrase",
-  "wallet.phrase.quizDesc": "Type these words from your recovery phrase, to make sure it's written down correctly.",
-  "wallet.phrase.word": "Word #{n}",
+  "wallet.phrase.quizDesc": "Type these words from your written copy, to check it's correct.",
+  "wallet.phrase.word": "Word {n}",
   "wallet.phrase.confirm": "Confirm",
   "wallet.phrase.ready": "Your wallet is ready",
   "wallet.phrase.readyDesc":
     "Keep the recovery phrase safe and offline. With it, you can restore your accounts in this or any compatible wallet.",
   "wallet.phrase.open": "Show",
-  "wallet.phrase.openDesc": "Enter the password you chose for the recovery phrase to show it.",
+  "wallet.phrase.openDesc": "Enter your wallet password to see the words.",
   "wallet.phrase.confirmed": "Recovery phrase confirmed",
   "wallet.phrase.confirmedDesc": "Accounts made from it are now backed up.",
   "wallet.phrase.show": "Show recovery phrase",

@@ -125,6 +125,7 @@ export function RemoveWatchOnlyModal({
     >
       {account && (
         <ModalForm
+          busy={busy}
           onSubmit={async () => {
             const ok = await run(async () => {
               await api.walletRemoveWatchOnly(account.address);

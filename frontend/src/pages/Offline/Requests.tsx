@@ -225,6 +225,7 @@ function ConfirmModal({
     >
       {confirm && (
         <ModalForm
+          busy={busy}
           onSubmit={go}
           footer={
             <>

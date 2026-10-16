@@ -415,6 +415,7 @@ const ptBR: Dict = {
   // Wallet: passwords
   "wallet.password.new": "Senha",
   "wallet.password.current": "Senha atual",
+  "wallet.password.required": "Obrigatório",
   "wallet.password.confirm": "Confirmar senha",
   "wallet.password.rule": "Pelo menos {n} caracteres. Algumas palavras sem relação entre si formam uma senha forte.",
   "wallet.password.mismatch": "As senhas não coincidem",
@@ -654,26 +655,24 @@ const ptBR: Dict = {
 
   // Wallet: recovery phrase
   "wallet.phrase.section": "Frase de recuperação",
-  "wallet.phrase.title": "Frase de recuperação",
   "wallet.phrase.yours": "Sua frase de recuperação",
   "wallet.phrase.writeDown":
-    "Anote estas palavras em papel, nesta ordem, e guarde-as em um lugar seguro. Elas são o backup de todas as contas criadas a partir delas.",
-  "wallet.phrase.reveal": "Clique para revelar",
+    "Anote estas palavras no papel, na ordem, e guarde-as em um lugar seguro. Elas restauram todas as contas criadas a partir desta frase, nesta carteira ou em qualquer outra.",
+  "wallet.phrase.reveal": "Clique para mostrar as palavras",
   "wallet.phrase.warning":
-    "Qualquer pessoa com estas palavras pode levar seus LAX. Nunca as digite em um site, não as compartilhe e não as guarde em uma captura de tela ou em uma nota neste computador.",
+    "Qualquer pessoa com estas palavras pode levar seus LAX. Nunca as digite em um site, não as compartilhe nem as guarde em uma captura de tela ou nota em nenhum dispositivo.",
   "wallet.phrase.laterWarn": "Até você confirmá-la, a frase não conta como backup feito.",
   "wallet.phrase.written": "Já anotei",
   "wallet.phrase.backupLater": "Fazer backup depois",
   "wallet.phrase.quizTitle": "Confirme sua frase de recuperação",
-  "wallet.phrase.quizDesc":
-    "Digite estas palavras da sua frase de recuperação para garantir que ela foi anotada corretamente.",
-  "wallet.phrase.word": "Palavra #{n}",
+  "wallet.phrase.quizDesc": "Digite estas palavras a partir da sua cópia escrita, para conferir se está correta.",
+  "wallet.phrase.word": "Palavra {n}",
   "wallet.phrase.confirm": "Confirmar",
   "wallet.phrase.ready": "Sua carteira está pronta",
   "wallet.phrase.readyDesc":
     "Guarde a frase de recuperação em segurança e offline. Com ela, você pode restaurar suas contas nesta ou em qualquer carteira compatível.",
   "wallet.phrase.open": "Mostrar",
-  "wallet.phrase.openDesc": "Digite a senha que você escolheu para a frase de recuperação para mostrá-la.",
+  "wallet.phrase.openDesc": "Digite a senha da sua carteira para ver as palavras.",
   "wallet.phrase.confirmed": "Frase de recuperação confirmada",
   "wallet.phrase.confirmedDesc": "As contas criadas a partir dela agora têm backup.",
   "wallet.phrase.show": "Mostrar frase de recuperação",

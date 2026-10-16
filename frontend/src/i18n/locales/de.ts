@@ -421,6 +421,7 @@ const de: Dict = {
   // Wallet: passwords
   "wallet.password.new": "Passwort",
   "wallet.password.current": "Aktuelles Passwort",
+  "wallet.password.required": "Erforderlich",
   "wallet.password.confirm": "Passwort bestätigen",
   "wallet.password.rule": "Mindestens {n} Zeichen. Ein paar zusammenhanglose Wörter ergeben ein starkes Passwort.",
   "wallet.password.mismatch": "Die Passwörter stimmen nicht überein",
@@ -662,27 +663,24 @@ const de: Dict = {
 
   // Wallet: recovery phrase
   "wallet.phrase.section": "Wiederherstellungsphrase",
-  "wallet.phrase.title": "Wiederherstellungsphrase",
   "wallet.phrase.yours": "Ihre Wiederherstellungsphrase",
   "wallet.phrase.writeDown":
-    "Schreiben Sie diese Wörter in dieser Reihenfolge auf Papier und bewahren Sie sie an einem sicheren Ort auf. Sie sind die Sicherung aller Konten, die daraus erstellt wurden.",
-  "wallet.phrase.reveal": "Zum Anzeigen klicken",
+    "Schreiben Sie diese Wörter der Reihe nach auf Papier und bewahren Sie sie an einem sicheren Ort auf. Mit ihnen lässt sich jedes Konto dieser Phrase wiederherstellen, in dieser oder jeder anderen Wallet.",
+  "wallet.phrase.reveal": "Klicken, um die Wörter zu zeigen",
   "wallet.phrase.warning":
-    "Jeder, der diese Wörter hat, kann Ihre LAX an sich bringen. Geben Sie sie niemals auf einer Website ein, teilen Sie sie nicht und speichern Sie sie nicht in einem Screenshot oder einer Notiz auf diesem Computer.",
+    "Jeder, der diese Wörter hat, kann Ihre LAX an sich bringen. Geben Sie sie niemals auf einer Website ein, teilen Sie sie nicht und bewahren Sie sie nicht in einem Screenshot oder einer Notiz auf einem Gerät auf.",
   "wallet.phrase.laterWarn": "Bis Sie sie bestätigen, gilt die Phrase nicht als gesichert.",
   "wallet.phrase.written": "Ich habe sie aufgeschrieben",
   "wallet.phrase.backupLater": "Später sichern",
   "wallet.phrase.quizTitle": "Wiederherstellungsphrase bestätigen",
-  "wallet.phrase.quizDesc":
-    "Geben Sie diese Wörter aus Ihrer Wiederherstellungsphrase ein, um sicherzustellen, dass sie richtig aufgeschrieben ist.",
-  "wallet.phrase.word": "Wort #{n}",
+  "wallet.phrase.quizDesc": "Geben Sie diese Wörter aus Ihrer Abschrift ein, um zu prüfen, ob sie stimmt.",
+  "wallet.phrase.word": "Wort {n}",
   "wallet.phrase.confirm": "Bestätigen",
   "wallet.phrase.ready": "Ihre Wallet ist bereit",
   "wallet.phrase.readyDesc":
     "Bewahren Sie die Wiederherstellungsphrase sicher und offline auf. Mit ihr können Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wiederherstellen.",
   "wallet.phrase.open": "Anzeigen",
-  "wallet.phrase.openDesc":
-    "Geben Sie das Passwort ein, das Sie für die Wiederherstellungsphrase gewählt haben, um sie anzuzeigen.",
+  "wallet.phrase.openDesc": "Geben Sie Ihr Wallet-Passwort ein, um die Wörter zu sehen.",
   "wallet.phrase.confirmed": "Wiederherstellungsphrase bestätigt",
   "wallet.phrase.confirmedDesc": "Daraus erstellte Konten sind jetzt gesichert.",
   "wallet.phrase.show": "Wiederherstellungsphrase anzeigen",

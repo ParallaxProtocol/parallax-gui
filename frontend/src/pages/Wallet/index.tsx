@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Clock,
   Eye,
-  FileKey2,
   HardDrive,
   KeyRound,
   Lock,
@@ -171,8 +170,7 @@ function Overview() {
             tone="warn"
             title={t("wallet.phrase.missingTitle")}
             action={
-              <button type="button" className="btn btn-secondary" onClick={() => setReveal(true)}>
-                <ScrollText className="size-3.5" />
+              <button type="button" className="btn btn-tinted" onClick={() => setReveal(true)}>
                 {t("wallet.phrase.showConfirm")}
               </button>
             }
@@ -184,8 +182,7 @@ function Overview() {
             tone="warn"
             title={t("wallet.backup.missingTitle")}
             action={
-              <button type="button" className="btn btn-secondary" onClick={() => setBackup(true)}>
-                <FileKey2 className="size-3.5" />
+              <button type="button" className="btn btn-tinted" onClick={() => setBackup(true)}>
                 {t("wallet.backup.cta")}
               </button>
             }

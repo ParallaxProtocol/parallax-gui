@@ -72,6 +72,8 @@ export function ReplaceModal({
     >
       {target && (
         <ModalForm
+          // Quoting first, then replacing: the dialog holds a spinner through both
+          busy={busy || (!quote && !error)}
           onSubmit={go}
           footer={
             <>
@@ -93,13 +95,7 @@ export function ReplaceModal({
           <p className="text-muted-foreground">
             {cancel ? t("wallet.replace.cancelDesc") : t("wallet.replace.speedUpDesc")}
           </p>
-          {!quote ? (
-            !error && (
-              <div className="flex justify-center py-4 text-muted-foreground">
-                <Loader2 className="size-5 animate-spin" />
-              </div>
-            )
-          ) : (
+          {quote && (
             <>
               <dl className="space-y-2 rounded-xl bg-muted px-4 py-3 text-sm tabular-nums">
                 <Row label={t("mempool.gasPrice")}>

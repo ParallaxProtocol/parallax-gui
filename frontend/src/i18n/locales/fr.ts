@@ -417,6 +417,7 @@ const fr: Dict = {
   // Wallet: passwords
   "wallet.password.new": "Mot de passe",
   "wallet.password.current": "Mot de passe actuel",
+  "wallet.password.required": "Obligatoire",
   "wallet.password.confirm": "Confirmer le mot de passe",
   "wallet.password.rule": "Au moins {n} caractères. Quelques mots sans rapport entre eux font un mot de passe solide.",
   "wallet.password.mismatch": "Les mots de passe ne correspondent pas",
@@ -657,26 +658,24 @@ const fr: Dict = {
 
   // Wallet: recovery phrase
   "wallet.phrase.section": "Phrase de récupération",
-  "wallet.phrase.title": "Phrase de récupération",
   "wallet.phrase.yours": "Votre phrase de récupération",
   "wallet.phrase.writeDown":
-    "Notez ces mots sur papier, dans cet ordre, et conservez-les en lieu sûr. Ils sont la sauvegarde de tous les comptes créés à partir d'eux.",
-  "wallet.phrase.reveal": "Cliquez pour afficher",
+    "Notez ces mots sur papier, dans l'ordre, et gardez-les en lieu sûr. Ils restaurent chaque compte créé à partir de cette phrase, dans ce portefeuille ou un autre.",
+  "wallet.phrase.reveal": "Cliquez pour afficher les mots",
   "wallet.phrase.warning":
-    "Toute personne qui possède ces mots peut prendre vos LAX. Ne les saisissez jamais sur un site web, ne les partagez pas et ne les enregistrez pas dans une capture d'écran ou une note sur cet ordinateur.",
+    "Quiconque possède ces mots peut prendre vos LAX. Ne les saisissez jamais sur un site web, ne les partagez pas et ne les gardez pas dans une capture d'écran ou une note sur un appareil.",
   "wallet.phrase.laterWarn": "Tant que vous ne l'avez pas confirmée, la phrase n'est pas considérée comme sauvegardée.",
   "wallet.phrase.written": "Je l'ai notée",
   "wallet.phrase.backupLater": "Sauvegarder plus tard",
   "wallet.phrase.quizTitle": "Confirmez votre phrase de récupération",
-  "wallet.phrase.quizDesc":
-    "Saisissez ces mots de votre phrase de récupération, pour vérifier qu'elle est correctement notée.",
-  "wallet.phrase.word": "Mot #{n}",
+  "wallet.phrase.quizDesc": "Saisissez ces mots depuis votre copie écrite, pour vérifier qu'elle est exacte.",
+  "wallet.phrase.word": "Mot {n}",
   "wallet.phrase.confirm": "Confirmer",
   "wallet.phrase.ready": "Votre portefeuille est prêt",
   "wallet.phrase.readyDesc":
     "Conservez la phrase de récupération en lieu sûr et hors ligne. Avec elle, vous pouvez restaurer vos comptes dans ce portefeuille ou dans tout portefeuille compatible.",
   "wallet.phrase.open": "Afficher",
-  "wallet.phrase.openDesc": "Saisissez le mot de passe choisi pour la phrase de récupération afin de l'afficher.",
+  "wallet.phrase.openDesc": "Saisissez le mot de passe de votre portefeuille pour voir les mots.",
   "wallet.phrase.confirmed": "Phrase de récupération confirmée",
   "wallet.phrase.confirmedDesc": "Les comptes créés à partir d'elle sont désormais sauvegardés.",
   "wallet.phrase.show": "Afficher la phrase de récupération",

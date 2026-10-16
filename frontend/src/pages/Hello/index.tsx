@@ -15,7 +15,7 @@ import { LANG_NAMES } from "../../i18n/translations";
 import { Meter, Notice } from "../../components/ui/bits";
 import logo from "../../assets/logo.svg";
 import Toggle from "../../components/ui/Toggle";
-import { DrawnCheck, MIN_PASSWORD, PasswordInput } from "../Wallet/common";
+import { CheckMark, DrawnCheck, FLAT, FLAT_FIELD, MIN_PASSWORD, PasswordInput } from "../Wallet/common";
 import { Requirement, StrengthMeter } from "../Wallet/CreateStep";
 import { Choice } from "../../components/ui/Choice";
 import { PhraseGrid, PhraseInput, PhraseQuiz, PhraseWarning } from "../Wallet/Phrase";
@@ -503,12 +503,6 @@ function Greeting({
   );
 }
 
-/** A field flat in its card's row, as in a Mac's settings group: no box of its own, no ring, the caret showing the focus. */
-const FLAT =
-  "[&_.input]:border-transparent [&_.input]:bg-transparent [&_.input]:pl-0 [&_.input]:text-base [&_.input]:shadow-none [&_.input:focus]:border-transparent [&_.input:focus]:shadow-none";
-/** A one-line field so: as tall as a row. Only its start loses its padding, the end keeping room for its eye. */
-const FLAT_FIELD = `${FLAT} [&_.input]:h-11`;
-
 /** Screen is one step of the password sequence: a big title, a line, and its controls, centred. */
 function Screen({
   title,
@@ -739,35 +733,6 @@ function Countdown({ ms, onDone }: { ms: number; onDone: () => void }) {
         transition={{ duration: ms / 1000, ease: "linear" }}
       />
     </div>
-  );
-}
-
-/** CheckMark is a checkbox's box, as on a Mac: a rounded square that fills and draws its check when ticked. */
-function CheckMark({ checked }: { checked: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={`grid size-5 shrink-0 place-items-center rounded-md transition-colors duration-200 ${
-        checked ? "bg-brand-fill text-brand-foreground" : "border border-border-strong"
-      }`}
-    >
-      <svg viewBox="0 0 24 24" className="size-3.5" fill="none">
-        <AnimatePresence initial={false}>
-          {checked && (
-            <motion.path
-              d="M5 12.5l4.5 4.5L19 7.5"
-              stroke="currentColor"
-              strokeWidth={3.25}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1, transition: { duration: 0.25, ease: "easeOut" } }}
-              exit={{ opacity: 0, transition: { duration: 0.1 } }}
-            />
-          )}
-        </AnimatePresence>
-      </svg>
-    </span>
   );
 }
 

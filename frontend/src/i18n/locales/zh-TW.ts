@@ -398,6 +398,7 @@ const zhTW: Dict = {
   // Wallet: passwords
   "wallet.password.new": "密碼",
   "wallet.password.current": "目前密碼",
+  "wallet.password.required": "必填",
   "wallet.password.confirm": "確認密碼",
   "wallet.password.rule": "至少 {n} 個字元。幾個互不相關的單字就能組成強密碼。",
   "wallet.password.mismatch": "兩次輸入的密碼不一致",
@@ -617,23 +618,23 @@ const zhTW: Dict = {
 
   // Wallet: recovery phrase
   "wallet.phrase.section": "助記詞",
-  "wallet.phrase.title": "助記詞",
   "wallet.phrase.yours": "您的助記詞",
-  "wallet.phrase.writeDown": "請將這些單字依順序抄寫在紙上，並存放在安全的地方。它們是由其產生的所有帳戶的備份。",
-  "wallet.phrase.reveal": "點擊顯示",
+  "wallet.phrase.writeDown":
+    "請按順序把這些單字抄寫在紙上，並妥善保管。憑它們可以在本錢包或任何其他錢包中還原由此助記詞產生的所有帳戶。",
+  "wallet.phrase.reveal": "點擊顯示單字",
   "wallet.phrase.warning":
-    "任何擁有這些單字的人都能拿走您的 LAX。切勿在任何網站上輸入它們，切勿分享，也切勿將其儲存在螢幕截圖或這台電腦上的筆記中。",
+    "任何擁有這些單字的人都能拿走您的 LAX。切勿在網站上輸入、與他人分享，或以截圖、筆記的形式保存在任何裝置上。",
   "wallet.phrase.laterWarn": "在您確認之前，助記詞不算已備份。",
   "wallet.phrase.written": "我已抄寫下來",
   "wallet.phrase.backupLater": "稍後備份",
   "wallet.phrase.quizTitle": "確認您的助記詞",
-  "wallet.phrase.quizDesc": "請輸入助記詞中的這些單字，以確保您已正確抄寫。",
-  "wallet.phrase.word": "單字 #{n}",
+  "wallet.phrase.quizDesc": "請根據您抄寫的副本輸入這些單字，以核對是否正確。",
+  "wallet.phrase.word": "第 {n} 個單字",
   "wallet.phrase.confirm": "確認",
   "wallet.phrase.ready": "您的錢包已就緒",
   "wallet.phrase.readyDesc": "請離線妥善保管助記詞。憑藉它，您可以在本錢包或任何相容錢包中還原您的帳戶。",
   "wallet.phrase.open": "顯示",
-  "wallet.phrase.openDesc": "輸入您為助記詞設定的密碼以顯示它。",
+  "wallet.phrase.openDesc": "輸入您的錢包密碼以查看這些單字。",
   "wallet.phrase.confirmed": "助記詞已確認",
   "wallet.phrase.confirmedDesc": "由它產生的帳戶現已備份。",
   "wallet.phrase.show": "顯示助記詞",

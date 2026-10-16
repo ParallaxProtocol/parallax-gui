@@ -1,5 +1,5 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
-import { motion } from "motion/react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { Eye, EyeOff } from "lucide-react";
 import { api, AddressView } from "../../lib/api";
 import { useHiddenFromCapture } from "../../lib/desktop";
@@ -251,5 +251,108 @@ export function DrawnCheck() {
         />
       </svg>
     </motion.span>
+  );
+}
+
+/** A field flat in its card's row, as in a Mac's settings group: no box of its own, no ring, the caret showing the focus. */
+export const FLAT =
+  "[&_.input]:border-transparent [&_.input]:bg-transparent [&_.input]:pl-0 [&_.input]:text-base [&_.input]:shadow-none [&_.input:focus]:border-transparent [&_.input:focus]:shadow-none";
+/** A one-line field so: as tall as a row. Only its start loses its padding, the end keeping room for its eye. */
+export const FLAT_FIELD = `${FLAT} [&_.input]:h-11`;
+
+/** CheckMark is a checkbox's box, as on a Mac: a rounded square that fills and draws its check when ticked. */
+export function CheckMark({ checked }: { checked: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={`grid size-5 shrink-0 place-items-center rounded-md transition-colors duration-200 ${
+        checked ? "bg-brand-fill text-brand-foreground" : "border border-border-strong"
+      }`}
+    >
+      <svg viewBox="0 0 24 24" className="size-3.5" fill="none">
+        <AnimatePresence initial={false}>
+          {checked && (
+            <motion.path
+              d="M5 12.5l4.5 4.5L19 7.5"
+              stroke="currentColor"
+              strokeWidth={3.25}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1, transition: { duration: 0.25, ease: "easeOut" } }}
+              exit={{ opacity: 0, transition: { duration: 0.1 } }}
+            />
+          )}
+        </AnimatePresence>
+      </svg>
+    </span>
+  );
+}
+
+/**
+ * WalletPasswordPrompt is where a dialog asks for the wallet password
+ * before something it guards: a card as a Mac's settings group, the field
+ * flat in a row beside its label. For what can't be undone, acknowledge
+ * puts a row to tick above it, the field shut (and emptied) until it is
+ * ticked and focused as it is; locked shuts it for a gate of the
+ * dialog's own (a word typed, a step done).
+ */
+export function WalletPasswordPrompt({
+  value,
+  onChange,
+  acknowledge,
+  locked = false,
+  autoFocus,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  acknowledge?: { label: ReactNode; checked: boolean; onChange: (on: boolean) => void };
+  locked?: boolean;
+  autoFocus?: boolean;
+}) {
+  const t = useT();
+  const id = useId();
+  const input = useRef<HTMLInputElement>(null);
+  const shut = locked || (!!acknowledge && !acknowledge.checked);
+  const tick = (on: boolean) => {
+    acknowledge?.onChange(on);
+    if (on) requestAnimationFrame(() => input.current?.focus());
+    else onChange("");
+  };
+  return (
+    <div className="glass @container flex flex-col divide-y divide-border overflow-hidden">
+      {acknowledge && (
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={acknowledge.checked}
+          onClick={() => tick(!acknowledge.checked)}
+          className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--glass-hover)]"
+        >
+          <span className="flex h-[1lh] items-center">
+            <CheckMark checked={acknowledge.checked} />
+          </span>
+          <span>{acknowledge.label}</span>
+        </button>
+      )}
+      <div
+        className={`flex flex-col gap-1 px-4 pt-3 pb-1 transition-opacity duration-200 @sm:flex-row @sm:items-center @sm:gap-4 @sm:py-1 ${FLAT_FIELD} ${shut ? "opacity-50" : ""}`}
+      >
+        <label htmlFor={id} className="text-sm @sm:w-36 @sm:shrink-0">
+          {t("wallet.walletPassword")}
+        </label>
+        <div className="min-w-0 flex-1">
+          <PasswordInput
+            id={id}
+            value={value}
+            onChange={onChange}
+            disabled={shut}
+            inputRef={input}
+            autoFocus={autoFocus}
+            placeholder={t("wallet.password.required")}
+          />
+        </div>
+      </div>
+    </div>
   );
 }

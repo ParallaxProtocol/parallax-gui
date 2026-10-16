@@ -149,9 +149,7 @@ export function CreateWallet({ lead, onBack, onDone }: { lead: string; onBack: (
           }}
         >
           <Group title={t("wallet.phrase.quizTitle")} desc={t("wallet.phrase.quizDesc")}>
-            <Panel className="p-4">
-              <PhraseQuiz words={words} onValid={setValid} />
-            </Panel>
+            <PhraseQuiz words={words} onValid={setValid} />
           </Group>
           <StepFooter onBack={() => setStage("phrase")}>
             <button type="submit" className="btn btn-primary" disabled={!valid}>

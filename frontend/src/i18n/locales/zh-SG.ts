@@ -398,6 +398,7 @@ const zhSG: Dict = {
   // Wallet: passwords
   "wallet.password.new": "密码",
   "wallet.password.current": "当前密码",
+  "wallet.password.required": "必填",
   "wallet.password.confirm": "确认密码",
   "wallet.password.rule": "至少 {n} 个字符。几个互不相关的单词即可组成强密码。",
   "wallet.password.mismatch": "两次输入的密码不一致",
@@ -616,23 +617,23 @@ const zhSG: Dict = {
 
   // Wallet: recovery phrase
   "wallet.phrase.section": "助记词",
-  "wallet.phrase.title": "助记词",
   "wallet.phrase.yours": "您的助记词",
-  "wallet.phrase.writeDown": "请将这些单词按顺序抄写在纸上，并存放在安全的地方。它们是由其生成的所有账户的备份。",
-  "wallet.phrase.reveal": "点击显示",
+  "wallet.phrase.writeDown":
+    "请按顺序把这些单词抄写在纸上，并妥善保管。凭它们可以在本钱包或任何其他钱包中恢复由此助记词生成的所有账户。",
+  "wallet.phrase.reveal": "点击显示单词",
   "wallet.phrase.warning":
-    "任何拥有这些单词的人都能拿走您的 LAX。切勿在任何网站上输入它们，切勿分享，也切勿将其保存在截图或这台电脑上的笔记中。",
+    "任何拥有这些单词的人都能拿走您的 LAX。切勿在网站上输入、与他人分享，或以截图、笔记的形式保存在任何设备上。",
   "wallet.phrase.laterWarn": "在您确认之前，助记词不算已备份。",
   "wallet.phrase.written": "我已抄写下来",
   "wallet.phrase.backupLater": "稍后备份",
   "wallet.phrase.quizTitle": "确认您的助记词",
-  "wallet.phrase.quizDesc": "请输入助记词中的这些单词，以确保您已正确抄写。",
-  "wallet.phrase.word": "单词 #{n}",
+  "wallet.phrase.quizDesc": "请根据您抄写的副本输入这些单词，以核对是否正确。",
+  "wallet.phrase.word": "第 {n} 个单词",
   "wallet.phrase.confirm": "确认",
   "wallet.phrase.ready": "您的钱包已就绪",
   "wallet.phrase.readyDesc": "请离线妥善保管助记词。凭借它，您可以在本钱包或任何兼容钱包中恢复您的账户。",
   "wallet.phrase.open": "显示",
-  "wallet.phrase.openDesc": "输入您为助记词设置的密码以显示它。",
+  "wallet.phrase.openDesc": "输入您的钱包密码以查看这些单词。",
   "wallet.phrase.confirmed": "助记词已确认",
   "wallet.phrase.confirmedDesc": "由它生成的账户现已备份。",
   "wallet.phrase.show": "显示助记词",
