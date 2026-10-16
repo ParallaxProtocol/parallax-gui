@@ -1,4 +1,15 @@
-import { createContext, lazy, ReactNode, Suspense, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  lazy,
+  ReactNode,
+  Suspense,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Minimize2, Settings2 } from "lucide-react";
 import type { HardwareKind } from "../../lib/api";
@@ -53,9 +64,9 @@ export const pageKey = (p: SettingsPage) =>
       : p.kind;
 
 // Whether Settings is open, over the page it was opened from, and the
-// section it shows (kept while closed, so it reopens where it was left),
-// and the page within it drilled into, if any (not kept: a flow left
-// half done starts over)
+// section it shows (General each time it opens, unless it was opened at
+// another), and the page within it drilled into, if any (not kept: a flow
+// left half done starts over)
 type Sheet = {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -77,9 +88,11 @@ const SheetContext = createContext<Sheet>({
 });
 
 export function SettingsSheetProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
   const [section, setSectionState] = useState<SettingsSection>("general");
   const [page, setPage] = useState<SettingsPage | null>(null);
+  // Whether it is open, read as it opens without a re-render
+  const wasOpen = useRef(false);
   // Choosing a section leaves the page drilled into
   const setSection = useCallback((s: SettingsSection) => {
     setSectionState(s);
@@ -90,7 +103,19 @@ export function SettingsSheetProvider({ children }: { children: ReactNode }) {
   const openAt = useCallback((s: SettingsSection, p?: SettingsPage) => {
     setSectionState(s);
     setPage(p ?? null);
-    setOpen(true);
+    wasOpen.current = true;
+    setOpenState(true);
+  }, []);
+  // Opened as it is (its button, its shortcut), it starts at General, not
+  // the section it was left at; closing leaves the section be, so the
+  // panel doesn't change as it goes
+  const setOpen = useCallback((o: boolean) => {
+    if (o && !wasOpen.current) {
+      setSectionState("general");
+      setPage(null);
+    }
+    wasOpen.current = o;
+    setOpenState(o);
   }, []);
   useEffect(() => {
     if (!open) setPage(null);
