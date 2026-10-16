@@ -12,7 +12,7 @@ import { Tooltip } from "../ui/Tooltip";
 import { IconBadge } from "../ui/IconBadge";
 import { TOP_BAR_HEIGHT } from "./TopBar";
 import { useAssistant } from "../../lib/assistantContext";
-import { BAR_SURFACE } from "./barSurface";
+import { BAR_FADE, BAR_GLASS, BAR_SURFACE } from "./barSurface";
 
 const NodePage = lazy(() => import("../../pages/Overview"));
 
@@ -67,9 +67,12 @@ export default function NodeBar({ version }: { version: string }) {
   }, []);
   const [err, setErr] = useState<string | null>(null);
   // The assistant bar sits at the right end of the foot: this bar keeps
-  // clear of it, moving aside as it opens on a request
-  const { width: assistantWidth } = useAssistant();
-  const right = NODE_BAR_GAP + (assistantWidth > 0 ? assistantWidth + NODE_BAR_GAP : 0);
+  // clear of it, moving aside as it opens on a request. Opened into the
+  // node's page it takes the whole width, the assistant bar stepping
+  // away meanwhile, unless a request has it open
+  const { width: assistantWidth, shown, sent } = useAssistant();
+  const asking = !!shown || !!sent;
+  const right = NODE_BAR_GAP + (assistantWidth > 0 && (!open || asking) ? assistantWidth + NODE_BAR_GAP : 0);
 
   useEffect(() => {
     if (!open) return;
@@ -105,7 +108,8 @@ export default function NodeBar({ version }: { version: string }) {
   return (
     <motion.section
       aria-label={t("nav.node")}
-      className={`no-drag fixed z-40 flex flex-col overflow-hidden ${BAR_SURFACE}`}
+      // At rest the cards' glass, as the empty wallet's Settings pill, lit under the pointer as it opens on a click; opened, the page's thicker glass
+      className={`no-drag fixed z-40 flex flex-col overflow-hidden ${open ? BAR_SURFACE : `${BAR_GLASS} hover:bg-[var(--glass-hover)]`} ${BAR_FADE}`}
       style={{ left: NODE_BAR_GAP, bottom: NODE_BAR_GAP, borderRadius: 16 }}
       initial={false}
       animate={{
@@ -237,7 +241,7 @@ export function OfflineBar({ version }: { version: string }) {
   return (
     <section
       aria-label={t("offline.mode")}
-      className={`no-drag fixed z-40 flex items-center gap-3 px-3 text-sm text-muted-foreground ${BAR_SURFACE}`}
+      className={`no-drag fixed z-40 flex items-center gap-3 px-3 text-sm text-muted-foreground ${BAR_GLASS}`}
       style={{
         left: NODE_BAR_GAP,
         right: NODE_BAR_GAP,

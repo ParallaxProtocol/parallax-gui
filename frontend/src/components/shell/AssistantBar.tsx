@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Bot, X } from "lucide-react";
 import { useT } from "../../i18n";
 import { useAssistant } from "../../lib/assistantContext";
-import { NODE_BAR_GAP, NODE_BAR_HEIGHT } from "./NodeBar";
+import { NODE_BAR_GAP, NODE_BAR_HEIGHT, useNodeSheet } from "./NodeBar";
 import { TOP_BAR_HEIGHT } from "./TopBar";
 import { RequestBody } from "./AssistantRequests";
 import { activityKey, REQUEST_ICON, requestTitle } from "../../lib/assistantRequests";
@@ -21,7 +21,7 @@ import { formatUnits, sameAddress, shortHex } from "../../lib/format";
 import { SENT_MS, type SentInfo } from "../../lib/assistantContext";
 import { Ticker } from "../ui/Ticker";
 import { api, type AssistantRequest, type MCPActivity, type MCPStatus } from "../../lib/api";
-import { BAR_SURFACE } from "./barSurface";
+import { BAR_FADE, BAR_GLASS, BAR_SURFACE } from "./barSurface";
 
 /** The node bar's spring, so the two bars move as one. */
 const BAR_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35 } as const;
@@ -57,6 +57,9 @@ export default function AssistantBar() {
   // The request shown, or, once a send is carried out, its confirmation
   const req = shown ?? undefined;
   const open = !!req || !!sent;
+  // The node's page, opened over the foot, pushes the bar off the window's right edge, unless it is asking something
+  const { open: nodeOpen } = useNodeSheet();
+  const pushed = nodeOpen && !open;
   // The contents' natural height, which the bar opens to, up to the window
   const inner = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState(NODE_BAR_HEIGHT);
@@ -85,11 +88,12 @@ export default function AssistantBar() {
         <motion.section
           key="assistant-bar"
           aria-label={t("assistant.bar.title")}
-          // The node bar's glass, in its own rounder shape; the blue comes with work and requests
-          className={`no-drag fixed z-40 flex flex-col overflow-hidden ${BAR_SURFACE}`}
+          // The node bar's glass, light at rest and thick opened on a request; the blue comes with work and requests
+          className={`no-drag fixed z-40 flex flex-col overflow-hidden ${open ? BAR_SURFACE : BAR_GLASS} ${BAR_FADE}`}
           style={{
             right: NODE_BAR_GAP,
             bottom: NODE_BAR_GAP,
+            pointerEvents: pushed ? "none" : undefined,
           }}
           initial={{
             opacity: 0,
@@ -100,11 +104,20 @@ export default function AssistantBar() {
             borderRadius: NODE_BAR_HEIGHT / 2,
           }}
           // Fully rounded, unlike the node bar: a circle or a capsule at rest,
-          // softer corners opened on a request
-          animate={{ opacity: 1, y: 0, scale: 1, width, height, borderRadius: open ? 28 : NODE_BAR_HEIGHT / 2 }}
+          // opened on a request, the node bar's corners
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            x: pushed ? width + 2 * NODE_BAR_GAP : 0,
+            width,
+            height,
+            borderRadius: open ? 16 : NODE_BAR_HEIGHT / 2,
+          }}
           exit={{ opacity: 0, y: 16, scale: 0.88 }}
           transition={BAR_SPRING}
           ref={section}
+          aria-hidden={pushed || undefined}
           onMouseEnter={() => hover(true)}
           onMouseLeave={() => hover(false)}
           onFocusCapture={() => hover()}
