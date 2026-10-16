@@ -172,6 +172,9 @@ function Popover({
           aria-expanded={open}
           aria-haspopup="dialog"
           onClick={() => setOpen((o) => !o)}
+          // A box of its face's size: inline, it would sit its face on the
+          // text's baseline, below the bar's other buttons
+          className="flex"
         >
           {button(open)}
         </button>
