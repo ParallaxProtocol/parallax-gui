@@ -11,6 +11,7 @@ const TITLES: Record<string, string> = {
   "/": "nav.overview",
   "/send": "nav.send",
   "/receive": "nav.receive",
+  "/history": "nav.history",
   "/contacts": "nav.contacts",
   "/sign": "offline.nav.sign",
   "/messages/sign": "nav.signMessage",

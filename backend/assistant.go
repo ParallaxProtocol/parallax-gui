@@ -476,6 +476,13 @@ type addressIn struct {
 	Address string `json:"address" jsonschema:"one of the wallet's account addresses"`
 }
 
+type activityIn struct {
+	Address string `json:"address" jsonschema:"one of the wallet's account addresses"`
+	Before  string `json:"before,omitempty" jsonschema:"the next of an earlier answer, for the page of history older than it; omit for the newest"`
+	Filter  string `json:"filter,omitempty" jsonschema:"only these: in (received), out (sent), mined or failed; omit for all"`
+	With    string `json:"with,omitempty" jsonschema:"only the transactions with this address"`
+}
+
 type settingsChangeIn struct {
 	Changes map[string]any `json:"changes" jsonschema:"setting keys from app_settings and their new values"`
 	Reason  string         `json:"reason" jsonschema:"why you ask, in a sentence the user reads before deciding"`
@@ -541,8 +548,8 @@ func (a *Assistant) Register(r *server.Registrar) {
 		})
 
 	server.Add(r, server.Spec{Group: GroupApp, Name: "wallet_activity", Timeout: a.permitTimeout(), Title: "Wallet account activity",
-		Description: `One wallet account's balance, nonce and recent transactions (newest first, with block, time, counterparty, value in wei and kind), and its transactions still in the pool.` + permitNote},
-		func(ctx context.Context, in addressIn) (any, error) {
+		Description: `One wallet account's history, from the whole chain, 25 items at a time, newest first: its transactions (block, time, counterparty, value, fee paid and gas used in wei, kind, and whether it failed) and the blocks it mined (kind "mined": reward, the fees its transactions paid, and the block from which the reward can be spent). "filter" keeps only received, sent, mined or failed ones, "with" only the transactions with one address. The first page, unfiltered, also has the account's balance and nonce and its transactions still in the pool. A page can hold fewer than 25 while a filter looks through a long history: go on while "next" is set. "next" is the "before" for the page older than it, empty at the history's end; "complete" is false while the app is still indexing the chain, when older items may be missing.` + permitNote},
+		func(ctx context.Context, in activityIn) (any, error) {
 			if err := a.permit(ctx, "wallet"); err != nil {
 				return nil, err
 			}
@@ -553,8 +560,15 @@ func (a *Assistant) Register(r *server.Registrar) {
 			if _, _, err := w.known(in.Address); err != nil {
 				return nil, server.Inputf("%s is not an account in the wallet; wallet_accounts lists them", in.Address)
 			}
+			q := HistoryQuery{Address: in.Address, Cursor: in.Before, Filter: in.Filter, With: in.With}
+			if _, err := parseHistQuery(q); err != nil {
+				return nil, server.Inputf("before must be the next of an earlier answer, filter one of in, out, mined or failed, and with an address")
+			}
 			if err := a.ensureNode(ctx); err != nil {
 				return nil, err
+			}
+			if in.Before != "" || in.Filter != "" || in.With != "" {
+				return w.History(q)
 			}
 			return w.Summary(in.Address)
 		})

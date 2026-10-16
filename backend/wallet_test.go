@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -441,6 +442,27 @@ func TestPoolActivity(t *testing.T) {
 	for _, v := range got {
 		if v.Hash == unrelated.Hash().Hex() {
 			t.Fatal("listed a transaction neither from nor to the account")
+		}
+	}
+
+	// The same order every time, though the pool's maps have none: the
+	// account's own by nonce (a queued one after its pending), then the
+	// incoming by sender and nonce
+	out1 := types.NewTransaction(1, other, big.NewInt(6), 21000, big.NewInt(1), nil)
+	gap := types.NewTransaction(5, other, big.NewInt(7), 21000, big.NewInt(1), nil)
+	in2 := types.NewTransaction(4, me, big.NewInt(8), 21000, big.NewInt(1), nil)
+	fromThird := types.NewTransaction(0, me, big.NewInt(2), 21000, big.NewInt(1), nil)
+	pending = map[util.Address]types.Transactions{me: {out, out1}, other: {in, in2}, third: {fromThird}}
+	queued = map[util.Address]types.Transactions{me: {gap}, other: {unrelated}}
+	want := []string{out.Hash().Hex(), out1.Hash().Hex(), gap.Hash().Hex(), in.Hash().Hex(), in2.Hash().Hex(), fromThird.Hash().Hex()}
+	for range 50 {
+		got := poolActivity(pending, queued, me)
+		hashes := make([]string, len(got))
+		for i, v := range got {
+			hashes[i] = v.Hash
+		}
+		if !reflect.DeepEqual(hashes, want) {
+			t.Fatalf("poolActivity order = %v, want %v", hashes, want)
 		}
 	}
 }

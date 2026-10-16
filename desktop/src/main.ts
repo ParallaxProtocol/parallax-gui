@@ -263,6 +263,22 @@ async function saveContacts(format: "json" | "csv", contents: string): Promise<b
 }
 
 /**
+ * Asks where to save an account's exported activity (backend/history_read.go
+ * writes it there, as it can be large): a .csv path, or null if cancelled.
+ */
+async function pickHistoryPath(fileName: string): Promise<string | null> {
+  const name = path.basename(fileName).replace(/[^\w.-]/g, "_") || "parallax-activity.csv";
+  const opts = {
+    title: "Export activity",
+    defaultPath: path.join(app.getPath("documents"), name.toLowerCase().endsWith(".csv") ? name : `${name}.csv`),
+    filters: [{ name: "CSV", extensions: ["csv"] }],
+  };
+  const res = mainWindow ? await dialog.showSaveDialog(mainWindow, opts) : await dialog.showSaveDialog(opts);
+  if (res.canceled || !res.filePath) return null;
+  return res.filePath.toLowerCase().endsWith(".csv") ? res.filePath : `${res.filePath}.csv`;
+}
+
+/**
  * Saves an offline signing document (backend/offline.go): a signing
  * request or a signed transaction, to carry between the online wallet and
  * the offline signer on a drive. Only those two kinds are written.
@@ -504,6 +520,10 @@ function wireIpc() {
     if (!isMac) return true;
     if (systemPreferences.getMediaAccessStatus("camera") === "granted") return true;
     return systemPreferences.askForMediaAccess("camera");
+  });
+  ipcMain.handle("history:savePath", async (event, fileName: unknown) => {
+    if (!trusted(event) || typeof fileName !== "string") return null;
+    return pickHistoryPath(fileName);
   });
   ipcMain.handle("contacts:export", async (event, format: unknown, contents: unknown) => {
     if (!trusted(event) || (format !== "json" && format !== "csv") || typeof contents !== "string") return false;

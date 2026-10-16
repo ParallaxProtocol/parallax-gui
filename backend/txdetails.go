@@ -4,14 +4,16 @@
 package backend
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"strings"
 
+	"github.com/ParallaxProtocol/parallax/v2/dbstore"
 	"github.com/ParallaxProtocol/parallax/v2/primitives/types"
 	"github.com/ParallaxProtocol/parallax/v2/util"
 	"github.com/ParallaxProtocol/parallax/v2/util/hexutil"
+	"github.com/ParallaxProtocol/parallax/v2/validation"
+	"github.com/ParallaxProtocol/parallax/v2/validation/rawdb"
 )
 
 // TxDetails is everything the node knows of one transaction, for the
@@ -47,6 +49,14 @@ type TxDetails struct {
 
 // TxDetails looks a transaction up by hash, in the chain and then the pool.
 func (n *NodeController) TxDetails(hash string) (TxDetails, error) {
+	return n.TxDetailsAt(hash, 0, 0)
+}
+
+// TxDetailsAt looks a transaction up as TxDetails does, first at the
+// position the wallet's history found it in (block, when non-zero, and
+// its index there): the node's transaction index holds only the last
+// TxLookupLimit blocks' (a year's by default), the history all of them.
+func (n *NodeController) TxDetailsAt(hash string, block, index uint64) (TxDetails, error) {
 	hash = strings.TrimSpace(hash)
 	raw, err := hexutil.Decode(hash)
 	if err != nil || len(raw) != util.HashLength {
@@ -60,7 +70,7 @@ func (n *NodeController) TxDetails(hash string) (TxDetails, error) {
 	bc := prl.BlockChain()
 	signer := types.LatestSignerForChainID(bc.Config().ChainID)
 
-	tx, blockHash, number, index, _ := prl.APIBackend.GetTransaction(context.Background(), h)
+	tx, blockHash, number, index := findTx(bc, prl.ChainDb(), h, block, index)
 	if tx == nil {
 		tx = prl.TxPool().Get(h)
 		if tx == nil {
@@ -93,6 +103,20 @@ func (n *NodeController) TxDetails(hash string) (TxDetails, error) {
 	}
 	d.FeeWei = new(big.Int).Mul(tx.GasPrice(), new(big.Int).SetUint64(d.GasUsed)).String()
 	return d, nil
+}
+
+// findTx finds the canonical transaction h: at block's position index if
+// it's there, by the node's transaction index otherwise. tx is nil when
+// neither has it.
+func findTx(bc *validation.BlockChain, db dbstore.Reader, h util.Hash, block, index uint64) (tx *types.Transaction, blockHash util.Hash, number, at uint64) {
+	if block > 0 {
+		if b := bc.GetBlockByNumber(block); b != nil {
+			if txs := b.Transactions(); index < uint64(len(txs)) && txs[index].Hash() == h {
+				return txs[index], b.Hash(), block, index
+			}
+		}
+	}
+	return rawdb.ReadTransaction(db, h)
 }
 
 // txDetails fills in what the transaction itself carries.

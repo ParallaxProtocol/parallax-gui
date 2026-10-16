@@ -17,6 +17,7 @@ import WalletPage from "./pages/Wallet";
 // the webview parses less JavaScript before the first paint
 const SendPage = lazy(() => import("./pages/Wallet/Send"));
 const ReceivePage = lazy(() => import("./pages/Wallet/Receive"));
+const HistoryPage = lazy(() => import("./pages/Wallet/History"));
 const ContactsPage = lazy(() => import("./pages/Contacts"));
 const SignPage = lazy(() => import("./pages/Offline/Sign"));
 const SignMessagePage = lazy(() => import("./pages/Messages").then((m) => ({ default: m.SignMessagePage })));
@@ -283,6 +284,18 @@ function RoutedContent({ animate }: { animate: boolean }) {
             <WithPassword>
               <ReceivePage />
             </WithPassword>
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            offline ? (
+              <Navigate to="/" replace />
+            ) : (
+              <WithPassword>
+                <HistoryPage />
+              </WithPassword>
+            )
           }
         />
         <Route

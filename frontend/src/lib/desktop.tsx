@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { api, onEvent } from "./api";
 import { formatInt, formatLax, sameAddress, shortHex } from "./format";
 import { useNode } from "./live";
@@ -29,10 +30,14 @@ export function useHiddenFromCapture(on = true) {
   }, [on]);
 }
 
-export function notify(title: string, body: string) {
+/** notify shows a desktop notification; clicked, it brings the window forward, and runs onClick if given. */
+export function notify(title: string, body: string, onClick?: () => void) {
   if (typeof Notification === "undefined" || Notification.permission === "denied") return;
   const n = new Notification(title, { body, silent: false });
-  n.onclick = () => window.focus();
+  n.onclick = () => {
+    window.focus();
+    onClick?.();
+  };
 }
 
 /**
@@ -48,6 +53,9 @@ export function DesktopBehaviors({ notifications, preventSleep }: { notification
   const t = useT();
   const node = useNode();
   const { push } = useNotifications();
+  const navigate = useNavigate();
+  const go = useRef(navigate);
+  go.current = navigate;
 
   const awake = preventSleep && !!node?.running && node.syncing;
   useEffect(() => {
@@ -140,8 +148,10 @@ export function DesktopBehaviors({ notifications, preventSleep }: { notification
             const sender = contactName.current(tx.from)?.name ?? shortHex(tx.from, 8, 6);
             body = t("notify.received.body", { account: accountLabel(to, mine, t), from: sender, block });
           } else continue;
-          push(kind, title, body);
-          if (on.current) notify(title, body);
+          // Opened, the transaction on the History page, of the account it's about
+          const link = `/history?${new URLSearchParams({ account: (from ?? to)!.address, tx: tx.hash })}`;
+          push(kind, title, body, link);
+          if (on.current) notify(title, body, () => go.current(link));
         }
       })
       .catch(() => {})

@@ -1,34 +1,28 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import {
   ArrowDownLeft,
   ArrowRight,
   ArrowUpRight,
-  Ban,
-  ChevronRight,
   Clock,
   Download,
   Eye,
   HardDrive,
-  History,
   KeyRound,
   Lock,
   Plus,
   Server,
-  Zap,
 } from "lucide-react";
-import { api, ReplaceKind, TxDetails, TxView } from "../../lib/api";
-import { formatGwei, formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
+import { api } from "../../lib/api";
+import { formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
 import { useNow } from "../../lib/useNow";
 import { STAGGER, useStagger } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
-import { useAgo, useLang, useT } from "../../i18n";
+import { useT } from "../../i18n";
 import { Counter } from "../../components/ui/Counter";
-import { Facts, Fact, Panel, Section } from "../../components/ui/Panel";
-import { IconBadge } from "../../components/ui/IconBadge";
 import { Pill } from "../../components/ui/Pill";
-import { CopyButton, EmptySymbol, Notice } from "../../components/ui/bits";
+import { CopyButton, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { BackupModal } from "./AccountForms";
 import { useSummary } from "./common";
@@ -37,23 +31,8 @@ import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { GroupedAddress } from "../../components/ui/AccountParts";
 import { RevealPhraseModal } from "./Phrase";
-import { Hex, Party, Unfold } from "../Overview/parts";
-import { useContacts } from "../../lib/contacts";
 import { PendingRequests } from "../Offline/Requests";
-import { ReplaceModal } from "./Replace";
-import { NODE_ICON } from "../../components/shell/NodeBar";
-
-type Activity = {
-  kind: "in" | "out" | "self";
-  /** Nothing sent to the account itself: how a waiting transaction is cancelled. */
-  cancel: boolean;
-  pending: boolean;
-  block: number;
-  time: number;
-  amountWei: string;
-  other: string;
-  hash: string;
-};
+import { PendingSection, RecentActivity } from "./Activity";
 
 /**
  * WalletPage is the app's home: the selected account's balance, the way
@@ -110,54 +89,7 @@ function Overview() {
   const { info, account } = useWallet();
   const { view, err, running, refresh } = useSummary(account?.address);
   const [backup, setBackup] = useState(false);
-  const [replace, setReplace] = useState<{ from: string; hash: string; kind: ReplaceKind } | null>(null);
   const [reveal, setReveal] = useState(false);
-  // The activity row opened to its details, by hash, and the details read
-  // so far (or why they couldn't be). A row opens once its details are in,
-  // so it unfolds to its full height in one motion.
-  const [opened, setOpened] = useState<string | null>(null);
-  const [details, setDetails] = useState<Record<string, TxDetails | string>>({});
-  const load = (hash: string) =>
-    api
-      .txDetails(hash)
-      .then((d) => setDetails((m) => ({ ...m, [hash]: d })))
-      .catch((e: unknown) => setDetails((m) => ({ ...m, [hash]: e instanceof Error ? e.message : String(e) })));
-  const toggle = (hash: string) => {
-    if (opened === hash) setOpened(null);
-    else load(hash).then(() => setOpened(hash));
-  };
-
-  const activity = useMemo<Activity[]>(() => {
-    if (!view) return [];
-    const row = (tx: TxView, pending: boolean): Activity => {
-      const fromMe = sameAddress(tx.from, view.address);
-      const toMe = sameAddress(tx.to, view.address);
-      const kind = fromMe && toMe ? "self" : fromMe ? "out" : "in";
-      return {
-        kind,
-        cancel: kind === "self" && tx.kind === "transfer" && tx.valueWei === "0",
-        pending,
-        block: tx.block,
-        time: tx.timestamp,
-        amountWei: tx.valueWei,
-        other: (fromMe ? tx.to : tx.from) || "",
-        hash: tx.hash,
-      };
-    };
-    // The backend lists confirmed ones newest first
-    return [...view.pending.map((tx) => row(tx, true)), ...view.transactions.slice(0, 25).map((tx) => row(tx, false))];
-  }, [view]);
-  // Waiting ones get a section of their own, above the confirmed
-  const waiting = activity.filter((a) => a.pending);
-  const confirmed = activity.filter((a) => !a.pending);
-
-  // The opened one read again as it lands in a block
-  const openedBlock = activity.find((a) => a.hash === opened)?.block;
-  useEffect(() => {
-    if (opened && openedBlock) load(opened);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opened, openedBlock]);
-
   if (!account || !info) return null;
   const label = accountLabel(account, info.accounts, t);
   const balanceKnown = !!view?.balanceWei;
@@ -269,303 +201,12 @@ function Overview() {
 
       <PendingRequests />
 
-      {waiting.length > 0 && (
-        <Section title={t("wallet.pending")} count={waiting.length}>
-          <Panel className="overflow-hidden">
-            <motion.ul {...stagger} className="flex flex-col divide-y divide-border">
-              {waiting.map((a) => (
-                <ActivityRow
-                  key={a.hash}
-                  a={a}
-                  opened={opened === a.hash}
-                  onToggle={() => toggle(a.hash)}
-                  details={details[a.hash]}
-                  head={view?.headBlock ?? 0}
-                  now={now}
-                  // A hot account's own waiting send can be replaced at its nonce
-                  onReplace={
-                    a.kind !== "in" && !account.watchOnly
-                      ? (kind) => setReplace({ from: account.address, hash: a.hash, kind })
-                      : undefined
-                  }
-                />
-              ))}
-            </motion.ul>
-          </Panel>
-        </Section>
-      )}
+      <PendingSection view={view} refresh={refresh} now={now} />
+      <RecentActivity view={view} running={running} now={now} />
 
-      <Section
-        title={t("wallet.activity")}
-        aside={view && t("wallet.activityWindow", { from: formatInt(view.scannedFrom) })}
-      >
-        <Panel className="overflow-hidden">
-          {confirmed.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-14 text-center text-muted-foreground">
-              {/* The node's tower when it's off, the reason; an account's history otherwise, only empty */}
-              <EmptySymbol icon={running ? History : NODE_ICON} />
-              <p>{!running ? t("wallet.activityOffline") : view ? t("wallet.activityEmpty") : "…"}</p>
-            </div>
-          ) : (
-            <motion.ul {...stagger} className="flex flex-col divide-y divide-border">
-              {confirmed.map((a) => (
-                <ActivityRow
-                  key={a.hash}
-                  a={a}
-                  opened={opened === a.hash}
-                  onToggle={() => toggle(a.hash)}
-                  details={details[a.hash]}
-                  head={view?.headBlock ?? 0}
-                  now={now}
-                />
-              ))}
-            </motion.ul>
-          )}
-        </Panel>
-      </Section>
-
-      <ReplaceModal
-        target={replace}
-        onClose={() => setReplace(null)}
-        onReplaced={(tx) => {
-          // An opened transaction follows on to its replacement; a closed one stays closed
-          if (replace && opened === replace.hash) load(tx.hash).then(() => setOpened(tx.hash));
-          setReplace(null);
-          refresh();
-        }}
-      />
       <RevealPhraseModal open={reveal} onClose={() => setReveal(false)} seedId={account.seedId || null} />
       <BackupModal open={backup} onClose={() => setBackup(false)} account={account} label={label} />
     </div>
-  );
-}
-
-/**
- * ActivityRow is one transaction of the account's: what it was, with whom,
- * and for how much, opening to its details. One of the account's own still
- * waiting has the ways to speed it up or cancel it beside them.
- */
-function ActivityRow({
-  a,
-  opened,
-  onToggle,
-  details,
-  head,
-  now,
-  onReplace,
-}: {
-  a: Activity;
-  opened: boolean;
-  onToggle: () => void;
-  details: TxDetails | string | undefined;
-  head: number;
-  now: number;
-  onReplace?: (kind: ReplaceKind) => void;
-}) {
-  const t = useT();
-  const ago = useAgo();
-  const label = useId();
-  return (
-    <motion.li variants={STAGGER.item}>
-      {/* The whole row opens it: a button beneath the row's contents, so
-          the buttons to speed up or cancel can sit in the row beside them.
-          It lights up wherever on the row the pointer is, those included */}
-      <div className="group relative flex h-16 items-center gap-3.5 px-4">
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={opened}
-          aria-labelledby={label}
-          className={`absolute inset-0 transition-colors group-hover:bg-hover ${opened ? "bg-hover" : ""}`}
-        />
-        <span className="pointer-events-none relative">
-          <ActivityIcon kind={a.kind} pending={a.pending} cancel={a.cancel} />
-        </span>
-        <div id={label} className="pointer-events-none relative min-w-0 flex-1">
-          <div className="flex items-center gap-2 font-medium">
-            {a.cancel ? t(a.pending ? "wallet.kind.cancelling" : "wallet.kind.cancelled") : t(`wallet.kind.${a.kind}`)}
-          </div>
-          <div className="truncate text-sm text-muted-foreground tabular-nums">
-            {a.pending ? t("wallet.inPool") : t("wallet.inBlock", { block: formatInt(a.block) })}
-            {a.kind !== "self" && (
-              <>
-                {" · "}
-                {a.kind === "out" ? t("wallet.row.to") : t("wallet.row.from")} <Counterparty address={a.other} />
-              </>
-            )}
-          </div>
-        </div>
-        {onReplace && (
-          <span className="relative flex shrink-0 gap-2">
-            <Tooltip content={t("wallet.replace.speedUp")}>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm btn-icon"
-                aria-label={t("wallet.replace.speedUp")}
-                onClick={() => onReplace("speedUp")}
-              >
-                <Zap className="size-3.5" />
-              </button>
-            </Tooltip>
-            <Tooltip content={t("wallet.replace.cancel")}>
-              <button
-                type="button"
-                className="btn btn-danger btn-sm btn-icon"
-                aria-label={t("wallet.replace.cancel")}
-                onClick={() => onReplace("cancel")}
-              >
-                <Ban className="size-3.5" />
-              </button>
-            </Tooltip>
-          </span>
-        )}
-        <div className="pointer-events-none relative text-right tabular-nums">
-          <div className={`font-semibold ${a.kind === "in" ? "text-good-ink" : ""}`}>
-            {a.kind === "in" ? "+" : a.kind === "out" ? "−" : ""}
-            {formatLax(a.amountWei, 6)} <span className="font-normal text-muted-foreground">LAX</span>
-          </div>
-          <div className="text-sm text-muted-foreground">{a.pending ? t("wallet.unconfirmed") : ago(a.time, now)}</div>
-        </div>
-        <ChevronRight
-          className={`pointer-events-none relative size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${opened ? "rotate-90" : ""}`}
-        />
-      </div>
-      <AnimatePresence initial={false}>
-        {opened && (
-          <Unfold>
-            <ActivityDetails d={details} head={head} cancel={a.cancel} />
-          </Unfold>
-        )}
-      </AnimatePresence>
-    </motion.li>
-  );
-}
-
-/**
- * ActivityDetails is an opened activity row: everything the node knows of
- * the transaction, in the app's grouped boxes, two columns of them where
- * the window has room. Hashes and addresses are shortened, whole in a
- * tooltip and to copy.
- */
-function ActivityDetails({
-  d,
-  head,
-  cancel,
-}: {
-  d: TxDetails | string | undefined;
-  head: number;
-  /** A cancellation: its pill is neutral, nothing having gone through. */
-  cancel: boolean;
-}) {
-  const t = useT();
-  const { lang } = useLang();
-
-  // Indented to the row's text: its padding, the badge and the gap after it
-  const inset = "bg-hover pr-4 pb-4 pl-[70px]";
-  if (!d || typeof d === "string") {
-    return (
-      <div className={inset}>
-        <p className="rounded-lg bg-muted/60 px-3 py-2.5 text-sm text-critical-ink">{d}</p>
-      </div>
-    );
-  }
-
-  const pending = d.status === "pending";
-  const confirmations = pending || head < d.block ? 0 : head - d.block + 1;
-  const used = d.gasLimit > 0 ? Math.round((d.gasUsed / d.gasLimit) * 100) : 0;
-  return (
-    <div className={`flex flex-col gap-3 ${inset}`}>
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        {/* Confirmed, the pill counts its confirmations */}
-        <Pill
-          tone={pending ? "info" : d.status === "failed" ? "critical" : cancel ? "neutral" : "good"}
-          className="tabular-nums"
-        >
-          {d.status === "success"
-            ? t(confirmations === 1 ? "wallet.tx.confirmation" : "wallet.tx.confirmations", {
-                n: formatInt(confirmations),
-              })
-            : t(`wallet.tx.status.${d.status}`)}
-        </Pill>
-        {!pending && (
-          <span className="ml-auto text-muted-foreground tabular-nums">
-            {new Date(d.timestamp * 1000).toLocaleString(lang, { dateStyle: "medium", timeStyle: "medium" })}
-          </span>
-        )}
-      </div>
-      {/* Two columns where there's room, each its boxes stacked, about as
-          tall as the other: who and the chain's record of it on the left,
-          what it cost and what it carried on the right */}
-      <div className="grid items-start gap-3 lg:grid-cols-2">
-        <div className="flex flex-col gap-3">
-          <Facts>
-            <Fact label={t("mempool.from")}>
-              <Party address={d.from} />
-            </Fact>
-            <Fact label={t("mempool.to")}>{d.to ? <Party address={d.to} /> : t("mempool.creation")}</Fact>
-            {d.contractAddress && (
-              <Fact label={t("wallet.tx.contract")}>
-                <Party address={d.contractAddress} />
-              </Fact>
-            )}
-          </Facts>
-          <Facts>
-            <Fact label={t("mempool.hash")}>
-              <Hex value={d.hash} />
-            </Fact>
-            {/* Shown waiting too (as are its events), a dash until it's in a block */}
-            <Fact label={t("wallet.tx.block")}>
-              {pending ? "—" : `${formatInt(d.block)} · ${t("wallet.tx.position", { n: formatInt(d.index) })}`}
-            </Fact>
-            <Fact label={t("wallet.tx.blockHash")}>{pending ? "—" : <Hex value={d.blockHash} />}</Fact>
-            <Fact label={t("mempool.nonce")}>{formatInt(d.nonce)}</Fact>
-            {/* A blank line, so this column ends level with the other */}
-            <div aria-hidden className="min-h-10" />
-          </Facts>
-        </div>
-        <div className="flex flex-col gap-3">
-          <Facts>
-            <Fact label={t("mempool.value")}>{formatLax(d.valueWei, 18)} LAX</Fact>
-            <Fact label={pending ? t("mempool.maxFee") : t("wallet.tx.fee")}>{formatLax(d.feeWei, 18)} LAX</Fact>
-            <Fact label={t("mempool.gasPrice")}>{formatGwei(d.gasPriceWei)}</Fact>
-            <Fact label={t("wallet.tx.gas")}>
-              {pending ? formatInt(d.gasLimit) : `${formatInt(d.gasUsed)} / ${formatInt(d.gasLimit)} (${used}%)`}
-            </Fact>
-          </Facts>
-          <Facts>
-            <Fact label={t("mempool.size")}>{t("mempool.bytes", { n: formatInt(d.sizeBytes) })}</Fact>
-            <Fact label={t("wallet.tx.events")}>{pending ? "—" : formatInt(d.logs)}</Fact>
-            <Fact label={t("mempool.data")}>{d.input === "0x" ? t("peers.none") : <Hex value={d.input} />}</Fact>
-          </Facts>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Counterparty is the other side of an activity row: one of the wallet's
- * own accounts or a contact by name, any other address shortened, or a
- * contract creation, which has none.
- */
-function Counterparty({ address }: { address: string }) {
-  const t = useT();
-  const { info } = useWallet();
-  const { byAddress } = useContacts();
-  if (!address) return <>{t("mempool.creation")}</>;
-  const own = info?.accounts.find((x) => sameAddress(x.address, address));
-  if (own) return <span className="text-foreground/80">{accountLabel(own, info!.accounts, t)}</span>;
-  const contact = byAddress(address);
-  if (contact) return <span className="text-foreground/80">{contact.name}</span>;
-  return <span className="font-mono">{shortHex(address, 8, 6)}</span>;
-}
-
-function ActivityIcon({ kind, pending, cancel }: { kind: Activity["kind"]; pending: boolean; cancel: boolean }) {
-  return (
-    <IconBadge
-      icon={pending ? Clock : cancel ? Ban : kind === "in" ? ArrowDownLeft : ArrowUpRight}
-      tone={pending ? "info" : kind === "in" ? "good" : "neutral"}
-    />
   );
 }
 

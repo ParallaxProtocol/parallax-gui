@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowDownLeft,
@@ -140,6 +141,9 @@ function Popover({
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  // Somewhere else opened from it (a notification's transaction), it closes
+  const { key } = useLocation();
+  useEffect(() => setOpen(false), [key]);
 
   useEffect(() => {
     if (!open) return;
@@ -222,6 +226,7 @@ function Notifications() {
   const ago = useAgo();
   const now = useNow(30_000);
   const { notices, clear } = useNotifications();
+  const navigate = useNavigate();
   // Cleared, the cards fade away in place first; once they're gone the
   // list is emptied, and the panel eases to the empty state's height
   const [clearing, setClearing] = useState(false);
@@ -277,7 +282,7 @@ function Notifications() {
                 {notices.map((n, i) => (
                   <motion.li
                     key={n.id}
-                    className="flex items-start gap-3 rounded-xl bg-muted/60 p-3"
+                    className="relative flex items-start gap-3 rounded-xl bg-muted/60 p-3"
                     initial={{ opacity: 0, y: -6 }}
                     animate={
                       clearing
@@ -285,8 +290,19 @@ function Notifications() {
                         : { opacity: 1, scale: 1, y: 0, transition: SPRING }
                     }
                   >
-                    <IconBadge icon={KIND_ICON[n.kind]} tone={KIND_TONE[n.kind]} size="sm" />
-                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    {/* One about a transaction opens it, the whole card its button, beneath what it shows */}
+                    {n.link && (
+                      <button
+                        type="button"
+                        className="absolute inset-0 rounded-xl transition-colors hover:bg-hover"
+                        onClick={() => navigate(n.link!)}
+                        aria-label={`${n.title}. ${t("notifications.open")}`}
+                      />
+                    )}
+                    <span className="pointer-events-none relative flex">
+                      <IconBadge icon={KIND_ICON[n.kind]} tone={KIND_TONE[n.kind]} size="sm" />
+                    </span>
+                    <span className="pointer-events-none relative flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="flex items-baseline justify-between gap-2">
                         <span className="truncate font-semibold">{n.title}</span>
                         <span className="shrink-0 text-xs text-muted-foreground tabular-nums">

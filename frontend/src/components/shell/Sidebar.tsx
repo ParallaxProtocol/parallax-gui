@@ -7,6 +7,7 @@ import {
   BookUser,
   FileCheck,
   FileSignature,
+  History,
   PenLine,
   Radio,
   Settings2,
@@ -134,6 +135,7 @@ export default function Sidebar() {
               <NavItem to="/" icon={Wallet} label={t("nav.overview")} />
               <NavItem to="/send" icon={ArrowUpRight} label={t("nav.send")} disabled={noAccount} />
               <NavItem to="/receive" icon={ArrowDownLeft} label={t("nav.receive")} disabled={noAccount} />
+              <NavItem to="/history" icon={History} label={t("nav.history")} disabled={noAccount} />
               <GroupSeparator />
               <NavItem to="/contacts" icon={BookUser} label={t("nav.contacts")} />
               {/* Takes a transaction signed offline for any watch-only account */}

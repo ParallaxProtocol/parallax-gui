@@ -15,6 +15,7 @@ declare global {
       protectContent: (on: boolean) => void;
       saveBackup: (fileName: string, contents: string) => Promise<boolean>;
       exportContacts: (format: "json" | "csv", contents: string) => Promise<boolean>;
+      pickHistoryPath: (fileName: string) => Promise<string | null>;
       saveSigningDoc: (fileName: string, contents: string) => Promise<boolean>;
       cameraAccess: () => Promise<boolean>;
       pickFolder: (title: string, start: string) => Promise<string | null>;
@@ -361,15 +362,74 @@ export type TxDetails = {
 /** A wallet account's transaction in a block, for the app's notifications. */
 export type WalletTx = TxView & { failed: boolean };
 
-export type AddressView = {
+/** One item of an account's history (backend/types.go HistoryTx): a transaction as its receipt has it, or a block it mined. Amounts are decimal wei. */
+export type HistoryTx = {
+  /** Empty for a mined block. */
+  hash: string;
+  block: number;
+  blockHash: string;
+  /** The transaction's position in its block. */
+  index: number;
+  timestamp: number;
+  /** Empty for a mined block. */
+  from: string;
+  /** Empty for a contract creation; the miner for a mined block. */
+  to: string;
+  /** What moved: for a mined block, its reward and fees. */
+  valueWei: string;
+  kind: "transfer" | "contract" | "call" | "mined";
+  failed: boolean;
+  gasUsed: number;
+  /** What the sender paid; empty while the block's receipts aren't downloaded. */
+  feeWei: string;
+  contractAddress?: string;
+  /** A mined block's reward, the fees its transactions paid, and the block from which the reward can be spent. */
+  rewardWei?: string;
+  feesWei?: string;
+  maturesAt?: number;
+};
+
+/** A page of an account's history, newest first. */
+export type HistoryPage = {
+  transactions: HistoryTx[];
+  /** Continues with the next older page (walletHistory); empty at the history's end. */
+  next: string;
+  /** Unset while the history index is still being built: older items may be missing until it is. */
+  complete: boolean;
+  /** Set while the history index is being built; complete and indexing both unset, it couldn't be opened. */
+  indexing: boolean;
+  /** The block the history index has reached. */
+  indexedTo: number;
+};
+
+/** What a page of history is read for (backend HistoryQuery): from a cursor or a block down, filtered, or with one counterparty. */
+export type HistoryQuery = {
+  address: string;
+  /** The next of the page before; empty for the newest, or for atBlock. */
+  cursor: string;
+  filter: "" | "in" | "out" | "mined" | "failed";
+  /** Only the transactions with this address; empty for all. */
+  with: string;
+  /** From this block down, when non-zero and there's no cursor. */
+  atBlock: number;
+};
+
+/** Where a transaction searched for by hash is in an account's history (backend HistoryFind). */
+export type HistoryFind = {
+  found: boolean;
+  /** Waiting in the pool, not in a block yet. */
+  pending: boolean;
+  /** Starts a page of history at it. */
+  cursor: string;
+  item: HistoryTx;
+};
+
+export type AddressView = HistoryPage & {
   address: string;
   /** Empty while the head state is unavailable (snap sync in progress). */
   balanceWei: string;
   nonce: number;
   headBlock: number;
-  /** The oldest block the activity below was gathered from. */
-  scannedFrom: number;
-  transactions: TxView[];
   /** Its transactions in the pool, not yet in a block (block and timestamp are 0). */
   pending: TxView[];
 };
@@ -633,6 +693,9 @@ const WALLET_ERRORS: Record<string, string> = {
   "wallet: this account is watch-only: its key is on an offline signer": "wallet.err.watchOnly",
   "wallet: the transaction is no longer waiting: it is in a block or was replaced": "wallet.err.notWaiting",
   "wallet: the transaction is not sent from this account": "wallet.err.notYourTx",
+  "history: the history is still being indexed": "wallet.history.err.partial",
+  "history: not a valid transaction hash": "wallet.history.err.hash",
+  "history: the export must be saved as a .csv file": "wallet.history.err.path",
   "offline: this app is an offline signer: it never goes online": "offline.err.signer",
   "offline: not a signing request": "offline.err.format",
   "offline: the signing request is from a newer version of the app": "offline.err.version",
@@ -703,6 +766,12 @@ export function cameraAccess(): Promise<boolean> {
 export function exportContacts(format: "json" | "csv", contents: string): Promise<boolean> {
   if (!window.parallax) return Promise.reject(new Error("unavailable"));
   return window.parallax.exportContacts(format, contents);
+}
+
+/** Asks where to save an account's exported activity: a .csv path, or null if cancelled. */
+export function pickHistoryPath(fileName: string): Promise<string | null> {
+  if (!window.parallax) return Promise.reject(new Error("unavailable"));
+  return window.parallax.pickHistoryPath(fileName);
 }
 
 /** Saves an account's encrypted keystore file where the user picks; false if cancelled. */
@@ -923,6 +992,13 @@ export const api = {
   walletWipe: (password: string) => call<void>("WalletWipe", password),
   walletDismissDamaged: () => call<void>("WalletDismissDamaged"),
   walletSummary: (address: string) => call<AddressView>("WalletSummary", address),
+  walletHistory: (q: HistoryQuery) => call<HistoryPage>("WalletHistory", q),
+  walletFindTx: (address: string, hash: string) => call<HistoryFind>("WalletFindTx", address, hash),
+  /** The newest block mined at or before t (Unix seconds). */
+  historyBlockAt: (t: number) => call<number>("HistoryBlockAt", t),
+  /** Writes the history q asks for (its cursor and atBlock aside) to path as CSV; the rows written. Progress comes as "history-export" events. */
+  walletExportHistory: (q: HistoryQuery, path: string, names: Record<string, string>) =>
+    call<number>("WalletExportHistory", q, path, names),
   /** Every wallet account's balance at the head, in wei by checksummed address. */
   walletBalances: () => call<Record<string, string>>("WalletBalances"),
   walletAddWatchOnly: (name: string, address: string) => call<WalletAccount>("WalletAddWatchOnly", name, address),
@@ -952,7 +1028,8 @@ export const api = {
   contactsImport: (data: string) => call<ContactsImport>("ContactsImport", data),
   /** The development profile this copy runs as (make dev PROFILE=…), "" for the default one. */
   profile: () => call<string>("Profile"),
-  txDetails: (hash: string) => call<TxDetails>("TxDetails", hash),
+  /** block and index are where the history has it, so one older than the node's transaction index still reads; zero while waiting. */
+  txDetails: (hash: string, block = 0, index = 0) => call<TxDetails>("TxDetails", hash, block, index),
   walletActivitySince: (after: number) =>
     call<{ transactions: WalletTx[]; head: number }>("WalletActivitySince", after),
   walletQuote: (from: string, to: string, valueWei: string, gasPriceWei: string) =>

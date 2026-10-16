@@ -395,8 +395,11 @@ func (a *App) RecentTransactions(n int) []backend.TxView {
 }
 
 // TxDetails is everything the node knows of one transaction, for a row of
-// the wallet's activity opened up.
-func (a *App) TxDetails(hash string) (backend.TxDetails, error) { return a.node.TxDetails(hash) }
+// the wallet's activity opened up: block and index are where the row has
+// it, zero for one still waiting.
+func (a *App) TxDetails(hash string, block, index uint64) (backend.TxDetails, error) {
+	return a.node.TxDetailsAt(hash, block, index)
+}
 
 // WalletBalances reads every wallet account's balance at the chain head.
 func (a *App) WalletBalances() (map[string]string, error) {
@@ -681,14 +684,49 @@ func (a *App) WalletRemove(address, password string) error {
 	return w.Remove(address, password)
 }
 
-// WalletSummary reports an account's balance, recent activity and the
-// transactions it has waiting in the pool.
+// WalletSummary reports an account's balance, the newest page of its
+// history and the transactions it has waiting in the pool.
 func (a *App) WalletSummary(address string) (backend.AddressView, error) {
 	w, err := a.walletOrErr()
 	if err != nil {
 		return backend.AddressView{}, err
 	}
 	return w.Summary(address)
+}
+
+// WalletHistory reads a page of an account's history: from a cursor or a
+// block, filtered, or with one counterparty, as q asks.
+func (a *App) WalletHistory(q backend.HistoryQuery) (backend.HistoryPage, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.HistoryPage{}, err
+	}
+	return w.History(q)
+}
+
+// WalletFindTx finds a transaction, by hash, in an account's history.
+func (a *App) WalletFindTx(address, hash string) (backend.HistoryFind, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return backend.HistoryFind{}, err
+	}
+	return w.FindTx(address, hash)
+}
+
+// HistoryBlockAt is the newest block mined at or before t (Unix seconds).
+func (a *App) HistoryBlockAt(t int64) (uint64, error) { return a.node.HistoryBlockAt(t) }
+
+// WalletExportHistory writes an account's history, as q asks, to path as
+// CSV, its counterparties named from names (by address), reporting how far
+// it has got as "history-export" events. It returns the rows written.
+func (a *App) WalletExportHistory(q backend.HistoryQuery, path string, names map[string]string) (int, error) {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return 0, err
+	}
+	return w.ExportHistory(q, path, names, func(done, total uint64) {
+		a.events.emit("history-export", map[string]uint64{"done": done, "total": total})
+	})
 }
 
 // WalletQuote works out what a send would cost; gasPriceWei may be empty

@@ -860,7 +860,7 @@ function RecipientInput({
     if (view) {
       const seen = new Set<string>();
       for (const tx of [...view.pending, ...view.transactions]) {
-        if (tx.kind !== "transfer") continue;
+        if (tx.kind !== "transfer" || ("failed" in tx && tx.failed)) continue;
         const out = sameAddress(tx.from, view.address);
         const other = out ? tx.to : tx.from;
         if (!other || sameAddress(other, view.address) || seen.has(other.toLowerCase())) continue;

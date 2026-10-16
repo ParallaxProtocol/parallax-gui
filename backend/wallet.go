@@ -807,8 +807,8 @@ func (w *Wallet) Remove(address, password string) error {
 // Balances and activity
 // ---------------------------------------------------------------------------
 
-// Summary reports one wallet account's balance and activity: the
-// transactions of the last week of blocks, and those waiting in the pool.
+// Summary reports one wallet account's balance and activity: the newest
+// page of its history, and its transactions waiting in the pool.
 func (w *Wallet) Summary(address string) (AddressView, error) {
 	if err := w.requireOpen(); err != nil {
 		return AddressView{}, err
@@ -818,6 +818,45 @@ func (w *Wallet) Summary(address string) (AddressView, error) {
 		return AddressView{}, err
 	}
 	return w.node.AddressSummary(addr.Hex())
+}
+
+// History reads a page of one wallet account's history, as q asks.
+func (w *Wallet) History(q HistoryQuery) (HistoryPage, error) {
+	if err := w.requireOpen(); err != nil {
+		return HistoryPage{}, err
+	}
+	addr, _, err := w.known(q.Address)
+	if err != nil {
+		return HistoryPage{}, err
+	}
+	q.Address = addr.Hex()
+	return w.node.AccountHistory(q)
+}
+
+// FindTx finds transaction hash in one wallet account's history.
+func (w *Wallet) FindTx(address, hash string) (HistoryFind, error) {
+	if err := w.requireOpen(); err != nil {
+		return HistoryFind{}, err
+	}
+	addr, _, err := w.known(address)
+	if err != nil {
+		return HistoryFind{}, err
+	}
+	return w.node.FindHistoryTx(addr.Hex(), hash)
+}
+
+// ExportHistory writes one wallet account's history, as q asks, to path
+// as CSV, its counterparties named from names.
+func (w *Wallet) ExportHistory(q HistoryQuery, path string, names map[string]string, progress func(done, total uint64)) (int, error) {
+	if err := w.requireOpen(); err != nil {
+		return 0, err
+	}
+	addr, _, err := w.known(q.Address)
+	if err != nil {
+		return 0, err
+	}
+	q.Address = addr.Hex()
+	return w.node.ExportHistory(q, path, names, progress)
 }
 
 // ---------------------------------------------------------------------------

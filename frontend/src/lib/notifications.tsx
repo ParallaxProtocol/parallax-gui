@@ -10,12 +10,14 @@ export type AppNotice = {
   body: string;
   at: number;
   read: boolean;
+  /** Where in the app it's about, opened as it's clicked: a transaction on the History page. */
+  link?: string;
 };
 
 type Ctx = {
   notices: AppNotice[];
   unread: number;
-  push: (kind: NoticeKind, title: string, body: string) => void;
+  push: (kind: NoticeKind, title: string, body: string, link?: string) => void;
   markRead: () => void;
   clear: () => void;
 };
@@ -39,8 +41,8 @@ let nextId = 1;
  */
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [notices, setNotices] = useState<AppNotice[]>([]);
-  const push = useCallback((kind: NoticeKind, title: string, body: string) => {
-    setNotices((n) => [{ id: nextId++, kind, title, body, at: Date.now(), read: false }, ...n].slice(0, KEEP));
+  const push = useCallback((kind: NoticeKind, title: string, body: string, link?: string) => {
+    setNotices((n) => [{ id: nextId++, kind, title, body, at: Date.now(), read: false, link }, ...n].slice(0, KEEP));
   }, []);
   const markRead = useCallback(
     () => setNotices((n) => (n.some((x) => !x.read) ? n.map((x) => ({ ...x, read: true })) : n)),

@@ -308,7 +308,8 @@ func (n *NodeController) whileStopped(ctx context.Context, f func(g GUIConfig) e
 }
 
 // ClearChainData deletes the chain the node downloaded (its database and
-// its ancient store, wherever that was put, and the trie cache's journal),
+// its ancient store, wherever that was put, the trie cache's journal and
+// the history index built from it),
 // for it to sync again from scratch. Its identity, peers, ban list, onion
 // key and own keystore stay.
 func (n *NodeController) ClearChainData(ctx context.Context) error {
@@ -320,7 +321,8 @@ func (n *NodeController) ClearChainData(ctx context.Context) error {
 		root := filepath.Clean(g.DataDir)
 		var paths []string
 		chain := nodeCfg.ResolvePath("chaindata")
-		paths = append(paths, chain)
+		// The history index is built from the chain: it goes with it
+		paths = append(paths, chain, nodeCfg.ResolvePath(historyDir))
 		if prlCfg.TrieCleanCacheJournal != "" {
 			paths = append(paths, nodeCfg.ResolvePath(prlCfg.TrieCleanCacheJournal))
 		}

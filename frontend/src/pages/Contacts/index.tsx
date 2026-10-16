@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowUpRight,
@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronRight,
   Download,
+  History,
   Pencil,
   Plus,
   Search,
@@ -18,6 +19,8 @@ import {
 import { api, Contact, ContactsImport, exportContacts, walletError } from "../../lib/api";
 import { shortHex } from "../../lib/format";
 import { useContacts } from "../../lib/contacts";
+import { useOfflineMode } from "../../lib/offline";
+import { useWallet } from "../../lib/wallet";
 import { FADE_OUT, GLIDE, SPRING, STAGGER, useStagger } from "../../lib/motion";
 import { ToolbarAccessory } from "../../lib/toolbar";
 import { useNow } from "../../lib/useNow";
@@ -413,6 +416,9 @@ function ContactDetails({
   const ago = useAgo();
   const { lang } = useLang();
   const date = (s: number) => new Date(s * 1000).toLocaleDateString(lang, { dateStyle: "medium" });
+  // The account's transactions with them, on the History page: an online wallet's, with an account
+  const offline = useOfflineMode();
+  const { account } = useWallet();
   // Indented to the row's text: its padding, the avatar and the gap after it
   return (
     <div className="flex flex-col gap-3 bg-hover pr-4 pb-4 pl-[70px]">
@@ -454,6 +460,12 @@ function ContactDetails({
           <Pencil className="size-3.5" />
           {t("contacts.edit.title")}
         </button>
+        {!offline && account && (
+          <Link to={`/history?${new URLSearchParams({ with: c.address })}`} className="btn btn-tinted btn-sm">
+            <History className="size-3.5" />
+            {t("contacts.history")}
+          </Link>
+        )}
         <button type="button" className="btn btn-danger btn-sm ml-auto" onClick={onRemove}>
           <Trash2 className="size-3.5" />
           {t("contacts.remove.cta")}

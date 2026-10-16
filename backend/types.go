@@ -339,8 +339,8 @@ type BlockView struct {
 }
 
 // AddressView summarises one wallet account for the Wallet page: its
-// balance at the head, what the recent chain holds for it, and what waits
-// in the pool.
+// balance at the head, the newest page of its history, and what waits in
+// the pool.
 type AddressView struct {
 	Address string `json:"address"`
 	// BalanceWei is empty while the head state is unavailable (e.g. during
@@ -348,12 +348,50 @@ type AddressView struct {
 	BalanceWei string `json:"balanceWei"`
 	Nonce      uint64 `json:"nonce"`
 	HeadBlock  uint64 `json:"headBlock"`
-	// ScannedFrom is the oldest block the activity below was gathered from.
-	ScannedFrom  uint64   `json:"scannedFrom"`
-	Transactions []TxView `json:"transactions"` // newest first, capped
+	HistoryPage
 	// Pending are its transactions in the pool, not yet in a block: Block
 	// and Timestamp are zero.
 	Pending []TxView `json:"pending"`
+}
+
+// HistoryTx is one item of an account's history: a transaction from or to
+// it, as its receipt has it, or a block it mined (Kind "mined", with no
+// transaction hash).
+type HistoryTx struct {
+	Hash      string `json:"hash"` // empty for a mined block
+	Block     uint64 `json:"block"`
+	BlockHash string `json:"blockHash"`
+	Index     uint32 `json:"index"` // the transaction's position in its block
+	Timestamp int64  `json:"timestamp"`
+	From      string `json:"from"` // empty for a mined block
+	To        string `json:"to"`   // empty for a contract creation; the miner for a mined block
+	// ValueWei is what moved: for a mined block, its reward and fees
+	ValueWei string `json:"valueWei"`
+	Kind     string `json:"kind"` // "transfer" | "contract" | "call" | "mined"
+	Failed   bool   `json:"failed"`
+	GasUsed  uint64 `json:"gasUsed"`
+	FeeWei   string `json:"feeWei"` // what the sender paid; zero for a mined block
+	// ContractAddress is the contract a creation made
+	ContractAddress string `json:"contractAddress,omitempty"`
+	// A mined block's reward, the fees its transactions paid the miner, and
+	// the block from which the reward can be spent
+	RewardWei string `json:"rewardWei,omitempty"`
+	FeesWei   string `json:"feesWei,omitempty"`
+	MaturesAt uint64 `json:"maturesAt,omitempty"`
+}
+
+// HistoryPage is a page of an account's history, newest first.
+type HistoryPage struct {
+	Transactions []HistoryTx `json:"transactions"`
+	// Next continues the history with the next older page; empty at its end
+	Next string `json:"next"`
+	// Complete is unset while the history index is still being built (or
+	// couldn't be opened): older items than these may be missing until it
+	// is. Indexing is set while it's being built, IndexedTo the block it
+	// has reached.
+	Complete  bool   `json:"complete"`
+	Indexing  bool   `json:"indexing"`
+	IndexedTo uint64 `json:"indexedTo"`
 }
 
 // ---------------------------------------------------------------------------

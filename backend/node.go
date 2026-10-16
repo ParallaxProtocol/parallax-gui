@@ -54,6 +54,9 @@ type NodeController struct {
 	busy bool
 	// The free space below which monitorFreeDiskSpace stops the node; 0 when off
 	diskCritical uint64
+	// The address history index (history.go) while the node runs; nil
+	// when it couldn't be opened
+	history *historyIndex
 
 	emitter func(NodeEvent)
 
@@ -114,6 +117,13 @@ func (n *NodeController) Parallax() *protocol.Parallax {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 	return n.parallax
+}
+
+// historyIndex returns the running node's history index, or nil.
+func (n *NodeController) historyIndex() *historyIndex {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.history
 }
 
 // Stack returns the underlying node.Node, or nil if stopped.
@@ -213,10 +223,18 @@ func (n *NodeController) Start(ctx context.Context) error {
 		return fmt.Errorf("start node: %w", err)
 	}
 
+	// The address history index, kept beside the chain it's built from.
+	// Without it the wallet shows the latest blocks' activity only.
+	history, err := openHistoryIndex(stack.ResolvePath(historyDir), parallax.BlockChain(), parallax.ChainDb())
+	if err != nil {
+		logging.Error("Failed to open the history index", "err", err)
+	}
+
 	stopCh := make(chan struct{})
 	n.mu.Lock()
 	n.stack = stack
 	n.parallax = parallax
+	n.history = history
 	n.startedAt = time.Now()
 	n.stopCh = stopCh
 	n.dev = dev
@@ -254,6 +272,9 @@ func (n *NodeController) Start(ctx context.Context) error {
 	// CLI's behaviour at cmd/parallaxd/config.go.
 	go n.warnIfLegacyReceipts(parallax)
 
+	if history != nil {
+		history.start()
+	}
 	n.emit("started", nil)
 	return nil
 }
@@ -263,8 +284,10 @@ func (n *NodeController) Stop() error {
 	n.mu.Lock()
 	stack := n.stack
 	stopCh := n.stopCh
+	history := n.history
 	n.stack = nil
 	n.parallax = nil
+	n.history = nil
 	n.stopCh = nil
 	n.dev = false
 	n.mu.Unlock()
@@ -275,6 +298,10 @@ func (n *NodeController) Stop() error {
 		// Signal background helpers (disk monitor) to exit before we close
 		// the stack so they don't race against a half-torn-down node.
 		close(stopCh)
+	}
+	// The index reads the chain's database, closed with the stack
+	if history != nil {
+		history.Close()
 	}
 	err := stack.Close()
 	n.emit("stopped", nil)

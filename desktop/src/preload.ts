@@ -50,6 +50,10 @@ contextBridge.exposeInMainWorld("parallax", {
   exportContacts(format: "json" | "csv", contents: string): Promise<boolean> {
     return ipcRenderer.invoke("contacts:export", format, contents);
   },
+  /** Asks where to save an account's exported activity: a .csv path, or null if cancelled. */
+  pickHistoryPath(fileName: string): Promise<string | null> {
+    return ipcRenderer.invoke("history:savePath", fileName);
+  },
   /** Saves a signing request or signed transaction where the user picks; false if cancelled. */
   saveSigningDoc(fileName: string, contents: string): Promise<boolean> {
     return ipcRenderer.invoke("offline:save", fileName, contents);
