@@ -43,7 +43,7 @@ export const en: Dict = {
   "hello.sync.stoppedDesc": "Your node is offline.",
   "hello.offer.title": "Set up your recovery phrase",
   "hello.offer.desc":
-    "Your wallet password is set. Now create a recovery phrase to back up your accounts, or import one you already have.",
+    "Your wallet password is set. Now create a recovery phrase to back up your accounts, import one you already have, or connect a hardware wallet.",
   "hello.offer.import": "Import recovery phrase",
   "hello.offer.createDesc":
     "24 new words that back up every account you make here. They work in MetaMask and most other wallets.",

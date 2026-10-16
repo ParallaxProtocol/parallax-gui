@@ -14,7 +14,13 @@ import { useWallet } from "../../../lib/wallet";
 import { useT } from "../../../i18n";
 import { Notice } from "../../../components/ui/bits";
 import { RadioMark } from "../../../components/ui/Choice";
-import { DEVICE_NAME, DeviceStatus, deviceOf, useHardwareDevices } from "../../../components/hardware/Device";
+import {
+  DEVICE_NAME,
+  DeviceStatus,
+  deviceOf,
+  firstScheme,
+  useHardwareDevices,
+} from "../../../components/hardware/Device";
 import { useBusy, useNamePicks } from "../../Wallet/accountActions";
 import { type Found, pickKey, picksOf } from "../../Wallet/PhraseImport";
 import { Group } from "../fields";
@@ -216,15 +222,6 @@ export function FindHardwareAccounts({
       addLabel={t("wallet.accounts.add")}
     />
   );
-}
-
-/**
- * firstScheme is the path a device's accounts are looked along first: a
- * Ledger's where Ledger Live (and MetaMask, with a Ledger) put them, a
- * Trezor's where Trezor Suite does, the standard one.
- */
-export function firstScheme(kind: HardwareKind): SeedScheme {
-  return kind === "ledger" ? "ledgerlive" : "standard";
 }
 
 /** DevicePicker is the PhrasePicker of one device's accounts, its picks added from the accounts' header. */

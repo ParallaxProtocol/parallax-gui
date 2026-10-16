@@ -45,17 +45,20 @@ export function AccountPicker({
   onToggle,
   onScan,
   error,
+  initialScheme = "standard",
 }: {
   found: Found;
   picked: Set<string>;
   onToggle: (c: SeedCandidate) => void;
   onScan: (scheme: SeedScheme, from: number) => Promise<void>;
   error: string | null;
+  /** The path shown first. */
+  initialScheme?: SeedScheme;
 }) {
   const t = useT();
   const node = useNode();
   const stagger = useStagger();
-  const [scheme, setScheme] = useState<SeedScheme>("standard");
+  const [scheme, setScheme] = useState<SeedScheme>(initialScheme);
   const [loading, setLoading] = useState(false);
   const list = found[scheme];
   const readable = list.some((c) => c.balanceWei !== "");

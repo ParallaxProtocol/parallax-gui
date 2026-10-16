@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, Download, Loader2, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Plus, ShieldCheck, Usb } from "lucide-react";
 import { NODE_ICON, NODE_ICON_STROKE } from "../../components/shell/NodeBar";
 import { CONFIG_UPDATED_EVENT } from "../../App";
-import { api, GUIConfig, NodeStatus, SeedCandidate, walletError } from "../../lib/api";
+import { api, GUIConfig, NodeStatus, SeedCandidate, walletError, type HardwareDevice } from "../../lib/api";
+import { DeviceStatus, deviceOf, firstScheme, useHardwareDevices } from "../../components/hardware/Device";
 import { formatInt } from "../../lib/format";
 import { syncProgress } from "../../lib/live";
 import { Counter } from "../../components/ui/Counter";
@@ -11,6 +12,7 @@ import { EASE, Glow } from "../../components/ui/Glow";
 import { useAnimationsOff } from "../../lib/prefs";
 import { SPRING } from "../../lib/motion";
 import { setSetupPending } from "../../lib/walletSetup";
+import { useOfflineMode } from "../../lib/offline";
 import { Lang, useLang, useT } from "../../i18n";
 import { LANG_NAMES } from "../../i18n/translations";
 import { Meter, Notice } from "../../components/ui/bits";
@@ -84,6 +86,8 @@ type Stage =
   | "offer"
   | "import"
   | "importAccounts"
+  | "hardware"
+  | "hardwareAccounts"
   | "phrase"
   | "quiz"
   | "passphrase"
@@ -99,6 +103,8 @@ const BACK: Partial<Record<Stage, Stage>> = {
   understand: "confirm",
   import: "offer",
   importAccounts: "import",
+  hardware: "offer",
+  hardwareAccounts: "hardware",
   phrase: "offer",
   quiz: "phrase",
 };
@@ -146,6 +152,8 @@ export default function Hello({
   const [passphrase, setPassphrase] = useState("");
   const [found, setFound] = useState<Found>({ standard: [], ledgerlive: [], legacy: [] });
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  // A hardware wallet's accounts being brought in: the device they're read from
+  const [device, setDevice] = useState<HardwareDevice | null>(null);
   const [cfg, setCfg] = useState<GUIConfig | null>(null);
   const settle = useCallback(() => setStage((s) => (s === "greet" ? "choose" : s)), []);
   useEffect(() => {
@@ -322,6 +330,7 @@ export default function Hello({
                 setStage("phrase");
               }}
               onImport={() => setStage("import")}
+              onHardware={() => setStage("hardware")}
             />
           ) : stage === "import" ? (
             <ImportPhrase
@@ -336,6 +345,28 @@ export default function Hello({
                 setPicked(new Set(standard.filter((c, i) => (i === 0 || c.used) && !c.inWallet).map(pickKey)));
                 setStage("importAccounts");
               }}
+            />
+          ) : stage === "hardware" ? (
+            <ConnectHardware
+              key="hardware"
+              onFound={(d, first) => {
+                setDevice(d);
+                const scheme = firstScheme(d.kind);
+                setFound({ standard: [], ledgerlive: [], legacy: [], [scheme]: first });
+                // The first account is always offered, used or not, with every used one
+                setPicked(new Set(first.filter((c, i) => (i === 0 || c.used) && !c.inWallet).map(pickKey)));
+                setStage("hardwareAccounts");
+              }}
+            />
+          ) : stage === "hardwareAccounts" && device ? (
+            <HardwareAccounts
+              key="hardwareAccounts"
+              device={device}
+              found={found}
+              setFound={setFound}
+              picked={picked}
+              setPicked={setPicked}
+              onImported={finish}
             />
           ) : stage === "importAccounts" ? (
             <ImportAccounts
@@ -764,10 +795,20 @@ function Countdown({ ms, onDone }: { ms: number; onDone: () => void }) {
 
 /**
  * Offer comes right after the password: a recovery phrase is next, made
- * here under the password just set, or one the user already has, imported.
+ * here under the password just set, or one the user already has, imported,
+ * or a hardware wallet's accounts, its phrase staying on the device.
  */
-function Offer({ onMade, onImport }: { onMade: (words: string[]) => void; onImport: () => void }) {
+function Offer({
+  onMade,
+  onImport,
+  onHardware,
+}: {
+  onMade: (words: string[]) => void;
+  onImport: () => void;
+  onHardware: () => void;
+}) {
   const t = useT();
+  const offline = useOfflineMode();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const create = async () => {
@@ -803,6 +844,16 @@ function Offer({ onMade, onImport }: { onMade: (words: string[]) => void; onImpo
             disabled={busy}
             onClick={onImport}
           />
+          {/* An offline signer holds keys only: a device's are for a wallet online */}
+          {!offline && (
+            <LinkRow
+              icon={Usb}
+              title={t("wallet.add.hardware")}
+              desc={t("wallet.add.hardwareDesc")}
+              disabled={busy}
+              onClick={onHardware}
+            />
+          )}
         </LinkRows>
         {error && <Notice tone="critical">{error}</Notice>}
       </div>
@@ -1112,6 +1163,137 @@ function ImportAccounts({
         >
           {busy && <Loader2 className="size-4 animate-spin" />}
           {busy ? t("wallet.import.busy") : t("wallet.import.cta")}
+        </button>
+        <span className="text-sm text-muted-foreground">{t("wallet.import.picked", { n: picks.length })}</span>
+      </div>
+    </Screen>
+  );
+}
+
+/**
+ * ConnectHardware waits for a Ledger or a Trezor to be ready, telling what
+ * it needs meanwhile (unlocking it, its Ethereum app, a Trezor One's PIN),
+ * then reads its first accounts, along the path its own app uses.
+ */
+function ConnectHardware({ onFound }: { onFound: (device: HardwareDevice, first: SeedCandidate[]) => void }) {
+  const t = useT();
+  const { devices, error: lookError } = useHardwareDevices();
+  const device = deviceOf(devices);
+  const ready = device?.state === "ready";
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <Screen title={t("hardware.import.title")} desc={t("hardware.import.deviceDesc")} wide>
+      <div className="w-full text-left">
+        <DeviceStatus device={device} error={lookError} />
+      </div>
+      {error && <Notice tone="critical">{error}</Notice>}
+      <button
+        type="button"
+        className="btn btn-primary btn-lg min-w-64"
+        disabled={busy || !ready || !device}
+        onClick={async () => {
+          if (!device) return;
+          setBusy(true);
+          setError(null);
+          try {
+            onFound(device, await api.hardwareScan(device.id, firstScheme(device.kind), 0, SCAN_BATCH));
+          } catch (e) {
+            setError(walletError(e, t));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy && <Loader2 className="size-4 animate-spin" />}
+        {t("common.continue")}
+      </button>
+    </Screen>
+  );
+}
+
+/** HardwareAccounts picks which of the device's accounts to bring in, as ImportAccounts does a phrase's. */
+function HardwareAccounts({
+  device,
+  found,
+  setFound,
+  picked,
+  setPicked,
+  onImported,
+}: {
+  device: HardwareDevice;
+  found: Found;
+  setFound: React.Dispatch<React.SetStateAction<Found>>;
+  picked: Set<string>;
+  setPicked: React.Dispatch<React.SetStateAction<Set<string>>>;
+  onImported: () => void;
+}) {
+  const t = useT();
+  const namePicks = useNamePicks();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const picks = picksOf(found, picked);
+  return (
+    <Screen title={t("wallet.import.chooseTitle")} desc={t("hardware.import.pathDesc")} wide>
+      <div className="glass max-h-[46vh] w-full overflow-y-auto text-left">
+        <AccountPicker
+          found={found}
+          picked={picked}
+          initialScheme={firstScheme(device.kind)}
+          onToggle={(c) =>
+            setPicked((p) => {
+              const next = new Set(p);
+              if (next.has(pickKey(c))) next.delete(pickKey(c));
+              else next.add(pickKey(c));
+              return next;
+            })
+          }
+          onScan={async (scheme, from) => {
+            setError(null);
+            try {
+              const batch = await api.hardwareScan(device.id, scheme, from, SCAN_BATCH);
+              setFound((f) => ({
+                ...f,
+                [scheme]: [
+                  ...f[scheme].filter((c) => c.index < from),
+                  ...batch,
+                  ...f[scheme].filter((c) => c.index >= from + batch.length),
+                ],
+              }));
+              setPicked((p) => {
+                const next = new Set(p);
+                for (const c of batch) if (c.used && !c.inWallet) next.add(pickKey(c));
+                return next;
+              });
+            } catch (e) {
+              setError(walletError(e, t));
+            }
+          }}
+          error={null}
+        />
+      </div>
+      {error && <Notice tone="critical">{error}</Notice>}
+      <div className="flex flex-col items-center gap-3">
+        <button
+          type="button"
+          className="btn btn-primary btn-lg min-w-64"
+          disabled={busy || picks.length === 0}
+          autoFocus
+          onClick={async () => {
+            setBusy(true);
+            setError(null);
+            try {
+              await api.hardwareAddAccounts(device.id, namePicks(picks, ""));
+              onImported();
+            } catch (e) {
+              setError(walletError(e, t));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy && <Loader2 className="size-4 animate-spin" />}
+          {busy ? t("hardware.import.busy") : t("hardware.import.cta")}
         </button>
         <span className="text-sm text-muted-foreground">{t("wallet.import.picked", { n: picks.length })}</span>
       </div>

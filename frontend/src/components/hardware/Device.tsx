@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Delete, Loader2, Usb } from "lucide-react";
-import { api, walletError, type HardwareDevice, type HardwareKind } from "../../lib/api";
+import { api, walletError, type HardwareDevice, type HardwareKind, type SeedScheme } from "../../lib/api";
 import { useT } from "../../i18n";
 import { Notice } from "../ui/bits";
 import { Panel } from "../ui/Panel";
@@ -8,6 +8,15 @@ import { Indicator, type Grade } from "../ui/Indicator";
 
 /** The devices' own names, the same in every language. */
 export const DEVICE_NAME: Record<HardwareKind, string> = { ledger: "Ledger", trezor: "Trezor" };
+
+/**
+ * firstScheme is the path a device's accounts are looked along first: a
+ * Ledger's where Ledger Live (and MetaMask, with a Ledger) put them, a
+ * Trezor's where Trezor Suite does, the standard one.
+ */
+export function firstScheme(kind: HardwareKind): SeedScheme {
+  return kind === "ledger" ? "ledgerlive" : "standard";
+}
 
 /** How often the devices are looked at while a page shows them (ms). */
 const POLL_MS = 1000;
