@@ -27,7 +27,16 @@ const fr: Dict = {
   "hello.offer.desc":
     "Le mot de passe de votre portefeuille est défini. Créez maintenant une phrase de récupération pour sauvegarder vos comptes, ou importez celle que vous avez déjà.",
   "hello.offer.import": "Importer une phrase de récupération",
+  "hello.offer.createDesc":
+    "24 nouveaux mots qui sauvegardent chaque compte que vous créez ici. Ils fonctionnent dans MetaMask et la plupart des autres portefeuilles.",
+  "hello.passphrase.title": "Ajouter une phrase secrète ?",
+  "hello.passphrase.desc":
+    "Facultatif. La plupart des gens n'en ont pas besoin : laissez-la de côté si vous n'êtes pas sûr d'en vouloir une.",
   "hello.password.title": "Créer un mot de passe du portefeuille",
+  "hello.password.understand": "Je comprends que si je perds ce mot de passe, il ne pourra pas être récupéré",
+  "hello.understand.title": "Une dernière chose",
+  "hello.understand.desc":
+    "Personne ne peut réinitialiser ce mot de passe ni le récupérer pour vous, pas même Parallax.",
   "hello.password.desc":
     "Il protège chaque compte que vous créez ou importez ici. Personne ne peut le réinitialiser pour vous : choisissez-en un dont vous vous souviendrez.",
   "hello.confirm.title": "Saisissez-le à nouveau",
@@ -448,7 +457,7 @@ const fr: Dict = {
     "{n} mots, générés ici à partir de la source aléatoire sécurisée de votre système. Ils restaurent vos comptes dans ce portefeuille ou dans tout portefeuille compatible.",
   "wallet.create.words24": "Utiliser 24 mots à la place",
   "wallet.create.words24Desc":
-    "256 bits, comme le font Ledger et Trezor. Deux fois plus à noter, et 12 mots sont déjà bien au-delà de toute devinette. Les deux fonctionnent dans MetaMask et d'autres portefeuilles.",
+    "256 bits. Deux fois plus à noter, et 12 mots sont déjà bien au-delà de toute devinette. Les deux fonctionnent dans MetaMask et d'autres portefeuilles.",
   "wallet.create.fact2": "Verrouillée par votre mot de passe",
   "wallet.create.fact2Desc": "La phrase et la clé de votre compte sont chiffrées avec le mot de passe du portefeuille.",
   "wallet.create.fact3": "Conservée sur cet ordinateur",
@@ -630,9 +639,9 @@ const fr: Dict = {
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Ajouter une phrase secrète (avancé)",
   "wallet.passphrase.toggleDesc":
-    "Un mot supplémentaire qui change chaque compte créé par la phrase, comme sur Ledger et Trezor. MetaMask ne la prend pas en charge.",
+    "Le texte de votre choix, d'un mot à une phrase entière, qui fait ouvrir à la phrase un autre ensemble de comptes : les mots seuls n'y donnent plus accès. MetaMask ne la prend pas en charge.",
   "wallet.passphrase.warning":
-    "Notez aussi la phrase secrète. La restauration exige à la fois les mots et la phrase secrète exacte, et une phrase secrète erronée donne un autre portefeuille, vide, sans aucune erreur.",
+    "Notez-la exactement, majuscules, espaces et symboles compris, et gardez-la à part de la phrase de récupération. Elle ne peut être ni modifiée ni récupérée, et une phrase secrète erronée ouvre un autre portefeuille, vide, sans aucune erreur. Lettres, chiffres et symboles courants sont les plus sûrs, car tout clavier peut les saisir.",
   "wallet.passphrase.label": "Phrase secrète",
   "wallet.passphrase.confirm": "Confirmer la phrase secrète",
   "wallet.passphrase.mismatch": "Les phrases secrètes ne correspondent pas",
@@ -640,7 +649,7 @@ const fr: Dict = {
     "Cette phrase de récupération a une phrase secrète : vous en aurez besoin, exactement telle que saisie, pour restaurer ces comptes.",
   "wallet.passphrase.importToggle": "Elle a une phrase secrète (avancé)",
   "wallet.passphrase.importToggleDesc":
-    "Si vous avez défini un mot supplémentaire sur Ledger ou Trezor, saisissez-le pour retrouver les mêmes comptes.",
+    "Si vous avez défini une phrase secrète dans un autre portefeuille, saisissez-la exactement pour retrouver les mêmes comptes.",
   "wallet.passphrase.importHint":
     "Exactement telle que définie : les majuscules et les espaces comptent. Si l'étape suivante n'affiche aucun compte connu, vérifiez-la.",
   "wallet.passphrase.show": "Afficher la phrase secrète",

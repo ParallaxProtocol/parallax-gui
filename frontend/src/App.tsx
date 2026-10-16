@@ -48,6 +48,7 @@ import SettingsSheet, {
 import { NotificationsProvider } from "./lib/notifications";
 import AssistantBar from "./components/shell/AssistantBar";
 import { LockGate } from "./components/shell/LockScreen";
+import { Arrival } from "./components/shell/Arrival";
 import { AssistantProvider } from "./lib/assistant";
 import { ContactsProvider } from "./lib/ContactsProvider";
 import { OfflineMode, useOfflineMode } from "./lib/offline";
@@ -67,6 +68,8 @@ export default function App() {
   // the wallet is new (no password, no keys), until it is through, for this
   // run of the app
   const [hello, setHello] = useState(false);
+  // Whether the greeting just finished: the app then arrives rather than appearing
+  const [arrived, setArrived] = useState(false);
   const [animationsDisabled, setAnimationsDisabled] = useState(false);
   const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>("jazzicon");
   const [desktop, setDesktop] = useState({ notifications: false, preventSleep: false });
@@ -152,6 +155,7 @@ export default function App() {
           node={needsBootstrap}
           wallet={hello}
           onDone={() => {
+            setArrived(true);
             setHello(false);
             setNeedsBootstrap(false);
             navigate("/", { replace: true });
@@ -161,43 +165,45 @@ export default function App() {
     );
   } else {
     content = (
-      <LiveProvider>
-        <WalletProvider>
-          <ContactsProvider>
-            <ToolbarSlotProvider>
-              <NotificationsProvider>
-                <UpdateProvider>
-                  <NodeSheetProvider>
-                    <SidebarProvider>
-                      <SettingsSheetProvider>
-                        <AssistantProvider enabled={!offline}>
-                          <DesktopBehaviors {...desktop} />
-                          {/* The whole window, behind the lock screen while the wallet is locked */}
-                          <LockGate>
-                            {/* The sidebar and the page run the window's whole height, the
+      <Arrival play={arrived}>
+        <LiveProvider>
+          <WalletProvider>
+            <ContactsProvider>
+              <ToolbarSlotProvider>
+                <NotificationsProvider>
+                  <UpdateProvider>
+                    <NodeSheetProvider>
+                      <SidebarProvider>
+                        <SettingsSheetProvider>
+                          <AssistantProvider enabled={!offline}>
+                            <DesktopBehaviors {...desktop} />
+                            {/* The whole window, behind the lock screen while the wallet is locked */}
+                            <LockGate>
+                              {/* The sidebar and the page run the window's whole height, the
                               node's bar floating over their foot: the sidebar keeps room for
                               it, the page scrolls on beneath it */}
-                            <div className="flex h-full">
-                              <Sidebar />
-                              <div className="flex min-w-0 flex-1 flex-col bg-background">
-                                <TopBar />
-                                <RoutedContent animate={!animationsDisabled} />
+                              <div className="flex h-full">
+                                <Sidebar />
+                                <div className="flex min-w-0 flex-1 flex-col bg-background">
+                                  <TopBar />
+                                  <RoutedContent animate={!animationsDisabled} />
+                                </div>
                               </div>
-                            </div>
-                            <SettingsSheet />
-                            {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
-                            {!offline && <AssistantBar />}
-                          </LockGate>
-                        </AssistantProvider>
-                      </SettingsSheetProvider>
-                    </SidebarProvider>
-                  </NodeSheetProvider>
-                </UpdateProvider>
-              </NotificationsProvider>
-            </ToolbarSlotProvider>
-          </ContactsProvider>
-        </WalletProvider>
-      </LiveProvider>
+                              <SettingsSheet />
+                              {offline ? <OfflineBar version={version} /> : <NodeBar version={version} />}
+                              {!offline && <AssistantBar />}
+                            </LockGate>
+                          </AssistantProvider>
+                        </SettingsSheetProvider>
+                      </SidebarProvider>
+                    </NodeSheetProvider>
+                  </UpdateProvider>
+                </NotificationsProvider>
+              </ToolbarSlotProvider>
+            </ContactsProvider>
+          </WalletProvider>
+        </LiveProvider>
+      </Arrival>
     );
   }
 

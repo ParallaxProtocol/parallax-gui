@@ -368,7 +368,8 @@ export function StrengthMeter({ strength, empty }: { strength: Strength; empty: 
           </span>
         ))}
       </div>
-      <span className="w-16 text-right text-sm text-muted-foreground">{empty ? "" : t(s.key)}</span>
+      {/* As tall when empty as with its word, so nothing shifts as the first key is typed */}
+      <span className="h-5 w-16 text-right text-sm text-muted-foreground">{empty ? "" : t(s.key)}</span>
     </div>
   );
 }

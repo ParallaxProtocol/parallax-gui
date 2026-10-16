@@ -27,7 +27,15 @@ const ptBR: Dict = {
   "hello.offer.desc":
     "A senha da sua carteira está definida. Agora crie uma frase de recuperação para fazer o backup das suas contas, ou importe uma que você já tem.",
   "hello.offer.import": "Importar frase de recuperação",
+  "hello.offer.createDesc":
+    "24 palavras novas que fazem backup de cada conta que você criar aqui. Funcionam no MetaMask e na maioria das outras carteiras.",
+  "hello.passphrase.title": "Adicionar uma frase secreta?",
+  "hello.passphrase.desc":
+    "Opcional. A maioria das pessoas não precisa: deixe desligado, a menos que saiba que quer uma.",
   "hello.password.title": "Crie uma senha da carteira",
+  "hello.password.understand": "Entendo que, se eu perder esta senha, ela não poderá ser recuperada",
+  "hello.understand.title": "Só mais uma coisa",
+  "hello.understand.desc": "Ninguém pode redefinir esta senha nem recuperá-la para você, nem mesmo a Parallax.",
   "hello.password.desc":
     "Ela protege cada conta que você criar ou trouxer para cá. Ninguém pode redefini-la para você, então escolha uma de que vá se lembrar.",
   "hello.confirm.title": "Digite de novo",
@@ -447,7 +455,7 @@ const ptBR: Dict = {
     "{n} palavras, geradas aqui a partir da fonte aleatória segura do seu sistema. Elas restauram suas contas nesta ou em qualquer carteira compatível.",
   "wallet.create.words24": "Usar 24 palavras",
   "wallet.create.words24Desc":
-    "256 bits, como Ledger e Trezor geram. O dobro para anotar, e 12 palavras já estão muito além de qualquer adivinhação. Ambas funcionam no MetaMask e em outras carteiras.",
+    "256 bits. O dobro para anotar, e 12 palavras já estão muito além de qualquer adivinhação. Ambas funcionam no MetaMask e em outras carteiras.",
   "wallet.create.fact2": "Protegida pela sua senha",
   "wallet.create.fact2Desc": "A frase e a chave da sua conta são criptografadas com a senha da carteira.",
   "wallet.create.fact3": "Guardada neste computador",
@@ -628,9 +636,9 @@ const ptBR: Dict = {
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Adicionar uma frase secreta (avançado)",
   "wallet.passphrase.toggleDesc":
-    "Uma palavra extra que muda todas as contas geradas pela frase, como na Ledger e na Trezor. O MetaMask não oferece suporte a ela.",
+    "Qualquer texto que você escolher, de uma palavra a uma frase inteira, que faz a frase abrir outro conjunto de contas: só as palavras já não chegam a elas. O MetaMask não oferece suporte a ela.",
   "wallet.passphrase.warning":
-    "Anote também a frase secreta. A restauração exige tanto as palavras quanto a frase secreta exata, e uma frase secreta errada gera uma carteira diferente e vazia, sem nenhum erro.",
+    "Anote-a exatamente, com maiúsculas, espaços e símbolos, e guarde-a separada da frase de recuperação. Ela não pode ser alterada nem recuperada, e uma errada abre outra carteira, vazia, sem nenhum erro. Letras, números e símbolos comuns são os mais seguros, pois qualquer teclado consegue digitá-los.",
   "wallet.passphrase.label": "Frase secreta",
   "wallet.passphrase.confirm": "Confirmar frase secreta",
   "wallet.passphrase.mismatch": "As frases secretas não coincidem",
@@ -638,7 +646,7 @@ const ptBR: Dict = {
     "Esta frase de recuperação tem uma frase secreta: você vai precisar dela, exatamente como foi digitada, para restaurar estas contas.",
   "wallet.passphrase.importToggle": "Ela tem uma frase secreta (avançado)",
   "wallet.passphrase.importToggleDesc":
-    "Se você definiu uma palavra extra na Ledger ou na Trezor, digite-a para chegar às mesmas contas.",
+    "Se você definiu uma frase secreta em outra carteira, digite-a exatamente para chegar às mesmas contas.",
   "wallet.passphrase.importHint":
     "Exatamente como foi definida: maiúsculas e espaços contam. Se a próxima etapa não mostrar contas conhecidas, confira-a.",
   "wallet.passphrase.show": "Mostrar a frase secreta",

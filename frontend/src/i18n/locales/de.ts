@@ -27,7 +27,17 @@ const de: Dict = {
   "hello.offer.desc":
     "Ihr Wallet-Passwort ist festgelegt. Erstellen Sie jetzt eine Wiederherstellungsphrase zur Sicherung Ihrer Konten, oder importieren Sie eine vorhandene.",
   "hello.offer.import": "Wiederherstellungsphrase importieren",
+  "hello.offer.createDesc":
+    "24 neue Wörter, die jedes Konto sichern, das Sie hier erstellen. Sie funktionieren in MetaMask und den meisten anderen Wallets.",
+  "hello.passphrase.title": "Eine Passphrase hinzufügen?",
+  "hello.passphrase.desc":
+    "Optional. Die meisten brauchen keine – lassen Sie sie weg, wenn Sie nicht sicher sind, dass Sie eine wollen.",
   "hello.password.title": "Wallet-Passwort erstellen",
+  "hello.password.understand":
+    "Mir ist klar, dass dieses Passwort nicht wiederhergestellt werden kann, wenn ich es verliere",
+  "hello.understand.title": "Noch eine Sache",
+  "hello.understand.desc":
+    "Niemand kann dieses Passwort für Sie zurücksetzen oder wiederherstellen, auch Parallax nicht.",
   "hello.password.desc":
     "Es schützt jedes Konto, das Sie hier erstellen oder hinzufügen. Niemand kann es für Sie zurücksetzen, wählen Sie also eines, das Sie sich merken.",
   "hello.confirm.title": "Noch einmal eingeben",
@@ -451,7 +461,7 @@ const de: Dict = {
     "{n} Wörter, hier aus der sicheren Zufallsquelle Ihres Systems erzeugt. Mit ihnen stellen Sie Ihre Konten in dieser oder jeder kompatiblen Wallet wieder her.",
   "wallet.create.words24": "Stattdessen 24 Wörter verwenden",
   "wallet.create.words24Desc":
-    "256 Bit, wie Ledger und Trezor sie erzeugen. Doppelt so viel zum Aufschreiben, und schon 12 Wörter sind weit jenseits des Erratbaren. Beide funktionieren in MetaMask und anderen Wallets.",
+    "256 Bit. Doppelt so viel zum Aufschreiben, und schon 12 Wörter sind weit jenseits des Erratbaren. Beide funktionieren in MetaMask und anderen Wallets.",
   "wallet.create.fact2": "Mit Ihrem Passwort gesperrt",
   "wallet.create.fact2Desc":
     "Die Phrase und der Schlüssel Ihres Kontos werden mit Ihrem Wallet-Passwort verschlüsselt.",
@@ -634,9 +644,9 @@ const de: Dict = {
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Passphrase hinzufügen (erweitert)",
   "wallet.passphrase.toggleDesc":
-    "Ein zusätzliches Wort, das jedes aus der Phrase erzeugte Konto verändert, wie bei Ledger und Trezor. MetaMask unterstützt es nicht.",
+    "Ein beliebiger Text Ihrer Wahl, von einem Wort bis zu einem ganzen Satz, mit dem die Phrase andere Konten öffnet: Die Wörter allein führen nicht mehr zu ihnen. MetaMask unterstützt es nicht.",
   "wallet.passphrase.warning":
-    "Schreiben Sie auch die Passphrase auf. Zur Wiederherstellung brauchen Sie sowohl die Wörter als auch die exakte Passphrase, und eine falsche Passphrase ergibt ohne jede Fehlermeldung eine andere, leere Wallet.",
+    "Schreiben Sie sie exakt auf, mit Groß- und Kleinschreibung, Leerzeichen und Sonderzeichen, und bewahren Sie sie getrennt von der Wiederherstellungsphrase auf. Sie lässt sich weder ändern noch wiederherstellen, und eine falsche öffnet ohne jede Fehlermeldung eine andere, leere Wallet. Buchstaben, Ziffern und gängige Sonderzeichen sind am sichersten, da jede Tastatur sie eingeben kann.",
   "wallet.passphrase.label": "Passphrase",
   "wallet.passphrase.confirm": "Passphrase bestätigen",
   "wallet.passphrase.mismatch": "Die Passphrasen stimmen nicht überein",
@@ -644,7 +654,7 @@ const de: Dict = {
     "Diese Wiederherstellungsphrase hat eine Passphrase: Sie benötigen sie genau so, wie sie eingegeben wurde, um diese Konten wiederherzustellen.",
   "wallet.passphrase.importToggle": "Sie hat eine Passphrase (erweitert)",
   "wallet.passphrase.importToggleDesc":
-    "Wenn Sie bei Ledger oder Trezor ein zusätzliches Wort festgelegt haben, geben Sie es ein, um zu denselben Konten zu gelangen.",
+    "Wenn Sie in einer anderen Wallet eine Passphrase festgelegt haben, geben Sie sie exakt ein, um zu denselben Konten zu gelangen.",
   "wallet.passphrase.importHint":
     "Genau wie festgelegt: Groß-/Kleinschreibung und Leerzeichen zählen. Wenn der nächste Schritt keine bekannten Konten zeigt, prüfen Sie die Passphrase.",
   "wallet.passphrase.show": "Passphrase anzeigen",

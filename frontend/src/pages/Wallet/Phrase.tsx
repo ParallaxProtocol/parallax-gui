@@ -21,7 +21,8 @@ import { Field, PasswordInput } from "./common";
 /**
  * PhraseGrid shows the words numbered, in reading order, veiled until the
  * user chooses to reveal them, so a glance over the shoulder or a screen
- * share doesn't catch them by accident.
+ * share doesn't catch them by accident. Plain words in columns, as a
+ * recovery key on a Mac: the card around them is the caller's.
  */
 export function PhraseGrid({ words }: { words: string[] }) {
   const t = useT();
@@ -32,15 +33,11 @@ export function PhraseGrid({ words }: { words: string[] }) {
     <div className="relative">
       <motion.ol
         {...stagger}
-        className={`grid grid-cols-3 gap-2 transition-[filter] duration-300 select-none ${shown ? "" : "blur-md"}`}
+        className={`grid grid-cols-3 gap-x-6 gap-y-3 transition-[filter] duration-300 select-none ${shown ? "" : "blur-md"}`}
         aria-hidden={!shown}
       >
         {words.map((w, i) => (
-          <motion.li
-            key={i}
-            variants={STAGGER.item}
-            className="glass flex items-baseline gap-2 rounded-md border border-border bg-background/60 px-2.5 py-2"
-          >
+          <motion.li key={i} variants={STAGGER.item} className="flex items-baseline gap-2.5">
             <span className="w-5 shrink-0 text-right text-xs text-muted-foreground tabular-nums">{i + 1}</span>
             <span className="font-mono font-medium">{w}</span>
           </motion.li>
@@ -51,16 +48,14 @@ export function PhraseGrid({ words }: { words: string[] }) {
           <motion.button
             type="button"
             onClick={() => setShown(true)}
-            className="absolute inset-0 grid place-items-center rounded-lg"
+            className="group absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={GLIDE}
           >
-            <span className="btn btn-secondary">
-              <Eye className="size-3.5" />
-              {t("wallet.phrase.reveal")}
-            </span>
+            <Eye className="size-5 transition-transform group-hover:scale-110" />
+            {t("wallet.phrase.reveal")}
           </motion.button>
         )}
       </AnimatePresence>

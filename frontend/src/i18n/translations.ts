@@ -45,7 +45,14 @@ export const en: Dict = {
   "hello.offer.desc":
     "Your wallet password is set. Now create a recovery phrase to back up your accounts, or import one you already have.",
   "hello.offer.import": "Import recovery phrase",
+  "hello.offer.createDesc":
+    "24 new words that back up every account you make here. They work in MetaMask and most other wallets.",
+  "hello.passphrase.title": "Add a passphrase?",
+  "hello.passphrase.desc": "Optional. Most people don't need one, so leave it off unless you know you want it.",
   "hello.password.title": "Create a wallet password",
+  "hello.password.understand": "I understand that if I lose this password, it can't be recovered",
+  "hello.understand.title": "One last thing",
+  "hello.understand.desc": "Nobody can reset this password or get it back for you, not even Parallax.",
   "hello.password.desc":
     "It protects every account you make or bring here. Nobody can reset it for you, so choose one you'll remember.",
   "hello.confirm.title": "Type it again",
@@ -747,7 +754,7 @@ export const en: Dict = {
     "{n} words, generated here from your system's secure random source. They restore your accounts in this or any compatible wallet.",
   "wallet.create.words24": "Use 24 words instead",
   "wallet.create.words24Desc":
-    "256 bits, as Ledger and Trezor make. Twice as much to write down, and 12 words are already far beyond guessing. Both work in MetaMask and other wallets.",
+    "256 bits. Twice as much to write down, and 12 words are already far beyond guessing. Both work in MetaMask and other wallets.",
   "wallet.create.fact2": "Locked with your password",
   "wallet.create.fact2Desc": "The phrase and your account's key are encrypted with your wallet password.",
   "wallet.create.fact3": "Kept on this computer",
@@ -925,9 +932,9 @@ export const en: Dict = {
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Add a passphrase (advanced)",
   "wallet.passphrase.toggleDesc":
-    "An extra word that changes every account the phrase makes, as on Ledger and Trezor. MetaMask doesn't support it.",
+    "Any text you choose, from a word to a whole sentence, that makes the phrase open a different set of accounts: the words alone no longer reach them. MetaMask doesn't support it.",
   "wallet.passphrase.warning":
-    "Write the passphrase down too. Restoring needs both the words and the exact passphrase, and a wrong one gives a different, empty wallet with no error.",
+    "Write it down exactly, capitals, spaces and symbols included, and keep it apart from the recovery phrase. It can't be changed or recovered, and a wrong one opens a different, empty wallet with no error. Letters, numbers and common symbols are safest, as every keyboard can type them.",
   "wallet.passphrase.label": "Passphrase",
   "wallet.passphrase.confirm": "Confirm passphrase",
   "wallet.passphrase.mismatch": "The passphrases don't match",
@@ -935,7 +942,7 @@ export const en: Dict = {
     "This phrase has a passphrase: you'll need it, exactly as typed, to restore these accounts.",
   "wallet.passphrase.importToggle": "It has a passphrase (advanced)",
   "wallet.passphrase.importToggleDesc":
-    "If you set an extra word on Ledger or Trezor, enter it to reach the same accounts.",
+    "If you set a passphrase in another wallet, enter it exactly to reach the same accounts.",
   "wallet.passphrase.importHint":
     "Exactly as set: case and spaces count. If the next step shows no familiar accounts, check it.",
   "wallet.passphrase.show": "Show the passphrase",

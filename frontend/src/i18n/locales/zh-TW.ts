@@ -26,7 +26,13 @@ const zhTW: Dict = {
   "hello.offer.title": "設定復原詞組",
   "hello.offer.desc": "錢包密碼已設定。現在建立一組復原詞組來備份你的帳戶，或匯入你已有的復原詞組。",
   "hello.offer.import": "匯入復原詞組",
+  "hello.offer.createDesc": "24 個新單字，備份您在這裡建立的每個帳戶。可在 MetaMask 和大多數其他錢包中使用。",
+  "hello.passphrase.title": "新增密碼短語？",
+  "hello.passphrase.desc": "選用。大多數人不需要；除非確定想要，否則請不要開啟。",
   "hello.password.title": "建立錢包密碼",
+  "hello.password.understand": "我了解如果遺失此密碼，將無法找回",
+  "hello.understand.title": "最後一件事",
+  "hello.understand.desc": "沒有人能為您重設或找回此密碼，包括 Parallax。",
   "hello.password.desc": "它保護您在這裡建立或匯入的每個帳戶。沒有人能為您重設它，請選擇一個您記得住的密碼。",
   "hello.confirm.title": "再輸入一次",
   "hello.confirm.desc": "只是為了確保沒有打錯。",
@@ -430,7 +436,7 @@ const zhTW: Dict = {
     "{n} 個單字，在此由系統的安全隨機來源產生。憑它們可以在本錢包或任何相容錢包中還原您的帳戶。",
   "wallet.create.words24": "改用 24 個單字",
   "wallet.create.words24Desc":
-    "256 位元，與 Ledger 和 Trezor 產生的相同。需要抄寫的內容加倍，而 12 個單字已遠超可被猜中的範圍。兩者都可在 MetaMask 和其他錢包中使用。",
+    "256 位元。需要抄寫的內容加倍，而 12 個單字已遠超可被猜中的範圍。兩者都可在 MetaMask 和其他錢包中使用。",
   "wallet.create.fact2": "以您的密碼鎖定",
   "wallet.create.fact2Desc": "助記詞和您帳戶的金鑰會以錢包密碼加密。",
   "wallet.create.fact3": "保存在這台電腦上",
@@ -595,15 +601,15 @@ const zhTW: Dict = {
   // Wallet: passphrase
   "wallet.passphrase.toggle": "新增密碼短語（進階）",
   "wallet.passphrase.toggleDesc":
-    "一個額外的詞，會改變該助記詞產生的每個帳戶，與 Ledger 和 Trezor 上的功能相同。MetaMask 不支援此功能。",
+    "您自選的任意文字，可以是一個詞，也可以是一整句話，讓助記詞開啟另一組帳戶：僅憑這些單字將無法存取它們。MetaMask 不支援此功能。",
   "wallet.passphrase.warning":
-    "也請把密碼短語抄寫下來。還原時既需要這些單字，也需要完全一致的密碼短語；密碼短語錯誤會得到另一個空錢包，且不會有任何錯誤提示。",
+    "請準確抄寫下來，包括大小寫、空格和符號，並與助記詞分開保管。它無法更改或找回，輸錯會開啟另一個空錢包，且不會有任何錯誤提示。字母、數字和常見符號最穩妥，因為任何鍵盤都能輸入。",
   "wallet.passphrase.label": "密碼短語",
   "wallet.passphrase.confirm": "確認密碼短語",
   "wallet.passphrase.mismatch": "兩次輸入的密碼短語不一致",
   "wallet.passphrase.remember": "此助記詞設有密碼短語：要還原這些帳戶，您需要與輸入時完全一致的密碼短語。",
   "wallet.passphrase.importToggle": "它設有密碼短語（進階）",
-  "wallet.passphrase.importToggleDesc": "如果您在 Ledger 或 Trezor 上設定過額外的詞，請輸入它以找到相同的帳戶。",
+  "wallet.passphrase.importToggleDesc": "如果您在其他錢包上設定過密碼短語，請準確輸入它以找到相同的帳戶。",
   "wallet.passphrase.importHint":
     "須與設定時完全一致：大小寫和空格都有區別。如果下一步沒有顯示熟悉的帳戶，請檢查密碼短語。",
   "wallet.passphrase.show": "顯示密碼短語",

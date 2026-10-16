@@ -1,9 +1,21 @@
-import { useCallback, useEffect, useId, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { AnimatePresence, motion, useAnimate } from "motion/react";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { api, walletError } from "../../lib/api";
 import { useWallet } from "../../lib/wallet";
 import { useAnimationsOff } from "../../lib/prefs";
+import { setSetupPending, setupPending } from "../../lib/walletSetup";
+import { Arrival } from "./Arrival";
 import { useT } from "../../i18n";
 import { EASE, Glow } from "../ui/Glow";
 import logo from "../../assets/logo.svg";
@@ -49,6 +61,8 @@ const APP_NAME = "Parallax Wallet";
 /** How often, at most, activity in the window puts off the wallet's auto-lock. */
 const TOUCH_EVERY_MS = 30_000;
 
+const Hello = lazy(() => import("../../pages/Hello"));
+
 /** What counts as the user being at the app. */
 const ACTIVITY = ["pointerdown", "pointermove", "keydown", "wheel"] as const;
 
@@ -58,10 +72,11 @@ const ACTIVITY = ["pointerdown", "pointermove", "keydown", "wheel"] as const;
  * behind it, so no page or form keeps what it held. Until the wallet first
  * answers it shows nothing, so the app never flashes up before the lock
  * screen. While unlocked, the user's activity in the window puts off the
- * auto-lock.
+ * auto-lock. A first launch's setup left after its password, with no
+ * account yet, goes on from its recovery phrase once unlocked.
  */
 export function LockGate({ children }: { children: ReactNode }) {
-  const { info } = useWallet();
+  const { info, refresh } = useWallet();
   const locked = !!info?.locked;
   const unlocked = !!info?.hasPassword && !locked;
   // The lock shuts itself only when the wallet locks while the app is open: launched locked, the screen is simply there
@@ -69,6 +84,20 @@ export function LockGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (unlocked) opened.current = true;
   }, [unlocked]);
+
+  // A setup left halfway is known only once unlocked, when the accounts are: then it shows until it is through
+  const [setup, setSetup] = useState<"maybe" | "on" | "off">(() => (setupPending() ? "maybe" : "off"));
+  const fresh = unlocked && info.accounts.length === 0 && info.seeds.length === 0;
+  const arrive = useRef(false);
+  useEffect(() => {
+    if (setup === "off" && !locked) arrive.current = false;
+  });
+  useEffect(() => {
+    if (setup !== "maybe" || !unlocked) return;
+    // Accounts made since some other way: the setup is through
+    if (!fresh) setSetupPending(false);
+    setSetup(fresh ? "on" : "off");
+  }, [setup, unlocked, fresh]);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -87,7 +116,24 @@ export function LockGate({ children }: { children: ReactNode }) {
 
   if (!info) return null;
   if (locked) return <LockScreen shutting={opened.current} />;
-  return <>{children}</>;
+  if (setup === "maybe" && unlocked) return null;
+  if (setup === "on")
+    return (
+      <Suspense fallback={null}>
+        <Hello
+          node={false}
+          wallet
+          resume
+          onDone={() => {
+            arrive.current = true;
+            setSetup("off");
+            refresh();
+          }}
+        />
+      </Suspense>
+    );
+  // Through a setup picked up again here, the app arrives as after a first launch's: once, not on every unlock after
+  return <Arrival play={arrive.current}>{children}</Arrival>;
 }
 
 /**

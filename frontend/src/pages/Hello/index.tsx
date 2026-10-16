@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ArrowRight, Loader2, Server, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ChevronRight, Download, Loader2, Plus, Server, ShieldCheck } from "lucide-react";
 import { CONFIG_UPDATED_EVENT } from "../../App";
 import { api, GUIConfig, NodeStatus, SeedCandidate, walletError } from "../../lib/api";
 import { formatInt } from "../../lib/format";
@@ -8,12 +8,14 @@ import { syncProgress } from "../../lib/live";
 import { Counter } from "../../components/ui/Counter";
 import { EASE, Glow } from "../../components/ui/Glow";
 import { useAnimationsOff } from "../../lib/prefs";
+import { SPRING } from "../../lib/motion";
+import { setSetupPending } from "../../lib/walletSetup";
 import { Lang, useLang, useT } from "../../i18n";
 import { LANG_NAMES } from "../../i18n/translations";
 import { Meter, Notice } from "../../components/ui/bits";
 import logo from "../../assets/logo.svg";
 import Toggle from "../../components/ui/Toggle";
-import { Checkbox, DrawnCheck, Field, MIN_PASSWORD, PasswordInput } from "../Wallet/common";
+import { DrawnCheck, MIN_PASSWORD, PasswordInput } from "../Wallet/common";
 import { Requirement, StrengthMeter } from "../Wallet/CreateStep";
 import { Choice } from "../../components/ui/Choice";
 import { PhraseGrid, PhraseInput, PhraseQuiz, PhraseWarning } from "../Wallet/Phrase";
@@ -62,6 +64,8 @@ const SCAN_BATCH = 5;
 const LOGO_MS = 1900;
 /** How long each greeting stays, in ms. */
 const STEP_MS = 1150;
+/** How long "Your wallet is ready" stays before the app comes in, in ms. */
+const READY_MS = 5000;
 
 type Stage =
   | "greet"
@@ -74,11 +78,13 @@ type Stage =
   | "wallet"
   | "password"
   | "confirm"
+  | "understand"
   | "offer"
   | "import"
   | "importAccounts"
   | "phrase"
   | "quiz"
+  | "passphrase"
   | "done";
 
 /** Where Back goes from each stage that has one. */
@@ -88,8 +94,10 @@ const BACK: Partial<Record<Stage, Stage>> = {
   datadir: "mode",
   networking: "datadir",
   confirm: "password",
+  understand: "confirm",
   import: "offer",
   importAccounts: "import",
+  phrase: "offer",
   quiz: "phrase",
 };
 
@@ -99,28 +107,35 @@ const BACK: Partial<Record<Stage, Stage>> = {
  * one question each. On a new install that is the node's setup (language,
  * data directory, networking; everything else as it comes), after which
  * the node starts. While the wallet is new it is then the wallet password
- * and a recovery phrase, made and confirmed or imported: none of it can be
- * skipped. onDone tells whether a wallet password was made.
+ * and a recovery phrase, imported or made: 24 words, typed back or
+ * left to back up later, and an optional passphrase, nothing of it stored
+ * until the last step. Left before then, it resumes at the phrase once the
+ * wallet is next unlocked (resume). onDone tells whether a wallet password
+ * was made.
  */
 export default function Hello({
   node,
   wallet,
+  resume,
   onDone,
 }: {
   /** Whether the node still needs its first setup. */
   node: boolean;
   /** Whether the wallet is new: no password, no keys. */
   wallet: boolean;
+  /** Whether this is a setup left after its password, picked up again at the recovery phrase. */
+  resume?: boolean;
   onDone: (created: boolean) => void;
 }) {
   const t = useT();
   const off = useAnimationsOff();
-  const [stage, setStage] = useState<Stage>(off ? "choose" : "greet");
+  const [stage, setStage] = useState<Stage>(resume ? "offer" : off ? "choose" : "greet");
   const [password, setPassword] = useState("");
-  const [phrase, setPhrase] = useState<{
-    seedId: string;
-    words: string[];
-  } | null>(null);
+  // That a lost password can't be recovered, acknowledged: kept should the user come back to it
+  const [understood, setUnderstood] = useState(false);
+  // A phrase being made: its words, and whether they were typed back
+  const [phrase, setPhrase] = useState<string[] | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
   // A phrase being imported, and the accounts found in it
   const [words, setWords] = useState("");
   const [passphrase, setPassphrase] = useState("");
@@ -146,23 +161,43 @@ export default function Hello({
     [],
   );
   const finish = () => {
+    setSetupPending(false);
     setPassword("");
     setPhrase(null);
     setWords("");
     setPassphrase("");
     setStage("done");
   };
-  const back = BACK[stage] ?? (stage === "password" ? (node ? "wallet" : "choose") : undefined);
+  // From the passphrase, Back goes to where it came from: the quiz, or the words it skipped
+  const passphraseBack = confirmed ? "quiz" : "phrase";
+  const back =
+    BACK[stage] ??
+    (stage === "password" ? (node ? "wallet" : "choose") : stage === "passphrase" ? passphraseBack : undefined);
+
+  // Leaving, as a Mac's setup assistant gives way to the desktop: the screen eases forward and away, then the app arrives (Arrival)
+  const [leaving, setLeaving] = useState<boolean | null>(null);
+  const leave = (created: boolean) => (off ? onDone(created) : setLeaving(created));
 
   const createPassword = (
     <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={() => setStage("password")} autoFocus>
       {t("hello.create")}
-      <ArrowRight className="size-4" />
     </button>
   );
 
   return (
-    <div className="hello fixed inset-0 overflow-hidden bg-background">
+    <motion.div
+      className={`hello fixed inset-0 overflow-hidden bg-background ${leaving !== null ? "pointer-events-none" : ""}`}
+      initial={false}
+      animate={
+        leaving !== null
+          ? { opacity: 0, scale: 1.04, filter: "blur(10px)" }
+          : { opacity: 1, scale: 1, filter: "blur(0px)" }
+      }
+      transition={{ duration: 0.45, ease: "easeIn" }}
+      onAnimationComplete={() => {
+        if (leaving !== null) onDone(leaving);
+      }}
+    >
       <Glow />
       {/* The window's title bar: draggable, with room for its controls */}
       <div className="drag absolute inset-x-0 top-0 z-10 flex h-13 items-center">
@@ -204,7 +239,6 @@ export default function Hello({
                   autoFocus
                 >
                   {t("onboarding.welcome.cta")}
-                  <ArrowRight className="size-4" />
                 </button>
               ) : (
                 createPassword
@@ -221,7 +255,7 @@ export default function Hello({
                 await api.saveBootstrap({ ...cfg, offlineSigner: true, autoStartNode: false });
                 window.dispatchEvent(new Event(CONFIG_UPDATED_EVENT));
                 if (wallet) setStage("wallet");
-                else onDone(false);
+                else leave(false);
               }}
             />
           ) : stage === "datadir" && cfg ? (
@@ -236,10 +270,10 @@ export default function Hello({
               key="networking"
               cfg={cfg}
               onChange={setCfg}
-              onStarted={(running) => (running ? setStage("sync") : wallet ? setStage("wallet") : onDone(false))}
+              onStarted={(running) => (running ? setStage("sync") : wallet ? setStage("wallet") : leave(false))}
             />
           ) : stage === "sync" ? (
-            <Sync key="sync" onNext={() => (wallet ? setStage("wallet") : onDone(false))} />
+            <Sync key="sync" onNext={() => (wallet ? setStage("wallet") : leave(false))} />
           ) : stage === "wallet" ? (
             <Screen key="wallet" title={t("hello.wallet.title")} desc={t("hello.wallet.desc")} top={<DrawnCheck />}>
               {createPassword}
@@ -247,9 +281,13 @@ export default function Hello({
           ) : stage === "password" ? (
             <ChoosePassword key="password" value={password} onChange={setPassword} onNext={() => setStage("confirm")} />
           ) : stage === "confirm" ? (
-            <ConfirmPassword
-              key="confirm"
+            <ConfirmPassword key="confirm" password={password} onNext={() => setStage("understand")} />
+          ) : stage === "understand" ? (
+            <Understand
+              key="understand"
               password={password}
+              understood={understood}
+              onUnderstood={setUnderstood}
               onDone={() => {
                 // Set: the wallet is unlocked with it, and nothing here needs it again
                 setPassword("");
@@ -292,22 +330,42 @@ export default function Hello({
             />
           ) : stage === "phrase" && phrase ? (
             <Screen key="phrase" title={t("wallet.phrase.yours")} desc={t("wallet.phrase.writeDown")} wide>
-              <div className="flex w-full flex-col gap-4">
-                <PhraseGrid words={phrase.words} />
-                <PhraseWarning />
+              {/* The words in one card, the warning as its footnote */}
+              <div className="flex w-full flex-col gap-2 text-left">
+                <div className="glass px-5 py-4">
+                  <PhraseGrid words={phrase} />
+                </div>
+                <div className="px-4">
+                  <PhraseWarning />
+                </div>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
-                <button type="button" className="btn btn-secondary btn-lg" onClick={finish}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-lg"
+                  onClick={() => {
+                    setConfirmed(false);
+                    setStage("passphrase");
+                  }}
+                >
                   {t("wallet.phrase.backupLater")}
                 </button>
                 <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={() => setStage("quiz")}>
                   {t("wallet.phrase.written")}
-                  <ArrowRight className="size-4" />
                 </button>
               </div>
             </Screen>
           ) : stage === "quiz" && phrase ? (
-            <Quiz key="quiz" phrase={phrase} onConfirmed={finish} />
+            <Quiz
+              key="quiz"
+              words={phrase}
+              onConfirmed={() => {
+                setConfirmed(true);
+                setStage("passphrase");
+              }}
+            />
+          ) : stage === "passphrase" && phrase ? (
+            <Passphrase key="passphrase" words={phrase} confirmed={confirmed} onCreated={finish} />
           ) : stage === "done" ? (
             <Screen
               key="done"
@@ -315,15 +373,12 @@ export default function Hello({
               desc={t("wallet.phrase.readyDesc")}
               top={<DrawnCheck />}
             >
-              <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={() => onDone(true)} autoFocus>
-                {t("common.continue")}
-                <ArrowRight className="size-4" />
-              </button>
+              <Countdown ms={READY_MS} onDone={() => leave(true)} />
             </Screen>
           ) : null}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -448,6 +503,12 @@ function Greeting({
   );
 }
 
+/** A field flat in its card's row, as in a Mac's settings group: no box of its own, no ring, the caret showing the focus. */
+const FLAT =
+  "[&_.input]:border-transparent [&_.input]:bg-transparent [&_.input]:pl-0 [&_.input]:text-base [&_.input]:shadow-none [&_.input:focus]:border-transparent [&_.input:focus]:shadow-none";
+/** A one-line field so: as tall as a row. Only its start loses its padding, the end keeping room for its eye. */
+const FLAT_FIELD = `${FLAT} [&_.input]:h-11`;
+
 /** Screen is one step of the password sequence: a big title, a line, and its controls, centred. */
 function Screen({
   title,
@@ -510,39 +571,42 @@ function ChoosePassword({
           if (longEnough) onNext();
         }}
       >
-        <label htmlFor={id} className="sr-only">
-          {t("wallet.walletPassword")}
-        </label>
-        <div className="[&_.input]:h-11 [&_.input]:text-base">
-          <PasswordInput
-            id={id}
-            value={value}
-            onChange={onChange}
-            isNew
-            autoFocus
-            placeholder={t("wallet.walletPassword")}
-          />
+        {/* As a Settings group: the password and how strong it is in one card */}
+        <div className="glass flex flex-col divide-y divide-border overflow-hidden text-left">
+          <div className="px-4 py-1">
+            <label htmlFor={id} className="sr-only">
+              {t("wallet.walletPassword")}
+            </label>
+            <div className={FLAT_FIELD}>
+              <PasswordInput
+                id={id}
+                value={value}
+                onChange={onChange}
+                isNew
+                autoFocus
+                placeholder={t("wallet.walletPassword")}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2.5 px-4 py-3">
+            <StrengthMeter strength={rate(value)} empty={value.length === 0} />
+            <ul className="flex flex-col gap-1.5">
+              <Requirement met={longEnough} label={t("wallet.create.req.length", { n: MIN_PASSWORD })} />
+            </ul>
+          </div>
         </div>
-        <StrengthMeter strength={rate(value)} empty={value.length === 0} />
-        <ul className="flex flex-col gap-1.5">
-          <Requirement met={longEnough} label={t("wallet.create.req.length", { n: MIN_PASSWORD })} />
-        </ul>
-        <p className="text-sm text-warn-ink">{t("wallet.setup.noRecovery")}</p>
         <button type="submit" className="btn btn-primary btn-lg mt-2 min-w-64 self-center" disabled={!longEnough}>
           {t("common.continue")}
-          <ArrowRight className="size-4" />
         </button>
       </form>
     </Screen>
   );
 }
 
-function ConfirmPassword({ password, onDone }: { password: string; onDone: () => void }) {
+function ConfirmPassword({ password, onNext }: { password: string; onNext: () => void }) {
   const t = useT();
   const id = useId();
   const [again, setAgain] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   useEffect(() => () => setAgain(""), []);
   const matches = again.length > 0 && again === password;
 
@@ -550,14 +614,72 @@ function ConfirmPassword({ password, onDone }: { password: string; onDone: () =>
     <Screen title={t("hello.confirm.title")} desc={t("hello.confirm.desc")}>
       <form
         className="flex w-full flex-col gap-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (matches) onNext();
+        }}
+      >
+        {/* As the password's own page: the field and whether it matches in one card */}
+        <div className="glass flex flex-col divide-y divide-border overflow-hidden text-left">
+          <div className="px-4 py-1">
+            <label htmlFor={id} className="sr-only">
+              {t("wallet.password.confirm")}
+            </label>
+            <div className={FLAT_FIELD}>
+              <PasswordInput
+                id={id}
+                value={again}
+                onChange={setAgain}
+                isNew
+                autoFocus
+                placeholder={t("wallet.password.confirm")}
+              />
+            </div>
+          </div>
+          <ul className="flex flex-col gap-1.5 px-4 py-3">
+            <Requirement met={matches} label={t("wallet.create.req.match")} />
+          </ul>
+        </div>
+        <button type="submit" className="btn btn-primary btn-lg mt-2 min-w-64 self-center" disabled={!matches}>
+          {t("common.continue")}
+        </button>
+      </form>
+    </Screen>
+  );
+}
+
+/**
+ * Understand comes once the password is chosen and typed again: that it
+ * can't be reset or recovered, ticked, before it is set. Setting it
+ * unlocks the wallet with it.
+ */
+function Understand({
+  password,
+  understood,
+  onUnderstood,
+  onDone,
+}: {
+  password: string;
+  understood: boolean;
+  onUnderstood: (v: boolean) => void;
+  onDone: () => void;
+}) {
+  const t = useT();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <Screen title={t("hello.understand.title")} desc={t("hello.understand.desc")}>
+      <form
+        className="flex w-full flex-col gap-4"
         onSubmit={async (e) => {
           e.preventDefault();
-          if (!matches || busy) return;
+          if (!understood || busy) return;
           setBusy(true);
           setError(null);
           try {
             await api.walletSetupPassword(password);
-            setAgain("");
+            // Set at once, unlike the phrase: an app closed before the phrase is stored comes back to it
+            setSetupPending(true);
             onDone();
           } catch (err) {
             setError(walletError(err, t));
@@ -566,24 +688,28 @@ function ConfirmPassword({ password, onDone }: { password: string; onDone: () =>
           }
         }}
       >
-        <label htmlFor={id} className="sr-only">
-          {t("wallet.password.confirm")}
-        </label>
-        <div className="[&_.input]:h-11 [&_.input]:text-base">
-          <PasswordInput
-            id={id}
-            value={again}
-            onChange={setAgain}
-            isNew
-            autoFocus
-            placeholder={t("wallet.password.confirm")}
-          />
+        <div className="flex flex-col gap-2 text-left">
+          {/* The card stays as it is when ticked, as on a Mac: only the box fills */}
+          <div className="glass overflow-hidden">
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={understood}
+              onClick={() => onUnderstood(!understood)}
+              className="flex w-full items-center gap-3 px-4 py-3 text-left font-medium transition-colors hover:bg-[var(--glass-hover)]"
+            >
+              <CheckMark checked={understood} />
+              {t("hello.password.understand")}
+            </button>
+          </div>
+          <p className="px-4 text-sm text-muted-foreground">{t("wallet.setup.noRecovery")}</p>
         </div>
-        <ul className="flex flex-col gap-1.5">
-          <Requirement met={matches} label={t("wallet.create.req.match")} />
-        </ul>
         {error && <Notice tone="critical">{error}</Notice>}
-        <button type="submit" className="btn btn-primary btn-lg mt-2 min-w-64 self-center" disabled={!matches || busy}>
+        <button
+          type="submit"
+          className="btn btn-primary btn-lg mt-2 min-w-64 self-center"
+          disabled={!understood || busy}
+        >
           {busy && <Loader2 className="size-4 animate-spin" />}
           {t("hello.confirm.cta")}
         </button>
@@ -593,51 +719,261 @@ function ConfirmPassword({ password, onDone }: { password: string; onDone: () =>
 }
 
 /**
+ * Countdown is a thin bar, as a Mac's progress bar, emptying over ms, then
+ * calls onDone. The time is kept apart from the bar, so it holds with
+ * animations off too.
+ */
+function Countdown({ ms, onDone }: { ms: number; onDone: () => void }) {
+  useEffect(() => {
+    const id = setTimeout(onDone, ms);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ms]);
+  return (
+    <div aria-hidden className="h-1 w-48 overflow-hidden rounded-full bg-muted">
+      <motion.div
+        className="h-full rounded-full bg-brand-fill"
+        style={{ originX: 0 }}
+        initial={{ scaleX: 1 }}
+        animate={{ scaleX: 0 }}
+        transition={{ duration: ms / 1000, ease: "linear" }}
+      />
+    </div>
+  );
+}
+
+/** CheckMark is a checkbox's box, as on a Mac: a rounded square that fills and draws its check when ticked. */
+function CheckMark({ checked }: { checked: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={`grid size-5 shrink-0 place-items-center rounded-md transition-colors duration-200 ${
+        checked ? "bg-brand-fill text-brand-foreground" : "border border-border-strong"
+      }`}
+    >
+      <svg viewBox="0 0 24 24" className="size-3.5" fill="none">
+        <AnimatePresence initial={false}>
+          {checked && (
+            <motion.path
+              d="M5 12.5l4.5 4.5L19 7.5"
+              stroke="currentColor"
+              strokeWidth={3.25}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1, transition: { duration: 0.25, ease: "easeOut" } }}
+              exit={{ opacity: 0, transition: { duration: 0.1 } }}
+            />
+          )}
+        </AnimatePresence>
+      </svg>
+    </span>
+  );
+}
+
+/**
  * Offer comes right after the password: a recovery phrase is next, made
  * here under the password just set, or one the user already has, imported.
  */
-function Offer({
-  onMade,
-  onImport,
-}: {
-  onMade: (phrase: { seedId: string; words: string[] }) => void;
-  onImport: () => void;
-}) {
+function Offer({ onMade, onImport }: { onMade: (words: string[]) => void; onImport: () => void }) {
   const t = useT();
-  const defaultName = useDefaultName();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const create = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      // 24 words, nothing stored yet: that waits for the passphrase step
+      onMade(await api.walletNewSeedWords(24));
+    } catch (e) {
+      setError(walletError(e, t));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <Screen title={t("hello.offer.title")} desc={t("hello.offer.desc")} top={<DrawnCheck />}>
-      {error && <Notice tone="critical">{error}</Notice>}
-      <div className="flex flex-col items-center gap-3">
-        <button
-          type="button"
-          className="btn btn-primary btn-lg min-w-64"
-          disabled={busy}
-          autoFocus
-          onClick={async () => {
-            setBusy(true);
-            setError(null);
-            try {
-              const made = await api.walletCreateSeed(defaultName, "");
-              onMade({ seedId: made.seedId, words: made.words });
-            } catch (e) {
-              setError(walletError(e, t));
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          {busy && <Loader2 className="size-4 animate-spin" />}
-          {t("wallet.offer.cta")}
-          {!busy && <ArrowRight className="size-4" />}
-        </button>
-        <button type="button" className="btn btn-secondary btn-lg min-w-64" onClick={onImport} disabled={busy}>
-          {t("hello.offer.import")}
-        </button>
+    <Screen title={t("hello.offer.title")} desc={t("hello.offer.desc")} top={<DrawnCheck />} wide>
+      {/* As a Mac's setup assistant: the ways on as rows of one card, each opening its own step */}
+      <div className="flex w-full flex-col gap-2">
+        <div className="glass flex w-full flex-col divide-y divide-border overflow-hidden text-left">
+          <OfferRow
+            icon={Plus}
+            title={t("wallet.offer.cta")}
+            desc={t("hello.offer.createDesc")}
+            busy={busy}
+            disabled={busy}
+            onClick={create}
+            autoFocus
+          />
+          <OfferRow
+            icon={Download}
+            title={t("hello.offer.import")}
+            desc={t("wallet.import.phraseDesc")}
+            disabled={busy}
+            onClick={onImport}
+          />
+        </div>
+        {error && <Notice tone="critical">{error}</Notice>}
       </div>
     </Screen>
+  );
+}
+
+/** OfferRow is one way on from Offer: its symbol, its name and line, and a chevron, or a spinner while it works. */
+function OfferRow({
+  icon: Icon,
+  title,
+  desc,
+  busy,
+  disabled,
+  onClick,
+  autoFocus,
+}: {
+  icon: typeof Plus;
+  title: string;
+  desc: string;
+  busy?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  autoFocus?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      autoFocus={autoFocus}
+      className="group flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors enabled:hover:bg-[var(--glass-hover)] disabled:opacity-60"
+    >
+      <Icon className="size-5 shrink-0 text-brand" strokeWidth={1.75} />
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="font-medium">{title}</span>
+        <span className="text-sm text-muted-foreground">{desc}</span>
+      </span>
+      {busy ? (
+        <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+      ) : (
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-enabled:group-hover:translate-x-0.5" />
+      )}
+    </button>
+  );
+}
+
+/**
+ * Passphrase offers a BIP-39 passphrase on top of the words, typed twice
+ * since nothing can tell a mistyped one, then stores the phrase and its
+ * first account: confirmed if its words were typed back.
+ */
+function Passphrase({ words, confirmed, onCreated }: { words: string[]; confirmed: boolean; onCreated: () => void }) {
+  const t = useT();
+  const defaultName = useDefaultName();
+  const [advanced, setAdvanced] = useState(false);
+  const [a, setA] = useState("");
+  const [b, setB] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(
+    () => () => {
+      setA("");
+      setB("");
+    },
+    [],
+  );
+  const mismatch = b.length > 0 && a !== b;
+  const ready = !advanced || (a !== "" && a === b);
+  return (
+    <Screen title={t("hello.passphrase.title")} desc={t("hello.passphrase.desc")} wide>
+      <form
+        className="flex w-full flex-col items-center gap-6"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!ready || busy) return;
+          setBusy(true);
+          setError(null);
+          try {
+            await api.walletCreateSeedWords(defaultName, words.join(" "), advanced ? a : "", confirmed);
+            onCreated();
+          } catch (err) {
+            setError(walletError(err, t));
+            setBusy(false);
+          }
+        }}
+      >
+        {/* As a Settings group: the switch, the fields it brings out folding open under it, and a footnote */}
+        <div className="flex w-full flex-col gap-2 text-left">
+          <div className="glass overflow-hidden">
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <span className="font-medium">{t("wallet.passphrase.toggle")}</span>
+              <Toggle
+                checked={advanced}
+                onChange={(on) => {
+                  setAdvanced(on);
+                  if (!on) {
+                    setA("");
+                    setB("");
+                  }
+                }}
+                label={t("wallet.passphrase.toggle")}
+              />
+            </div>
+            <AnimatePresence initial={false}>
+              {advanced && (
+                <motion.div
+                  className="overflow-hidden"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={SPRING}
+                >
+                  <div className={`flex flex-col divide-y divide-border border-t border-border ${FLAT_FIELD}`}>
+                    <PassphraseRow label={t("wallet.passphrase.label")}>
+                      {(id) => <PasswordInput id={id} value={a} onChange={setA} isNew autoFocus />}
+                    </PassphraseRow>
+                    <PassphraseRow label={t("wallet.passphrase.confirm")}>
+                      {(id) => <PasswordInput id={id} value={b} onChange={setB} isNew />}
+                    </PassphraseRow>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.p
+              key={mismatch ? "mismatch" : advanced ? "warning" : "about"}
+              role={mismatch ? "alert" : undefined}
+              className={`px-4 text-sm ${mismatch ? "text-critical-ink" : advanced ? "text-warn-ink" : "text-muted-foreground"}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { duration: 0.2 } }}
+              exit={{ opacity: 0, transition: { duration: 0.12 } }}
+            >
+              {mismatch
+                ? t("wallet.passphrase.mismatch")
+                : advanced
+                  ? t("wallet.passphrase.warning")
+                  : t("wallet.passphrase.toggleDesc")}
+            </motion.p>
+          </AnimatePresence>
+          {error && <Notice tone="critical">{error}</Notice>}
+        </div>
+        <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!ready || busy} autoFocus>
+          {busy && <Loader2 className="size-4 animate-spin" />}
+          {t("wallet.create.cta")}
+        </button>
+      </form>
+    </Screen>
+  );
+}
+
+/** PassphraseRow is one field of Passphrase's group: its label on the left, the field filling the rest. */
+function PassphraseRow({ label, children }: { label: string; children: (id: string) => React.ReactNode }) {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-1.5 px-4 pt-3 pb-1 sm:flex-row sm:items-center sm:gap-4 sm:py-1">
+      <label htmlFor={id} className="text-sm sm:w-40 sm:shrink-0">
+        {label}
+      </label>
+      <div className="min-w-0 flex-1">{children(id)}</div>
+    </div>
   );
 }
 
@@ -680,32 +1016,62 @@ function ImportPhrase({
           }
         }}
       >
-        <div className="flex w-full flex-col gap-4 text-left">
-          <label htmlFor={id} className="sr-only">
-            {t("wallet.import.phraseLabel")}
-          </label>
-          <PhraseInput id={id} value={words} onChange={onWords} />
-          <Checkbox
-            checked={advanced}
-            onChange={(on) => {
-              setAdvanced(on);
-              if (!on) onPassphrase("");
-            }}
-          >
-            <span className="font-medium">{t("wallet.passphrase.importToggle")}</span>
-            <span className="block text-sm text-muted-foreground">{t("wallet.passphrase.importToggleDesc")}</span>
-          </Checkbox>
-          {advanced && (
-            <Field label={t("wallet.passphrase.label")} hint={t("wallet.passphrase.importHint")}>
-              {(fid) => <PasswordInput id={fid} value={passphrase} onChange={onPassphrase} />}
-            </Field>
-          )}
+        {/* As Settings groups: the words in one card, the passphrase's switch and field in another, each with its footnote */}
+        <div className="flex w-full flex-col gap-6 text-left">
+          <div className={`glass px-4 py-3 ${FLAT}`}>
+            <label htmlFor={id} className="sr-only">
+              {t("wallet.import.phraseLabel")}
+            </label>
+            <PhraseInput id={id} value={words} onChange={onWords} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="glass overflow-hidden">
+              <div className="flex items-center justify-between gap-4 px-4 py-3">
+                <span className="font-medium">{t("wallet.passphrase.importToggle")}</span>
+                <Toggle
+                  checked={advanced}
+                  onChange={(on) => {
+                    setAdvanced(on);
+                    if (!on) onPassphrase("");
+                  }}
+                  label={t("wallet.passphrase.importToggle")}
+                />
+              </div>
+              <AnimatePresence initial={false}>
+                {advanced && (
+                  <motion.div
+                    className="overflow-hidden"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={SPRING}
+                  >
+                    <div className={`border-t border-border ${FLAT_FIELD}`}>
+                      <PassphraseRow label={t("wallet.passphrase.label")}>
+                        {(fid) => <PasswordInput id={fid} value={passphrase} onChange={onPassphrase} autoFocus />}
+                      </PassphraseRow>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.p
+                key={advanced ? "hint" : "about"}
+                className="px-4 text-sm text-muted-foreground"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { duration: 0.2 } }}
+                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+              >
+                {advanced ? t("wallet.passphrase.importHint") : t("wallet.passphrase.importToggleDesc")}
+              </motion.p>
+            </AnimatePresence>
+          </div>
           {error && <Notice tone="critical">{error}</Notice>}
         </div>
         <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!ready || busy}>
           {busy && <Loader2 className="size-4 animate-spin" />}
           {t("common.continue")}
-          {!busy && <ArrowRight className="size-4" />}
         </button>
       </form>
     </Screen>
@@ -802,37 +1168,23 @@ function ImportAccounts({
   );
 }
 
-/** Quiz asks for three of the phrase's words, then marks it confirmed. */
-function Quiz({ phrase, onConfirmed }: { phrase: { seedId: string; words: string[] }; onConfirmed: () => void }) {
+/** Quiz asks for three of the phrase's words, to be sure they were written down right. */
+function Quiz({ words, onConfirmed }: { words: string[]; onConfirmed: () => void }) {
   const t = useT();
   const [valid, setValid] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   return (
     <Screen title={t("wallet.phrase.quizTitle")} desc={t("wallet.phrase.quizDesc")} wide>
       <form
         className="flex w-full flex-col items-center gap-6"
-        onSubmit={async (e) => {
+        onSubmit={(e) => {
           e.preventDefault();
-          if (!valid || busy) return;
-          setBusy(true);
-          setError(null);
-          try {
-            await api.walletConfirmSeed(phrase.seedId);
-            onConfirmed();
-          } catch (err) {
-            setError(walletError(err, t));
-          } finally {
-            setBusy(false);
-          }
+          if (valid) onConfirmed();
         }}
       >
         <div className="w-full">
-          <PhraseQuiz words={phrase.words} onValid={setValid} />
+          <PhraseQuiz words={words} onValid={setValid} />
         </div>
-        {error && <Notice tone="critical">{error}</Notice>}
-        <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!valid || busy}>
-          {busy && <Loader2 className="size-4 animate-spin" />}
+        <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!valid}>
           {t("wallet.phrase.confirm")}
         </button>
       </form>
@@ -853,7 +1205,6 @@ function Language({ onNext }: { onNext: () => void }) {
       </div>
       <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={onNext} autoFocus>
         {t("common.continue")}
-        <ArrowRight className="size-4" />
       </button>
     </Screen>
   );
@@ -907,7 +1258,6 @@ function Mode({ onOnline, onOffline }: { onOnline: () => void; onOffline: () => 
       >
         {busy && <Loader2 className="size-4 animate-spin" />}
         {t("common.continue")}
-        <ArrowRight className="size-4" />
       </button>
     </Screen>
   );
@@ -939,7 +1289,6 @@ function DataDir({ value, onChange, onNext }: { value: string; onChange: (v: str
         />
         <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!value.trim()}>
           {t("common.continue")}
-          <ArrowRight className="size-4" />
         </button>
       </form>
     </Screen>
@@ -1007,7 +1356,6 @@ function Networking({
       <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={start} disabled={busy} autoFocus>
         {busy && <Loader2 className="size-4 animate-spin" />}
         {busy ? t("onboarding.starting.title") : saved ? t("common.continue") : t("onboarding.rpc.cta")}
-        {!busy && <ArrowRight className="size-4" />}
       </button>
     </Screen>
   );
@@ -1127,7 +1475,6 @@ function Sync({ onNext }: { onNext: () => void }) {
             animate={{ opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } }}
           >
             {t("common.continue")}
-            <ArrowRight className="size-4" />
           </motion.button>
         ) : stopped ? (
           <motion.button
