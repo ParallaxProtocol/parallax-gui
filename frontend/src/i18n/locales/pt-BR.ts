@@ -313,7 +313,6 @@ const ptBR: Dict = {
   "details.mempool": "Mempool",
   "details.usage": "Uso",
   "details.daemonVersion": "Versão do daemon",
-  "details.walletDir": "Diretório da carteira",
   "details.cpu": "CPU",
   "details.cpuDetail": "Computador {system} · espera de E/S {wait}",
   "details.disk": "Atividade de disco",

@@ -304,7 +304,6 @@ const zhTW: Dict = {
   "details.mempool": "交易池",
   "details.usage": "使用情況",
   "details.daemonVersion": "常駐程式版本",
-  "details.walletDir": "錢包目錄",
   "details.cpu": "CPU",
   "details.cpuDetail": "整機 {system} · I/O 等待 {wait}",
   "details.disk": "磁碟活動",

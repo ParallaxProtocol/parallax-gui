@@ -304,7 +304,6 @@ const zhSG: Dict = {
   "details.mempool": "交易池",
   "details.usage": "使用情况",
   "details.daemonVersion": "守护进程版本",
-  "details.walletDir": "钱包目录",
   "details.cpu": "CPU",
   "details.cpuDetail": "整机 {system} · I/O 等待 {wait}",
   "details.disk": "磁盘活动",

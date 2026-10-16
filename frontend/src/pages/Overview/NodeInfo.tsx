@@ -10,7 +10,6 @@ import { Panel, Property, Rows, Section, Stat, StatStrip, Tile } from "../../com
 import { Donut } from "../../components/ui/Donut";
 import { Sparkline } from "../../components/ui/Sparkline";
 import { useUsage } from "../../lib/usage";
-import { useWallet } from "../../lib/wallet";
 import { CopyButton } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 
@@ -48,7 +47,6 @@ export default function NodeInfo({
   const t = useT();
   const [more, setMore] = useState(readMore);
   const usage = useUsage(node.running && more);
-  const keystoreDir = useWallet().info?.keystoreDir;
   const stagger = useStagger();
 
   if (!d?.running) return null;
@@ -270,14 +268,6 @@ export default function NodeInfo({
                       </Tooltip>
                       <CopyButton value={node.dataDir} className="-my-1 -mr-2" />
                     </Property>
-                    {keystoreDir && (
-                      <Property label={t("details.walletDir")} mono>
-                        <Tooltip content={keystoreDir} mono overflowOnly>
-                          <span className="truncate">{keystoreDir}</span>
-                        </Tooltip>
-                        <CopyButton value={keystoreDir} className="-my-1 -mr-2" />
-                      </Property>
-                    )}
                   </Rows>
                 </Section>
               </motion.div>

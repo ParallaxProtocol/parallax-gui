@@ -313,7 +313,6 @@ const ru: Dict = {
   "details.mempool": "Мемпул",
   "details.usage": "Использование",
   "details.daemonVersion": "Версия демона",
-  "details.walletDir": "Каталог кошелька",
   "details.cpu": "ЦП",
   "details.cpuDetail": "Компьютер {system} · ожидание ввода-вывода {wait}",
   "details.disk": "Активность диска",

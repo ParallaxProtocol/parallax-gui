@@ -315,7 +315,6 @@ const fr: Dict = {
   "details.mempool": "Mempool",
   "details.usage": "Utilisation",
   "details.daemonVersion": "Version du démon",
-  "details.walletDir": "Dossier du portefeuille",
   "details.cpu": "Processeur",
   "details.cpuDetail": "Ordinateur {system} · attente E/S {wait}",
   "details.disk": "Activité disque",

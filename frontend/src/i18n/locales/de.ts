@@ -317,7 +317,6 @@ const de: Dict = {
   "details.mempool": "Mempool",
   "details.usage": "Nutzung",
   "details.daemonVersion": "Daemon-Version",
-  "details.walletDir": "Wallet-Verzeichnis",
   "details.cpu": "CPU",
   "details.cpuDetail": "Computer {system} · E/A-Wartezeit {wait}",
   "details.disk": "Datenträgeraktivität",

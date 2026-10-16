@@ -331,7 +331,6 @@ export const en: Dict = {
   "details.mempool": "Mempool",
   "details.usage": "Usage",
   "details.daemonVersion": "Daemon version",
-  "details.walletDir": "Wallet directory",
   "details.cpu": "CPU",
   "details.cpuDetail": "Computer {system} · I/O wait {wait}",
   "details.disk": "Disk activity",
