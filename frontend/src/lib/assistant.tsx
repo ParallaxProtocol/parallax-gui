@@ -30,6 +30,8 @@ export function AssistantProvider({ enabled, children }: { enabled: boolean; chi
   const seen = useRef(new Set<string>());
   const [activity, setActivity] = useState<MCPActivity | null>(null);
   const [hovered, setHovered] = useState(false);
+  // Whether the bar at rest is opened into a capsule telling what's up, by a click on it
+  const [expanded, setExpanded] = useState(false);
   const [holding, setHolding] = useState<AssistantRequest | null>(null);
   const [sent, setSent] = useState<SentInfo | null>(null);
   // The confirmation stays while it's pointed at; once the pointer leaves
@@ -111,20 +113,20 @@ export function AssistantProvider({ enabled, children }: { enabled: boolean; chi
 
   const value = useMemo(() => {
     const working = status?.running ? activity : null;
-    // Told what's up: room for the cancel button only while there is work to cancel
+    // Opened at rest: room for the stop button only while there is work to stop
     const restWidth = working ? ASSISTANT_BAR_WIDTH.restWorking : ASSISTANT_BAR_WIDTH.rest;
     let width = 0;
     // A confirmation first, then the oldest request, or one being carried out
     const req = sent ? null : (pending[0] ?? holding);
     if (status?.enabled) {
-      // At rest just its badge, told what's up when pointed at, wide open
-      // on a request
+      // At rest just its badge, a capsule telling what's up once clicked,
+      // wide open on a request
       if (sent) width = ASSISTANT_BAR_WIDTH.wide;
       else if (req) width = wideRequest(req) ? ASSISTANT_BAR_WIDTH.wide : ASSISTANT_BAR_WIDTH.request;
       // Nobody connected and nothing asked: no bar, the node bar has the foot
       else if ((status.clients?.length ?? 0) === 0 && !working) width = 0;
-      // Work shows in the badge alone; pointing at it tells more
-      else width = hovered ? restWidth : ASSISTANT_BAR_WIDTH.compact;
+      // Work shows in the badge alone, until it's clicked
+      else width = expanded ? restWidth : ASSISTANT_BAR_WIDTH.compact;
       // A narrow window keeps room for the node bar
       width = Math.min(width, Math.max(ASSISTANT_BAR_WIDTH.rest, Math.round(vw * 0.55)));
     }
@@ -136,12 +138,14 @@ export function AssistantProvider({ enabled, children }: { enabled: boolean; chi
       restWidth,
       hovered,
       setHovered,
+      expanded,
+      setExpanded,
       shown: req,
       hold: setHolding,
       sent,
       showSent: setSent,
     };
-  }, [status, pending, vw, activity, hovered, holding, sent]);
+  }, [status, pending, vw, activity, hovered, expanded, holding, sent]);
 
   return <AssistantContext.Provider value={value}>{children}</AssistantContext.Provider>;
 }

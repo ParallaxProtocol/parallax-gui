@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import {
   ArrowDown,
-  Bot,
   Check,
   Eye,
   KeyRound,
@@ -25,6 +24,7 @@ import { formatDuration, formatGwei, formatInt, formatUnits, sameAddress, shortH
 import { SPRING, STAGGER, useStagger } from "../../lib/motion";
 import { ModalForm } from "../ui/Modal";
 import { AddressAvatar } from "../ui/AddressAvatar";
+import { SparklesSymbol } from "../ui/symbols";
 import { IconBadge } from "../ui/IconBadge";
 import { Indicator, type Grade } from "../ui/Indicator";
 import { Notice } from "../ui/bits";
@@ -280,7 +280,7 @@ function Reason({ text }: { text: string }) {
   const t = useT();
   return (
     <div className="flex items-start gap-2.5">
-      <IconBadge icon={Bot} tone="brand" size="sm" />
+      <IconBadge icon={SparklesSymbol} tone="brand" size="sm" />
       <div className="flex min-w-0 flex-col gap-0.5 rounded-2xl rounded-tl-md bg-muted/60 px-3.5 py-2.5">
         <span className="text-xs font-medium text-muted-foreground">{t("assistant.reason")}</span>
         <p className="selectable break-words text-foreground/85">“{text}”</p>

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Activity,
-  Bot,
   Check,
   Globe,
   HardDrive,
@@ -29,6 +28,7 @@ import { pageKey, useSettingsSheet, type SettingsSection } from "../../component
 import { Select } from "../../components/ui/Select";
 import { Tooltip } from "../../components/ui/Tooltip";
 import logo from "../../assets/logo.svg";
+import { SparklesSymbol } from "../../components/ui/symbols";
 import { IconTile, TILE } from "../../components/ui/IconTile";
 import { AccountsSettings, SecuritySettings } from "../Wallet/Accounts";
 import { NodeStorageActions, WalletStorage, WipeWallet } from "./storage";
@@ -1788,7 +1788,7 @@ const SECTION_LOOK: Record<SettingsSection, { icon: LucideIcon; color: string }>
   node: { icon: Server, color: TILE.purple },
   network: { icon: Globe, color: TILE.green },
   rpc: { icon: Plug, color: TILE.orange },
-  assistants: { icon: Bot, color: TILE.indigo },
+  assistants: { icon: SparklesSymbol, color: TILE.indigo },
   permissions: { icon: ShieldCheck, color: TILE.green },
   diagnostics: { icon: Activity, color: TILE.pink },
   about: { icon: Info, color: TILE.graphite },

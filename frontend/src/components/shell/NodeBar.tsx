@@ -1,6 +1,15 @@
 import { createContext, lazy, ReactNode, Suspense, useContext, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown, ChevronUp, Loader2, Power, Server, ShieldCheck, TriangleAlert } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Power,
+  RadioTower,
+  ShieldCheck,
+  TriangleAlert,
+  type LucideIcon,
+} from "lucide-react";
 import { api } from "../../lib/api";
 import { formatDuration, formatInt } from "../../lib/format";
 import { nodeState, syncProgress, useNode, useRefresh } from "../../lib/live";
@@ -15,6 +24,11 @@ import { NodeSwitchContext } from "../../lib/nodeSwitch";
 import { BAR_FADE, BAR_GLASS, BAR_SURFACE } from "./barSurface";
 
 const NodePage = lazy(() => import("../../pages/Overview"));
+
+/** The node's icon, wherever the app shows it: the bar, and setup's choice to run one. */
+export const NODE_ICON: LucideIcon = RadioTower;
+/** Its stroke, lighter than Lucide's 2, and the offline signer's shield's beside or in place of it. */
+export const NODE_ICON_STROKE = 1.5;
 
 /** The bar's height, collapsed. */
 export const NODE_BAR_HEIGHT = 64;
@@ -137,9 +151,11 @@ export default function NodeBar() {
           }}
         >
           {/* What the node is doing: its symbol, the state led by its live dot
-            (as System Settings marks a connection), and a line of figures under it */}
-          <span className="flex min-w-0 items-center gap-3">
-            <Server className="size-5 shrink-0" aria-hidden />
+            (as System Settings marks a connection), and a line of figures under
+            it, starting where the dot does */}
+          {/* The symbol as far from its text as the buttons at the other end are apart */}
+          <span className="flex min-w-0 items-center gap-5">
+            <NODE_ICON className="size-5 shrink-0" strokeWidth={NODE_ICON_STROKE} aria-hidden />
             <span className="flex min-w-0 flex-col">
               <span className="flex min-w-0 items-center gap-2">
                 <Indicator grade={STATE_GRADE[state]} ping={running} cause={state} />
@@ -264,7 +280,7 @@ export function OfflineBar() {
   return (
     <section
       aria-label={t("offline.mode")}
-      className={`no-drag fixed z-40 flex items-center gap-3 pr-[15px] pl-5 text-sm text-muted-foreground ${BAR_GLASS}`}
+      className={`no-drag fixed z-40 flex items-center gap-5 pr-[15px] pl-5 text-sm text-muted-foreground ${BAR_GLASS}`}
       style={{
         left: NODE_BAR_GAP,
         right: NODE_BAR_GAP,
@@ -273,7 +289,7 @@ export function OfflineBar() {
         borderRadius: NODE_BAR_HEIGHT / 2,
       }}
     >
-      <ShieldCheck className="size-5 shrink-0 text-good-ink" aria-hidden />
+      <ShieldCheck className="size-5 shrink-0 text-good-ink" strokeWidth={NODE_ICON_STROKE} aria-hidden />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[15px] font-semibold text-foreground">{t("offline.mode")}</span>
         <span className="truncate">{t("offline.mode.bar")}</span>

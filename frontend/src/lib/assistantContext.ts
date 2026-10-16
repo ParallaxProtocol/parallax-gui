@@ -18,12 +18,15 @@ type Ctx = {
   width: number;
   /** The tool call an assistant is making now, if any: shown a moment at least, so quick calls don't flicker. */
   activity: MCPActivity | null;
-  /** The bar's width told what's up, to lay its contents out at while it grows to it or shrinks from it. */
+  /** The bar's width at rest opened into a capsule, to lay its contents out at while it grows to it or shrinks from it. */
   restWidth: number;
   /** Whether the bar is pointed at, or focused, now. */
   hovered: boolean;
-  /** setHovered opens the bar a little while it's pointed at, or focused. */
+  /** setHovered holds a send's confirmation open while the bar is pointed at, or focused. */
   setHovered: (on: boolean) => void;
+  /** Whether the bar at rest is opened into a capsule telling what's up, by a click on its badge. */
+  expanded: boolean;
+  setExpanded: (on: boolean | ((on: boolean) => boolean)) => void;
   /** The request the bar shows: the oldest pending, or one being carried out (held). */
   shown: AssistantRequest | null;
   /** hold keeps a request in the bar while it is being carried out, when it has left the pending list. */
@@ -41,6 +44,8 @@ export const AssistantContext = createContext<Ctx>({
   restWidth: 0,
   hovered: false,
   setHovered: () => {},
+  expanded: false,
+  setExpanded: () => {},
   shown: null,
   hold: () => {},
   sent: null,

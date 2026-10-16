@@ -1,23 +1,21 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bot, X } from "lucide-react";
 import { useT } from "../../i18n";
 import { useAssistant } from "../../lib/assistantContext";
 import { NODE_BAR_GAP, NODE_BAR_HEIGHT, useNodeSheet } from "./NodeBar";
 import { TOP_BAR_HEIGHT } from "./TopBar";
 import { RequestBody } from "./AssistantRequests";
 import { activityKey, REQUEST_ICON, requestTitle } from "../../lib/assistantRequests";
-import { IconBadge } from "../ui/IconBadge";
+import { Fact, Facts } from "../ui/Panel";
+import { SparklesSymbol } from "../ui/symbols";
 import { ActivitySpinner } from "../ui/ActivitySpinner";
 import { FADE_OUT, SPRING } from "../../lib/motion";
 import { Indicator, type Grade } from "../ui/Indicator";
 import { Tooltip } from "../ui/Tooltip";
 import { ASSISTANT_GLOW } from "../ui/assistantGlass";
-import { CopyButton } from "../ui/bits";
 import { DrawnCheck } from "../../pages/Wallet/common";
-import { accountLabel, useWallet } from "../../lib/wallet";
-import { useContacts } from "../../lib/contacts";
-import { formatUnits, sameAddress, shortHex } from "../../lib/format";
+import { Hex, Party } from "../../pages/Overview/parts";
+import { formatUnits } from "../../lib/format";
 import { SENT_MS, type SentInfo } from "../../lib/assistantContext";
 import { Ticker } from "../ui/Ticker";
 import { api, type AssistantRequest, type MCPActivity, type MCPStatus } from "../../lib/api";
@@ -29,21 +27,24 @@ const BAR_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35 } as const;
 /**
  * AssistantBar floats beside the node bar, at the window's foot, while AI
  * assistants may connect (Settings › AI assistants): who is connected, at
- * a glance, in the assistants' blue glass. When an assistant asks for
+ * a glance, in the assistants' blue glass: a circle at rest, clicked to
+ * open into a capsule saying what's up, the node bar beside it giving way. When an assistant asks for
  * something it opens on the request, growing wider and taller and pushing
  * the node bar aside, and closes again once the user has decided. The
  * requests come one at a time, each giving way to the next in place.
  */
 export default function AssistantBar() {
   const t = useT();
-  const { status, pending, width, activity, restWidth, setHovered, shown, sent } = useAssistant();
-  // Pointed at, or focused, the bar opens a little at once; it closes a
-  // beat after neither is so, so crossing its edge doesn't flicker it. The
-  // two are followed apart: focus leaving (a clicked button giving way to
-  // what it did) mustn't count as the pointer leaving. Focus is read from
-  // the page rather than kept from its events: a focused button removed
-  // with the form it was in (Send giving way to the confirmation) never
-  // says it lost focus, and would hold the bar open for good
+  const { status, pending, width, activity, restWidth, setHovered, expanded, setExpanded, shown, sent } =
+    useAssistant();
+  // Whether the bar is pointed at or focused, which holds a send's
+  // confirmation open; it lets go a beat after neither is so, so crossing
+  // its edge doesn't flicker it. The two are followed apart: focus leaving
+  // (a clicked button giving way to what it did) mustn't count as the
+  // pointer leaving. Focus is read from the page rather than kept from its
+  // events: a focused button removed with the form it was in (Send giving
+  // way to the confirmation) never says it lost focus, and would hold the
+  // bar open for good
   const section = useRef<HTMLElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>();
   const pointer = useRef(false);
@@ -82,14 +83,39 @@ export default function AssistantBar() {
   // Opened, the bar holds its contents inside its 1px border
   const height = open ? Math.min(Math.max(contentHeight + 2, NODE_BAR_HEIGHT), maxHeight) : NODE_BAR_HEIGHT;
 
+  // What's up, for the badge to announce and the capsule to say
+  const rest = useRest(status, activity);
+  // Opened into a capsule by a click on its badge: a request taking the
+  // bar, or the node's page pushing it away, closes it, as do Escape and a
+  // click anywhere else
+  const telling = expanded && width > 0 && !open && !pushed;
+  useEffect(() => {
+    if (open || pushed) setExpanded(false);
+  }, [open, pushed, setExpanded]);
+  useEffect(() => {
+    if (!telling) return;
+    const onDown = (e: PointerEvent) => {
+      if (!section.current?.contains(e.target as Node)) setExpanded(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setExpanded(false);
+    };
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [telling, setExpanded]);
+
   return (
     <AnimatePresence>
       {width > 0 && (
         <motion.section
           key="assistant-bar"
           aria-label={t("assistant.bar.title")}
-          // The node bar's glass, light at rest and thick opened on a request; the blue comes with work and requests
-          className={`no-drag fixed z-40 flex flex-col overflow-hidden ${open ? BAR_SURFACE : BAR_GLASS} ${BAR_FADE}`}
+          // The node bar's glass, light at rest, lit under the pointer as it opens into a capsule on a click, and thick opened on a request; the blue comes with work and requests
+          className={`no-drag fixed z-40 flex flex-col overflow-hidden ${open ? BAR_SURFACE : `${BAR_GLASS} hover:bg-[var(--glass-hover)]`} ${BAR_FADE}`}
           style={{
             right: NODE_BAR_GAP,
             bottom: NODE_BAR_GAP,
@@ -144,7 +170,7 @@ export default function AssistantBar() {
             className={`relative min-h-0 flex-1 overflow-x-hidden ${open ? "overflow-y-auto" : "overflow-y-hidden"}`}
           >
             {/* Laid out at the bar's coming width, so nothing reflows as it grows */}
-            {/* At rest the contents keep their told width, clipped down to the badge */}
+            {/* At rest the contents keep the capsule's width, clipped down to the badge */}
             <div ref={inner} style={{ width: open ? width : restWidth }}>
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
@@ -161,7 +187,13 @@ export default function AssistantBar() {
                   ) : req ? (
                     <Opened req={req} more={pending.filter((p) => p.id !== req.id).length} />
                   ) : (
-                    <Rest status={status} activity={activity} told={width > 64} />
+                    <Rest
+                      rest={rest}
+                      activity={activity}
+                      expanded={telling}
+                      told={width > NODE_BAR_HEIGHT}
+                      onToggle={() => setExpanded((on) => !on)}
+                    />
                   )}
                 </motion.div>
               </AnimatePresence>
@@ -173,8 +205,10 @@ export default function AssistantBar() {
   );
 }
 
-/** Rest is the bar between requests: who is connected, or what an assistant is doing, with a way to stop it. */
-function Rest({ status, activity, told }: { status: MCPStatus | null; activity: MCPActivity | null; told: boolean }) {
+type RestState = { grade: Grade; line: string; clients: number };
+
+/** useRest is what's up between requests: who is connected, or what an assistant is doing. */
+function useRest(status: MCPStatus | null, activity: MCPActivity | null): RestState {
   const t = useT();
   const clients = status?.clients ?? [];
   let grade: Grade = "off";
@@ -192,7 +226,7 @@ function Rest({ status, activity, told }: { status: MCPStatus | null; activity: 
     grade = "info";
     line = t("assistant.bar.ready", { port: new URL(status.url).port });
   }
-  // At work: who is doing what, under a spinner
+  // At work: who is doing what
   if (activity) {
     const name = activity.client || t("assistant.bar.anAssistant");
     // A wait says what it awaits; anything else, what it does
@@ -203,98 +237,124 @@ function Rest({ status, activity, told }: { status: MCPStatus | null; activity: 
           : t("assistant.bar.waitingNext", { name })
         : t("assistant.bar.working", { name, doing: t(activityKey(activity.tool)) });
   }
-  const cancel = () => api.mcpCancel().catch(() => {});
+  return { grade, line, clients: clients.length };
+}
+
+/**
+ * Rest is the bar between requests. At rest just its badge: the
+ * assistants' sparkles, or, while an assistant works, the activity
+ * indicator in their place, one giving way to the other on a spring.
+ * Clicked, the bar opens into a capsule telling what's up beside it, as
+ * the node bar does: the title led by the live dot, the line under it
+ * starting where the dot does, and while an assistant works, a way to
+ * stop it. A click on the
+ * capsule (anywhere but the stop button) closes it again.
+ */
+function Rest({
+  rest,
+  activity,
+  expanded,
+  told,
+  onToggle,
+}: {
+  rest: RestState;
+  activity: MCPActivity | null;
+  expanded: boolean;
+  /** Wide enough to tell what's up: the text fades in as the bar grows to it and out as it shrinks. */
+  told: boolean;
+  onToggle: () => void;
+}) {
+  const t = useT();
+  const stop = () => api.mcpCancel().catch(() => {});
   return (
     <div
-      // What's up, read out as it changes
-      role="status"
-      aria-live="polite"
-      aria-label={line}
-      className="flex items-center gap-3 px-3 text-sm text-muted-foreground"
+      className="flex items-center gap-3 pr-3 text-sm text-muted-foreground"
       style={{ height: NODE_BAR_HEIGHT }}
+      onClick={(e) => {
+        if (expanded && !(e.target as HTMLElement).closest("button")) onToggle();
+      }}
     >
-      {/* The badge and its dot, or, while an assistant works, the activity
-          indicator in their place: one gives way to the other on a spring */}
-      <span className="relative size-10 shrink-0">
-        <AnimatePresence initial={false}>
-          {activity ? (
-            <motion.span
-              key="busy"
-              className="absolute inset-0 grid place-items-center"
-              // A light blue: the app's blue, eased toward white
-              style={{ color: "color-mix(in oklab, var(--info) 55%, white)" }}
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1, transition: SPRING }}
-              exit={{ opacity: 0, scale: 0.6, transition: FADE_OUT }}
-            >
-              <ActivitySpinner size={30} glow label={line} />
-            </motion.span>
-          ) : (
-            <motion.span
-              key="idle"
-              className="absolute inset-0"
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1, transition: SPRING }}
-              exit={{ opacity: 0, scale: 0.6, transition: FADE_OUT }}
-            >
-              {/* The robot on its own, its dot at its corner */}
-              <span className="grid size-full place-items-center">
-                <span className="relative">
-                  <Bot className="size-6 text-foreground/80" strokeWidth={1.75} aria-hidden />
-                  <span className="absolute -right-1.5 -bottom-1 grid place-items-center rounded-full bg-popover p-[2px]">
-                    <Indicator grade={grade} ping={grade === "good"} cause={String(clients.length)} />
-                  </span>
-                </span>
-              </span>
-            </motion.span>
-          )}
-        </AnimatePresence>
+      <span className="sr-only" role="status" aria-live="polite">
+        {rest.line}
       </span>
+      {/* The badge, a button that opens the capsule and closes it */}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-label={t("assistant.bar.title")}
+        className="grid shrink-0 place-items-center pl-3 outline-none"
+        style={{ height: NODE_BAR_HEIGHT }}
+      >
+        <span className="relative size-10">
+          <AnimatePresence initial={false}>
+            {activity ? (
+              <motion.span
+                key="busy"
+                className="absolute inset-0 grid place-items-center"
+                // A light blue: the app's blue, eased toward white
+                style={{ color: "color-mix(in oklab, var(--info) 55%, white)" }}
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1, transition: SPRING }}
+                exit={{ opacity: 0, scale: 0.6, transition: FADE_OUT }}
+              >
+                <ActivitySpinner size={30} glow label={rest.line} />
+              </motion.span>
+            ) : (
+              <motion.span
+                key="idle"
+                className="absolute inset-0 grid place-items-center"
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1, transition: SPRING }}
+                exit={{ opacity: 0, scale: 0.6, transition: FADE_OUT }}
+              >
+                <SparklesSymbol className="size-6 text-foreground/80" aria-hidden />
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </span>
+      </button>
       {/* What's up, fading in as the bar opens to tell it and out as it closes to its badge */}
       <motion.span
         className="flex min-w-0 flex-1 items-center gap-3"
+        aria-hidden={!told || undefined}
         initial={false}
         animate={{ opacity: told ? 1 : 0 }}
         transition={{ duration: told ? 0.25 : 0.12, delay: told ? 0.08 : 0 }}
       >
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-[15px] font-semibold text-foreground">{t("assistant.bar.title")}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            <Indicator grade={rest.grade} ping={rest.grade === "good"} cause={String(rest.clients)} />
+            <span className="truncate text-[15px] font-semibold text-foreground">{t("assistant.bar.title")}</span>
+          </span>
           <AnimatePresence mode="wait" initial={false}>
             <motion.span
-              key={line}
-              className={grade === "critical" && !activity ? "text-critical-ink" : ""}
+              key={rest.line}
+              className={rest.grade === "critical" && !activity ? "text-critical-ink" : ""}
               initial={{ opacity: 0, y: 3 }}
               animate={{ opacity: 1, y: 0, transition: { duration: 0.18 } }}
               exit={{ opacity: 0, y: -3, transition: { duration: 0.1 } }}
             >
-              {/* A line too long for the bar wraps, and shows a line at a time */}
-              <Ticker text={line} />
+              {/* A line too long for the capsule wraps, and shows a line at a time */}
+              <Ticker text={rest.line} />
             </motion.span>
           </AnimatePresence>
         </span>
-        {/* While an assistant works, a way to stop it */}
-        <AnimatePresence initial={false}>
-          {activity && (
-            <motion.span
-              key="cancel"
-              className="shrink-0"
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1, transition: SPRING }}
-              exit={{ opacity: 0, scale: 0.6, transition: FADE_OUT }}
+        {/* While an assistant works, a way to stop it: the stop square, as
+            Apple stops what's running, not a close X */}
+        {activity && (
+          <Tooltip content={t("assistant.bar.cancel")}>
+            <button
+              type="button"
+              className="btn btn-tinted btn-icon shrink-0"
+              onClick={stop}
+              tabIndex={told ? undefined : -1}
+              aria-label={t("assistant.bar.cancel")}
             >
-              <Tooltip content={t("assistant.bar.cancel")}>
-                <button
-                  type="button"
-                  className="btn btn-tinted btn-icon"
-                  onClick={cancel}
-                  aria-label={t("assistant.bar.cancel")}
-                >
-                  <X className="size-4" />
-                </button>
-              </Tooltip>
-            </motion.span>
-          )}
-        </AnimatePresence>
+              <span className="size-2.5 rounded-[2.5px] bg-current" aria-hidden />
+            </button>
+          </Tooltip>
+        )}
       </motion.span>
     </div>
   );
@@ -304,19 +364,17 @@ function Rest({ status, activity, told }: { status: MCPStatus | null; activity: 
  * Sent is the bar's confirmation of a send an assistant asked for, as the
  * Send page confirms one: the check drawing itself in, what left, where
  * to, and the transaction's hash to copy. From a watch-only account, the
- * signing request it made instead. It closes by itself after a moment.
+ * signing request it made instead. It closes by itself after a moment,
+ * the time left running down a hairline along its foot, as a banner times
+ * out; pointed at, it waits, the hairline full again.
  */
 function Sent({ sent }: { sent: SentInfo }) {
   const t = useT();
   const { showSent, hovered } = useAssistant();
-  const { info } = useWallet();
-  const { byAddress } = useContacts();
   const { tx } = sent;
-  const own = info?.accounts.find((a) => sameAddress(a.address, tx.to));
-  const toName = own && info ? accountLabel(own, info.accounts, t) : byAddress(tx.to)?.name;
   const amount = formatUnits(tx.valueWei, 18);
   return (
-    <div className="flex flex-col items-center px-5 pt-7 pb-5 text-center">
+    <div className="relative flex flex-col items-center px-5 pt-7 pb-5 text-center">
       <span className="scale-125">
         <DrawnCheck />
       </span>
@@ -334,65 +392,33 @@ function Sent({ sent }: { sent: SentInfo }) {
         </p>
       </motion.div>
       <motion.div
-        className="mt-4 flex w-full flex-col divide-y divide-border/70 rounded-lg bg-muted/60 text-left text-sm"
+        className="mt-4 w-full text-left"
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0, transition: { ...SPRING, delay: 0.25 } }}
       >
-        <div className="flex items-center justify-between gap-4 px-3 py-2.5">
-          <span className="shrink-0">{t("wallet.send.to")}</span>
-          <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
-            {toName && <span className="truncate">{toName}</span>}
-            <span className="selectable font-mono">{shortHex(tx.to, 8, 6)}</span>
-          </span>
-        </div>
-        {sent.hash && (
-          <div className="flex items-center justify-between gap-4 px-3 py-2.5">
-            <span className="shrink-0">{t("wallet.sent.hash")}</span>
-            <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
-              <span className="selectable truncate font-mono">{shortHex(sent.hash, 10, 8)}</span>
-              <CopyButton value={sent.hash} className="-my-1 -mr-2" />
-            </span>
-          </div>
-        )}
+        <Facts>
+          <Fact label={t("wallet.send.to")}>
+            <Party address={tx.to} />
+          </Fact>
+          {sent.hash && (
+            <Fact label={t("wallet.sent.hash")}>
+              <Hex value={sent.hash} />
+            </Fact>
+          )}
+        </Facts>
       </motion.div>
-      {/* Done while it's pointed at. Pointed away from, the button itself
-          flattens into a slim bar whose fill runs down the time until the
-          card closes; pointed at again, it fills and grows back into Done */}
-      <div className="mt-4 grid h-[34px] w-full place-items-center">
-        <motion.button
-          type="button"
-          tabIndex={hovered ? 0 : -1}
-          aria-label={hovered ? t("wallet.sent.done") : t("assistant.sent.closing")}
-          onClick={() => hovered && showSent(null)}
-          className="relative grid w-32 place-items-center overflow-hidden bg-muted font-medium outline-none"
-          initial={false}
-          animate={{ height: hovered ? 34 : 3, borderRadius: hovered ? 10 : 1.5 }}
-          transition={SPRING}
-        >
-          {/* The button's face, then the countdown's fill */}
-          <motion.span
-            aria-hidden
-            className="absolute inset-0 origin-left"
-            style={{
-              backgroundColor: hovered ? "var(--brand-fill)" : "color-mix(in oklab, var(--info) 55%, white)",
-              backgroundImage: hovered ? "linear-gradient(180deg, var(--gloss-top), var(--gloss-bottom))" : "none",
-              transition: "background-color 0.3s ease",
-            }}
-            initial={false}
-            animate={{ scaleX: hovered ? 1 : 0 }}
-            transition={hovered ? SPRING : { duration: SENT_MS / 1000, ease: "linear" }}
-          />
-          <motion.span
-            className="relative whitespace-nowrap"
-            style={{ color: "var(--brand-foreground)" }}
-            initial={false}
-            animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1 : 0.9 }}
-            transition={hovered ? { ...SPRING, delay: 0.08 } : FADE_OUT}
-          >
-            {t("wallet.sent.done")}
-          </motion.span>
-        </motion.button>
-      </div>
+      <button type="button" className="btn btn-primary mt-4 w-32" onClick={() => showSent(null)}>
+        {t("wallet.sent.done")}
+      </button>
+      {/* The time left, running down from the right */}
+      <motion.span
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 h-[2px] origin-left"
+        style={{ backgroundColor: "color-mix(in oklab, var(--info) 55%, white)" }}
+        initial={{ scaleX: 1 }}
+        animate={{ scaleX: hovered ? 1 : 0 }}
+        transition={hovered ? SPRING : { duration: SENT_MS / 1000, ease: "linear" }}
+      />
     </div>
   );
 }
@@ -403,8 +429,9 @@ function Opened({ req, more }: { req: AssistantRequest; more: number }) {
   const Icon = REQUEST_ICON[req.kind];
   return (
     <div className="flex flex-col">
-      <header className="flex items-center gap-3 border-b border-info/15 px-4" style={{ height: NODE_BAR_HEIGHT }}>
-        <IconBadge icon={Icon} tone="info" />
+      <header className="flex items-center gap-3 border-b border-info/15 pr-4 pl-5" style={{ height: NODE_BAR_HEIGHT }}>
+        {/* Its symbol bare, as a sheet leads with one, in the assistants' blue */}
+        <Icon className="size-5 shrink-0 text-info-ink" strokeWidth={2} aria-hidden />
         <div className="flex min-w-0 flex-1 flex-col">
           <h2 className="truncate text-[15px] font-semibold">{requestTitle(req, t)}</h2>
           <span className="truncate text-sm text-muted-foreground">

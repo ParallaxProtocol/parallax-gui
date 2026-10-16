@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, Download, Loader2, Plus, Server, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Plus, ShieldCheck } from "lucide-react";
+import { NODE_ICON, NODE_ICON_STROKE } from "../../components/shell/NodeBar";
 import { CONFIG_UPDATED_EVENT } from "../../App";
 import { api, GUIConfig, NodeStatus, SeedCandidate, walletError } from "../../lib/api";
 import { formatInt } from "../../lib/format";
@@ -1176,14 +1177,14 @@ function Mode({ onOnline, onOffline }: { onOnline: () => void; onOffline: () => 
         <Choice
           selected={mode === "online"}
           onClick={() => setMode("online")}
-          icon={<Server className="size-5 shrink-0 text-muted-foreground" />}
+          icon={<NODE_ICON className="size-5 shrink-0 text-muted-foreground" strokeWidth={NODE_ICON_STROKE} />}
           title={t("onboarding.mode.online")}
           desc={t("onboarding.mode.onlineDesc")}
         />
         <Choice
           selected={mode === "offline"}
           onClick={() => setMode("offline")}
-          icon={<ShieldCheck className="size-5 shrink-0 text-muted-foreground" />}
+          icon={<ShieldCheck className="size-5 shrink-0 text-muted-foreground" strokeWidth={NODE_ICON_STROKE} />}
           title={t("onboarding.mode.offline")}
           desc={t("onboarding.mode.offlineDesc")}
         />
