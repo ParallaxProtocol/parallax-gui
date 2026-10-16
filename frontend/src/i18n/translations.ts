@@ -384,6 +384,7 @@ export const en: Dict = {
   "wallet.history.filter.failed": "Failed",
   "wallet.history.search": "Search by contact, address, transaction or block",
   "wallet.history.jumpDate": "Go to a date",
+  "wallet.history.toTop": "Back to top",
   "wallet.history.export": "Export what's shown as a CSV file",
   "wallet.history.exportShort": "Export",
   "wallet.history.exporting": "Exporting… {pct}%",

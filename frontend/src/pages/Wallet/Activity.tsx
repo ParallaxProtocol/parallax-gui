@@ -1,18 +1,19 @@
-import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowDownLeft,
+  ArrowUp,
   ArrowUpRight,
   Ban,
   CalendarDays,
   ChevronRight,
   Clock,
-  Download,
   History,
   Pickaxe,
   Search,
+  Upload,
   X,
   Zap,
 } from "lucide-react";
@@ -30,10 +31,12 @@ import {
   type TxView,
 } from "../../lib/api";
 import { formatGwei, formatInt, formatLax, isAddress, sameAddress, shortHex } from "../../lib/format";
-import { FADE_OUT, GLIDE, POPUP, POPUP_ROW, STAGGER, useStagger } from "../../lib/motion";
+import { POPUP, POPUP_ROW, SPRING, STAGGER, useStagger } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { useContacts } from "../../lib/contacts";
 import { useNode } from "../../lib/live";
+import { useNodeSwitch } from "../../lib/nodeSwitch";
+import { ToolbarAccessory } from "../../lib/toolbar";
 import { useAgo, useLang, useT } from "../../i18n";
 import { Facts, Fact, Panel, Section } from "../../components/ui/Panel";
 import { IconBadge } from "../../components/ui/IconBadge";
@@ -42,6 +45,7 @@ import { EmptySymbol, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { ActivitySpinner } from "../../components/ui/ActivitySpinner";
 import { Segmented } from "../../components/ui/Segmented";
+import { SearchField } from "../../components/ui/SearchField";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { usePopup } from "../../components/ui/popup";
 import { Hex, Party, Unfold } from "../Overview/parts";
@@ -354,6 +358,7 @@ export function ActivitySection({
   view,
   onView,
   onFoundPending,
+  titled = true,
 }: {
   address: string;
   head: number;
@@ -362,12 +367,15 @@ export function ActivitySection({
   onView: (v: HistoryView, replace?: boolean) => void;
   /** A transaction searched for that's still waiting: the Pending section above opens it. */
   onFoundPending: (hash: string) => void;
+  /** Headed Activity, set apart from the Pending section above; untitled under the page's own title alone. */
+  titled?: boolean;
 }) {
   const t = useT();
   const { lang } = useLang();
   const stagger = useStagger();
   const day = useDay();
   const node = useNode();
+  const nodeSwitch = useNodeSwitch();
   const { info } = useWallet();
   const { contacts } = useContacts();
   const [message, setMessage] = useState<{ tone: "info" | "critical"; text: string } | null>(null);
@@ -470,51 +478,61 @@ export function ActivitySection({
           })
         : t("wallet.history.fromTx", { hash: shortHex(view.jump.hash, 8, 6) });
   const complete = !!h.page?.complete;
-  const exportPct = exporting && exporting.total > 0 ? Math.floor((exporting.done / exporting.total) * 100) : 0;
+  const exportPct = exporting && exporting.total > 0 ? Math.floor((exporting.done / exporting.total) * 100) : null;
+
+  // The rows by local day, each day a group of its own under its date, as a Mac's grouped lists
+  const days = useMemo(() => {
+    const out: { key: string; label: string; rows: Activity[] }[] = [];
+    for (const a of rows) {
+      const d = day(a.time, now);
+      if (out.length > 0 && out[out.length - 1].key === d.key) out[out.length - 1].rows.push(a);
+      else out.push({ ...d, rows: [a] });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, now, lang]);
+
+  const retry = (
+    <>
+      <p className="text-critical-ink">{h.err}</p>
+      <button type="button" className="btn btn-secondary btn-sm" onClick={h.retry}>
+        {t("wallet.history.retry")}
+      </button>
+    </>
+  );
 
   return (
-    <Section title={t("wallet.activity")} aside={h.page && <HistoryState view={{ ...h.page, headBlock: head }} />}>
-      {/* What to show: a kind of item, a counterparty, a starting point; and the export of it */}
+    <Section
+      title={titled ? t("wallet.activity") : undefined}
+      aside={h.page && <HistoryState view={{ ...h.page, headBlock: head }} />}
+    >
+      <ToolbarAccessory>
+        <HistoryActions
+          onDate={jumpToDate}
+          onExport={exportCsv}
+          canExport={complete}
+          exporting={exporting ? (exportPct ?? 0) : null}
+        />
+      </ToolbarAccessory>
+
+      {/* What to show: found by what's typed, then a kind of item, and what's set besides, to clear */}
+      <HistorySearch
+        address={address}
+        names={names}
+        onWith={(a) => set({ with: a, jump: view.jump?.kind === "tx" ? null : view.jump })}
+        onBlock={(block) => set({ jump: { kind: "block", block } })}
+        onHash={(hash) => set({ filter: "all", with: "", jump: { kind: "tx", hash } })}
+        onNoMatch={() => setMessage({ tone: "info", text: t("wallet.history.noSuggestion") })}
+      />
       <div className="flex flex-wrap items-center gap-2">
         <Segmented<HistoryFilter>
-          size="sm"
           value={view.filter}
           onChange={(filter) => set({ filter })}
-          options={(["all", "in", "out", "mined", "failed"] as const).map((v) => ({
-            value: v,
-            label: t(`wallet.history.filter.${v}`),
-          }))}
+          options={FILTERS.map((v) => ({ value: v, label: t(`wallet.history.filter.${v}`) }))}
         />
-        <HistorySearch
-          address={address}
-          names={names}
-          onWith={(a) => set({ with: a, jump: view.jump?.kind === "tx" ? null : view.jump })}
-          onBlock={(block) => set({ jump: { kind: "block", block } })}
-          onHash={(hash) => set({ filter: "all", with: "", jump: { kind: "tx", hash } })}
-          onNoMatch={() => setMessage({ tone: "info", text: t("wallet.history.noSuggestion") })}
-        />
-        <DateJump onPick={jumpToDate} />
-        <Tooltip content={complete ? t("wallet.history.export") : t("wallet.history.exportPartial")}>
-          <span>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              disabled={!complete || !!exporting}
-              onClick={exportCsv}
-            >
-              {exporting ? <ActivitySpinner size={14} /> : <Download className="size-3.5" />}
-              {exporting ? t("wallet.history.exporting", { pct: exportPct }) : t("wallet.history.exportShort")}
-            </button>
-          </span>
-        </Tooltip>
+        {view.with && <Chip label={t("wallet.history.with", { name: withName })} onClear={() => set({ with: "" })} />}
+        {view.jump && <Chip label={jumpLabel} onClear={() => set({ jump: null })} />}
       </div>
-
-      {(view.with || view.jump) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {view.with && <Chip label={t("wallet.history.with", { name: withName })} onClear={() => set({ with: "" })} />}
-          {view.jump && <Chip label={jumpLabel} onClear={() => set({ jump: null })} />}
-        </div>
-      )}
 
       {message && (
         <Notice
@@ -529,20 +547,15 @@ export function ActivitySection({
         </Notice>
       )}
 
-      <Panel className="overflow-hidden">
-        {rows.length === 0 && h.next ? (
-          // A filter still looking through a long history: it goes on until it finds some, or the end
+      {rows.length === 0 && h.next ? (
+        // A filter still looking through a long history: it goes on until it finds some, or the end
+        <Panel>
           <div
             ref={sentinel}
             className="flex flex-col items-center gap-3 py-14 text-center text-sm text-muted-foreground"
           >
             {h.err ? (
-              <>
-                <p className="text-critical-ink">{h.err}</p>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={h.retry}>
-                  {t("wallet.history.retry")}
-                </button>
-              </>
+              retry
             ) : (
               <>
                 <ActivitySpinner size={20} />
@@ -550,46 +563,60 @@ export function ActivitySection({
               </>
             )}
           </div>
-        ) : rows.length === 0 ? (
+        </Panel>
+      ) : rows.length === 0 ? (
+        <Panel>
           <div className="flex flex-col items-center gap-3 py-14 text-center text-muted-foreground">
-            {/* The node's tower when it's off, the reason; an account's history otherwise, only empty */}
-            <EmptySymbol icon={!h.running ? NODE_ICON : filtered ? Search : History} />
-            <p className="max-w-sm">
-              {!h.running
-                ? t("wallet.activityOffline")
-                : h.err && !h.page
-                  ? h.err
-                  : !h.page
-                    ? "…"
+            {!h.running ? (
+              // The node's tower and the way to connect, as Send's button; the switch's error over it
+              <>
+                <EmptySymbol icon={NODE_ICON} />
+                <p className="max-w-sm">{t("wallet.activityOffline")}</p>
+                {nodeSwitch.err && <p className="max-w-sm text-sm text-critical-ink">{nodeSwitch.err}</p>}
+                <button
+                  type="button"
+                  className="btn btn-primary mt-1 min-w-40"
+                  onClick={nodeSwitch.toggle}
+                  disabled={nodeSwitch.busy}
+                >
+                  {nodeSwitch.busy && <ActivitySpinner size={14} />}
+                  {nodeSwitch.busy ? t("node.starting") : t("node.start")}
+                </button>
+              </>
+            ) : !h.page && !h.err ? (
+              <ActivitySpinner size={20} />
+            ) : (
+              // An account's history otherwise, only empty; a filter's, with the way back
+              <>
+                <EmptySymbol icon={filtered ? Search : History} />
+                <p className="max-w-sm">
+                  {!h.page
+                    ? h.err
                     : filtered
                       ? t(complete ? "wallet.history.noMatch" : "wallet.history.noMatchYet")
                       : complete
                         ? t("wallet.activityNone")
                         : t("wallet.activityNoneYet")}
-            </p>
-            {filtered && h.page && (
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => set(NEWEST)}>
-                {t("wallet.history.clear")}
-              </button>
+                </p>
+                {filtered && h.page && (
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => set(NEWEST)}>
+                    {t("wallet.history.clear")}
+                  </button>
+                )}
+              </>
             )}
           </div>
-        ) : (
-          <>
-            <motion.ul {...stagger} className="flex flex-col">
-              {rows.map((a, i) => {
-                const d = day(a.time, now);
-                const heading = i === 0 || day(rows[i - 1].time, now).key !== d.key;
-                return (
-                  <Fragment key={a.key}>
-                    {heading && (
-                      <li
-                        role="presentation"
-                        className={`bg-muted/40 px-4 py-1.5 text-xs font-semibold text-muted-foreground ${i > 0 ? "border-t border-border" : ""}`}
-                      >
-                        {d.label}
-                      </li>
-                    )}
+        </Panel>
+      ) : (
+        <>
+          <motion.div {...stagger} className="flex flex-col gap-5">
+            {days.map((d) => (
+              <section key={d.key} className="flex flex-col gap-2">
+                <h3 className="px-1 text-sm font-semibold text-muted-foreground">{d.label}</h3>
+                <Panel as="ul" className="flex flex-col divide-y divide-border overflow-hidden">
+                  {d.rows.map((a) => (
                     <ActivityRow
+                      key={a.key}
                       a={a}
                       opened={tx.opened === a.key}
                       onToggle={() => tx.toggle(a)}
@@ -597,37 +624,32 @@ export function ActivitySection({
                       head={head}
                       now={now}
                       // Off screen, a row isn't laid out: a long history stays light
-                      className={`[contain-intrinsic-size:auto_4rem] [content-visibility:auto] ${heading ? "" : "border-t border-border"}`}
+                      className="[contain-intrinsic-size:auto_4rem] [content-visibility:auto]"
                     />
-                  </Fragment>
-                );
-              })}
-            </motion.ul>
-            {/* Older pages load as the end comes near; while the history is indexed, why there's no more yet */}
-            {(h.next || h.err || !complete) && (
-              <div
-                ref={sentinel}
-                className="flex flex-col items-center gap-2 border-t border-border px-4 py-3 text-center text-sm text-muted-foreground"
-              >
-                {h.err ? (
-                  <>
-                    <p className="text-critical-ink">{h.err}</p>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={h.retry}>
-                      {t("wallet.history.retry")}
-                    </button>
-                  </>
-                ) : h.next ? (
-                  <ActivitySpinner size={16} />
-                ) : h.page?.indexing ? (
-                  <p>{t("wallet.historyBuilding", { pct: indexedPct({ ...h.page, headBlock: head }) })}</p>
-                ) : (
-                  <p>{t("wallet.historyLatestOnlyDesc")}</p>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </Panel>
+                  ))}
+                </Panel>
+              </section>
+            ))}
+          </motion.div>
+          {/* Older pages load as the end comes near; while the history is indexed, why there's no more yet */}
+          {(h.next || h.err || !complete) && (
+            <div
+              ref={sentinel}
+              className="flex flex-col items-center gap-2 px-4 py-2 text-center text-sm text-muted-foreground"
+            >
+              {h.err ? (
+                retry
+              ) : h.next ? (
+                <ActivitySpinner size={16} />
+              ) : h.page?.indexing ? (
+                <p>{t("wallet.historyBuilding", { pct: indexedPct({ ...h.page, headBlock: head }) })}</p>
+              ) : (
+                <p>{t("wallet.historyLatestOnlyDesc")}</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </Section>
   );
 }
@@ -727,10 +749,16 @@ export function RecentActivity({ view, running, now }: { view: AddressView | nul
       aside={
         <>
           {view && <HistoryState view={view} />}
-          <Link to="/history" className="flex items-center gap-0.5 font-medium text-brand hover:underline">
-            {t("wallet.seeAll")}
-            <ChevronRight className="size-3.5" />
-          </Link>
+          {/* The app's text link, as Settings' Read more: its chevron nudging on, never underlined; only with something to see */}
+          {rows.length > 0 && (
+            <Link
+              to="/history"
+              className="group inline-flex items-center gap-0.5 font-medium whitespace-nowrap text-brand"
+            >
+              {t("wallet.seeAll")}
+              <ChevronRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+            </Link>
+          )}
         </>
       }
     >
@@ -738,16 +766,20 @@ export function RecentActivity({ view, running, now }: { view: AddressView | nul
         {rows.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center text-muted-foreground">
             {/* The node's tower when it's off, the reason; an account's history otherwise, only empty */}
-            <EmptySymbol icon={running ? History : NODE_ICON} />
-            <p className="max-w-sm">
-              {!running
-                ? t("wallet.activityOffline")
-                : !view
-                  ? "…"
-                  : view.complete
-                    ? t("wallet.activityNone")
-                    : t("wallet.activityNoneYet")}
-            </p>
+            {running && !view ? (
+              <ActivitySpinner size={20} />
+            ) : (
+              <>
+                <EmptySymbol icon={running ? History : NODE_ICON} />
+                <p className="max-w-sm">
+                  {!running
+                    ? t("wallet.activityOffline")
+                    : view!.complete
+                      ? t("wallet.activityNone")
+                      : t("wallet.activityNoneYet")}
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <motion.ul {...stagger} className="flex flex-col divide-y divide-border">
@@ -787,44 +819,112 @@ function Chip({ label, onClear }: { label: string; onClear: () => void }) {
   );
 }
 
-/** DateJump starts the list at a date, picked in the system's calendar. */
-function DateJump({ onPick }: { onPick: (date: string) => void }) {
+/**
+ * HistoryActions is what acts on the whole history, in the toolbar: a glass
+ * pill, as Contacts' Import and Export, of going to a date (picked in the
+ * system's calendar) and exporting what's shown, its progress in its place.
+ */
+function HistoryActions({
+  onDate,
+  onExport,
+  canExport,
+  exporting,
+}: {
+  onDate: (date: string) => void;
+  onExport: () => void;
+  canExport: boolean;
+  /** The export's progress while it runs, as a whole percentage. */
+  exporting: number | null;
+}) {
   const t = useT();
   const input = useRef<HTMLInputElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const [down, setDown] = useState(false);
+  // The page's scroller, the toolbar's main, which this pill sits in
+  useEffect(() => {
+    const main = box.current?.closest("main");
+    if (!main) return;
+    const onScroll = () => setDown(main.scrollTop > 240);
+    onScroll();
+    main.addEventListener("scroll", onScroll, { passive: true });
+    return () => main.removeEventListener("scroll", onScroll);
+  }, []);
+  const toTop = () => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    box.current?.closest("main")?.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  };
   const today = new Date();
   const max = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const capsule =
+    "flex h-7 items-center gap-1.5 rounded-full px-2.5 font-medium text-foreground/70 transition-colors enabled:hover:text-foreground focus-visible:text-foreground disabled:opacity-50";
   return (
-    <Tooltip content={t("wallet.history.jumpDate")}>
-      <span className="relative">
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm btn-icon"
-          aria-label={t("wallet.history.jumpDate")}
-          onClick={() => {
-            const el = input.current;
-            if (!el) return;
-            el.value = "";
-            try {
-              el.showPicker();
-            } catch {
-              el.focus();
-            }
-          }}
-        >
-          <CalendarDays className="size-3.5" />
-        </button>
-        {/* The system's date picker, opened by the button; the field itself never shows */}
-        <input
-          ref={input}
-          type="date"
-          max={max}
-          tabIndex={-1}
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-0"
-          onChange={(e) => onPick(e.target.value)}
-        />
-      </span>
-    </Tooltip>
+    <div ref={box} className="no-drag glass flex h-9 items-center rounded-full px-1.5">
+      {/* Back to the top, once the page has scrolled down: opening out of the pill's left end, as Contacts' Export does */}
+      <AnimatePresence initial={false}>
+        {down && (
+          <motion.span
+            key="top"
+            className="flex items-center overflow-hidden"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: "auto", opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={SPRING}
+          >
+            <Tooltip content={t("wallet.history.toTop")}>
+              <button type="button" className={capsule} aria-label={t("wallet.history.toTop")} onClick={toTop}>
+                <ArrowUp className="size-4" />
+              </button>
+            </Tooltip>
+            <span aria-hidden className="mx-1 h-4 w-px shrink-0 bg-border-strong" />
+          </motion.span>
+        )}
+      </AnimatePresence>
+      <Tooltip content={t("wallet.history.jumpDate")}>
+        <span className="relative flex">
+          <button
+            type="button"
+            className={capsule}
+            aria-label={t("wallet.history.jumpDate")}
+            onClick={() => {
+              const el = input.current;
+              if (!el) return;
+              el.value = "";
+              try {
+                el.showPicker();
+              } catch {
+                el.focus();
+              }
+            }}
+          >
+            <CalendarDays className="size-4" />
+          </button>
+          {/* The system's date picker, opened by the button; the field itself never shows */}
+          <input
+            ref={input}
+            type="date"
+            max={max}
+            tabIndex={-1}
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-0"
+            onChange={(e) => onDate(e.target.value)}
+          />
+        </span>
+      </Tooltip>
+      <span aria-hidden className="mx-1 h-4 w-px shrink-0 bg-border-strong" />
+      <Tooltip content={canExport ? t("wallet.history.export") : t("wallet.history.exportPartial")}>
+        <span className="flex">
+          <button
+            type="button"
+            className={`${capsule} whitespace-nowrap tabular-nums`}
+            disabled={!canExport || exporting !== null}
+            onClick={onExport}
+          >
+            {exporting !== null ? <ActivitySpinner size={14} /> : <Upload className="size-4" />}
+            {exporting !== null ? t("wallet.history.exporting", { pct: exporting }) : t("wallet.history.exportShort")}
+          </button>
+        </span>
+      </Tooltip>
+    </div>
   );
 }
 
@@ -896,11 +996,11 @@ function HistorySearch({
   };
 
   return (
-    <div className="relative min-w-48 flex-1">
-      <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
-      <input
+    <>
+      <SearchField
         ref={field}
-        className="input h-8 rounded-lg pr-8 pl-8 text-sm"
+        onClear={() => setValue("")}
+        clearLabel={t("wallet.history.clear")}
         placeholder={t("wallet.history.search")}
         aria-label={t("wallet.history.search")}
         value={value}
@@ -940,25 +1040,7 @@ function HistorySearch({
         aria-controls={showing ? listId : undefined}
         aria-activedescendant={showing ? `${listId}-${active}` : undefined}
         aria-autocomplete="list"
-        spellCheck={false}
-        autoComplete="off"
       />
-      <AnimatePresence>
-        {value && (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.6, transition: FADE_OUT }}
-            transition={GLIDE}
-            className="absolute top-1/2 right-1.5 -mt-2.5 grid size-5 place-items-center rounded-full bg-muted text-muted-foreground hover:text-foreground"
-            onClick={() => setValue("")}
-            aria-label={t("wallet.history.clear")}
-          >
-            <X className="size-3" />
-          </motion.button>
-        )}
-      </AnimatePresence>
       {/* Over the window, so the section can't cut it */}
       {createPortal(
         <AnimatePresence>
@@ -1011,7 +1093,7 @@ function HistorySearch({
         </AnimatePresence>,
         document.body,
       )}
-    </div>
+    </>
   );
 }
 

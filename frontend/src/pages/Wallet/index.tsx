@@ -17,10 +17,12 @@ import {
 import { api } from "../../lib/api";
 import { formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
 import { useNow } from "../../lib/useNow";
+import { useNodeSwitch } from "../../lib/nodeSwitch";
 import { STAGGER, useStagger } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Counter } from "../../components/ui/Counter";
+import { ActivitySpinner } from "../../components/ui/ActivitySpinner";
 import { Pill } from "../../components/ui/Pill";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
@@ -78,6 +80,30 @@ function DamagedNotice() {
       }
     >
       {t("wallet.damaged.desc", { what: damaged.map((d) => t(`wallet.damaged.${d}`)).join(", ") })}
+    </Notice>
+  );
+}
+
+/**
+ * NodeOffNotice says what connecting brings, with the way to connect beside
+ * it: the node bar's switch, so the bar and History show it connecting too,
+ * its error under the line.
+ */
+function NodeOffNotice() {
+  const t = useT();
+  const { busy, err, toggle } = useNodeSwitch();
+  return (
+    <Notice
+      tone="info"
+      action={
+        <button type="button" className="btn btn-tinted" onClick={toggle} disabled={busy}>
+          {busy && <ActivitySpinner size={14} />}
+          {busy ? t("node.starting") : t("node.start")}
+        </button>
+      }
+    >
+      {t("wallet.nodeOff")}
+      {err && <p className="mt-1 text-sm text-critical-ink">{err}</p>}
     </Notice>
   );
 }
@@ -196,7 +222,7 @@ function Overview() {
         </div>
       </GlowCard>
 
-      {!running && <Notice tone="info">{t("wallet.nodeOff")}</Notice>}
+      {!running && <NodeOffNotice />}
       {err && <Notice tone="critical">{err}</Notice>}
 
       <PendingRequests />

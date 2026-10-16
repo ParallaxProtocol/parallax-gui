@@ -14,7 +14,6 @@ import {
   Star,
   Trash2,
   Upload,
-  X,
 } from "lucide-react";
 import { api, Contact, ContactsImport, exportContacts, walletError } from "../../lib/api";
 import { shortHex } from "../../lib/format";
@@ -32,6 +31,7 @@ import { Tooltip } from "../../components/ui/Tooltip";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { GroupedAddress } from "../../components/ui/AccountParts";
 import { GlowCard } from "../../components/ui/GlowCard";
+import { SearchField } from "../../components/ui/SearchField";
 import { Unfold } from "../Overview/parts";
 import { ContactModal, RemoveContactModal } from "./ContactForm";
 
@@ -163,35 +163,16 @@ export default function ContactsPage() {
       ) : (
         <>
           <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                className="input h-10 rounded-xl pr-10 pl-10"
-                placeholder={t("contacts.search")}
-                aria-label={t("contacts.search")}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Escape" && setQuery("")}
-                spellCheck={false}
-                autoComplete="off"
-              />
-              <AnimatePresence>
-                {query && (
-                  <motion.button
-                    type="button"
-                    initial={{ opacity: 0, scale: 0.6 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.6, transition: FADE_OUT }}
-                    transition={GLIDE}
-                    className="absolute top-1/2 right-2.5 -mt-3 grid size-6 place-items-center rounded-full bg-muted text-muted-foreground hover:text-foreground"
-                    onClick={() => setQuery("")}
-                    aria-label={t("contacts.search.clear")}
-                  >
-                    <X className="size-3.5" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </div>
+            <SearchField
+              className="flex-1"
+              placeholder={t("contacts.search")}
+              aria-label={t("contacts.search")}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Escape" && setQuery("")}
+              onClear={() => setQuery("")}
+              clearLabel={t("contacts.search.clear")}
+            />
             <button type="button" className="btn btn-primary btn-lg" onClick={() => setEditing("new")}>
               <Plus className="size-4" />
               {t("contacts.add.title")}

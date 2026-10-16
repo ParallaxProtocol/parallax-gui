@@ -367,6 +367,7 @@ const ptBR: Dict = {
   "wallet.history.filter.failed": "Com falha",
   "wallet.history.search": "Buscar por contato, endereço, transação ou bloco",
   "wallet.history.jumpDate": "Ir para uma data",
+  "wallet.history.toTop": "Voltar ao topo",
   "wallet.history.export": "Exportar o que está na tela como arquivo CSV",
   "wallet.history.exportShort": "Exportar",
   "wallet.history.exporting": "Exportando… {pct}%",

@@ -372,6 +372,7 @@ const de: Dict = {
   "wallet.history.filter.failed": "Fehlgeschlagen",
   "wallet.history.search": "Nach Kontakt, Adresse, Transaktion oder Block suchen",
   "wallet.history.jumpDate": "Zu einem Datum springen",
+  "wallet.history.toTop": "Nach oben",
   "wallet.history.export": "Angezeigtes als CSV-Datei exportieren",
   "wallet.history.exportShort": "Exportieren",
   "wallet.history.exporting": "Exportiere … {pct} %",

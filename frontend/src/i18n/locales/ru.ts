@@ -368,6 +368,7 @@ const ru: Dict = {
   "wallet.history.filter.failed": "Неудачные",
   "wallet.history.search": "Поиск по контакту, адресу, транзакции или блоку",
   "wallet.history.jumpDate": "Перейти к дате",
+  "wallet.history.toTop": "Наверх",
   "wallet.history.export": "Экспортировать показанное в файл CSV",
   "wallet.history.exportShort": "Экспорт",
   "wallet.history.exporting": "Экспорт… {pct}%",

@@ -22,7 +22,7 @@ export default function HistoryPage() {
   const now = useNow(5000);
   const { info, account, select } = useWallet();
   const [params, setParams] = useSearchParams();
-  const { view: summary, err, running, refresh } = useSummary(account?.address);
+  const { view: summary, err, refresh } = useSummary(account?.address);
   const [focus, setFocus] = useState<{ hash: string; at: number } | null>(null);
 
   // A link for another of the wallet's accounts shows that one
@@ -66,7 +66,6 @@ export default function HistoryPage() {
 
   return (
     <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
-      {!running && <Notice tone="info">{t("wallet.nodeOff")}</Notice>}
       {err && <Notice tone="critical">{err}</Notice>}
       <PendingSection view={summary} refresh={refresh} now={now} focus={focus} />
       <ActivitySection
@@ -76,6 +75,8 @@ export default function HistoryPage() {
         view={view}
         onView={onView}
         onFoundPending={(hash) => setFocus({ hash, at: Date.now() })}
+        // Headed only to set it apart from the Pending section above; the page's title says the rest
+        titled={(summary?.pending.length ?? 0) > 0}
       />
     </div>
   );

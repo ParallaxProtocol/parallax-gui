@@ -37,7 +37,7 @@ export function Panel({
   );
 }
 
-/** Section is a titled block of a page: a small heading over its panels, with an optional aside. */
+/** Section is a titled block of a page: a small heading over its panels, with an optional aside; untitled, the aside alone. */
 export function Section({
   title,
   count,
@@ -45,7 +45,7 @@ export function Section({
   className = "",
   children,
 }: {
-  title: string;
+  title?: string;
   /** How many things the section holds, shown beside its title. */
   count?: number;
   aside?: ReactNode;
@@ -54,15 +54,21 @@ export function Section({
 }) {
   return (
     <section className={`flex flex-col gap-3 ${className}`}>
-      <div className="flex items-baseline justify-between gap-4 px-1">
-        <h2 className="flex items-baseline gap-2 text-xl font-semibold tracking-tight">
-          {title}
-          {count !== undefined && (
-            <span className="text-base font-medium text-muted-foreground tabular-nums">{count}</span>
+      {(title || aside) && (
+        <div className="flex items-baseline justify-between gap-4 px-1">
+          {title && (
+            <h2 className="flex items-baseline gap-2 text-xl font-semibold tracking-tight">
+              {title}
+              {count !== undefined && (
+                <span className="text-base font-medium text-muted-foreground tabular-nums">{count}</span>
+              )}
+            </h2>
           )}
-        </h2>
-        {aside && <div className="flex items-center gap-2 text-sm text-muted-foreground tabular-nums">{aside}</div>}
-      </div>
+          {aside && (
+            <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground tabular-nums">{aside}</div>
+          )}
+        </div>
+      )}
       {children}
     </section>
   );

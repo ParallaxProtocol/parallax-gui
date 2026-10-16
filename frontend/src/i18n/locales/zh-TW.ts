@@ -356,6 +356,7 @@ const zhTW: Dict = {
   "wallet.history.filter.failed": "失敗",
   "wallet.history.search": "依聯絡人、地址、交易或區塊搜尋",
   "wallet.history.jumpDate": "跳到日期",
+  "wallet.history.toTop": "回到頂端",
   "wallet.history.export": "將顯示的內容匯出為 CSV 檔案",
   "wallet.history.exportShort": "匯出",
   "wallet.history.exporting": "正在匯出… {pct}%",
