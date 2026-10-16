@@ -17,7 +17,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useOfflineMode } from "../../lib/offline";
-import { SIDEBAR_RAIL, SIDEBAR_RAIL_MAC, SIDEBAR_WIDTH, useSidebar } from "../../lib/sidebar";
+import { MAC, SIDEBAR_RAIL, SIDEBAR_RAIL_MAC, SIDEBAR_WIDTH, TRAFFIC_LIGHTS_ROW, useSidebar } from "../../lib/sidebar";
 import { api } from "../../lib/api";
 import { FADE_IN, FADE_OUT, GLIDE, ROW_IN, SPRING, useStagger } from "../../lib/motion";
 import { accountLabel, groupAccounts, groupKey, useBalances, useWallet, type AccountGroup } from "../../lib/wallet";
@@ -25,6 +25,7 @@ import { DEVICE_NAME } from "../hardware/Device";
 import { useT } from "../../i18n";
 import logo from "../../assets/logo.svg";
 import { NODE_BAR_ROOM } from "./NodeBar";
+import { TOP_BAR_HEIGHT } from "./TopBar";
 import { SettingsButton, useSettingsSheet } from "./SettingsSheet";
 import { AddressAvatar } from "../ui/AddressAvatar";
 import { AccountBadge, Balance, GroupedAddress } from "../ui/AccountParts";
@@ -32,8 +33,6 @@ import { CopyButton } from "../ui/bits";
 import { Tooltip } from "../ui/Tooltip";
 import { Segmented } from "../ui/Segmented";
 
-/** macOS keeps its traffic lights over the sidebar's top left (public/boot.js marks the platform). */
-const MAC = document.documentElement.dataset.platform === "darwin";
 const RAIL = MAC ? SIDEBAR_RAIL_MAC : SIDEBAR_RAIL;
 /** An item's width in the rail: its icon and the padding around it. */
 const RAIL_ITEM = 40;
@@ -71,6 +70,10 @@ const fade = (shown: boolean) => ({
  * narrows to a rail of its icons, their names in tooltips, the page
  * gliding over to take the room.
  */
+// The logo and name over the sidebar, in the website's proportions: the
+// mark half the title bar's height, the name set tight beside it
+const LOGO = 26;
+
 export default function Sidebar() {
   const t = useT();
   const { collapsed } = useSidebar();
@@ -90,17 +93,17 @@ export default function Sidebar() {
     >
       {/* The title bar's part over the sidebar: the line under it runs on
           under the page's part, and the sidebar's own line starts below it.
-          In the rail, the logo alone (on macOS, the traffic lights alone) */}
+          On macOS, under the traffic lights' row. In the rail, the logo alone */}
       <motion.div
-        className="drag flex h-13 shrink-0 items-center gap-2.5 overflow-hidden border-b border-border pr-4 whitespace-nowrap"
+        className="drag flex shrink-0 items-center gap-2.5 overflow-hidden border-b border-border pr-4 whitespace-nowrap"
         initial={false}
-        animate={{ paddingLeft: collapsed && !MAC ? (RAIL - 20) / 2 : 16 }}
+        style={{ height: TOP_BAR_HEIGHT, paddingTop: TRAFFIC_LIGHTS_ROW }}
+        animate={{ paddingLeft: collapsed ? (RAIL - LOGO) / 2 : 16 }}
         transition={SPRING}
       >
-        <span className="traffic-light-gap" />
-        <motion.img src={logo} alt="" className="size-5 shrink-0" initial={false} animate={fade(!collapsed || !MAC)} />
+        <img src={logo} alt="" className="shrink-0" style={{ width: LOGO, height: LOGO }} />
         <motion.span className="flex min-w-0 items-center gap-2.5" initial={false} animate={fade(!collapsed)}>
-          <span className="text-[15px] font-semibold">Parallax</span>
+          <span className="truncate text-[19px] leading-none font-medium tracking-[-0.04em]">Parallax Wallet</span>
           <ProfileBadge />
         </motion.span>
       </motion.div>

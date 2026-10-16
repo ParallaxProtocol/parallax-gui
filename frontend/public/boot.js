@@ -10,7 +10,7 @@ try {
 } catch (e) {}
 
 // The platform, for the window chrome: macOS keeps room for its traffic
-// lights at the sidebar's top left (see createWindow in desktop/src/main.ts)
+// lights at the window's top left (see createWindow in desktop/src/main.ts)
 try {
   document.documentElement.dataset.platform = (window.parallax && window.parallax.platform) || "web";
   // The window shows an OS material behind the sidebar (see MATERIAL in main.ts)

@@ -365,7 +365,8 @@ function serveFrontend(dir: string) {
 /**
  * The window has no title bar of its own: the sidebar and the toolbar run
  * up to the top edge and the toolbar is the drag area, as in native apps.
- * macOS keeps its traffic lights, inset to sit centred in the toolbar;
+ * macOS keeps its traffic lights, in a row of their own over the toolbar
+ * (the frontend's TRAFFIC_LIGHTS_ROW, 32px), centred in it;
  * Windows and Linux draw their controls over the toolbar's right end, in
  * the window's colours (the frontend's --background: black, or a soft
  * white in the light theme), which follow the theme.
@@ -401,7 +402,7 @@ function createWindow() {
     title: PROFILE ? `Parallax Wallet (${PROFILE})` : "Parallax Wallet",
     backgroundColor: look.background,
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
-    ...(isMac ? { trafficLightPosition: { x: 16, y: 19 } } : { titleBarOverlay: look.overlay }),
+    ...(isMac ? { trafficLightPosition: { x: 16, y: 9 } } : { titleBarOverlay: look.overlay }),
     icon: isWindows || isMac ? undefined : path.join(__dirname, "..", "resources", "icon.png"),
     autoHideMenuBar: true,
     webPreferences: {

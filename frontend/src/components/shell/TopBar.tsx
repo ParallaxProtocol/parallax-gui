@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { FADE_IN, FADE_OUT, GLIDE, SPRING } from "../../lib/motion";
 import { useNotifications, type NoticeKind } from "../../lib/notifications";
-import { useSidebar } from "../../lib/sidebar";
+import { TRAFFIC_LIGHTS_ROW, useSidebar } from "../../lib/sidebar";
 import { useUpdate } from "../../lib/update";
 import { api } from "../../lib/api";
 import { useWallet } from "../../lib/wallet";
@@ -27,8 +27,8 @@ import UpdatePanel from "../UpdatePanel";
 import { IconBadge } from "../ui/IconBadge";
 import { EmptySymbol } from "../ui/bits";
 
-/** The top bar's height, the window's title bar. */
-export const TOP_BAR_HEIGHT = 52;
+/** The top bar's height, the window's title bar, with macOS's row for its traffic lights over it. */
+export const TOP_BAR_HEIGHT = 52 + TRAFFIC_LIGHTS_ROW;
 
 /**
  * TopBar is the window's title bar over the page (the sidebar has its own
@@ -49,7 +49,7 @@ export default function TopBar() {
   return (
     <header
       className="drag relative z-20 flex shrink-0 items-center gap-2 border-b border-border px-4"
-      style={{ height: TOP_BAR_HEIGHT }}
+      style={{ height: TOP_BAR_HEIGHT, paddingTop: TRAFFIC_LIGHTS_ROW }}
     >
       <Tooltip content={sidebarLabel}>
         <button
