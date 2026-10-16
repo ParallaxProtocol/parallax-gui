@@ -46,9 +46,8 @@ type GUIConfig struct {
 	// status (block height, peer count, sync state, client version,
 	// OS) to the public dashboard at status.parallaxprotocol.org under a
 	// random name kept in the datadir — the same as a bare --prlstats on the
-	// CLI. On by default for new installs; configs persisted
-	// before this field existed load it as false, so existing installs are
-	// never opted in silently. Requires a node restart: the service is
+	// CLI. Off by default: the user turns it on in Settings. A config that
+	// saved it on keeps it on. Requires a node restart: the service is
 	// registered before stack.Start().
 	ReportStats bool `json:"reportStats"`
 

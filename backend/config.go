@@ -114,9 +114,9 @@ func defaultGUIConfig() GUIConfig {
 		MaxPeers:         100,
 		Theme:            "system",
 		AutoStartNode:    true,
-		EnableSmartFee:   true, // matches the v2.0.0 CLI default (--gpo.smartfee).
-		ReportStats:      true, // on for new installs.
-		Notifications:    true, // configs saved before it existed load it off.
+		EnableSmartFee:   true,  // matches the v2.0.0 CLI default (--gpo.smartfee).
+		ReportStats:      false, // off until the user turns it on.
+		Notifications:    true,  // configs saved before it existed load it off.
 		MCPAllow:         defaultMCPAllow(),
 		DatabaseCacheMB:  cacheTotalMB * 50 / 100, // 2048 MB
 		TrieCleanCacheMB: cacheTotalMB * 15 / 100, //  614 MB

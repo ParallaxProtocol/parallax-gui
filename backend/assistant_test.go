@@ -179,7 +179,7 @@ func TestAssistantTools(t *testing.T) {
 	if _, errText := call("request_settings_change", map[string]any{"changes": map[string]any{"theme": cfg.Theme}, "reason": "x"}); !strings.Contains(errText, "already") {
 		t.Errorf("no change: %q", errText)
 	}
-	req, errText = call("request_settings_change", map[string]any{"changes": map[string]any{"logLevel": 4, "reportStats": false}, "reason": "to debug a sync problem"})
+	req, errText = call("request_settings_change", map[string]any{"changes": map[string]any{"logLevel": 4, "reportStats": true}, "reason": "to debug a sync problem"})
 	if errText != "" {
 		t.Fatal(errText)
 	}
@@ -190,7 +190,7 @@ func TestAssistantTools(t *testing.T) {
 	if done, err := as.Approve(req["id"].(string), ""); err != nil || !strings.Contains(done.Result, "reportStats") {
 		t.Fatalf("settings: %+v %v", done, err)
 	}
-	if got := host.Config(); got.LogLevel != 4 || got.ReportStats || got.MCPAllow.Settings != ModeAsk {
+	if got := host.Config(); got.LogLevel != 4 || !got.ReportStats || got.MCPAllow.Settings != ModeAsk {
 		t.Fatalf("saved config: %+v", got)
 	}
 
