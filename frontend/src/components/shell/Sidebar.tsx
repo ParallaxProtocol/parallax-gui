@@ -1,10 +1,11 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { animate, AnimatePresence, motion, useMotionValue, usePresence } from "motion/react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
   BookUser,
+  Eye,
   FileCheck,
   FileSignature,
   History,
@@ -133,7 +134,20 @@ export default function Sidebar() {
             <>
               <AccountSwitcher />
               <NavItem to="/" icon={Wallet} label={t("nav.overview")} />
-              <NavItem to="/send" icon={ArrowUpRight} label={t("nav.send")} disabled={noAccount} />
+              <NavItem
+                to="/send"
+                icon={ArrowUpRight}
+                label={t("nav.send")}
+                disabled={noAccount}
+                // From a watch-only account, a send is signed on the offline signer
+                trailing={
+                  account?.watchOnly && (
+                    <Tooltip content={t("offline.watchOnly.desc")}>
+                      <Eye className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
+                    </Tooltip>
+                  )
+                }
+              />
               <NavItem to="/receive" icon={ArrowDownLeft} label={t("nav.receive")} disabled={noAccount} />
               <NavItem to="/history" icon={History} label={t("nav.history")} disabled={noAccount} />
               <GroupSeparator />
@@ -459,7 +473,7 @@ function AccountSwitcher() {
                       <span className="truncate text-[15px] font-semibold">{name}</span>
                       {account.watchOnly && (
                         <span className={collapsed ? "" : "pointer-events-auto"}>
-                          <WatchOnlyBadge />
+                          <WatchOnlyBadge className="h-4 px-1.5 text-[10px]" />
                         </span>
                       )}
                     </div>
@@ -569,7 +583,7 @@ function AccountSwitcher() {
                           <span className="truncate text-[15px] font-semibold">{name}</span>
                           {account.watchOnly && (
                             <span className="pointer-events-auto">
-                              <WatchOnlyBadge />
+                              <WatchOnlyBadge className="h-4 px-1.5 text-[10px]" />
                             </span>
                           )}
                         </span>
@@ -771,18 +785,26 @@ function NavItem({
   icon: Icon,
   label,
   disabled,
+  trailing,
 }: {
   to: string;
   icon: typeof Wallet;
   label: string;
   /** Shown but not reachable, until what it needs exists. */
   disabled?: boolean;
+  /** A mark at the row's end, fading with its name in the rail. */
+  trailing?: ReactNode;
 }) {
   // In the rail the name fades, and shows as the icon's tooltip instead
   const { collapsed } = useSidebar();
   const name = (
     <motion.span className="relative flex-1 truncate" initial={false} animate={fade(!collapsed)}>
       {label}
+    </motion.span>
+  );
+  const mark = trailing && (
+    <motion.span className="relative flex shrink-0" initial={false} animate={fade(!collapsed)}>
+      {trailing}
     </motion.span>
   );
   if (disabled) {
@@ -794,6 +816,7 @@ function NavItem({
         >
           <Icon className="size-4 shrink-0 text-brand opacity-35" strokeWidth={1.75} />
           {name}
+          {mark}
         </span>
       </Tooltip>
     );
@@ -831,6 +854,7 @@ function NavItem({
               strokeWidth={1.75}
             />
             {name}
+            {mark}
           </>
         )}
       </NavLink>

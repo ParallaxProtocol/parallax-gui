@@ -491,7 +491,7 @@ function SendForm({
             error={toTrim && !toOk && !looksLikeName(toTrim) ? t("wallet.err.badRecipient") : null}
             hint={<RecipientHint address={toOk ? toTrim : ""} />}
           >
-            {(id) => <RecipientInput id={id} value={to} onChange={set.setTo} view={view} />}
+            {(id) => <RecipientInput id={id} value={to} onChange={set.setTo} from={from} view={view} />}
           </Field>
         </div>
         <div className="p-4">
@@ -790,7 +790,12 @@ function looksLikeName(s: string): boolean {
 /** How many recent counterparties the list offers. */
 const RECENT = 8;
 
-type SuggestionTab = "recent" | "contacts";
+type SuggestionTab = "recent" | "contacts" | "mine";
+const TAB_NAME: Record<SuggestionTab, string> = {
+  recent: "wallet.send.recent",
+  contacts: "nav.contacts",
+  mine: "wallet.send.mine",
+};
 
 /** A suggestion in the recipient's list: an address, named where the wallet knows it. */
 type Suggestion = {
@@ -804,9 +809,10 @@ type Suggestion = {
 
 /**
  * RecipientInput is the recipient's address, with what to pick it from
- * listed under it as the field is focused, on two tabs: the addresses
- * this account last sent to or received from, and the contacts
- * (recently sent to first, then favourites). Recent shows first while it
+ * listed under it as the field is focused, on tabs: the addresses this
+ * account last sent to or received from, the contacts (recently sent to
+ * first, then favourites), and the wallet's other accounts, where it has
+ * any. Recent shows first while it
  * has anything to show, until a tab is chosen. Typing a name, part of an
  * address or a note narrows both. Arrow keys move through the list,
  * Enter picks, Escape closes.
@@ -815,11 +821,14 @@ function RecipientInput({
   id,
   value,
   onChange,
+  from,
   view,
 }: {
   id: string;
   value: string;
   onChange: (v: string) => void;
+  /** The sending account, left out of the wallet's own. */
+  from: string;
   /** The sending account's activity, for its recent counterparties. */
   view: AddressView | null;
 }) {
@@ -840,9 +849,12 @@ function RecipientInput({
   const stagger = useStagger();
 
   const q = value.trim().toLowerCase();
-  const { recent, book } = useMemo(() => {
+  // The wallet's accounts but the one sending, in Settings' order: whether
+  // there are any decides the tab, before what's typed narrows them
+  const others = useMemo(() => (info?.accounts ?? []).filter((a) => !sameAddress(a.address, from)), [info, from]);
+  const { recent, book, mine } = useMemo(() => {
     // A complete address needs no suggestions
-    if (isAddress(q)) return { recent: [], book: [] };
+    if (isAddress(q)) return { recent: [], book: [], mine: [] };
     const nameOf = (address: string) => {
       const contact = byAddress(address);
       if (contact) return contact.name;
@@ -882,13 +894,17 @@ function RecipientInput({
       )
       .filter((c) => matches(c, c.note))
       .map((c): Suggestion => ({ address: c.address, name: c.name, contact: true }));
-    return { recent, book };
-  }, [contacts, byAddress, info, view, q, t]);
+    const mine = others
+      .map((a): Suggestion => ({ address: a.address, name: info ? accountLabel(a, info.accounts, t) : undefined }))
+      .filter((s) => matches(s));
+    return { recent, book, mine };
+  }, [contacts, byAddress, info, others, view, q, t]);
   const [chosen, setChosen] = useState<SuggestionTab | null>(null);
   const tab: SuggestionTab = chosen ?? (recent.length > 0 ? "recent" : "contacts");
-  const all = tab === "recent" ? recent : book;
-  // Open while either tab has something to offer; a tab with nothing says so
-  const showing = open && recent.length + book.length > 0;
+  const all = tab === "recent" ? recent : tab === "contacts" ? book : mine;
+  const offered = recent.length + book.length + mine.length;
+  // Open while any tab has something to offer; a tab with nothing says so
+  const showing = open && offered > 0;
 
   const pos = usePopup(showing, setOpen, field, menu);
 
@@ -1023,7 +1039,7 @@ function RecipientInput({
             return;
           }
           if (!showing) {
-            if (e.key === "ArrowDown" && recent.length + book.length > 0) {
+            if (e.key === "ArrowDown" && offered > 0) {
               e.preventDefault();
               setOpen(true);
             }
@@ -1078,6 +1094,7 @@ function RecipientInput({
                 options={[
                   { value: "recent", label: t("wallet.send.recent") },
                   { value: "contacts", label: t("nav.contacts") },
+                  ...(others.length > 0 ? [{ value: "mine" as const, label: t("wallet.send.mine") }] : []),
                 ]}
               />
               <AnimatePresence mode="wait" initial={false}>
@@ -1086,7 +1103,7 @@ function RecipientInput({
                     key={tab}
                     id={listId}
                     role="listbox"
-                    aria-label={tab === "recent" ? t("wallet.send.recent") : t("nav.contacts")}
+                    aria-label={t(TAB_NAME[tab])}
                     className="flex max-h-72 flex-col gap-px overflow-y-auto"
                     {...stagger}
                     variants={POPUP_ROWS}
@@ -1104,7 +1121,9 @@ function RecipientInput({
                   >
                     {tab === "recent"
                       ? t(q ? "wallet.send.noRecentMatch" : "wallet.send.noRecent")
-                      : t(q ? "wallet.send.noContactMatch" : "wallet.send.noContacts")}
+                      : tab === "contacts"
+                        ? t(q ? "wallet.send.noContactMatch" : "wallet.send.noContacts")
+                        : t("wallet.send.noMineMatch")}
                   </motion.p>
                 )}
               </AnimatePresence>

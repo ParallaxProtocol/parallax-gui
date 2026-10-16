@@ -674,6 +674,8 @@ export const en: Dict = {
   "wallet.send.noRecentMatch": "No recent address matches",
   "wallet.send.noContacts": "No contacts yet",
   "wallet.send.noContactMatch": "No contact matches",
+  "wallet.send.mine": "My accounts",
+  "wallet.send.noMineMatch": "No account matches",
   "contacts.recipient": "Sending to {name}",
   "contacts.savedRecipient": "Saved as {name}",
   "contacts.err.name": "Give the contact a name of at most 64 characters.",

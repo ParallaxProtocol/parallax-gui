@@ -77,11 +77,11 @@ export function ShortAddress({ address }: { address: string }) {
 }
 
 /** WatchOnlyBadge marks an account whose key is on an offline signer. */
-export function WatchOnlyBadge() {
+export function WatchOnlyBadge({ className = "" }: { className?: string }) {
   const t = useT();
   return (
     <Tooltip content={t("offline.watchOnly.desc")}>
-      <Pill className="shrink-0">{t("offline.watchOnly")}</Pill>
+      <Pill className={`shrink-0 ${className}`}>{t("offline.watchOnly")}</Pill>
     </Tooltip>
   );
 }

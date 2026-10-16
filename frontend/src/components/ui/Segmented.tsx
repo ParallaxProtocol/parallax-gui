@@ -47,7 +47,7 @@ export function Segmented<T extends string>({
             aria-checked={here}
             disabled={o.disabled}
             onClick={() => !o.disabled && onChange(o.value)}
-            className={`relative ${fill ? "min-w-0 flex-1 truncate" : "min-w-20"} rounded-[7px] font-medium transition-colors disabled:opacity-40 ${
+            className={`relative ${fill ? "min-w-0 flex-1" : "min-w-20"} rounded-[7px] font-medium transition-colors disabled:opacity-40 ${
               size === "sm" ? "h-6 px-3 text-sm" : "h-7 px-4"
             } ${here ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
@@ -59,7 +59,9 @@ export function Segmented<T extends string>({
                 className="absolute inset-0 rounded-[7px] bg-segment-thumb shadow-[var(--shadow-segment)]"
               />
             )}
-            <span className="relative">{o.label}</span>
+            {/* Cut short on the label, not the button: clipped there, the thumb
+                couldn't slide in from its neighbour, only wipe into its own */}
+            <span className={`relative ${fill ? "block truncate" : ""}`}>{o.label}</span>
           </button>
         );
         return o.title ? (
