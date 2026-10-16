@@ -14,7 +14,6 @@ import {
   KeyRound,
   Lock,
   Plus,
-  ScrollText,
   Server,
   Zap,
 } from "lucide-react";
@@ -28,7 +27,7 @@ import { Counter } from "../../components/ui/Counter";
 import { Facts, Fact, Panel, Section } from "../../components/ui/Panel";
 import { IconBadge } from "../../components/ui/IconBadge";
 import { Pill } from "../../components/ui/Pill";
-import { CopyButton, Notice } from "../../components/ui/bits";
+import { CopyButton, EmptySymbol, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { BackupModal } from "./AccountForms";
 import { useSummary } from "./common";
@@ -41,6 +40,7 @@ import { Hex, Party, Unfold } from "../Overview/parts";
 import { useContacts } from "../../lib/contacts";
 import { PendingRequests } from "../Offline/Requests";
 import { ReplaceModal } from "./Replace";
+import { NODE_ICON } from "../../components/shell/NodeBar";
 
 type Activity = {
   kind: "in" | "out" | "self";
@@ -301,7 +301,7 @@ function Overview() {
         <Panel className="overflow-hidden">
           {confirmed.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-14 text-center text-muted-foreground">
-              <IconBadge icon={ScrollText} size="lg" />
+              <EmptySymbol icon={NODE_ICON} />
               <p>{!running ? t("wallet.activityOffline") : view ? t("wallet.activityEmpty") : "…"}</p>
             </div>
           ) : (

@@ -9,9 +9,8 @@ import { accountLabel, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { motion } from "motion/react";
 import { GlowCard } from "../../components/ui/GlowCard";
-import { IconBadge } from "../../components/ui/IconBadge";
 import { Panel, Section } from "../../components/ui/Panel";
-import { CopyButton } from "../../components/ui/bits";
+import { CopyButton, EmptySymbol } from "../../components/ui/bits";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { Modal } from "../../components/ui/Modal";
 import { QRCode } from "../../components/ui/QRCode";
@@ -34,7 +33,7 @@ export default function SignerHome() {
     <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
       <GlowCard>
         <div className="flex flex-col items-center gap-5 py-4 text-center">
-          <IconBadge icon={ShieldCheck} tone="good" size="lg" />
+          <EmptySymbol icon={ShieldCheck} className="size-12 text-good-ink" />
           <div className="flex max-w-lg flex-col gap-2">
             <h2 className="text-3xl font-semibold tracking-tight">{t("offline.home.title")}</h2>
             <p className="text-muted-foreground">{t("offline.home.desc")}</p>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ArrowRight, FileCheck, Loader2, PenLine, QrCode, ScanLine, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileCheck, Loader2, PenLine, QrCode, ScanLine, X } from "lucide-react";
 import { api, MessageCheck, MessageRequest, SignedMessage, walletError } from "../../lib/api";
 import { isAddress, sameAddress, shortHex } from "../../lib/format";
 import { docKind, messageFileName, useOfflineMode } from "../../lib/offline";
@@ -12,7 +12,6 @@ import { ToolbarAccessory } from "../../lib/toolbar";
 import { useT } from "../../i18n";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { Panel, Property, Rows } from "../../components/ui/Panel";
-import { IconBadge } from "../../components/ui/IconBadge";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { ScanCard } from "../../components/offline/QRScanner";
@@ -478,7 +477,18 @@ function VerifyResult({
               <DrawnCheck />
             </span>
           ) : (
-            <IconBadge icon={ShieldAlert} tone="critical" size="lg" />
+            // The valid check's counterpart: a solid red disc, its cross springing in as the check draws
+            <span className="scale-125">
+              <motion.span
+                className="grid size-8 place-items-center rounded-full bg-critical text-white shadow-[0_0_20px_-4px_var(--critical)]"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", bounce: 0.35, visualDuration: 0.45 }}
+                aria-hidden
+              >
+                <X className="size-[18px]" strokeWidth={3} />
+              </motion.span>
+            </span>
           )}
           <div className="flex flex-col items-center gap-1.5">
             <h2 className="text-3xl font-semibold tracking-tight">

@@ -790,7 +790,7 @@ function NavItem({
           aria-disabled="true"
           className="flex h-9 shrink-0 cursor-default items-center gap-3 rounded-lg px-2.5 text-[15px] text-foreground/35"
         >
-          <Icon className="size-[18px] shrink-0 text-brand/35" strokeWidth={1.75} />
+          <Icon className="size-[18px] shrink-0 text-brand opacity-35" strokeWidth={1.75} />
           {name}
         </span>
       </Tooltip>

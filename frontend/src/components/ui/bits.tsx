@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { AlertTriangle, Check, Copy, Info, OctagonAlert } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useT } from "../../i18n";
 import { Tooltip } from "./Tooltip";
-import { IconBadge } from "./IconBadge";
 
 /**
  * Meter is a thin progress track in the accent; with no `value` it shows
@@ -156,4 +156,25 @@ export function CopyButton({ value, label, className = "" }: { value: string; la
     </button>
   );
   return label ? button : <Tooltip content={copied ? t("common.copied") : t("common.copy")}>{button}</Tooltip>;
+}
+
+/**
+ * EmptySymbol leads an empty state, as Apple's do: a large bare symbol in
+ * the muted colour over the words, no disc behind it (a disc is for a
+ * control, an item's avatar, or a filled status mark). `className` sets
+ * another size and colour for a hero, in place of the muted one.
+ *
+ * Faded by opacity, never by a translucent colour: an SVG paints each of
+ * its lines on its own, so where a translucent colour's lines meet or
+ * cross they'd overlap darker, while opacity fades the drawn symbol whole.
+ */
+export function EmptySymbol({
+  icon: Icon,
+  className = "size-10 text-muted-foreground opacity-70",
+}: {
+  icon: LucideIcon;
+  className?: string;
+}) {
+  // Lighter than the app's 1.75, as the symbol is twice the size: about 2px drawn, not 3
+  return <Icon className={`shrink-0 ${className}`} strokeWidth={1.25} aria-hidden />;
 }

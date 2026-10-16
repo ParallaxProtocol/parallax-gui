@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { X } from "lucide-react";
 import { FADE_OUT, SPRING } from "../../lib/motion";
 import { useT } from "../../i18n";
-import { TONE_WASH } from "./tone";
 import { ActivitySpinner } from "./ActivitySpinner";
 
 /**
@@ -105,10 +104,13 @@ export function Modal({
             transition={SPRING}
           >
             <header className="flex items-center gap-3 px-5 pt-5">
+              {/* Its symbol bare, as a sheet leads with one, in its tone; given
+                  at any size, it's drawn at the title's, at the app's weight */}
               {icon && (
                 <span
-                  className={`grid size-10 shrink-0 place-items-center rounded-full ${
-                    TONE_WASH[tone === "danger" ? "critical" : "brand"]
+                  aria-hidden
+                  className={`grid shrink-0 place-items-center [&_svg]:size-5 [&_svg]:stroke-[1.75] ${
+                    tone === "danger" ? "text-critical-ink" : "text-brand"
                   }`}
                 >
                   {icon}

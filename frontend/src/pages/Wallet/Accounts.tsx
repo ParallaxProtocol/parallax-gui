@@ -21,7 +21,6 @@ import { STAGGER, useStagger } from "../../lib/motion";
 import { accountLabel, groupAccounts, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Panel, Section } from "../../components/ui/Panel";
-import { IconBadge } from "../../components/ui/IconBadge";
 import { Pill } from "../../components/ui/Pill";
 import { RadioMark } from "../../components/ui/Choice";
 import { CopyButton, Notice } from "../../components/ui/bits";
@@ -190,7 +189,7 @@ export function SecuritySettings() {
     <>
       <Panel className="flex h-full flex-col divide-y divide-border">
         <div className="flex items-center gap-3.5 p-5">
-          <IconBadge icon={Lock} />
+          <Lock className="size-5 shrink-0 text-brand" strokeWidth={1.75} aria-hidden />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span>{t("wallet.walletPassword")}</span>
             <span className="text-sm text-muted-foreground">{t("wallet.securityDesc")}</span>
@@ -356,7 +355,12 @@ function SeedRow({ seed, onAction }: { seed: SeedInfo; onAction: (a: SeedAction 
   return (
     <div className="group flex flex-col gap-2 border-b border-border bg-background/30 px-4 py-3.5">
       <div className="flex items-center gap-3.5">
-        <IconBadge icon={ScrollText} tone={seed.confirmed ? "neutral" : "warn"} />
+        {/* Amber until it's backed up */}
+        <ScrollText
+          className={`size-5 shrink-0 ${seed.confirmed ? "text-brand" : "text-warn-ink"}`}
+          strokeWidth={1.75}
+          aria-hidden
+        />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           {editing ? (
             <RenameForm
@@ -420,7 +424,7 @@ function AddRow({
       onClick={onClick}
       className="group flex h-14 w-full items-center gap-3.5 px-4 text-left transition-colors hover:bg-hover"
     >
-      <IconBadge icon={Icon} />
+      <Icon className="size-5 shrink-0 text-brand" strokeWidth={1.75} aria-hidden />
       <span className="flex-1">{label}</span>
       {chevron && (
         <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -555,7 +559,7 @@ function AutoLockRow() {
   return (
     <div className="flex flex-col gap-3 p-5">
       <div className="flex items-center gap-3.5">
-        <IconBadge icon={Timer} />
+        <Timer className="size-5 shrink-0 text-brand" strokeWidth={1.75} aria-hidden />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span>{t("wallet.autoLock")}</span>
           <span className="text-sm text-muted-foreground">{t("wallet.autoLockDesc")}</span>

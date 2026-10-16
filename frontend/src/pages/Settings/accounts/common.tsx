@@ -2,7 +2,6 @@ import { motion } from "motion/react";
 import { ChevronRight, KeyRound } from "lucide-react";
 import { STAGGER } from "../../../lib/motion";
 import { Pill } from "../../../components/ui/Pill";
-import { IconBadge } from "../../../components/ui/IconBadge";
 
 /**
  * ChoiceRow is one way on from a page of choices, as a row of a Settings
@@ -29,7 +28,7 @@ export function ChoiceRow({
         onClick={onClick}
         className="group flex min-h-16 w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-hover"
       >
-        <IconBadge icon={Icon} />
+        <Icon className="size-5 shrink-0 text-brand" strokeWidth={1.75} aria-hidden />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex items-center gap-2">
             <span>{title}</span>

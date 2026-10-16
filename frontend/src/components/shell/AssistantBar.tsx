@@ -308,7 +308,9 @@ function Rest({
                 animate={{ opacity: 1, scale: 1, transition: SPRING }}
                 exit={{ opacity: 0, scale: 0.6, transition: FADE_OUT }}
               >
-                <SparklesSymbol className="size-6 text-foreground/80" aria-hidden />
+                {/* Faded by opacity, not a translucent colour, which would show
+                    where each star's softening stroke overlaps its fill */}
+                <SparklesSymbol className="size-6 text-foreground opacity-80" aria-hidden />
               </motion.span>
             )}
           </AnimatePresence>

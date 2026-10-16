@@ -24,8 +24,7 @@ import { useNow } from "../../lib/useNow";
 import { PAGE_WIDE } from "../../lib/layout";
 import { useAgo, useLang, useT } from "../../i18n";
 import { Fact, Facts, Panel, Section } from "../../components/ui/Panel";
-import { IconBadge } from "../../components/ui/IconBadge";
-import { CopyButton, Notice } from "../../components/ui/bits";
+import { CopyButton, EmptySymbol, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { GroupedAddress } from "../../components/ui/AccountParts";
@@ -136,7 +135,7 @@ export default function ContactsPage() {
         <GlowCard {...stagger} className="px-6 py-14">
           <div className="flex flex-col items-center gap-5 text-center">
             <motion.div variants={STAGGER.item}>
-              <IconBadge icon={BookUser} tone="brand" size="lg" className="ring-1 ring-brand/25" />
+              <EmptySymbol icon={BookUser} className="size-12 text-brand" />
             </motion.div>
             <motion.div variants={STAGGER.item} className="flex max-w-md flex-col gap-1.5">
               <h2 className="text-2xl font-semibold tracking-tight">{t("contacts.empty.title")}</h2>
@@ -229,7 +228,7 @@ export default function ContactsPage() {
             <Panel className="overflow-hidden">
               {shown.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 py-14 text-center text-muted-foreground">
-                  <IconBadge icon={Search} size="lg" />
+                  <EmptySymbol icon={Search} />
                   <p>{t("contacts.noMatch", { query: query.trim() })}</p>
                 </div>
               ) : (

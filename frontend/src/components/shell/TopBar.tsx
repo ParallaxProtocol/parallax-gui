@@ -24,6 +24,7 @@ import { useNow } from "../../lib/useNow";
 import { Tooltip } from "../ui/Tooltip";
 import UpdatePanel from "../UpdatePanel";
 import { IconBadge } from "../ui/IconBadge";
+import { EmptySymbol } from "../ui/bits";
 
 /** The top bar's height, the window's title bar. */
 export const TOP_BAR_HEIGHT = 52;
@@ -267,7 +268,7 @@ function Notifications() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1, transition: FADE_IN }}
             >
-              <IconBadge icon={Bell} size="lg" />
+              <EmptySymbol icon={Bell} />
               <p className="text-sm text-muted-foreground">{t("notifications.empty")}</p>
             </motion.div>
           ) : (

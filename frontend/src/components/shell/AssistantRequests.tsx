@@ -161,7 +161,10 @@ function PermissionForm({ req }: { req: AssistantRequest }) {
         </Item>
         <Item>
           <div className="flex items-start gap-3 rounded-lg bg-muted/60 px-3 py-2.5">
-            <IconBadge icon={ShieldCheck} tone="brand" size="sm" />
+            {/* Its symbol bare, as a notice's, centred on the first line */}
+            <span className="flex h-[1lh] shrink-0 items-center">
+              <ShieldCheck className="size-5 text-brand" strokeWidth={1.75} aria-hidden />
+            </span>
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="font-medium">{t(`settings.mcp.allow.${feature}`)}</span>
               <span className="text-sm text-muted-foreground">{t(`settings.mcp.allow.${feature}.desc`)}</span>
