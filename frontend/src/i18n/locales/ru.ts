@@ -98,6 +98,10 @@ const ru: Dict = {
   // Settings
   "settings.language.label": "Язык интерфейса",
   "settings.language.desc": "Язык отображения во всём приложении.",
+  "settings.language.translate": "Помочь с переводом",
+  "settings.language.translate.desc":
+    "Нет вашего языка или фраза звучит неправильно? Переводы лежат на GitHub, и помочь может любой.",
+  "settings.language.translate.cta": "Участвовать",
   "settings.dataDir": "Каталог данных",
   "settings.syncMode": "Режим синхронизации",
   "settings.syncMode.snap": "Snap (рекомендуется)",

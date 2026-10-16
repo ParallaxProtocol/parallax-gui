@@ -1,11 +1,12 @@
 // Flat i18n dictionaries. Keys use dot-notation for organization only —
 // lookups are direct string indexes against the flat object.
 
-export type Lang = "en" | "de" | "fr" | "pt-BR" | "ru" | "zh-SG" | "zh-TW";
+export type Lang = "en" | "de" | "es-419" | "fr" | "pt-BR" | "ru" | "zh-SG" | "zh-TW";
 
 export const LANG_NAMES: Record<Lang, string> = {
   en: "English",
   de: "Deutsch",
+  "es-419": "Español (Latinoamérica)",
   fr: "Français",
   "pt-BR": "Português (Brasil)",
   ru: "Русский",
@@ -115,6 +116,10 @@ export const en: Dict = {
   // Settings
   "settings.language.label": "Interface language",
   "settings.language.desc": "Change the display language for the entire app.",
+  "settings.language.translate": "Help translate",
+  "settings.language.translate.desc":
+    "Missing your language, or found a phrase that reads wrong? The translations are on GitHub, open to anyone.",
+  "settings.language.translate.cta": "Contribute",
   "settings.dataDir": "Data directory",
   "settings.syncMode": "Sync mode",
   "settings.syncMode.snap": "Snap (recommended)",
@@ -1699,6 +1704,7 @@ export const en: Dict = {
 
 const LOADERS: Record<Exclude<Lang, "en">, () => Promise<{ default: Dict }>> = {
   de: () => import("./locales/de"),
+  "es-419": () => import("./locales/es-419"),
   fr: () => import("./locales/fr"),
   "pt-BR": () => import("./locales/pt-BR"),
   ru: () => import("./locales/ru"),

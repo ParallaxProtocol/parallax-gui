@@ -97,6 +97,10 @@ const fr: Dict = {
   // Settings
   "settings.language.label": "Langue de l’interface",
   "settings.language.desc": "Change la langue d’affichage de toute l’application.",
+  "settings.language.translate": "Aider à traduire",
+  "settings.language.translate.desc":
+    "Votre langue manque, ou une phrase sonne faux ? Les traductions sont sur GitHub, ouvertes à tous.",
+  "settings.language.translate.cta": "Contribuer",
   "settings.dataDir": "Répertoire de données",
   "settings.syncMode": "Mode de synchronisation",
   "settings.syncMode.snap": "Snap (recommandé)",

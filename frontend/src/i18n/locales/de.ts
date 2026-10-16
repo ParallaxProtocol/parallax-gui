@@ -102,6 +102,10 @@ const de: Dict = {
   // Settings
   "settings.language.label": "Sprache der Oberfläche",
   "settings.language.desc": "Ändern Sie die Anzeigesprache der gesamten App.",
+  "settings.language.translate": "Beim Übersetzen helfen",
+  "settings.language.translate.desc":
+    "Ihre Sprache fehlt oder eine Formulierung klingt falsch? Die Übersetzungen liegen offen auf GitHub, jeder kann mitmachen.",
+  "settings.language.translate.cta": "Mitwirken",
   "settings.dataDir": "Datenverzeichnis",
   "settings.syncMode": "Sync-Modus",
   "settings.syncMode.snap": "Snap (empfohlen)",

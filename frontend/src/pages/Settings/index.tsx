@@ -362,6 +362,16 @@ export default function Settings() {
                         options={(Object.keys(LANG_NAMES) as Lang[]).map((l) => ({ value: l, label: LANG_NAMES[l] }))}
                       />
                     </Setting>
+                    <Setting title={t("settings.language.translate")} desc={t("settings.language.translate.desc")}>
+                      <button
+                        type="button"
+                        className="btn btn-tinted btn-sm"
+                        onClick={() => openExternal(TRANSLATIONS_URL)}
+                      >
+                        <ExternalLink className="size-3" />
+                        {t("settings.language.translate.cta")}
+                      </button>
+                    </Setting>
                   </Rows>
                 </Group>
                 <Group title={t("settings.group.startup")}>
@@ -1688,6 +1698,9 @@ function About() {
     </div>
   );
 }
+
+// Where the app's strings live, for anyone who'd fix one or add a language
+const TRANSLATIONS_URL = "https://github.com/ParallaxProtocol/parallax-gui/tree/main/frontend/src/i18n";
 
 // The project's own pages, opened in the user's browser
 const ABOUT_LINKS = [

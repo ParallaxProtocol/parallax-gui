@@ -93,6 +93,9 @@ const zhSG: Dict = {
   // Settings
   "settings.language.label": "界面语言",
   "settings.language.desc": "更改整个应用的显示语言。",
+  "settings.language.translate": "帮助翻译",
+  "settings.language.translate.desc": "没有您的语言，或发现哪句翻译不对？翻译文件公开在 GitHub 上，欢迎任何人参与。",
+  "settings.language.translate.cta": "参与贡献",
   "settings.dataDir": "数据目录",
   "settings.syncMode": "同步模式",
   "settings.syncMode.snap": "Snap（推荐）",

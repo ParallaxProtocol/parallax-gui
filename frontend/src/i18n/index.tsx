@@ -10,6 +10,7 @@ function detectInitial(): Lang {
     if (
       saved === "en" ||
       saved === "de" ||
+      saved === "es-419" ||
       saved === "fr" ||
       saved === "pt-BR" ||
       saved === "ru" ||
@@ -25,6 +26,8 @@ function detectInitial(): Lang {
   const lower = nav?.toLowerCase() ?? "";
   if (lower.startsWith("pt")) return "pt-BR";
   if (lower.startsWith("de")) return "de";
+  // Every Spanish locale, Spain's included, gets the Latin American one.
+  if (lower.startsWith("es")) return "es-419";
   if (lower.startsWith("fr")) return "fr";
   if (lower.startsWith("ru")) return "ru";
   // Traditional Chinese locales (Taiwan, Hong Kong, Macau) map to zh-TW.

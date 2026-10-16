@@ -99,6 +99,10 @@ const ptBR: Dict = {
   // Settings
   "settings.language.label": "Idioma da interface",
   "settings.language.desc": "Altera o idioma de exibição de todo o app.",
+  "settings.language.translate": "Ajude a traduzir",
+  "settings.language.translate.desc":
+    "Falta o seu idioma ou alguma frase soa estranha? As traduções estão no GitHub, abertas a qualquer pessoa.",
+  "settings.language.translate.cta": "Contribuir",
   "settings.dataDir": "Diretório de dados",
   "settings.syncMode": "Modo de sincronização",
   "settings.syncMode.snap": "Snap (recomendado)",

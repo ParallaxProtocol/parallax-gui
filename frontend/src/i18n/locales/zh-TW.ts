@@ -93,6 +93,9 @@ const zhTW: Dict = {
   // Settings
   "settings.language.label": "介面語言",
   "settings.language.desc": "變更整個應用程式的顯示語言。",
+  "settings.language.translate": "協助翻譯",
+  "settings.language.translate.desc": "找不到你的語言，或發現哪句翻譯不對？翻譯檔案公開在 GitHub 上，歡迎任何人參與。",
+  "settings.language.translate.cta": "參與貢獻",
   "settings.dataDir": "資料目錄",
   "settings.syncMode": "同步模式",
   "settings.syncMode.snap": "Snap（建議）",
