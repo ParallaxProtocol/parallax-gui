@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import {
   ArrowDownLeft,
   ArrowRight,
   ArrowUpRight,
+  ChevronRight,
   Clock,
   Download,
   Eye,
@@ -12,7 +13,10 @@ import {
   KeyRound,
   Lock,
   Plus,
+  OctagonAlert,
   Server,
+  TriangleAlert,
+  type LucideIcon,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { formatBalanceAmount, formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
@@ -24,7 +28,7 @@ import { useT } from "../../i18n";
 import { Counter } from "../../components/ui/Counter";
 import { ActivitySpinner } from "../../components/ui/ActivitySpinner";
 import { Pill } from "../../components/ui/Pill";
-import { CopyButton, Notice } from "../../components/ui/bits";
+import { CopyButton } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { BackupModal } from "./AccountForms";
 import { useSummary } from "./common";
@@ -51,23 +55,23 @@ export default function WalletPage() {
 }
 
 /**
- * DamagedNotice tells what of the wallet's was found damaged as it opened
- * (backend/sealed.go): set aside, or taken from its last good copy. The
- * keys and the recovery phrases aren't among it.
+ * DamagedRow is the account card's row telling what of the wallet's was
+ * found damaged as it opened (backend/sealed.go): set aside, or taken from
+ * its last good copy. The keys and the recovery phrases aren't among it.
  */
-function DamagedNotice() {
+function DamagedRow({ damaged }: { damaged: string[] }) {
   const t = useT();
-  const { info, refresh } = useWallet();
-  const damaged = info?.damaged ?? [];
-  if (damaged.length === 0) return null;
+  const { refresh } = useWallet();
   return (
-    <Notice
+    <CardRow
       tone="warn"
+      icon={TriangleAlert}
       title={t("wallet.damaged.title")}
+      desc={t("wallet.damaged.desc", { what: damaged.map((d) => t(`wallet.damaged.${d}`)).join(", ") })}
       action={
         <button
           type="button"
-          className="btn btn-secondary"
+          className="btn btn-tinted shrink-0"
           onClick={() =>
             api
               .walletDismissDamaged()
@@ -78,33 +82,34 @@ function DamagedNotice() {
           {t("common.done")}
         </button>
       }
-    >
-      {t("wallet.damaged.desc", { what: damaged.map((d) => t(`wallet.damaged.${d}`)).join(", ") })}
-    </Notice>
+    />
   );
 }
 
 /**
- * NodeOffNotice says what connecting brings, with the way to connect beside
- * it: the node bar's switch, so the bar and History show it connecting too,
- * its error under the line.
+ * NodeOffRow is the account card's row while the node is off: what
+ * connecting brings, and Connect at its end, the node bar's switch, so the
+ * bar and History show it connecting too. Once a start has failed, the
+ * row says so, with what the node said under it, and Connect is Try again.
  */
-function NodeOffNotice() {
+function NodeOffRow() {
   const t = useT();
   const { busy, err, toggle, waiting } = useNodeSwitch();
+  const failed = !!err && !busy && !waiting;
   return (
-    <Notice
-      tone="info"
+    <CardRow
+      tone={failed ? "critical" : "info"}
+      icon={failed ? OctagonAlert : Server}
+      title={failed ? t("wallet.nodeOff.failedTitle") : t("wallet.nodeOff.title")}
+      desc={failed ? t("wallet.nodeOff.failedDesc") : t("wallet.nodeOff")}
+      detail={failed ? err : null}
       action={
-        <button type="button" className="btn btn-tinted" onClick={toggle} disabled={busy || !!waiting}>
+        <button type="button" className="btn btn-tinted shrink-0" onClick={toggle} disabled={busy || !!waiting}>
           {(busy || waiting) && <ActivitySpinner size={14} />}
-          {waiting ?? (busy ? t("node.starting") : t("node.start"))}
+          {waiting ?? (busy ? t("node.starting") : failed ? t("wallet.nodeOff.retry") : t("node.start"))}
         </button>
       }
-    >
-      {t("wallet.nodeOff")}
-      {err && <p className="mt-1 text-sm text-critical-ink">{err}</p>}
-    </Notice>
+    />
   );
 }
 
@@ -119,38 +124,11 @@ function Overview() {
   if (!account || !info) return null;
   const label = accountLabel(account, info.accounts, t);
   const balanceKnown = !!view?.balanceWei;
+  const damaged = info.damaged ?? [];
   const outgoing = view?.pending.filter((tx) => sameAddress(tx.from, view.address)).length ?? 0;
 
   return (
     <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
-      <DamagedNotice />
-      {!account.backedUp &&
-        (account.fromSeed ? (
-          <Notice
-            tone="warn"
-            title={t("wallet.phrase.missingTitle")}
-            action={
-              <button type="button" className="btn btn-tinted" onClick={() => setReveal(true)}>
-                {t("wallet.phrase.showConfirm")}
-              </button>
-            }
-          >
-            {t("wallet.phrase.missingDesc")}
-          </Notice>
-        ) : (
-          <Notice
-            tone="warn"
-            title={t("wallet.backup.missingTitle")}
-            action={
-              <button type="button" className="btn btn-tinted" onClick={() => setBackup(true)}>
-                {t("wallet.backup.cta")}
-              </button>
-            }
-          >
-            {t("wallet.backup.missingDesc")}
-          </Notice>
-        ))}
-
       {/* The account's card: who it is, what it holds, and the two things to do with it */}
       <GlowCard {...stagger} aria-label={label}>
         <div className="relative flex flex-col gap-6">
@@ -215,11 +193,45 @@ function Overview() {
               {t("wallet.receive")}
             </Link>
           </motion.div>
+
+          {/* What needs attention, the wallet first, then the node and the balance read from it, then the account: rows across the card's foot, under a hairline each */}
+          {(damaged.length > 0 || !running || err || !account.backedUp) && (
+            <div className="-mx-6 -mb-6 flex flex-col">
+              {damaged.length > 0 && <DamagedRow damaged={damaged} />}
+              {!running && <NodeOffRow />}
+              {err && (
+                <CardRow
+                  tone="critical"
+                  icon={OctagonAlert}
+                  title={t("wallet.balanceErr.title")}
+                  desc={t("wallet.balanceErr.desc")}
+                  detail={err}
+                />
+              )}
+              {!account.backedUp &&
+                (account.fromSeed ? (
+                  <CardRow
+                    tone="warn"
+                    icon={TriangleAlert}
+                    title={t("wallet.phrase.missingTitle")}
+                    desc={t("wallet.phrase.missingDesc")}
+                    label={`${t("wallet.phrase.missingTitle")}. ${t("wallet.phrase.showConfirm")}`}
+                    onClick={() => setReveal(true)}
+                  />
+                ) : (
+                  <CardRow
+                    tone="warn"
+                    icon={TriangleAlert}
+                    title={t("wallet.backup.missingTitle")}
+                    desc={t("wallet.backup.missingDesc")}
+                    label={`${t("wallet.backup.missingTitle")}. ${t("wallet.backup.cta")}`}
+                    onClick={() => setBackup(true)}
+                  />
+                ))}
+            </div>
+          )}
         </div>
       </GlowCard>
-
-      {!running && <NodeOffNotice />}
-      {err && <Notice tone="critical">{err}</Notice>}
 
       <PendingRequests />
 
@@ -229,5 +241,64 @@ function Overview() {
       <RevealPhraseModal open={reveal} onClose={() => setReveal(false)} seedId={account.seedId || null} />
       <BackupModal open={backup} onClose={() => setBackup(false)} account={account} label={label} />
     </div>
+  );
+}
+
+/** The ink each tone's symbol is drawn in, as a Notice's. */
+const INK = { info: "text-info-ink", warn: "text-warn-ink", critical: "text-critical-ink" } as const;
+
+/**
+ * CardRow is a row across the account card's foot, as the "Finish setting
+ * up" row atop a Mac's System Settings: its symbol in the tone's colour,
+ * the title over a muted line (or the line alone), and at its end a
+ * chevron, the whole row the button (`onClick`), or `action`, a flat
+ * capsule for what is done in place, or nothing. Flat, under a hairline
+ * across the card, as it sits on the card's glass.
+ */
+function CardRow({
+  tone,
+  icon: Icon,
+  title,
+  desc,
+  detail,
+  ...end
+}: {
+  tone: "info" | "warn" | "critical";
+  icon: LucideIcon;
+  title?: string;
+  desc: string;
+  /** What went wrong, as it was said: small, under the line, to copy into a report. */
+  detail?: string | null;
+} & ({ action?: ReactNode } | { label: string; onClick: () => void })) {
+  const body = (
+    <>
+      <Icon className={`size-6 shrink-0 ${INK[tone]}`} strokeWidth={1.75} aria-hidden />
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {title && <span className="font-medium">{title}</span>}
+        <span className={title ? "text-sm text-muted-foreground" : ""}>{desc}</span>
+        {detail && <span className="selectable mt-0.5 font-mono text-xs break-words text-faint">{detail}</span>}
+      </span>
+    </>
+  );
+  const row = "flex items-center gap-3.5 border-t border-border px-6 py-4 text-left";
+  if (!("onClick" in end)) {
+    return (
+      <motion.div variants={STAGGER.item} className={row} role={tone === "critical" ? "alert" : "status"}>
+        {body}
+        {end.action}
+      </motion.div>
+    );
+  }
+  return (
+    <motion.button
+      type="button"
+      variants={STAGGER.item}
+      onClick={end.onClick}
+      aria-label={end.label}
+      className={`${row} transition-colors hover:bg-hover focus-visible:-outline-offset-2`}
+    >
+      {body}
+      <ChevronRight className="size-4 shrink-0 text-faint" strokeWidth={2.5} />
+    </motion.button>
   );
 }

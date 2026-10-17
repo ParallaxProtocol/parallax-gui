@@ -353,7 +353,13 @@ const es: Dict = {
 
   // Wallet: overview
   "wallet.account.default": "Cuenta {n}",
-  "wallet.nodeOff": "Conéctate para leer el saldo y enviar. Tus claves y direcciones funcionan sin conexión.",
+  "wallet.nodeOff": "Conéctate para ver tu saldo y enviar LAX. Tus direcciones y claves funcionan sin conexión.",
+  "wallet.nodeOff.title": "Sin conexión",
+  "wallet.nodeOff.failedTitle": "No se pudo conectar",
+  "wallet.nodeOff.failedDesc": "El nodo no se inició.",
+  "wallet.nodeOff.retry": "Reintentar",
+  "wallet.balanceErr.title": "No se pudo actualizar el saldo",
+  "wallet.balanceErr.desc": "El nodo no respondió. Se volverá a intentar en unos segundos.",
   "wallet.balance": "Saldo",
   "wallet.balanceAt": "En el bloque #{block}",
   "wallet.balanceOffline": "Se lee del nodo cuando esté en marcha",

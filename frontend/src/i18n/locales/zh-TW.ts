@@ -342,7 +342,13 @@ const zhTW: Dict = {
 
   // Wallet: overview
   "wallet.account.default": "帳戶 {n}",
-  "wallet.nodeOff": "連線後才能讀取餘額及傳送。你的金鑰與地址不需連線也能使用。",
+  "wallet.nodeOff": "連線後即可查看餘額並傳送 LAX。你的地址與金鑰離線也能使用。",
+  "wallet.nodeOff.title": "未連線",
+  "wallet.nodeOff.failedTitle": "無法連線",
+  "wallet.nodeOff.failedDesc": "節點未能啟動。",
+  "wallet.nodeOff.retry": "重試",
+  "wallet.balanceErr.title": "無法更新餘額",
+  "wallet.balanceErr.desc": "節點沒有回應，幾秒後會自動重試。",
   "wallet.balance": "餘額",
   "wallet.balanceAt": "截至區塊 #{block}",
   "wallet.balanceOffline": "節點執行後即會讀取",

@@ -353,7 +353,13 @@ const ptBR: Dict = {
 
   // Wallet: overview
   "wallet.account.default": "Conta {n}",
-  "wallet.nodeOff": "Conecte-se para ver o saldo e enviar. Suas chaves e endereços funcionam sem isso.",
+  "wallet.nodeOff": "Conecte-se para ver seu saldo e enviar LAX. Seus endereços e chaves funcionam offline.",
+  "wallet.nodeOff.title": "Não conectado",
+  "wallet.nodeOff.failedTitle": "Não foi possível conectar",
+  "wallet.nodeOff.failedDesc": "O nó não foi iniciado.",
+  "wallet.nodeOff.retry": "Tentar novamente",
+  "wallet.balanceErr.title": "Não foi possível atualizar o saldo",
+  "wallet.balanceErr.desc": "O nó não respondeu. Uma nova tentativa será feita em alguns segundos.",
   "wallet.balance": "Saldo",
   "wallet.balanceAt": "No bloco #{block}",
   "wallet.balanceOffline": "Lido do nó assim que ele estiver rodando",

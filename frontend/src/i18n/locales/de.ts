@@ -359,7 +359,13 @@ const de: Dict = {
   // Wallet: overview
   "wallet.account.default": "Konto {n}",
   "wallet.nodeOff":
-    "Verbinden Sie sich, um das Guthaben abzurufen und zu senden. Ihre Schlüssel und Adressen funktionieren auch ohne Verbindung.",
+    "Verbinden Sie sich, um Ihr Guthaben zu sehen und LAX zu senden. Ihre Adressen und Schlüssel funktionieren auch offline.",
+  "wallet.nodeOff.title": "Nicht verbunden",
+  "wallet.nodeOff.failedTitle": "Verbindung fehlgeschlagen",
+  "wallet.nodeOff.failedDesc": "Der Knoten wurde nicht gestartet.",
+  "wallet.nodeOff.retry": "Erneut versuchen",
+  "wallet.balanceErr.title": "Guthaben konnte nicht aktualisiert werden",
+  "wallet.balanceErr.desc": "Der Knoten hat nicht geantwortet. In wenigen Sekunden wird es erneut versucht.",
   "wallet.balance": "Guthaben",
   "wallet.balanceAt": "Bei Block #{block}",
   "wallet.balanceOffline": "Wird vom Node abgerufen, sobald er läuft",

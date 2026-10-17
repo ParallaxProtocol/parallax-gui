@@ -349,7 +349,13 @@ const fr: Dict = {
   // Wallet: overview
   "wallet.account.default": "Compte {n}",
   "wallet.nodeOff":
-    "Connectez-vous pour lire le solde et envoyer. Vos clés et vos adresses fonctionnent sans connexion.",
+    "Connectez-vous pour voir votre solde et envoyer des LAX. Vos adresses et vos clés fonctionnent hors ligne.",
+  "wallet.nodeOff.title": "Non connecté",
+  "wallet.nodeOff.failedTitle": "Connexion impossible",
+  "wallet.nodeOff.failedDesc": "Le nœud n'a pas démarré.",
+  "wallet.nodeOff.retry": "Réessayer",
+  "wallet.balanceErr.title": "Impossible de mettre à jour le solde",
+  "wallet.balanceErr.desc": "Le nœud n'a pas répondu. Nouvel essai dans quelques secondes.",
   "wallet.balance": "Solde",
   "wallet.balanceAt": "Au bloc #{block}",
   "wallet.balanceOffline": "Lu depuis le nœud dès qu’il est lancé",

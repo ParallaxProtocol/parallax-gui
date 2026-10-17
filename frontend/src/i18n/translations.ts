@@ -369,7 +369,13 @@ export const en: Dict = {
 
   // Wallet: overview
   "wallet.account.default": "Account {n}",
-  "wallet.nodeOff": "Connect to read the balance and send. Your keys and addresses work without it.",
+  "wallet.nodeOff": "Connect to see your balance and send LAX. Your addresses and keys work offline.",
+  "wallet.nodeOff.title": "Not connected",
+  "wallet.nodeOff.failedTitle": "Couldn't connect",
+  "wallet.nodeOff.failedDesc": "The node didn't start.",
+  "wallet.nodeOff.retry": "Try again",
+  "wallet.balanceErr.title": "Couldn't update the balance",
+  "wallet.balanceErr.desc": "The node didn't answer. It'll try again in a few seconds.",
   "wallet.balance": "Balance",
   "wallet.balanceAt": "At block #{block}",
   "wallet.balanceOffline": "Read from the node once it runs",

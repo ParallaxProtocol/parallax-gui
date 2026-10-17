@@ -342,7 +342,13 @@ const zhSG: Dict = {
 
   // Wallet: overview
   "wallet.account.default": "账户 {n}",
-  "wallet.nodeOff": "连接后才能读取余额和发送。您的密钥和地址无需连接也能使用。",
+  "wallet.nodeOff": "连接后即可查看余额并发送 LAX。您的地址和密钥离线也能使用。",
+  "wallet.nodeOff.title": "未连接",
+  "wallet.nodeOff.failedTitle": "无法连接",
+  "wallet.nodeOff.failedDesc": "节点未能启动。",
+  "wallet.nodeOff.retry": "重试",
+  "wallet.balanceErr.title": "无法更新余额",
+  "wallet.balanceErr.desc": "节点没有响应，几秒后将自动重试。",
   "wallet.balance": "余额",
   "wallet.balanceAt": "截至区块 #{block}",
   "wallet.balanceOffline": "节点运行后读取",

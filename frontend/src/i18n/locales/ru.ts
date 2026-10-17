@@ -352,8 +352,13 @@ const ru: Dict = {
 
   // Wallet: overview
   "wallet.account.default": "Аккаунт {n}",
-  "wallet.nodeOff":
-    "Подключитесь, чтобы видеть баланс и отправлять средства. Ключи и адреса работают и без подключения.",
+  "wallet.nodeOff": "Подключитесь, чтобы видеть баланс и отправлять LAX. Адреса и ключи работают и без подключения.",
+  "wallet.nodeOff.title": "Нет подключения",
+  "wallet.nodeOff.failedTitle": "Не удалось подключиться",
+  "wallet.nodeOff.failedDesc": "Узел не запустился.",
+  "wallet.nodeOff.retry": "Повторить",
+  "wallet.balanceErr.title": "Не удалось обновить баланс",
+  "wallet.balanceErr.desc": "Узел не ответил. Повторная попытка через несколько секунд.",
   "wallet.balance": "Баланс",
   "wallet.balanceAt": "На блоке #{block}",
   "wallet.balanceOffline": "Будет получен от узла после его запуска",
