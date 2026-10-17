@@ -1,0 +1,61 @@
+name: Report a problem
+description: Something in Parallax Wallet isn't working as it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to tell us. Plain words are perfect: no technical knowledge needed.
+
+        **Never share your recovery phrase, your wallet password or a private key here.** This page is public, and no one from Parallax will ever ask you for them.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Tell us what went wrong, in your own words.
+      placeholder: When I tried to send LAX, the button stayed grey and nothing happened.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: I expected the transaction to be sent.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we see it for ourselves?
+      description: The steps that lead to the problem, if you know them.
+      placeholder: |
+        1. Open Send
+        2. Enter an address and an amount
+        3. Press Send
+  - type: dropdown
+    id: often
+    attributes:
+      label: How often does it happen?
+      options:
+        - Every time
+        - Sometimes
+        - It happened once
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If you can, drag a screenshot here. Check it shows no recovery phrase, password or private key first.
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Settings → About shows it. Opened from the app, this is filled in for you.
+      placeholder: "1.0.0"
+  - type: dropdown
+    id: os
+    attributes:
+      label: Your computer
+      options:
+        - Windows
+        - macOS
+        - Linux

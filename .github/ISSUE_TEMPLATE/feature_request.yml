@@ -1,0 +1,30 @@
+name: Request a feature
+description: Something you'd like Parallax Wallet to do.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping shape the wallet. Plain words are perfect: no technical knowledge needed.
+
+        **Never share your recovery phrase, your wallet password or a private key here.** This page is public.
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like the wallet to do?
+      placeholder: I'd like to see my balance in my own currency.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: How would it help you?
+      description: What you're trying to do, and what makes it hard today.
+      placeholder: I never know how much my LAX is worth without looking it up elsewhere.
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else?
+      description: "Other apps that do it well, sketches, screenshots: anything that helps."

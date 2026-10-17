@@ -1694,12 +1694,53 @@ function About() {
           </Row>
         ))}
       </Rows>
+
+      {/* Where a problem or a wish goes: the project's issue forms on GitHub
+          (.github/ISSUE_TEMPLATE), a problem's with this app's version and
+          system filled in */}
+      <Rows>
+        <Row title={t("settings.about.bug")} desc={t("settings.about.bug.desc")}>
+          <button
+            type="button"
+            className="btn btn-tinted btn-sm"
+            onClick={() => openExternal(issueURL("bug_report.yml", { version: appNumber, os: SYSTEM }))}
+          >
+            <ExternalLink className="size-3" />
+            {t("settings.about.bug.open")}
+          </button>
+        </Row>
+        <Row title={t("settings.about.feature")} desc={t("settings.about.feature.desc")}>
+          <button
+            type="button"
+            className="btn btn-tinted btn-sm"
+            onClick={() => openExternal(issueURL("feature_request.yml"))}
+          >
+            <ExternalLink className="size-3" />
+            {t("settings.about.feature.open")}
+          </button>
+        </Row>
+      </Rows>
     </div>
   );
 }
 
 // Where the app's strings live, for anyone who'd fix one or add a language
 const TRANSLATIONS_URL = "https://github.com/ParallaxProtocol/parallax-gui/tree/main/frontend/src/i18n";
+
+/**
+ * issueURL opens one of the repository's issue forms, its fields filled in
+ * by id (the form's own ids, .github/ISSUE_TEMPLATE); empty ones are left out.
+ */
+function issueURL(template: string, fields: Record<string, string> = {}) {
+  const q = new URLSearchParams({ template });
+  for (const [k, v] of Object.entries(fields)) if (v) q.set(k, v);
+  return `https://github.com/ParallaxProtocol/parallax-gui/issues/new?${q}`;
+}
+
+// The computer, as the problem form's "Your computer" names it
+const SYSTEM =
+  ({ win32: "Windows", darwin: "macOS", linux: "Linux" } as Record<string, string>)[window.parallax?.platform ?? ""] ??
+  "";
 
 // The project's own pages, opened in the user's browser
 const ABOUT_LINKS = [

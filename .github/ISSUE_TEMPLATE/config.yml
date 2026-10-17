@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Parallax Network Status
+    url: https://status.parallaxprotocol.org
+    about: Is the Parallax network itself having trouble? Check here first.
+  - name: Parallax Website
+    url: https://parallaxprotocol.org
+    about: Learn more about Parallax.
