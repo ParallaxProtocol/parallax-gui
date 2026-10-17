@@ -25,9 +25,9 @@ import { FADE_IN, FADE_OUT, GLIDE, SPRING, usePageSwap } from "../../lib/motion"
 import { useLang, useT, Lang } from "../../i18n";
 import { LANG_NAMES } from "../../i18n/translations";
 import { pageKey, useSettingsSheet, type SettingsSection } from "../../lib/settingsSheet";
+import { LogoMark } from "../../components/ui/LogoMark";
 import { Select } from "../../components/ui/Select";
 import { Tooltip } from "../../components/ui/Tooltip";
-import logo from "../../assets/logo.svg";
 import { SparklesSymbol } from "../../components/ui/symbols";
 import { IconTile, TILE } from "../../components/ui/IconTile";
 import { AccountsSettings, SecuritySettings } from "../Wallet/Accounts";
@@ -1621,7 +1621,7 @@ function About() {
     <div className="flex flex-col gap-7">
       {/* The app, as an About window shows it */}
       <div className="flex flex-col items-center gap-3 pt-2 text-center">
-        <img src={logo} alt="" className="size-20" />
+        <LogoMark size={80} />
         <div className="flex flex-col gap-1">
           <h3 className="text-2xl font-semibold tracking-tight">{appName}</h3>
           {appNumber && (

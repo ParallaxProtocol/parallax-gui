@@ -1,9 +1,11 @@
 import logo from "../../assets/logo.svg";
 
 /**
- * LogoMark is the app's mark as the greeting and the lock screen draw it:
- * the logo's shape filled with the text colour, warming into the brand's
- * violet at its far corner, rather than the logo's own colours.
+ * LogoMark is the app's mark, wherever the app shows it (the sidebar, the
+ * greeting, the lock screen, About) and in its icon
+ * (desktop/resources/icon.svg): the logo's shape filled with the text
+ * colour, warming into the brand's violet at its far corner, rather than
+ * the logo's own colours.
  */
 export function LogoMark({ size = 56, className = "" }: { size?: number; className?: string }) {
   return (

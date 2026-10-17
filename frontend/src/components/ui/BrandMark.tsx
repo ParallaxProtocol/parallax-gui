@@ -1,7 +1,7 @@
-import logo from "../../assets/logo.svg";
+import { LogoMark } from "./LogoMark";
 
 /**
- * BrandMark is the logo lit from behind: a soft glow in the accent that
+ * BrandMark is the app's mark (LogoMark) lit from behind: a soft glow in the accent that
  * breathes, for the few moments that are about the app itself (the
  * splash).
  */
@@ -13,7 +13,7 @@ export function BrandMark({ size = 56 }: { size?: number }) {
         className="breathe absolute -inset-1/2 rounded-full"
         style={{ background: "radial-gradient(closest-side, var(--glow), transparent)" }}
       />
-      <img src={logo} alt="" className="relative" style={{ width: size, height: size }} />
+      <LogoMark size={size} className="relative" />
     </span>
   );
 }

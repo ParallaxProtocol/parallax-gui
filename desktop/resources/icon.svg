@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <!-- The app's icon: its mark (frontend/src/components/ui/LogoMark.tsx) on
+       a black disc, the logo's shape (frontend/src/assets/logo.svg) in the
+       dark theme's text colour, warming into the brand's violet at its far
+       corner. icon.png and icon.ico are rendered from this file -->
+  <defs>
+    <linearGradient id="mark" gradientUnits="userSpaceOnUse" x1="145.01123" y1="32.460674" x2="409.59453" y2="297.043974">
+      <stop offset="0" stop-color="#ececee"/>
+      <stop offset="0.5" stop-color="#ececee"/>
+      <stop offset="1" stop-color="#b18cff"/>
+    </linearGradient>
+  </defs>
+  <circle cx="600" cy="600" r="600" fill="#000"/>
+  <g transform="translate(100 100) scale(3.7795278)">
+    <path transform="translate(-145.01123,-32.460674)" fill="url(#mark)" d="m 171.48919,103.57486 -0.0214,30.61331 108.49225,-62.638032 0.007,-0.004 0.007,0.01164 52.90338,30.543593 -26.45177,15.27194 -26.46448,15.27987 1.8e-4,-7e-4 -108.53587,62.66321 -0.0213,30.51422 0.0429,0.0247 211.66649,-122.2057 -105.70521,-61.127344 z m 26.39475,137.56774 79.35321,45.88867 105.91862,-61.05365 0.0215,-30.71125 -110.18258,63.61394 -0.003,-0.005 -26.45194,-15.27225 26.45847,-15.27581 110.20048,-63.62427 0.0213,-30.56377 z"/>
+  </g>
+</svg>

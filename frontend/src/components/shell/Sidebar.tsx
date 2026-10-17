@@ -22,8 +22,8 @@ import { api } from "../../lib/api";
 import { FADE_IN, FADE_OUT, GLIDE, ROW_IN, SPRING, useStagger } from "../../lib/motion";
 import { accountLabel, groupAccounts, groupKey, useBalances, useWallet, type AccountGroup } from "../../lib/wallet";
 import { DEVICE_NAME } from "../hardware/Device";
+import { LogoMark } from "../ui/LogoMark";
 import { useT } from "../../i18n";
-import logo from "../../assets/logo.svg";
 import { NODE_BAR_ROOM } from "./NodeBar";
 import { TOP_BAR_HEIGHT } from "./TopBar";
 import { useSettingsSheet } from "../../lib/settingsSheet";
@@ -102,7 +102,7 @@ export default function Sidebar() {
         animate={{ paddingLeft: collapsed ? (RAIL - LOGO) / 2 : 16 }}
         transition={SPRING}
       >
-        <img src={logo} alt="" className="shrink-0" style={{ width: LOGO, height: LOGO }} />
+        <LogoMark size={LOGO} />
         <motion.span className="flex min-w-0 items-center gap-2.5" initial={false} animate={fade(!collapsed)}>
           <span className="truncate text-[19px] leading-none font-medium tracking-[-0.04em]">Parallax Wallet</span>
           <ProfileBadge />
