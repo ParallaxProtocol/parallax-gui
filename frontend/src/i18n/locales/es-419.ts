@@ -600,6 +600,7 @@ const es: Dict = {
   "offline.scan.noClipboard": "No se pudo leer nada del portapapeles.",
   "offline.scan.tooBig": "Ese archivo es demasiado grande para ser un documento de firma.",
   "offline.scan.notRequest": "Eso no es una solicitud de firma. Escanea el código que muestra tu billetera en línea.",
+  "offline.scan.failedTitle": "Ese código no se puede usar",
   "offline.scan.notSigned":
     "Eso no es una transacción firmada. Escanea el código que muestra tu firmante sin conexión.",
   "offline.scan.notAddress": "Eso no es una dirección. Escanea el código QR de la dirección en el firmante.",
@@ -623,6 +624,8 @@ const es: Dict = {
   "offline.sign.conflict":
     "Esta computadora ya firmó otra transferencia desde esta cuenta con el mismo nonce. Solo una de ellas puede procesarse. Firma esta solo si reemplaza a la otra.",
   "offline.sign.already": "Esta solicitud ya se firmó aquí. Firmarla de nuevo da la misma transacción.",
+  "offline.sign.alreadyTitle": "Ya se firmó aquí",
+  "offline.sign.compareTitle": "Compara antes de firmar",
   "offline.sign.cta": "Firmar",
   "offline.sign.done": "Firmada",
   "offline.sign.doneDesc":
@@ -653,6 +656,11 @@ const es: Dict = {
     "Una transacción anterior de esta cuenta aún no salió. Esta espera hasta que salga.",
   "offline.broadcast.warn.balanceLow":
     "El saldo de la cuenta no cubre ahora el monto y la comisión. El nodo la rechazará.",
+  "offline.broadcast.unmatchedTitle": "No viene de las solicitudes de esta billetera",
+  "offline.broadcast.warn.priceLowTitle": "Comisión baja",
+  "offline.broadcast.warn.nonceGapTitle": "Esperando una transacción anterior",
+  "offline.broadcast.warn.balanceLowTitle": "Saldo insuficiente",
+  "offline.broadcast.failed": "No se pudo transmitir",
   "offline.broadcast.cta": "Transmitir",
   "offline.broadcast.done": "Transmitida",
   "offline.pending.title": "Esperando firma",

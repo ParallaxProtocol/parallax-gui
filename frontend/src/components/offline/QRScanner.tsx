@@ -1,8 +1,8 @@
-import { ArrowLeft, Camera, ClipboardPaste, FileUp, Loader2, VideoOff } from "lucide-react";
+import { ArrowLeft, Camera, ClipboardPaste, FileUp, Loader2, OctagonAlert, VideoOff } from "lucide-react";
 import { useT } from "../../i18n";
 import { Select } from "../ui/Select";
 import { GlowCard } from "../ui/GlowCard";
-import { Notice } from "../ui/bits";
+import { CardRow, CardRows } from "../ui/CardRow";
 import { useQRScanner } from "./useQRScanner";
 
 /**
@@ -95,7 +95,8 @@ export function QRScanner({
 /**
  * ScanCard is a scanning step, laid out as the app's other steps are: the
  * camera as the page's subject in a glowing card, under its title and
- * what to hold up to it, and Back under the card.
+ * what to hold up to it, what was wrong with the last code at its foot,
+ * and Back under the card.
  */
 export function ScanCard({
   title,
@@ -123,15 +124,13 @@ export function ScanCard({
             <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
             <p className="max-w-md text-muted-foreground">{desc}</p>
           </div>
-          {error && (
-            <div className="w-full text-left">
-              <Notice tone="critical">{error}</Notice>
-            </div>
-          )}
           <div className="w-full">
             <QRScanner accept={accept} onScan={onScan} hint={hint} />
           </div>
         </div>
+        <CardRows className="mt-4">
+          {error && <CardRow tone="critical" icon={OctagonAlert} title={t("offline.scan.failedTitle")} desc={error} />}
+        </CardRows>
       </GlowCard>
       {onBack && (
         <div className="flex justify-center">

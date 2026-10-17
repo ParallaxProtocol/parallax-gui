@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, Loader2, Radio } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Loader2, OctagonAlert, Radio, TriangleAlert } from "lucide-react";
 import { api, SentTx, SignedReview, walletError } from "../../lib/api";
 import { docKind } from "../../lib/offline";
 import { PAGE } from "../../lib/motion";
@@ -10,7 +10,8 @@ import { ToolbarAccessory } from "../../lib/toolbar";
 import { Steps } from "../Wallet/flow";
 import { useT } from "../../i18n";
 import { Property, Rows } from "../../components/ui/Panel";
-import { CopyButton, Notice } from "../../components/ui/bits";
+import { CopyButton } from "../../components/ui/bits";
+import { CardRow } from "../../components/ui/CardRow";
 import { ScanCard } from "../../components/offline/QRScanner";
 import { Fingerprint, TxSummary } from "../../components/offline/parts";
 import { DrawnCheck } from "../Wallet/common";
@@ -111,20 +112,44 @@ export function BroadcastFlow({
           </div>
         ) : review ? (
           <>
-            <TxSummary tx={review.tx} />
-            {review.matched ? (
-              <Notice tone="info">
-                {t("offline.broadcast.matched")} <Fingerprint value={review.tx.fingerprint} />
-              </Notice>
-            ) : (
-              <Notice tone="warn">{t("offline.broadcast.unmatched")}</Notice>
-            )}
-            {review.warnings.map((w) => (
-              <Notice key={w} tone="warn">
-                {t(`offline.broadcast.warn.${w}`)}
-              </Notice>
-            ))}
-            {error && <Notice tone="critical">{error}</Notice>}
+            <TxSummary
+              tx={review.tx}
+              rows={
+                <>
+                  {review.matched ? (
+                    <CardRow
+                      tone="good"
+                      icon={BadgeCheck}
+                      title={t("offline.broadcast.matched")}
+                      desc={
+                        <>
+                          {t("offline.fingerprint")} <Fingerprint value={review.tx.fingerprint} />
+                        </>
+                      }
+                    />
+                  ) : (
+                    <CardRow
+                      tone="warn"
+                      icon={TriangleAlert}
+                      title={t("offline.broadcast.unmatchedTitle")}
+                      desc={t("offline.broadcast.unmatched")}
+                    />
+                  )}
+                  {review.warnings.map((w) => (
+                    <CardRow
+                      key={w}
+                      tone="warn"
+                      icon={TriangleAlert}
+                      title={t(`offline.broadcast.warn.${w}Title`)}
+                      desc={t(`offline.broadcast.warn.${w}`)}
+                    />
+                  ))}
+                  {error && (
+                    <CardRow tone="critical" icon={OctagonAlert} title={t("offline.broadcast.failed")} desc={error} />
+                  )}
+                </>
+              }
+            />
             <div className="flex justify-center gap-3">
               <button
                 type="button"

@@ -605,6 +605,7 @@ const fr: Dict = {
   "offline.scan.tooBig": "Ce fichier est trop volumineux pour être un document de signature.",
   "offline.scan.notRequest":
     "Ce n’est pas une demande de signature. Scannez le code affiché par votre portefeuille en ligne.",
+  "offline.scan.failedTitle": "Ce code ne peut pas être utilisé",
   "offline.scan.notSigned":
     "Ce n’est pas une transaction signée. Scannez le code affiché par votre signataire hors ligne.",
   "offline.scan.notAddress": "Ce n’est pas une adresse. Scannez le code QR de l’adresse sur le signataire.",
@@ -628,6 +629,8 @@ const fr: Dict = {
   "offline.sign.conflict":
     "Cet ordinateur a déjà signé un autre transfert depuis ce compte avec le même nonce. Un seul des deux peut passer. Ne signez celui-ci que s’il remplace l’autre.",
   "offline.sign.already": "Cette demande a déjà été signée ici. La signer à nouveau produit la même transaction.",
+  "offline.sign.alreadyTitle": "Déjà signée ici",
+  "offline.sign.compareTitle": "Comparez avant de signer",
   "offline.sign.cta": "Signer",
   "offline.sign.done": "Signée",
   "offline.sign.doneDesc":
@@ -659,6 +662,11 @@ const fr: Dict = {
     "Une transaction antérieure de ce compte n’est pas encore partie. Celle-ci attendra qu’elle le soit.",
   "offline.broadcast.warn.balanceLow":
     "Le solde du compte ne couvre pas actuellement le montant et les frais. Le nœud la refusera.",
+  "offline.broadcast.unmatchedTitle": "Ne vient pas des demandes de ce portefeuille",
+  "offline.broadcast.warn.priceLowTitle": "Frais bas",
+  "offline.broadcast.warn.nonceGapTitle": "En attente d'une transaction antérieure",
+  "offline.broadcast.warn.balanceLowTitle": "Solde insuffisant",
+  "offline.broadcast.failed": "Diffusion impossible",
   "offline.broadcast.cta": "Diffuser",
   "offline.broadcast.done": "Diffusée",
   "offline.pending.title": "En attente de signature",

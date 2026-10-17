@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, Loader2, PenLine, ScanLine } from "lucide-react";
+import { ArrowLeft, Info, Loader2, OctagonAlert, PenLine, ScanLine, TriangleAlert } from "lucide-react";
 import { api, MessageRequest, RequestReview, SignedMessage, SignedOffline, walletError } from "../../lib/api";
 import { docFileName, docKind, messageFileName } from "../../lib/offline";
 import { accountLabel, useWallet } from "../../lib/wallet";
@@ -13,7 +13,7 @@ import { ToolbarAccessory } from "../../lib/toolbar";
 import { useT } from "../../i18n";
 import { Property, Rows } from "../../components/ui/Panel";
 import { GlowCard } from "../../components/ui/GlowCard";
-import { Notice } from "../../components/ui/bits";
+import { CardRow, CardRows } from "../../components/ui/CardRow";
 import { ScanCard } from "../../components/offline/QRScanner";
 import { DocCard, TxSummary } from "../../components/offline/parts";
 import { messageBytes } from "../Messages";
@@ -152,14 +152,31 @@ function SignReview({
 
   return (
     <div className="flex flex-col gap-5">
-      <TxSummary tx={review.tx} />
-      {review.conflict && (
-        <Notice tone="warn" title={t("offline.sign.conflictTitle")}>
-          {t("offline.sign.conflict")}
-        </Notice>
-      )}
-      {review.signed && <Notice tone="info">{t("offline.sign.already")}</Notice>}
-      <Notice tone="info">{t("offline.sign.compare")}</Notice>
+      <TxSummary
+        tx={review.tx}
+        rows={
+          <>
+            {review.conflict && (
+              <CardRow
+                tone="warn"
+                icon={TriangleAlert}
+                title={t("offline.sign.conflictTitle")}
+                desc={t("offline.sign.conflict")}
+              />
+            )}
+            {review.signed && (
+              <CardRow
+                tone="info"
+                icon={Info}
+                title={t("offline.sign.alreadyTitle")}
+                desc={t("offline.sign.already")}
+              />
+            )}
+            <CardRow tone="info" icon={Info} title={t("offline.sign.compareTitle")} desc={t("offline.sign.compare")} />
+            {error && <CardRow tone="critical" icon={OctagonAlert} title={t("message.signFailed")} desc={error} />}
+          </>
+        }
+      />
       <form
         className="flex flex-col gap-5"
         onSubmit={(e) => {
@@ -167,7 +184,6 @@ function SignReview({
           sign();
         }}
       >
-        {error && <Notice tone="critical">{error}</Notice>}
         <div className="flex justify-center gap-3">
           <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onBack} disabled={busy}>
             <ArrowLeft className="size-4" />
@@ -233,6 +249,10 @@ function MessageReview({
             {request.message}
           </p>
         </div>
+        <CardRows className="mt-5">
+          <CardRow tone="info" icon={Info} title={t("offline.sign.compareTitle")} desc={t("message.offline.compare")} />
+          {error && <CardRow tone="critical" icon={OctagonAlert} title={t("message.signFailed")} desc={error} />}
+        </CardRows>
       </GlowCard>
       <Rows as="dl">
         <Property label={t("message.signingAs")}>
@@ -245,7 +265,6 @@ function MessageReview({
           <Fingerprint value={request.fingerprint} />
         </Property>
       </Rows>
-      <Notice tone="info">{t("message.offline.compare")}</Notice>
       <form
         className="flex flex-col gap-5"
         onSubmit={(e) => {
@@ -253,7 +272,6 @@ function MessageReview({
           sign();
         }}
       >
-        {error && <Notice tone="critical">{error}</Notice>}
         <div className="flex justify-center gap-3">
           <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onBack} disabled={busy}>
             <ArrowLeft className="size-4" />

@@ -612,6 +612,7 @@ export const en: Dict = {
   "offline.scan.noClipboard": "Nothing could be read from the clipboard.",
   "offline.scan.tooBig": "That file is too big to be a signing document.",
   "offline.scan.notRequest": "That isn't a signing request. Scan the code your online wallet shows.",
+  "offline.scan.failedTitle": "That code can't be used",
   "offline.scan.notSigned": "That isn't a signed transaction. Scan the code your offline signer shows.",
   "offline.scan.notAddress": "That isn't an address. Scan the address QR code on the signer.",
   "offline.home.title": "This computer signs offline",
@@ -633,6 +634,8 @@ export const en: Dict = {
   "offline.sign.conflict":
     "This computer already signed a different transfer from this account with the same nonce. Only one of them can go through. Sign this one only if it replaces the other.",
   "offline.sign.already": "This request was signed here before. Signing it again gives the same transaction.",
+  "offline.sign.alreadyTitle": "Signed here before",
+  "offline.sign.compareTitle": "Compare before you sign",
   "offline.sign.cta": "Sign",
   "offline.sign.done": "Signed",
   "offline.sign.doneDesc":
@@ -661,6 +664,11 @@ export const en: Dict = {
     "An earlier transaction from this account hasn't gone out yet. This one waits until it does.",
   "offline.broadcast.warn.balanceLow":
     "The account's balance doesn't cover the amount and the fee right now. The node will refuse it.",
+  "offline.broadcast.unmatchedTitle": "Not from this wallet's requests",
+  "offline.broadcast.warn.priceLowTitle": "Low fee",
+  "offline.broadcast.warn.nonceGapTitle": "Waiting on an earlier transaction",
+  "offline.broadcast.warn.balanceLowTitle": "Balance too low",
+  "offline.broadcast.failed": "Couldn't broadcast",
   "offline.broadcast.cta": "Broadcast",
   "offline.broadcast.done": "Broadcast",
   "offline.pending.title": "Waiting for signature",

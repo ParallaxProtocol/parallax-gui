@@ -604,6 +604,7 @@ const ptBR: Dict = {
   "offline.scan.tooBig": "Esse arquivo é grande demais para ser um documento de assinatura.",
   "offline.scan.notRequest":
     "Isso não é uma solicitação de assinatura. Escaneie o código que sua carteira online mostra.",
+  "offline.scan.failedTitle": "Esse código não pode ser usado",
   "offline.scan.notSigned": "Isso não é uma transação assinada. Escaneie o código que seu assinador offline mostra.",
   "offline.scan.notAddress": "Isso não é um endereço. Escaneie o QR code do endereço no assinador.",
   "offline.home.title": "Este computador assina offline",
@@ -626,6 +627,8 @@ const ptBR: Dict = {
   "offline.sign.conflict":
     "Este computador já assinou uma transferência diferente desta conta com o mesmo nonce. Só uma delas pode ser concluída. Assine esta somente se ela substituir a outra.",
   "offline.sign.already": "Esta solicitação já foi assinada aqui antes. Assiná-la de novo gera a mesma transação.",
+  "offline.sign.alreadyTitle": "Já assinada aqui",
+  "offline.sign.compareTitle": "Compare antes de assinar",
   "offline.sign.cta": "Assinar",
   "offline.sign.done": "Assinada",
   "offline.sign.doneDesc":
@@ -655,6 +658,11 @@ const ptBR: Dict = {
   "offline.broadcast.warn.nonceGap":
     "Uma transação anterior desta conta ainda não foi enviada. Esta aguarda até que ela seja.",
   "offline.broadcast.warn.balanceLow": "O saldo da conta não cobre o valor e a taxa neste momento. O nó vai recusá-la.",
+  "offline.broadcast.unmatchedTitle": "Não veio das solicitações desta carteira",
+  "offline.broadcast.warn.priceLowTitle": "Taxa baixa",
+  "offline.broadcast.warn.nonceGapTitle": "Aguardando uma transação anterior",
+  "offline.broadcast.warn.balanceLowTitle": "Saldo insuficiente",
+  "offline.broadcast.failed": "Não foi possível transmitir",
   "offline.broadcast.cta": "Transmitir",
   "offline.broadcast.done": "Transmitida",
   "offline.pending.title": "Aguardando assinatura",

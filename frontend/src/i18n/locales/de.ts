@@ -615,6 +615,7 @@ const de: Dict = {
   "offline.scan.noClipboard": "Aus der Zwischenablage konnte nichts gelesen werden.",
   "offline.scan.tooBig": "Diese Datei ist zu groß für ein Signierdokument.",
   "offline.scan.notRequest": "Das ist keine Signieranfrage. Scannen Sie den Code, den Ihre Online-Wallet anzeigt.",
+  "offline.scan.failedTitle": "Dieser Code kann nicht verwendet werden",
   "offline.scan.notSigned":
     "Das ist keine signierte Transaktion. Scannen Sie den Code, den Ihr Offline-Signierer anzeigt.",
   "offline.scan.notAddress": "Das ist keine Adresse. Scannen Sie den Adress-QR-Code auf dem Signierer.",
@@ -638,6 +639,8 @@ const de: Dict = {
   "offline.sign.conflict":
     "Dieser Computer hat bereits eine andere Überweisung von diesem Konto mit derselben Nonce signiert. Nur eine davon kann durchgehen. Signieren Sie diese nur, wenn sie die andere ersetzen soll.",
   "offline.sign.already": "Diese Anfrage wurde hier bereits signiert. Erneutes Signieren ergibt dieselbe Transaktion.",
+  "offline.sign.alreadyTitle": "Hier bereits signiert",
+  "offline.sign.compareTitle": "Vor dem Signieren vergleichen",
   "offline.sign.cta": "Signieren",
   "offline.sign.done": "Signiert",
   "offline.sign.doneDesc":
@@ -669,6 +672,11 @@ const de: Dict = {
     "Eine frühere Transaktion von diesem Konto ist noch nicht raus. Diese wartet, bis sie es ist.",
   "offline.broadcast.warn.balanceLow":
     "Das Guthaben des Kontos deckt Betrag und Gebühr derzeit nicht. Der Node wird sie ablehnen.",
+  "offline.broadcast.unmatchedTitle": "Nicht aus den Anfragen dieser Wallet",
+  "offline.broadcast.warn.priceLowTitle": "Niedrige Gebühr",
+  "offline.broadcast.warn.nonceGapTitle": "Wartet auf eine frühere Transaktion",
+  "offline.broadcast.warn.balanceLowTitle": "Guthaben zu niedrig",
+  "offline.broadcast.failed": "Übertragung fehlgeschlagen",
   "offline.broadcast.cta": "Übertragen",
   "offline.broadcast.done": "Übertragen",
   "offline.pending.title": "Wartet auf Signatur",

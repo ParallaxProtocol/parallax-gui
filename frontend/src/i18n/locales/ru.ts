@@ -601,6 +601,7 @@ const ru: Dict = {
   "offline.scan.noClipboard": "Не удалось ничего прочитать из буфера обмена.",
   "offline.scan.tooBig": "Файл слишком большой для документа подписи.",
   "offline.scan.notRequest": "Это не запрос на подпись. Отсканируйте код, который показывает онлайн-кошелёк.",
+  "offline.scan.failedTitle": "Этот код нельзя использовать",
   "offline.scan.notSigned": "Это не подписанная транзакция. Отсканируйте код, который показывает офлайн-подписант.",
   "offline.scan.notAddress": "Это не адрес. Отсканируйте QR-код адреса на подписанте.",
   "offline.home.title": "Этот компьютер подписывает офлайн",
@@ -623,6 +624,8 @@ const ru: Dict = {
   "offline.sign.conflict":
     "Этот компьютер уже подписал другой перевод с этого аккаунта с тем же nonce. Пройти может только один из них. Подписывайте этот, только если он заменяет другой.",
   "offline.sign.already": "Этот запрос уже подписывался здесь. Повторная подпись даст ту же транзакцию.",
+  "offline.sign.alreadyTitle": "Уже подписано здесь",
+  "offline.sign.compareTitle": "Сверьте перед подписью",
   "offline.sign.cta": "Подписать",
   "offline.sign.done": "Подписано",
   "offline.sign.doneDesc":
@@ -653,6 +656,11 @@ const ru: Dict = {
   "offline.broadcast.warn.nonceGap":
     "Более ранняя транзакция с этого аккаунта ещё не отправлена. Эта будет ждать, пока не уйдёт та.",
   "offline.broadcast.warn.balanceLow": "Баланса аккаунта сейчас не хватает на сумму и комиссию. Узел её отклонит.",
+  "offline.broadcast.unmatchedTitle": "Не из запросов этого кошелька",
+  "offline.broadcast.warn.priceLowTitle": "Низкая комиссия",
+  "offline.broadcast.warn.nonceGapTitle": "Ожидает более раннюю транзакцию",
+  "offline.broadcast.warn.balanceLowTitle": "Недостаточно средств",
+  "offline.broadcast.failed": "Не удалось отправить в сеть",
   "offline.broadcast.cta": "Отправить в сеть",
   "offline.broadcast.done": "Отправлено в сеть",
   "offline.pending.title": "Ожидают подписи",

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowDown, Check, Download } from "lucide-react";
 import { OfflineTx, saveSigningDoc } from "../../lib/api";
 import { formatGwei, formatInt, formatUnits, sameAddress, shortHex } from "../../lib/format";
@@ -10,6 +10,7 @@ import { Property, Rows } from "../ui/Panel";
 import { CopyButton } from "../ui/bits";
 import { AddressAvatar } from "../ui/AddressAvatar";
 import { QRCode } from "../ui/QRCode";
+import { CardRows } from "../ui/CardRow";
 import { Address } from "../../pages/Wallet/common";
 
 const LAX_DECIMALS = 18;
@@ -107,7 +108,16 @@ export function DocBody({
  * to (named from this computer's own contacts or accounts), and every
  * figure that will be signed.
  */
-export function TxSummary({ tx, feeLabel }: { tx: OfflineTx; feeLabel?: string }) {
+export function TxSummary({
+  tx,
+  feeLabel,
+  rows,
+}: {
+  tx: OfflineTx;
+  feeLabel?: string;
+  /** What the step has to say about it: CardRows on the card. */
+  rows?: ReactNode;
+}) {
   const t = useT();
   const { info } = useWallet();
   const { byAddress } = useContacts();
@@ -152,6 +162,7 @@ export function TxSummary({ tx, feeLabel }: { tx: OfflineTx; feeLabel?: string }
             )}
           </div>
         </div>
+        <CardRows className="mt-4">{rows}</CardRows>
       </GlowCard>
 
       <Rows as="dl">
