@@ -640,3 +640,80 @@ func TestAssistantLock(t *testing.T) {
 		t.Fatal("a blocked lock_app locked the wallet")
 	}
 }
+
+// TestAssistantTor checks the Tor switch as assistants see it: node_status
+// says how Tor is doing, the node doesn't start while Tor isn't connected,
+// and the switch can be asked for under its own permission, never as an
+// ordinary setting, while the Tor it goes through can't be at all.
+func TestAssistantTor(t *testing.T) {
+	dir := t.TempDir()
+	store, err := LoadConfigStore(filepath.Join(dir, "gui.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	node := NewNodeController(store)
+	cfg := defaultGUIConfig()
+	cfg.DataDir = filepath.Join(dir, "parallax")
+	cfg.MCPEnabled = true
+	cfg.MCPPort = freePort(t)
+	// Tor on, at a Tor on this computer that isn't there
+	cfg.Tor, cfg.TorSystem, cfg.Proxy = true, true, closedPort(t)
+	cfg.MCPAllow.StartNode, cfg.MCPAllow.Settings, cfg.MCPAllow.Tor = ModeAllow, ModeAsk, ModeBlock
+	tor := NewTorController(t.TempDir())
+	defer tor.Close()
+	tor.Apply(cfg)
+	deadline := time.Now().Add(5 * time.Second)
+	for tor.Status().State == "starting" && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	host := &testHost{cfg: cfg}
+	m := NewMCPServer(t.TempDir(), AssistantDeps{Host: host, Node: node, Logs: NewLogTail(16), Tor: tor})
+	defer m.Close()
+	m.Apply(cfg)
+	cs := connectMCP(t, m.Status())
+	call := func(name string, args map[string]any) (map[string]any, string) {
+		t.Helper()
+		return callMCP(t, cs, name, args)
+	}
+
+	out, errText := call("node_status", nil)
+	if errText != "" {
+		t.Fatal(errText)
+	}
+	if v, _ := out["tor"].(map[string]any); v["enabled"] != true || v["state"] != "failed" || v["system"] != true {
+		t.Errorf("tor in node_status: %v", out["tor"])
+	}
+	if _, errText := call("start_node", nil); !strings.Contains(errText, "Tor is on and not connected") || host.started != 0 {
+		t.Errorf("start_node with Tor not connected: %q, started %d", errText, host.started)
+	}
+
+	// The Tor the node goes through isn't the assistant's to set, nor the
+	// switch as an ordinary setting
+	for _, key := range []string{"proxy", "torSystem", "torControl", "tor", "torOnionOnly"} {
+		if _, errText := call("request_settings_change", map[string]any{"changes": map[string]any{key: "127.0.0.1:1080"}, "reason": "x"}); !strings.Contains(errText, "not a setting assistants may change") {
+			t.Errorf("%s: %q", key, errText)
+		}
+	}
+	// Blocked, it isn't asked for; allowed, each request is still approved
+	if _, errText := call("request_tor", map[string]any{"enabled": false, "reason": "x"}); !strings.Contains(errText, "Settings › AI assistants") {
+		t.Errorf("request_tor while blocked: %q", errText)
+	}
+	host.allow(func(a *MCPAllow) { a.Tor = ModeAllow })
+	if _, errText := call("request_tor", map[string]any{"reason": "x"}); !strings.Contains(errText, "give enabled") {
+		t.Errorf("request_tor asking nothing: %q", errText)
+	}
+	req, errText := call("request_tor", map[string]any{"enabled": false, "reason": "to sync faster"})
+	if errText != "" {
+		t.Fatal(errText)
+	}
+	as := m.Assistant()
+	if ch := as.Pending()[0].Changes; len(ch) != 1 || ch[0].Key != "tor" || !ch[0].Sensitive || ch[0].Applies != "node" {
+		t.Fatalf("changes: %+v", ch)
+	}
+	if _, err := as.Approve(req["id"].(string), ""); err != nil {
+		t.Fatal(err)
+	}
+	if host.Config().Tor {
+		t.Error("Tor still on after the approved change")
+	}
+}

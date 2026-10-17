@@ -96,7 +96,15 @@ export default function Settings() {
   // waits on its restart then
   const nodeRunning = !!useNode()?.running;
   // Whether this build ships a Tor of its own, for the Tor settings
-  const torBundled = useTorStatus()?.bundled ?? true;
+  const tor = useTorStatus();
+  const torBundled = tor?.bundled ?? true;
+  // With Tor on, a restart waits for it to connect: the node starts behind it or not at all
+  const torWaiting =
+    !tor?.enabled || tor.state === "ready"
+      ? null
+      : tor.state === "starting"
+        ? t("node.waitTor", { n: tor.progress })
+        : t("node.waitTorFailed");
   useEffect(() => {
     if (!nodeRunning) setRestartPending(false);
   }, [nodeRunning]);
@@ -1587,6 +1595,7 @@ export default function Settings() {
           dirtyNeedsRestart={dirtyNeedsRestart || dirtyNeedsAppRestart}
           restartPending={appRestartPending ? "app" : restartPending ? "node" : null}
           restarting={restarting}
+          restartWaiting={appRestartPending ? null : torWaiting}
           onSave={save}
           onDiscard={() => {
             setCfg(orig);
@@ -1946,6 +1955,7 @@ function SaveBar({
   dirtyNeedsRestart,
   restartPending,
   restarting,
+  restartWaiting,
   onSave,
   onDiscard,
   onRestart,
@@ -1955,6 +1965,8 @@ function SaveBar({
   dirtyNeedsRestart: boolean;
   restartPending: "node" | "app" | null;
   restarting: boolean;
+  /** Why the node can't restart yet (Tor still connecting), shown on its button, disabled. */
+  restartWaiting: string | null;
   onSave: () => void;
   onDiscard: () => void;
   onRestart: () => void;
@@ -2006,13 +2018,20 @@ function SaveBar({
                       ? t("settings.save.appRestartRequired")
                       : t("settings.save.restartRequired")}
                   </span>
-                  <button type="button" onClick={onRestart} disabled={restarting} className="btn btn-primary">
-                    {restarting && <Loader2 className="size-3.5 animate-spin" />}
+                  <button
+                    type="button"
+                    onClick={onRestart}
+                    disabled={restarting || !!restartWaiting}
+                    className="btn btn-primary"
+                  >
+                    {(restarting || restartWaiting) && <Loader2 className="size-3.5 animate-spin" />}
                     {restarting
                       ? t("settings.save.restarting")
-                      : restartPending === "app"
-                        ? t("settings.save.restartApp")
-                        : t("settings.save.restart")}
+                      : restartWaiting
+                        ? restartWaiting
+                        : restartPending === "app"
+                          ? t("settings.save.restartApp")
+                          : t("settings.save.restart")}
                   </button>
                 </>
               ) : (

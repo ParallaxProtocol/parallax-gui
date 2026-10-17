@@ -752,10 +752,10 @@ export function ActivitySection({
                   type="button"
                   className="btn btn-primary mt-1 min-w-40"
                   onClick={nodeSwitch.toggle}
-                  disabled={nodeSwitch.busy}
+                  disabled={nodeSwitch.busy || !!nodeSwitch.waiting}
                 >
-                  {nodeSwitch.busy && <ActivitySpinner size={14} />}
-                  {nodeSwitch.busy ? t("node.starting") : t("node.start")}
+                  {(nodeSwitch.busy || nodeSwitch.waiting) && <ActivitySpinner size={14} />}
+                  {nodeSwitch.waiting ?? (nodeSwitch.busy ? t("node.starting") : t("node.start"))}
                 </button>
               </>
             ) : !h.page && !h.err ? (

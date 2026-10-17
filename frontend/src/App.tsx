@@ -159,11 +159,12 @@ export default function App() {
               <ToolbarSlotProvider>
                 <NotificationsProvider>
                   <UpdateProvider>
-                    <NodeSheetProvider>
-                      <NodeSwitchProvider>
-                        <SidebarProvider>
-                          <TorProvider>
-                            <SettingsSheetProvider>
+                    {/* Tor above the node's switch, which waits for it */}
+                    <SettingsSheetProvider>
+                      <TorProvider>
+                        <NodeSheetProvider>
+                          <NodeSwitchProvider>
+                            <SidebarProvider>
                               <AssistantProvider enabled={!offline}>
                                 <DesktopBehaviors {...desktop} />
                                 {/* The whole window, behind the lock screen while the wallet is locked */}
@@ -171,11 +172,11 @@ export default function App() {
                                   <Shell offline={offline} animate={!animationsDisabled} />
                                 </LockGate>
                               </AssistantProvider>
-                            </SettingsSheetProvider>
-                          </TorProvider>
-                        </SidebarProvider>
-                      </NodeSwitchProvider>
-                    </NodeSheetProvider>
+                            </SidebarProvider>
+                          </NodeSwitchProvider>
+                        </NodeSheetProvider>
+                      </TorProvider>
+                    </SettingsSheetProvider>
                   </UpdateProvider>
                 </NotificationsProvider>
               </ToolbarSlotProvider>

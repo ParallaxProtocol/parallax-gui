@@ -281,6 +281,8 @@ export const en: Dict = {
   "settings.about.updates": "Updates",
   "node.peer": "{n} peer",
   "node.peers": "{n} peers",
+  "node.waitTor": "Waiting for Tor… {n}%",
+  "node.waitTorFailed": "Waiting for Tor",
   "node.offlineHint": "Connect to see your balance and send LAX.",
   "overview.stopped.title": "You're not connected",
   "overview.stopped.desc":
@@ -1308,6 +1310,8 @@ export const en: Dict = {
   "settings.mcp.allow.settings": "Settings",
   "settings.mcp.allow.settings.desc":
     "See and ask to change appearance, sync, peer, cache, pool and fee settings. Those that could expose the node are off limits.",
+  "settings.mcp.allow.tor": "Tor",
+  "settings.mcp.allow.tor.desc": "Ask to turn Tor on or off, or keep the node to onion peers.",
   "settings.mcp.allow.newAccounts": "Create accounts",
   "settings.mcp.allow.newAccounts.desc": "Ask to create one; you type the wallet password.",
   "settings.mcp.allow.watchOnly": "Watch-only accounts",

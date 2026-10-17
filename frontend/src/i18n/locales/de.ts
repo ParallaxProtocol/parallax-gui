@@ -268,6 +268,8 @@ const de: Dict = {
   "settings.about.updates": "Updates",
   "node.peer": "{n} Peer",
   "node.peers": "{n} Peers",
+  "node.waitTor": "Warten auf Tor… {n} %",
+  "node.waitTorFailed": "Warten auf Tor",
   "node.offlineHint": "Verbinden Sie sich, um Ihr Guthaben zu sehen und LAX zu senden.",
   "overview.stopped.title": "Sie sind nicht verbunden",
   "overview.stopped.desc":
@@ -1339,6 +1341,8 @@ const de: Dict = {
   "settings.mcp.allow.settings": "Einstellungen",
   "settings.mcp.allow.settings.desc":
     "Einstellungen zu Darstellung, Synchronisierung, Peers, Cache, Pool und Gebühren sehen und Änderungen anfragen. Einstellungen, die den Node exponieren könnten, sind tabu.",
+  "settings.mcp.allow.tor": "Tor",
+  "settings.mcp.allow.tor.desc": "Bitten, Tor ein- oder auszuschalten oder den Node auf Onion-Peers zu beschränken.",
   "settings.mcp.allow.newAccounts": "Konten erstellen",
   "settings.mcp.allow.newAccounts.desc": "Das Erstellen anfragen. Sie geben das Wallet-Passwort ein.",
   "settings.mcp.allow.watchOnly": "Nur-Beobachten-Konten",

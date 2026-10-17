@@ -264,6 +264,8 @@ const ru: Dict = {
   "settings.about.updates": "Обновления",
   "node.peer": "Пиров: {n}",
   "node.peers": "Пиров: {n}",
+  "node.waitTor": "Ожидание Tor… {n}%",
+  "node.waitTorFailed": "Ожидание Tor",
   "node.offlineHint": "Подключитесь, чтобы видеть баланс и отправлять LAX.",
   "overview.stopped.title": "Вы не подключены",
   "overview.stopped.desc":
@@ -1312,6 +1314,8 @@ const ru: Dict = {
   "settings.mcp.allow.settings": "Настройки",
   "settings.mcp.allow.settings.desc":
     "Видеть и просить изменить настройки внешнего вида, синхронизации, пиров, кешей, пула транзакций и комиссий. Настройки, которые могут открыть узел извне, недоступны.",
+  "settings.mcp.allow.tor": "Tor",
+  "settings.mcp.allow.tor.desc": "Просить включить или выключить Tor либо ограничить узел onion-пирами.",
   "settings.mcp.allow.newAccounts": "Создание аккаунтов",
   "settings.mcp.allow.newAccounts.desc": "Просить создать аккаунт; пароль кошелька вводите вы.",
   "settings.mcp.allow.watchOnly": "Аккаунты только для просмотра",

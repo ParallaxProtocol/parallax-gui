@@ -89,6 +89,8 @@ func (a *MCPAllow) feature(name string) (mcpFeature, bool) {
 		return mcpFeature{&a.StopNode, "ask to stop the node", true}, true
 	case "settings":
 		return mcpFeature{&a.Settings, "see or ask to change settings", true}, true
+	case "tor":
+		return mcpFeature{&a.Tor, "ask to turn Tor on or off", true}, true
 	case "newAccounts":
 		return mcpFeature{&a.NewAccounts, "ask to create accounts", true}, true
 	case "watchOnly":
@@ -153,6 +155,9 @@ func (a *Assistant) ensureNode(ctx context.Context) error {
 		return errMCPNodeStopped
 	}
 	if err := a.permitAsk(ctx, "startNode", true); err != nil {
+		return fmt.Errorf("the node is stopped: %w", err)
+	}
+	if err := a.torWaiting(); err != nil {
 		return fmt.Errorf("the node is stopped: %w", err)
 	}
 	if err := a.deps.Host.StartNode(); err != nil {

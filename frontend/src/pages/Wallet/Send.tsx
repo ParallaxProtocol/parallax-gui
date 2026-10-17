@@ -336,15 +336,20 @@ function useNotReady(): NotReady | null {
 function SendButton({ notReady, ready, busy }: { notReady: NotReady | null; ready: boolean; busy: boolean }) {
   const t = useT();
   const node = useNode();
-  const { busy: connecting, err, toggle: connect } = useNodeSwitch();
+  const { busy: connecting, err, toggle: connect, waiting } = useNodeSwitch();
   const progress = syncProgress(node);
 
   let button: ReactNode;
   if (notReady?.kind === "stopped") {
     button = (
-      <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={connect} disabled={connecting}>
-        {connecting && <Loader2 className="size-4 animate-spin" />}
-        {connecting ? t("node.starting") : t("node.start")}
+      <button
+        type="button"
+        className="btn btn-primary btn-lg min-w-64"
+        onClick={connect}
+        disabled={connecting || !!waiting}
+      >
+        {(connecting || waiting) && <Loader2 className="size-4 animate-spin" />}
+        {waiting ?? (connecting ? t("node.starting") : t("node.start"))}
       </button>
     );
   } else if (notReady) {

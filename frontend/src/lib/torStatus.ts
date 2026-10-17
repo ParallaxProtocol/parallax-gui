@@ -10,16 +10,16 @@ export const TorContext = createContext<TorStatus | null>(null);
 export const useTorStatus = () => useContext(TorContext);
 
 /**
- * Whether the Tor bar is open of itself, for TOR_BAR_FRESH_MS after it
- * comes up or its message changes (TorProvider), before it shrinks to its
- * line.
+ * Whether the Tor bar is open of itself (TorProvider): until Tor is
+ * connected, then for TOR_BAR_GLANCE_MS from its connecting or Settings
+ * closing, before it shrinks to its line.
  */
 export const TorBarFreshContext = createContext(false);
 
 export const useTorBarFresh = () => useContext(TorBarFreshContext);
 
-/** How long the Tor bar stays open on a new message. */
-export const TOR_BAR_FRESH_MS = 30_000;
+/** How long the Tor bar stays open once Tor is connected, or Settings closes on it connected. */
+export const TOR_BAR_GLANCE_MS = 10_000;
 
 export type TorBarKind = "off" | "starting" | "failed" | "nodeRestart" | "readyOnion" | "ready";
 

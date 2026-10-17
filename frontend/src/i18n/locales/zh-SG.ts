@@ -255,6 +255,8 @@ const zhSG: Dict = {
   "settings.about.updates": "更新",
   "node.peer": "{n} 个对等节点",
   "node.peers": "{n} 个对等节点",
+  "node.waitTor": "正在等待 Tor… {n}%",
+  "node.waitTorFailed": "正在等待 Tor",
   "node.offlineHint": "连接后即可查看余额并发送 LAX。",
   "overview.stopped.title": "尚未连接",
   "overview.stopped.desc": "连接后即可与 Parallax 网络同步，亲自验证每个区块，无需依赖任何第三方即可为钱包提供数据。",
@@ -1211,6 +1213,8 @@ const zhSG: Dict = {
   "settings.mcp.allow.settings": "设置",
   "settings.mcp.allow.settings.desc":
     "查看并请求更改外观、同步、对等节点、缓存、交易池和手续费设置。可能暴露节点的设置不在此列。",
+  "settings.mcp.allow.tor": "Tor",
+  "settings.mcp.allow.tor.desc": "请求开启或关闭 Tor，或让节点只连接 Onion 对等节点。",
   "settings.mcp.allow.newAccounts": "创建账户",
   "settings.mcp.allow.newAccounts.desc": "请求创建账户，由您输入钱包密码。",
   "settings.mcp.allow.watchOnly": "观察账户",

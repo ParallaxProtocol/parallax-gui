@@ -23,6 +23,7 @@ import { TOP_BAR_HEIGHT } from "./TopBar";
 import { useAssistant } from "../../lib/assistantContext";
 import { NodeSwitchContext, useNodeSwitch } from "../../lib/nodeSwitch";
 import { BAR_FADE, BAR_GLASS, BAR_SURFACE } from "./barSurface";
+import { useTorStatus } from "../../lib/torStatus";
 
 const NodePage = lazy(() => import("../../pages/Overview"));
 
@@ -58,7 +59,17 @@ export function NodeSwitchProvider({ children }: { children: ReactNode }) {
   const running = !!node?.running;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // With Tor on, the node starts once Tor is connected, never before
+  const t = useT();
+  const tor = useTorStatus();
+  const waiting =
+    running || !tor?.enabled || tor.state === "ready"
+      ? null
+      : tor.state === "starting"
+        ? t("node.waitTor", { n: tor.progress })
+        : t("node.waitTorFailed");
   const toggle = async () => {
+    if (!running && waiting) return;
     setBusy(true);
     setErr(null);
     try {
@@ -71,7 +82,7 @@ export function NodeSwitchProvider({ children }: { children: ReactNode }) {
       refresh();
     }
   };
-  return <NodeSwitchContext.Provider value={{ busy, err, toggle }}>{children}</NodeSwitchContext.Provider>;
+  return <NodeSwitchContext.Provider value={{ busy, err, toggle, waiting }}>{children}</NodeSwitchContext.Provider>;
 }
 
 /**
@@ -90,7 +101,7 @@ export default function NodeBar() {
   const state = nodeState(node);
   const progress = syncProgress(node);
   const running = !!node?.running;
-  const { busy, err, toggle } = useNodeSwitch();
+  const { busy, err, toggle, waiting } = useNodeSwitch();
   // The window's height, which the open panel fills under the title bar
   const [vh, setVh] = useState(window.innerHeight);
   useEffect(() => {
@@ -234,9 +245,14 @@ export default function NodeBar() {
             // Opened, the page's own button is the one; a second would compete with it
             node &&
             !open && (
-              <button type="button" className="btn btn-primary rounded-full px-4" onClick={toggle} disabled={busy}>
-                {busy && <Loader2 className="size-3.5 animate-spin" />}
-                {switchLabel}
+              <button
+                type="button"
+                className="btn btn-primary rounded-full px-4"
+                onClick={toggle}
+                disabled={busy || !!waiting}
+              >
+                {(busy || waiting) && <Loader2 className="size-3.5 animate-spin" />}
+                {waiting ?? switchLabel}
               </button>
             )
           )}

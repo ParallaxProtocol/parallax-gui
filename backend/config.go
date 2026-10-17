@@ -131,7 +131,7 @@ func defaultGUIConfig() GUIConfig {
 func defaultMCPAllow() MCPAllow {
 	return MCPAllow{
 		NodeStatus: ModeAllow, NodeLogs: ModeAsk, Wallet: ModeAsk, Contacts: ModeAsk, StartNode: ModeAsk, LockApp: ModeAllow,
-		StopNode: ModeAsk, Settings: ModeAsk, NewAccounts: ModeAsk, WatchOnly: ModeAsk, EditContacts: ModeAsk, SendTransactions: ModeAsk,
+		StopNode: ModeAsk, Settings: ModeAsk, Tor: ModeAsk, NewAccounts: ModeAsk, WatchOnly: ModeAsk, EditContacts: ModeAsk, SendTransactions: ModeAsk,
 	}
 }
 
@@ -147,6 +147,10 @@ func mergeDefaults(cfg *GUIConfig) {
 	// let assistants lock, as new ones do
 	if cfg.MCPAllow.LockApp == "" {
 		cfg.MCPAllow.LockApp = d.MCPAllow.LockApp
+	}
+	// As Tor's, which came later still: asked for, each request approved
+	if cfg.MCPAllow.Tor == "" {
+		cfg.MCPAllow.Tor = d.MCPAllow.Tor
 	}
 	if cfg.HTTPRPCPort == 0 {
 		cfg.HTTPRPCPort = d.HTTPRPCPort

@@ -147,6 +147,7 @@ func (a *App) startup(ctx context.Context) {
 			Contacts: a.contacts,
 			Logs:     a.logs,
 			HTTP:     a.tor.HTTPClient(),
+			Tor:      a.tor,
 		})
 		a.mcp.SetEmitter(func(st backend.MCPStatus) {
 			a.events.emit("mcp", st)

@@ -265,6 +265,8 @@ const es: Dict = {
   "settings.about.updates": "Actualizaciones",
   "node.peer": "{n} par",
   "node.peers": "{n} pares",
+  "node.waitTor": "Esperando a Tor… {n} %",
+  "node.waitTorFailed": "Esperando a Tor",
   "node.offlineHint": "Conéctate para ver tu saldo y enviar LAX.",
   "overview.stopped.title": "No estás conectado",
   "overview.stopped.desc":
@@ -1315,6 +1317,8 @@ const es: Dict = {
   "settings.mcp.allow.settings": "Configuración",
   "settings.mcp.allow.settings.desc":
     "Ver y solicitar cambios en la configuración de apariencia, sincronización, pares, caché, mempool y comisiones. Las que podrían exponer el nodo quedan fuera de su alcance.",
+  "settings.mcp.allow.tor": "Tor",
+  "settings.mcp.allow.tor.desc": "Pedir activar o desactivar Tor, o limitar el nodo a pares onion.",
   "settings.mcp.allow.newAccounts": "Crear cuentas",
   "settings.mcp.allow.newAccounts.desc": "Solicitar crear una; tú escribes la contraseña de la billetera.",
   "settings.mcp.allow.watchOnly": "Cuentas de solo lectura",

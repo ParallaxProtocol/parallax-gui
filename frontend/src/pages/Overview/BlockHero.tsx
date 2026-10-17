@@ -36,7 +36,7 @@ export function Stopped() {
   const t = useT();
   const stagger = useStagger();
   // Shared with the node bar above, so a start from either shows on both
-  const { busy, err, toggle: start } = useNodeSwitch();
+  const { busy, err, toggle: start, waiting } = useNodeSwitch();
 
   // Laid out as the greeting's pages: the glow behind, the mark, a big
   // title over a line, and the one button
@@ -62,9 +62,15 @@ export function Stopped() {
           </motion.div>
         )}
         <motion.div variants={STAGGER.item}>
-          <button type="button" className="btn btn-primary btn-lg min-w-64" onClick={start} disabled={busy} autoFocus>
-            {busy && <Loader2 className="size-4 animate-spin" />}
-            {busy ? t("node.starting") : t("node.start")}
+          <button
+            type="button"
+            className="btn btn-primary btn-lg min-w-64"
+            onClick={start}
+            disabled={busy || !!waiting}
+            autoFocus
+          >
+            {(busy || waiting) && <Loader2 className="size-4 animate-spin" />}
+            {waiting ?? (busy ? t("node.starting") : t("node.start"))}
           </button>
         </motion.div>
       </motion.div>

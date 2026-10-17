@@ -260,6 +260,8 @@ const fr: Dict = {
   "settings.about.updates": "Mises à jour",
   "node.peer": "{n} pair",
   "node.peers": "{n} pairs",
+  "node.waitTor": "En attente de Tor… {n} %",
+  "node.waitTorFailed": "En attente de Tor",
   "node.offlineHint": "Connectez-vous pour voir votre solde et envoyer des LAX.",
   "overview.stopped.title": "Vous n’êtes pas connecté",
   "overview.stopped.desc":
@@ -1318,6 +1320,8 @@ const fr: Dict = {
   "settings.mcp.allow.settings": "Paramètres",
   "settings.mcp.allow.settings.desc":
     "Voir et demander à modifier les paramètres d’apparence, de synchronisation, de pairs, de cache, de mempool et de frais. Ceux qui pourraient exposer le nœud sont hors d’atteinte.",
+  "settings.mcp.allow.tor": "Tor",
+  "settings.mcp.allow.tor.desc": "Demander d'activer ou de désactiver Tor, ou de limiter le nœud aux pairs onion.",
   "settings.mcp.allow.newAccounts": "Créer des comptes",
   "settings.mcp.allow.newAccounts.desc":
     "Demander à en créer un ; c’est vous qui saisissez le mot de passe du portefeuille.",

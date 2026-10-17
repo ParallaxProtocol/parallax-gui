@@ -47,8 +47,11 @@ type MCPAllow struct {
 	LockApp MCPMode `json:"lockApp"`
 	// What they may ask for: each request is approved in the app whatever
 	// the mode, so allow is the same as ask, and block stops them asking
-	StopNode     MCPMode `json:"stopNode"`
-	Settings     MCPMode `json:"settings"`
+	StopNode MCPMode `json:"stopNode"`
+	Settings MCPMode `json:"settings"`
+	// Tor asks to turn the Tor switch on or off (request_tor), apart from
+	// the other settings: it decides where everything the app sends goes
+	Tor          MCPMode `json:"tor"`
 	NewAccounts  MCPMode `json:"newAccounts"`
 	WatchOnly    MCPMode `json:"watchOnly"`
 	EditContacts MCPMode `json:"editContacts"`
@@ -73,8 +76,10 @@ type AssistantDeps struct {
 	Contacts *Contacts // likewise
 	Logs     *LogTail
 	// HTTP is what the explorer and the status page are asked by: through
-	// Tor while its switch is on (tor.go)
+	// Tor while its switch is on (tor.go); Tor that switch, for node_status
+	// and for starting the node, which waits for Tor to connect (nil: off)
 	HTTP *http.Client
+	Tor  *TorController
 }
 
 // Request kinds
@@ -163,9 +168,13 @@ type ContactProposal struct {
 
 // assistantSetting is a setting assistants may ask to change. Those left
 // out could expose the node or the wallet, or reroute the node's traffic:
-// RPC addresses, APIs, CORS and hosts, proxies and Tor, peers and
-// bootnodes, network restrictions, the fee and disk guards, data
-// directories, update checks, offline signing, and these settings.
+// RPC addresses, APIs, CORS and hosts, proxies, the Tor to use and its
+// ports (an assistant could send the node through a proxy someone else
+// runs), peers and bootnodes, network restrictions, the fee and disk
+// guards, data directories, update checks, offline signing, and these
+// settings. The Tor switch itself is asked for apart, under a permission
+// of its own (torSettings, request_tor): on or off, it goes only through
+// the app's own Tor or the one the user set up.
 type assistantSetting struct {
 	Key     string `json:"key"`
 	Label   string `json:"label"`
@@ -225,12 +234,19 @@ var assistantSettings = []assistantSetting{
 	{Key: "gpoIgnorePrice", Label: "Fee oracle ignores below (wei)", Values: `decimal wei as a string; "" is the default`, Applies: "node"},
 }
 
-func settingByKey(key string) (assistantSetting, bool) {
-	i := slices.IndexFunc(assistantSettings, func(s assistantSetting) bool { return s.Key == key })
+// torSettings are the Tor switch's settings, asked for by request_tor
+// alone, under the Tor permission.
+var torSettings = []assistantSetting{
+	{Key: "tor", Label: "Send everything through Tor", Values: "true or false", Applies: "node", Sensitive: true},
+	{Key: "torOnionOnly", Label: "Over Tor, connect to onion peers only", Values: "true or false", Applies: "node", Sensitive: true},
+}
+
+func settingByKey(list []assistantSetting, key string) (assistantSetting, bool) {
+	i := slices.IndexFunc(list, func(s assistantSetting) bool { return s.Key == key })
 	if i < 0 {
 		return assistantSetting{}, false
 	}
-	return assistantSettings[i], true
+	return list[i], true
 }
 
 // Assistant answers the app's own MCP tools and keeps the requests
@@ -493,6 +509,12 @@ type settingsChangeIn struct {
 	Reason  string         `json:"reason" jsonschema:"why you ask, in a sentence the user reads before deciding"`
 }
 
+type torIn struct {
+	Enabled   *bool  `json:"enabled,omitempty" jsonschema:"true to send everything through Tor, false to stop; left out keeps it as it is"`
+	OnionOnly *bool  `json:"onion_only,omitempty" jsonschema:"with Tor on, true to connect the node to onion peers only, false for all peers; left out keeps it as it is"`
+	Reason    string `json:"reason" jsonschema:"why you ask, in a sentence the user reads before deciding"`
+}
+
 type newAccountIn struct {
 	Name           string `json:"name,omitempty" jsonschema:"a name for the account"`
 	RecoveryPhrase string `json:"recovery_phrase_id,omitempty" jsonschema:"make the next account of this recovery phrase (an id from wallet_accounts) rather than a new key"`
@@ -524,14 +546,17 @@ const maxRequestWait = 120 * time.Second
 // allows it, so a change in Settings takes effect at once.
 func (a *Assistant) Register(r *server.Registrar) {
 	server.Add(r, server.Spec{Group: GroupApp, Name: "node_status", Timeout: a.permitTimeout(), Title: "Node status",
-		Description: `The status of the node Parallax Wallet runs: whether it runs, whether it is syncing (current, highest and starting block), peer count, chain and network ID, uptime, disk and memory used, client version, whether it runs the private development chain, and its HTTP-RPC endpoint if one is on.` + permitNote},
+		Description: `The status of the node Parallax Wallet runs: whether it runs, whether it is syncing (current, highest and starting block), peer count, chain and network ID, uptime, disk and memory used, client version, whether it runs the private development chain, and its HTTP-RPC endpoint if one is on. And "tor", the Tor switch: whether everything the app sends goes through Tor ("enabled"), and to onion peers only; Tor's "state" ("off", "starting" with its "progress" in percent, "ready" or "failed" with its "error"); whether it is the app's own Tor or the one on the user's computer ("system"); whether the running node is behind Tor yet ("node_behind": a node started before Tor was turned on goes behind it as it restarts); and the node's onion address once it has one.` + permitNote},
 		func(ctx context.Context, _ noIn) (any, error) {
 			if err := a.permit(ctx, "nodeStatus"); err != nil {
 				return nil, err
 			}
 			st := a.deps.Node.Status()
 			st.DataDir = "" // a path on the user's disk: not the assistant's business
-			return st, nil
+			return struct {
+				NodeStatus
+				Tor torView `json:"tor"`
+			}{st, a.torView()}, nil
 		})
 
 	server.Add(r, server.Spec{Group: GroupApp, Name: "node_logs", Timeout: a.permitTimeout(), Title: "Node and app logs",
@@ -608,9 +633,12 @@ func (a *Assistant) Register(r *server.Registrar) {
 		})
 
 	server.Add(r, server.Spec{Group: GroupApp, Name: "start_node", Timeout: a.permitTimeout(), Title: "Start the node", Changes: true,
-		Description: `Starts the node Parallax Wallet runs, if it is stopped; it then syncs with the network. Returns at once with its status.` + permitNote},
+		Description: `Starts the node Parallax Wallet runs, if it is stopped; it then syncs with the network. Returns at once with its status. With Tor on (node_status), the node starts only once Tor has connected: until then this says so, and you can call it again.` + permitNote},
 		func(ctx context.Context, _ noIn) (any, error) {
 			if err := a.permit(ctx, "startNode"); err != nil {
+				return nil, err
+			}
+			if err := a.torWaiting(); err != nil {
 				return nil, err
 			}
 			if err := a.deps.Host.StartNode(); err != nil {
@@ -858,12 +886,37 @@ func (a *Assistant) registerRequests(r *server.Registrar) {
 				}
 				raw[k] = b
 			}
-			changes, err := a.settingChanges(a.deps.Host.Config(), raw)
+			changes, err := a.settingChanges(a.deps.Host.Config(), raw, assistantSettings)
 			if err != nil {
 				return nil, err
 			}
 			return a.submit(RequestSettings, in.Reason, AssistantRequest{Changes: changes}, func(string) (string, error) {
-				return a.applySettings(raw)
+				return a.applySettings(raw, assistantSettings)
+			})
+		})
+
+	server.Add(r, server.Spec{Group: GroupApp, Name: "request_tor", Title: "Ask to turn Tor on or off", Changes: true,
+		Description: `Asks the user to turn the Tor switch on or off: with it on, everything Parallax Wallet sends goes through Tor (the node's peers, the update check, the explorer and status page these tools ask), never directly. "onion_only" keeps the node to onion peers. node_status says how it stands now. The app's own requests change course at once; the node's as it restarts, and with Tor on it starts only once Tor has connected. Where Tor is (the app's own or one the user runs) stays the user's to set.` + requestNote + requestPermitNote},
+		func(ctx context.Context, in torIn) (any, error) {
+			if err := a.permit(ctx, "tor"); err != nil {
+				return nil, err
+			}
+			raw := map[string]json.RawMessage{}
+			if in.Enabled != nil {
+				raw["tor"], _ = json.Marshal(*in.Enabled)
+			}
+			if in.OnionOnly != nil {
+				raw["torOnionOnly"], _ = json.Marshal(*in.OnionOnly)
+			}
+			if len(raw) == 0 {
+				return nil, server.Inputf("give enabled, onion_only or both")
+			}
+			changes, err := a.settingChanges(a.deps.Host.Config(), raw, torSettings)
+			if err != nil {
+				return nil, err
+			}
+			return a.submit(RequestSettings, in.Reason, AssistantRequest{Changes: changes}, func(string) (string, error) {
+				return a.applySettings(raw, torSettings)
 			})
 		})
 
@@ -994,15 +1047,15 @@ func configMap(g GUIConfig) (map[string]json.RawMessage, error) {
 	return m, json.Unmarshal(b, &m)
 }
 
-// withChanges is g with the given fields replaced, checked as Settings
-// checks a save.
-func withChanges(g GUIConfig, changes map[string]json.RawMessage) (GUIConfig, error) {
+// withChanges is g with the given fields replaced, each one of list,
+// checked as Settings checks a save.
+func withChanges(g GUIConfig, changes map[string]json.RawMessage, list []assistantSetting) (GUIConfig, error) {
 	m, err := configMap(g)
 	if err != nil {
 		return g, err
 	}
 	for k, v := range changes {
-		if _, ok := settingByKey(k); !ok {
+		if _, ok := settingByKey(list, k); !ok {
 			return g, server.Inputf("%q is not a setting assistants may change; app_settings lists those that are", k)
 		}
 		m[k] = v
@@ -1022,11 +1075,11 @@ func withChanges(g GUIConfig, changes map[string]json.RawMessage) (GUIConfig, er
 }
 
 // settingChanges checks a settings request and describes it for the user.
-func (a *Assistant) settingChanges(g GUIConfig, changes map[string]json.RawMessage) ([]SettingChange, error) {
+func (a *Assistant) settingChanges(g GUIConfig, changes map[string]json.RawMessage, list []assistantSetting) ([]SettingChange, error) {
 	if len(changes) == 0 {
 		return nil, server.Inputf("changes is empty")
 	}
-	next, err := withChanges(g, changes)
+	next, err := withChanges(g, changes, list)
 	if err != nil {
 		return nil, err
 	}
@@ -1039,7 +1092,7 @@ func (a *Assistant) settingChanges(g GUIConfig, changes map[string]json.RawMessa
 		return nil, err
 	}
 	var out []SettingChange
-	for _, s := range assistantSettings {
+	for _, s := range list {
 		if _, asked := changes[s.Key]; !asked || string(before[s.Key]) == string(after[s.Key]) {
 			continue
 		}
@@ -1052,8 +1105,8 @@ func (a *Assistant) settingChanges(g GUIConfig, changes map[string]json.RawMessa
 }
 
 // applySettings saves a request's changes onto the config as it is now.
-func (a *Assistant) applySettings(changes map[string]json.RawMessage) (string, error) {
-	next, err := withChanges(a.deps.Host.Config(), changes)
+func (a *Assistant) applySettings(changes map[string]json.RawMessage, list []assistantSetting) (string, error) {
+	next, err := withChanges(a.deps.Host.Config(), changes, list)
 	if err != nil {
 		return "", err
 	}
@@ -1062,7 +1115,7 @@ func (a *Assistant) applySettings(changes map[string]json.RawMessage) (string, e
 	}
 	var later []string
 	for k := range changes {
-		if s, _ := settingByKey(k); s.Applies != "now" {
+		if s, _ := settingByKey(list, k); s.Applies != "now" {
 			later = append(later, k)
 		}
 	}
@@ -1071,4 +1124,47 @@ func (a *Assistant) applySettings(changes map[string]json.RawMessage) (string, e
 	}
 	slices.Sort(later)
 	return "saved; " + strings.Join(later, ", ") + " apply when the node or app restarts", nil
+}
+
+// torView is the Tor switch as node_status shows it.
+type torView struct {
+	Enabled    bool   `json:"enabled"`
+	OnionOnly  bool   `json:"onion_only"`
+	System     bool   `json:"system"`
+	State      string `json:"state"`
+	Progress   int    `json:"progress,omitempty"`
+	Error      string `json:"error,omitempty"`
+	NodeBehind bool   `json:"node_behind"`
+	Onion      string `json:"onion,omitempty"`
+}
+
+// torView is how the Tor switch stands, off without one.
+func (a *Assistant) torView() torView {
+	if a.deps.Tor == nil {
+		return torView{State: "off"}
+	}
+	st := a.deps.Tor.Status()
+	return torView{
+		Enabled:    st.Enabled,
+		OnionOnly:  st.OnionOnly,
+		System:     st.System,
+		State:      st.State,
+		Progress:   st.Progress,
+		Error:      st.Error,
+		NodeBehind: a.deps.Node.BehindTor(),
+		Onion:      a.deps.Node.OnionService(),
+	}
+}
+
+// torWaiting refuses to start the node while Tor is on and not connected,
+// as the app's own start buttons do: the node goes behind Tor or not at all.
+func (a *Assistant) torWaiting() error {
+	v := a.torView()
+	if !v.Enabled || v.State == "ready" {
+		return nil
+	}
+	if v.State == "failed" {
+		return fmt.Errorf("Tor is on and not connected (%s): the node starts once it is", v.Error)
+	}
+	return fmt.Errorf("Tor is on and still connecting (%d%%): the node starts once it has connected; try again shortly", v.Progress)
 }

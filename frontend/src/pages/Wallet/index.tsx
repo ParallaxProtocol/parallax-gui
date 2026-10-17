@@ -91,14 +91,14 @@ function DamagedNotice() {
  */
 function NodeOffNotice() {
   const t = useT();
-  const { busy, err, toggle } = useNodeSwitch();
+  const { busy, err, toggle, waiting } = useNodeSwitch();
   return (
     <Notice
       tone="info"
       action={
-        <button type="button" className="btn btn-tinted" onClick={toggle} disabled={busy}>
-          {busy && <ActivitySpinner size={14} />}
-          {busy ? t("node.starting") : t("node.start")}
+        <button type="button" className="btn btn-tinted" onClick={toggle} disabled={busy || !!waiting}>
+          {(busy || waiting) && <ActivitySpinner size={14} />}
+          {waiting ?? (busy ? t("node.starting") : t("node.start"))}
         </button>
       }
     >

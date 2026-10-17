@@ -255,6 +255,8 @@ const zhTW: Dict = {
   "settings.about.updates": "更新",
   "node.peer": "{n} 個對等節點",
   "node.peers": "{n} 個對等節點",
+  "node.waitTor": "正在等待 Tor… {n}%",
+  "node.waitTorFailed": "正在等待 Tor",
   "node.offlineHint": "連線後即可查看餘額並傳送 LAX。",
   "overview.stopped.title": "尚未連線",
   "overview.stopped.desc": "連線後即可與 Parallax 網路同步、親自驗證每個區塊，讓錢包完全不必依賴第三方。",
@@ -1215,6 +1217,8 @@ const zhTW: Dict = {
   "settings.mcp.allow.settings": "設定",
   "settings.mcp.allow.settings.desc":
     "查看並要求變更外觀、同步、對等節點、快取、交易池與手續費設定。可能讓節點對外暴露的設定則不在此列。",
+  "settings.mcp.allow.tor": "Tor",
+  "settings.mcp.allow.tor.desc": "請求開啟或關閉 Tor，或讓節點只連到 onion 對等節點。",
   "settings.mcp.allow.newAccounts": "建立帳戶",
   "settings.mcp.allow.newAccounts.desc": "要求建立帳戶；由你輸入錢包密碼。",
   "settings.mcp.allow.watchOnly": "觀察帳戶",

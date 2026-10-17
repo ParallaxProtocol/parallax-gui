@@ -17,6 +17,7 @@ const ASK: (keyof MCPAllow)[] = [
   "sendTransactions",
   "stopNode",
   "settings",
+  "tor",
   "newAccounts",
   "watchOnly",
   "editContacts",

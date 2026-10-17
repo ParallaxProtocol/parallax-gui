@@ -888,6 +888,8 @@ export type MCPAllow = {
   // Requests: ask lets assistants ask (each request approved), block stops them
   stopNode: MCPMode;
   settings: MCPMode;
+  /** Ask to turn Tor on or off, apart from the other settings. */
+  tor: MCPMode;
   newAccounts: MCPMode;
   watchOnly: MCPMode;
   editContacts: MCPMode;

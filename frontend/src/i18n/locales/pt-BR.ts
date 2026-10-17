@@ -265,6 +265,8 @@ const ptBR: Dict = {
   "settings.about.updates": "Atualizações",
   "node.peer": "{n} peer",
   "node.peers": "{n} peers",
+  "node.waitTor": "Aguardando o Tor… {n}%",
+  "node.waitTorFailed": "Aguardando o Tor",
   "node.offlineHint": "Conecte-se para ver seu saldo e enviar LAX.",
   "overview.stopped.title": "Você não está conectado",
   "overview.stopped.desc":
@@ -1314,6 +1316,8 @@ const ptBR: Dict = {
   "settings.mcp.allow.settings": "Configurações",
   "settings.mcp.allow.settings.desc":
     "Ver e solicitar mudanças nas configurações de aparência, sincronização, peers, cache, pool e taxas. As que poderiam expor o nó ficam de fora.",
+  "settings.mcp.allow.tor": "Tor",
+  "settings.mcp.allow.tor.desc": "Pedir para ativar ou desativar o Tor, ou limitar o nó a peers onion.",
   "settings.mcp.allow.newAccounts": "Criar contas",
   "settings.mcp.allow.newAccounts.desc": "Solicitar a criação de uma; você digita a senha da carteira.",
   "settings.mcp.allow.watchOnly": "Contas somente leitura",

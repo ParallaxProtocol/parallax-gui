@@ -49,7 +49,8 @@ export function TorBarSpacer() {
  * the app sends goes through Tor, or that it's still connecting, or can't,
  * nothing going out meanwhile; and, for a node started before Tor was
  * turned on, that it goes behind Tor once it restarts, with the restart at
- * hand. Each new message shows for 30 seconds; then it is only a line of
+ * hand. It stays open until Tor is connected, then 10 seconds from its
+ * connecting or Settings closing; after, it is only a line of
  * the purple, opening over the page into its message under the pointer
  * (or the keyboard's focus). It slides
  * down as Tor is turned on and away as it's turned off, its message
