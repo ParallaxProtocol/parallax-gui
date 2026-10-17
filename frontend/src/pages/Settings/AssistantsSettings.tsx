@@ -1,12 +1,15 @@
-import { Ban } from "lucide-react";
+import { Ban, FlaskConical } from "lucide-react";
 import { Notice } from "../../components/ui/bits";
+import { CardRow } from "../../components/ui/CardRow";
 import type { GUIConfig, MCPAllow, MCPMode } from "../../lib/api";
 import { useT } from "../../i18n";
 import { Row, Rows } from "../../components/ui/Panel";
 import Toggle from "../../components/ui/Toggle";
 import { Segmented } from "../../components/ui/Segmented";
 import { Group, NumberInput, Setting } from "./fields";
-import McpPanel from "./McpPanel";
+import McpPanel, { McpServerRows, useMcpStatus } from "./McpPanel";
+import { useNode } from "../../lib/live";
+import { NodeOffRow } from "../Wallet/common";
 
 /** The permissions in each group, in the order they're listed. */
 const SEE: (keyof MCPAllow)[] = ["nodeStatus", "nodeLogs", "wallet", "contacts"];
@@ -31,9 +34,13 @@ type PageProps = { cfg: GUIConfig; update: (patch: Partial<GUIConfig>) => void }
 /** AssistantsOverview is the AI assistants' Overview: the MCP server and how to connect to it. */
 export function AssistantsOverview({ cfg, update }: PageProps) {
   const t = useT();
+  const node = useNode();
+  const [st, setSt] = useMcpStatus();
   return (
     <Group title={t("settings.group.mcp")} desc={t("settings.mcp.desc")} more={t("settings.mcp.more")}>
       <Rows>
+        {/* It needs the node, not HTTP-RPC: said first, with the way to start it, while the node is down */}
+        {cfg.mcpEnabled && node && !node.running && <NodeOffRow inPanel desc={t("settings.mcp.nodeStopped")} />}
         <Setting title={t("settings.mcp.enable")} desc={t("settings.mcp.enable.desc")}>
           <Toggle
             checked={cfg.mcpEnabled}
@@ -51,8 +58,10 @@ export function AssistantsOverview({ cfg, update }: PageProps) {
             />
           </Setting>
         )}
+        {/* Where the server listens and with which token, once it runs */}
+        <McpServerRows st={st} onStatus={setSt} />
       </Rows>
-      <McpPanel />
+      <McpPanel st={st} />
     </Group>
   );
 }
@@ -115,8 +124,11 @@ export function AssistantsPermissions({ cfg, update }: PageProps) {
       </Group>
 
       <Group title={t("settings.mcp.public")} desc={t("settings.mcp.public.desc")}>
-        <Rows>{PUBLIC.map(toggle)}</Rows>
-        {cfg.devChain && <Notice tone="info">{t("settings.mcp.public.dev")}</Notice>}
+        <Rows>
+          {/* On the development chain they're beside the point: said first, as a row of the group */}
+          {cfg.devChain && <CardRow inPanel tone="info" icon={FlaskConical} desc={t("settings.mcp.public.dev")} />}
+          {PUBLIC.map(toggle)}
+        </Rows>
       </Group>
 
       <Group title={t("settings.mcp.do")} desc={t("settings.mcp.do.desc")}>

@@ -1301,8 +1301,7 @@ const de: Dict = {
   "settings.mcp.enable.desc":
     "Tools über MCP auf diesem Computer bereitstellen. Funktioniert ohne HTTP-RPC und antwortet über den Node innerhalb der App.",
   "settings.mcp.nodeStopped":
-    "Der Node läuft nicht. Assistenten bleiben verbunden, aber Blockchain- und Node-Tools antworten erst, wenn er startet.",
-  "settings.mcp.startNode": "Node starten",
+    "Assistenten bleiben verbunden, aber Blockchain- und Node-Tools antworten erst, wenn der Node startet.",
   "settings.mcp.port": "Port",
   "settings.mcp.port.desc": "Wo sich Assistenten verbinden, auf 127.0.0.1.",
   "settings.mcp.failed": "Der Assistenten-Server konnte nicht starten",

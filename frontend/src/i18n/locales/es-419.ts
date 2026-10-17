@@ -1278,8 +1278,7 @@ const es: Dict = {
   "settings.mcp.enable.desc":
     "Ofrece herramientas por MCP en esta computadora. Funciona sin HTTP-RPC, respondiendo desde el nodo dentro de la app.",
   "settings.mcp.nodeStopped":
-    "El nodo no está en marcha. Los asistentes siguen conectados, pero las herramientas de la cadena y del nodo solo responden cuando arranque.",
-  "settings.mcp.startNode": "Iniciar nodo",
+    "Los asistentes siguen conectados, pero las herramientas de la cadena y del nodo solo responden cuando el nodo arranque.",
   "settings.mcp.port": "Puerto",
   "settings.mcp.port.desc": "Donde se conectan los asistentes, en 127.0.0.1.",
   "settings.mcp.failed": "No se pudo iniciar el servidor de asistentes",

@@ -366,7 +366,7 @@ export function WalletPasswordPrompt({
  * bar and History show it connecting too. Once a start has failed, the
  * row says so, with what the node said under it, and Connect is Try again.
  */
-export function NodeOffRow({ desc }: { desc?: string }) {
+export function NodeOffRow({ desc, inPanel }: { desc?: string; inPanel?: boolean }) {
   const t = useT();
   const { busy, err, toggle, waiting } = useNodeSwitch();
   const failed = !!err && !busy && !waiting;
@@ -377,6 +377,7 @@ export function NodeOffRow({ desc }: { desc?: string }) {
       title={failed ? t("wallet.nodeOff.failedTitle") : t("wallet.nodeOff.title")}
       desc={failed ? t("wallet.nodeOff.failedDesc") : (desc ?? t("wallet.nodeOff"))}
       detail={failed ? err : null}
+      inPanel={inPanel}
       action={
         <button type="button" className="btn btn-tinted shrink-0" onClick={toggle} disabled={busy || !!waiting}>
           {(busy || waiting) && <ActivitySpinner size={14} />}

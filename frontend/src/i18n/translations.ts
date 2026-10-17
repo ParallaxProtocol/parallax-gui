@@ -1272,9 +1272,7 @@ export const en: Dict = {
   "settings.mcp.enable": "Assistant access",
   "settings.mcp.enable.desc":
     "Serve tools over MCP on this computer. It works without HTTP-RPC, answering from the node inside the app.",
-  "settings.mcp.nodeStopped":
-    "The node isn't running. Assistants stay connected, but chain and node tools answer only once it starts.",
-  "settings.mcp.startNode": "Start node",
+  "settings.mcp.nodeStopped": "Assistants stay connected, but chain and node tools answer only once the node starts.",
   "settings.mcp.port": "Port",
   "settings.mcp.port.desc": "Where assistants connect, on 127.0.0.1.",
   "settings.mcp.failed": "The assistant server could not start",

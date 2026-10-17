@@ -1278,8 +1278,7 @@ const fr: Dict = {
   "settings.mcp.enable.desc":
     "Fournit des outils via MCP sur cet ordinateur. Fonctionne sans HTTP-RPC, en s’appuyant sur le nœud intégré à l’application.",
   "settings.mcp.nodeStopped":
-    "Le nœud n’est pas lancé. Les assistants restent connectés, mais les outils de chaîne et de nœud ne répondront qu’une fois le nœud démarré.",
-  "settings.mcp.startNode": "Démarrer le nœud",
+    "Les assistants restent connectés, mais les outils de chaîne et de nœud ne répondront qu’une fois le nœud démarré.",
   "settings.mcp.port": "Port",
   "settings.mcp.port.desc": "Le port auquel se connectent les assistants, sur 127.0.0.1.",
   "settings.mcp.failed": "Le serveur des assistants n’a pas pu démarrer",

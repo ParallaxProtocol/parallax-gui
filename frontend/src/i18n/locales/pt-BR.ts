@@ -1277,8 +1277,7 @@ const ptBR: Dict = {
   "settings.mcp.enable.desc":
     "Oferece ferramentas via MCP neste computador. Funciona sem o HTTP-RPC, respondendo a partir do nó dentro do app.",
   "settings.mcp.nodeStopped":
-    "O nó não está rodando. Os assistentes continuam conectados, mas as ferramentas da blockchain e do nó só respondem quando ele iniciar.",
-  "settings.mcp.startNode": "Iniciar nó",
+    "Os assistentes continuam conectados, mas as ferramentas da blockchain e do nó só respondem quando o nó iniciar.",
   "settings.mcp.port": "Porta",
   "settings.mcp.port.desc": "Onde os assistentes se conectam, em 127.0.0.1.",
   "settings.mcp.failed": "Não foi possível iniciar o servidor de assistentes",

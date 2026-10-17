@@ -31,7 +31,8 @@ export function CardRows({ className = "", children }: { className?: string; chi
  * whole row the button (`onClick`), or `action`, a flat capsule for what
  * is done in place, or nothing. Flat, under a hairline across the card, as
  * it sits on the card's glass. What the page has to say goes here, on the
- * card it is about, rather than in a notice of its own.
+ * card it is about, rather than in a notice of its own. `inPanel`, it is a
+ * row of a Rows panel instead, padded as its rows and parted by its lines.
  */
 export function CardRow({
   tone,
@@ -39,6 +40,7 @@ export function CardRow({
   title,
   desc,
   detail,
+  inPanel,
   ...end
 }: {
   tone: keyof typeof INK;
@@ -47,6 +49,7 @@ export function CardRow({
   desc: ReactNode;
   /** What went wrong, as it was said: small, under the line, to copy into a report. */
   detail?: string | null;
+  inPanel?: boolean;
 } & ({ action?: ReactNode } | { label: string; onClick: () => void })) {
   const body = (
     <>
@@ -58,7 +61,7 @@ export function CardRow({
       </span>
     </>
   );
-  const row = "flex items-center gap-3.5 border-t border-border px-6 py-4 text-left";
+  const row = `flex items-center gap-3.5 text-left ${inPanel ? "min-h-14 px-4 py-3" : "border-t border-border px-6 py-4"}`;
   if (!("onClick" in end)) {
     return (
       <motion.div variants={STAGGER.item} className={row} role={tone === "critical" ? "alert" : "status"}>
