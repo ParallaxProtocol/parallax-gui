@@ -241,7 +241,6 @@ const fr: Dict = {
   "nav.verifyMessage": "Vérifier un message",
   "nav.accounts": "Comptes",
   "nav.manageAccounts": "Gérer les comptes…",
-  "nav.tab.phrases": "Phrases",
   "nav.node": "Nœud",
   "nav.network": "Réseau",
   "node.state.stopped": "Hors ligne",
@@ -496,7 +495,6 @@ const fr: Dict = {
   // Hardware wallets
   "hardware.badge.desc": "Sa clé se trouve sur votre {device}. Les envois depuis ce compte y sont confirmés.",
   "hardware.group": "Portefeuilles matériels",
-  "hardware.tab": "Matériel",
   "hardware.place.other": "Autres chemins",
   "hardware.wallet.unknown": "connectez votre {device} pour les classer",
   "hardware.find.other":

@@ -246,7 +246,6 @@ const es: Dict = {
   "nav.verifyMessage": "Verificar mensaje",
   "nav.accounts": "Cuentas",
   "nav.manageAccounts": "Administrar cuentas…",
-  "nav.tab.phrases": "Frases",
   "nav.node": "Nodo",
   "nav.network": "Red",
   "node.state.stopped": "Sin conexión",
@@ -497,7 +496,6 @@ const es: Dict = {
   // Hardware wallets
   "hardware.badge.desc": "Su clave está en tu {device}. Los envíos desde ella se confirman allí.",
   "hardware.group": "Billeteras de hardware",
-  "hardware.tab": "Hardware",
   "hardware.place.other": "Otras rutas",
   "hardware.wallet.unknown": "conecta tu {device} para ordenarlas",
   "hardware.find.other": "El {device} conectado tiene otra billetera. Conecta el que tiene {name}.",

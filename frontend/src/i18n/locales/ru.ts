@@ -245,7 +245,6 @@ const ru: Dict = {
   "nav.verifyMessage": "Проверить сообщение",
   "nav.accounts": "Аккаунты",
   "nav.manageAccounts": "Управление аккаунтами…",
-  "nav.tab.phrases": "Фразы",
   "nav.node": "Узел",
   "nav.network": "Сеть",
   "node.state.stopped": "Не в сети",
@@ -497,7 +496,6 @@ const ru: Dict = {
   // Hardware wallets
   "hardware.badge.desc": "Его ключ хранится на вашем {device}. Отправки с него подтверждаются там.",
   "hardware.group": "Аппаратные кошельки",
-  "hardware.tab": "Аппаратные",
   "hardware.place.other": "Другие пути",
   "hardware.wallet.unknown": "подключите {device}, чтобы распределить их",
   "hardware.find.other": "На подключённом {device} другой кошелёк. Подключите тот, на котором находится {name}.",

@@ -236,7 +236,6 @@ const zhTW: Dict = {
   "nav.verifyMessage": "驗證訊息",
   "nav.accounts": "帳戶",
   "nav.manageAccounts": "管理帳戶…",
-  "nav.tab.phrases": "助記詞",
   "nav.node": "節點",
   "nav.network": "網路",
   "node.state.stopped": "離線",
@@ -476,7 +475,6 @@ const zhTW: Dict = {
   // Hardware wallets
   "hardware.badge.desc": "其金鑰存放在你的 {device} 上，從此帳戶送出的交易需在該裝置上確認。",
   "hardware.group": "硬體錢包",
-  "hardware.tab": "硬體",
   "hardware.place.other": "其他路徑",
   "hardware.wallet.unknown": "連接你的 {device} 即可分類",
   "hardware.find.other": "目前連接的 {device} 存放的是另一個錢包。請連接存放 {name} 的那一台。",

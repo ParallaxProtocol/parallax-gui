@@ -20,7 +20,7 @@ import { useOfflineMode } from "../../lib/offline";
 import { MAC, SIDEBAR_RAIL, SIDEBAR_RAIL_MAC, SIDEBAR_WIDTH, TRAFFIC_LIGHTS_ROW, useSidebar } from "../../lib/sidebar";
 import { api } from "../../lib/api";
 import { FADE_IN, FADE_OUT, GLIDE, ROW_IN, SPRING, useStagger } from "../../lib/motion";
-import { accountLabel, groupAccounts, groupKey, useBalances, useWallet, type AccountGroup } from "../../lib/wallet";
+import { accountLabel, groupAccounts, groupKey, useBalances, useWallet } from "../../lib/wallet";
 import { DEVICE_NAME } from "../hardware/Device";
 import { LogoMark } from "../ui/LogoMark";
 import { useT } from "../../i18n";
@@ -33,7 +33,6 @@ import { AddressAvatar } from "../ui/AddressAvatar";
 import { AccountBadge, Balance, GroupedAddress } from "../ui/AccountParts";
 import { CopyButton } from "../ui/bits";
 import { Tooltip } from "../ui/Tooltip";
-import { Segmented } from "../ui/Segmented";
 
 const RAIL = MAC ? SIDEBAR_RAIL_MAC : SIDEBAR_RAIL;
 /** An item's width in the rail: its icon and the padding around it. */
@@ -48,16 +47,6 @@ const LIST_WIDTH = 320;
  * folding back would give way to the card that far off it.
  */
 const SHEET_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35, restDelta: 0.01, restSpeed: 0.1 } as const;
-/** The switcher's tabs: the kinds of account, as Settings groups them. */
-type Tab = "phrase" | "keys" | "hardware" | "watch";
-const TABS: Tab[] = ["phrase", "keys", "hardware", "watch"];
-const TAB_LABEL: Record<Tab, string> = {
-  phrase: "nav.tab.phrases",
-  keys: "wallet.accounts.keys",
-  hardware: "hardware.tab",
-  watch: "offline.watchOnly",
-};
-const tabOf = (g: AccountGroup): Tab => (g.kind === "phrase" ? "phrase" : g.kind);
 /** What fades as the sidebar collapses goes quickly; what comes back waits for the room. */
 const fade = (shown: boolean) => ({
   opacity: shown ? 1 : 0,
@@ -197,7 +186,6 @@ function AccountSwitcher() {
   // An offline signer has no chain to read balances from
   const offline = useOfflineMode();
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<Tab | null>(null);
   const [cardHeight, setCardHeight] = useState(0);
   // From opening until the sheet has folded all the way back, the card under
   // it is hidden, so the sheet's glass isn't laid over the card's own
@@ -215,10 +203,6 @@ function AccountSwitcher() {
 
   // Another page closes it, however it was reached
   useEffect(() => setOpen(false), [pathname]);
-  // Each opening starts from the whole list
-  useEffect(() => {
-    if (!open) setTab(null);
-  }, [open]);
 
   // A press anywhere else closes it, heard before the page can swallow it;
   // so does the window losing focus (a press on another window or the
@@ -255,43 +239,19 @@ function AccountSwitcher() {
   if (!info || !account) return null;
   const accounts = info.accounts;
   // Grouped as Settings shows them, the empty groups left out
-  // The kinds there are accounts of, for the tabs; the list opens on the
-  // current account's
-  const groups = groupAccounts(info);
-  const kinds = TABS.filter((k) => groups.some((g) => tabOf(g) === k && g.accounts.length > 0));
-  const current: Tab = account.watchOnly
-    ? "watch"
-    : account.hardware
-      ? "hardware"
-      : account.fromSeed && groups.some((g) => g.kind === "phrase" && g.seed.id === account.seedId)
-        ? "phrase"
-        : "keys";
-  const kind: Tab = tab && kinds.includes(tab) ? tab : current;
-  const shown = groups.filter((g) => kinds.length < 2 || tabOf(g) === kind).filter((g) => g.accounts.length > 0);
+  const shown = groupAccounts(info).filter((g) => g.accounts.length > 0);
 
   const name = accountLabel(account, accounts, t);
 
-  // The tabs, the accounts by group, and the way to manage them: the
-  // list, in the card grown into it or beside the rail
+  // The accounts by group, and the way to manage them: the list, in the
+  // card grown into it or beside the rail
   const list = (
     <>
-      {kinds.length > 1 && (
-        // A regular-size control, as tall and as large as the text about it
-        <div className="px-1 pt-1.5 pb-2">
-          <Segmented<Tab>
-            fill
-            options={kinds.map((k) => ({ value: k, label: t(TAB_LABEL[k]) }))}
-            value={kind}
-            onChange={setTab}
-          />
-        </div>
-      )}
       {/* As tall as the window leaves room for under the card, scrolling past
           that: its rows keep their height (a column would squeeze them first;
           the accounts' are menu items, which don't shrink) */}
       <div className="relative flex min-h-0 flex-col">
         <motion.div
-          key={kind}
           ref={setScroller}
           // Positioned, so its rows' offsetTop is measured from it
           className="relative flex max-h-[calc(100dvh-22rem)] min-h-0 flex-col gap-px overflow-y-auto overscroll-contain"
@@ -301,22 +261,19 @@ function AccountSwitcher() {
             <Fragment key={groupKey(g)}>
               {/* What keeps the accounts under it, a hairline above it parting it
                 from the group before, on the list's own glass */}
-              {/* A tab of single keys or watch-only accounts is named by its tab;
-                  a phrase or a hardware wallet by its own name */}
-              {(g.kind === "phrase" || g.kind === "hardware" || kinds.length < 2) && (
-                <motion.div
-                  variants={ROW_IN}
-                  className="mt-1.5 shrink-0 truncate border-t border-border px-2.5 pt-3 pb-1.5 font-semibold text-foreground/75 first:mt-0 first:border-t-0 first:pt-1.5"
-                >
-                  {g.kind === "phrase"
-                    ? g.seed.name
-                    : g.kind === "keys"
-                      ? t("wallet.accounts.keys")
-                      : g.kind === "hardware"
-                        ? (g.wallet?.name ?? DEVICE_NAME[g.device])
-                        : t("offline.watchOnly")}
-                </motion.div>
-              )}
+              {/* A phrase or a hardware wallet by its own name, single keys and watch-only accounts by their kind */}
+              <motion.div
+                variants={ROW_IN}
+                className="mt-1.5 shrink-0 truncate border-t border-border px-2.5 pt-3 pb-1.5 font-semibold text-foreground/75 first:mt-0 first:border-t-0 first:pt-1.5"
+              >
+                {g.kind === "phrase"
+                  ? g.seed.name
+                  : g.kind === "keys"
+                    ? t("wallet.accounts.keys")
+                    : g.kind === "hardware"
+                      ? (g.wallet?.name ?? DEVICE_NAME[g.device])
+                      : t("offline.watchOnly")}
+              </motion.div>
               {g.accounts.map((a) => {
                 const here = a.address === account.address;
                 return (

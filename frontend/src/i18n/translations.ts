@@ -262,7 +262,6 @@ export const en: Dict = {
   "nav.verifyMessage": "Verify message",
   "nav.accounts": "Accounts",
   "nav.manageAccounts": "Manage accounts…",
-  "nav.tab.phrases": "Phrases",
   "nav.node": "Node",
   "nav.network": "Network",
   "node.state.stopped": "Offline",
@@ -510,7 +509,6 @@ export const en: Dict = {
   // Hardware wallets
   "hardware.badge.desc": "Its key is on your {device}. Sends from it are confirmed there.",
   "hardware.group": "Hardware wallets",
-  "hardware.tab": "Hardware",
   "hardware.place.other": "Other paths",
   "hardware.wallet.unknown": "connect your {device} to sort them",
   "hardware.find.other": "The {device} connected holds another wallet. Connect the one {name} is on.",

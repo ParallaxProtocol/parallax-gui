@@ -236,7 +236,6 @@ const zhSG: Dict = {
   "nav.verifyMessage": "验证消息",
   "nav.accounts": "账户",
   "nav.manageAccounts": "管理账户…",
-  "nav.tab.phrases": "助记词",
   "nav.node": "节点",
   "nav.network": "网络",
   "node.state.stopped": "离线",
@@ -476,7 +475,6 @@ const zhSG: Dict = {
   // Hardware wallets
   "hardware.badge.desc": "其密钥保存在您的 {device} 上，从该账户发送的交易需在设备上确认。",
   "hardware.group": "硬件钱包",
-  "hardware.tab": "硬件",
   "hardware.place.other": "其他路径",
   "hardware.wallet.unknown": "连接您的 {device} 以进行归类",
   "hardware.find.other": "当前连接的 {device} 中是另一个钱包。请连接存有 {name} 的设备。",

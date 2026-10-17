@@ -246,7 +246,6 @@ const ptBR: Dict = {
   "nav.verifyMessage": "Verificar mensagem",
   "nav.accounts": "Contas",
   "nav.manageAccounts": "Gerenciar contas…",
-  "nav.tab.phrases": "Frases",
   "nav.node": "Nó",
   "nav.network": "Rede",
   "node.state.stopped": "Offline",
@@ -499,7 +498,6 @@ const ptBR: Dict = {
   // Hardware wallets
   "hardware.badge.desc": "A chave dela está no seu {device}. Os envios a partir dela são confirmados lá.",
   "hardware.group": "Carteiras de hardware",
-  "hardware.tab": "Hardware",
   "hardware.place.other": "Outros caminhos",
   "hardware.wallet.unknown": "conecte seu {device} para organizá-las",
   "hardware.find.other": "O {device} conectado guarda outra carteira. Conecte aquele em que {name} está.",
