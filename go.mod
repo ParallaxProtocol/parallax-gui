@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/ParallaxProtocol/parallax-mcp v0.2.2
-	github.com/ParallaxProtocol/parallax/v2 v2.1.4
+	github.com/ParallaxProtocol/parallax/v2 v2.1.5
 	github.com/awnumar/memguard v0.23.0
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
