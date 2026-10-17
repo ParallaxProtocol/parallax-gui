@@ -512,6 +512,16 @@ func (a *App) WalletRename(address, name string) error {
 	return w.Rename(address, name)
 }
 
+// WalletSetOrder keeps the order the account switcher's groups and
+// accounts were dragged into (backend/wallet.go).
+func (a *App) WalletSetOrder(groups, accounts []string) error {
+	w, err := a.walletOrErr()
+	if err != nil {
+		return err
+	}
+	return w.SetOrder(groups, accounts)
+}
+
 // WalletUnlock opens the wallet with its password, for the actions that
 // sign or add keys to use without asking again, until it locks
 // (backend/session.go).

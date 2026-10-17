@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -282,6 +283,44 @@ func TestWalletBackupRemove(t *testing.T) {
 	}
 	if _, err := w.Backup(acc.Address, testPassword); !errors.Is(err, ErrUnknownAccount) {
 		t.Fatalf("Backup after Remove = %v, want ErrUnknownAccount", err)
+	}
+}
+
+func TestWalletSetOrder(t *testing.T) {
+	w, _ := newTestWallet(t)
+	first, err := w.Create("", testPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := w.Create("", testPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := w.Info().Accounts
+	stranger := "0x1111111111111111111111111111111111111111"
+	if err := w.SetOrder([]string{"watch", "keys"}, []string{second.Address, stranger, strings.ToLower(first.Address)}); err != nil {
+		t.Fatalf("SetOrder: %v", err)
+	}
+	info := w.Info()
+	if !slices.Equal(info.GroupOrder, []string{"watch", "keys"}) {
+		t.Fatalf("GroupOrder = %v", info.GroupOrder)
+	}
+	// The stranger left out, the lowercase address checksummed
+	if !slices.Equal(info.AccountOrder, []string{second.Address, first.Address}) {
+		t.Fatalf("AccountOrder = %v", info.AccountOrder)
+	}
+	// Accounts keep their own order: it numbers the unnamed ones
+	for i, a := range info.Accounts {
+		if a.Address != before[i].Address {
+			t.Fatalf("Accounts reordered: %v, was %v", info.Accounts, before)
+		}
+	}
+	if err := w.SetOrder([]string{""}, nil); err == nil {
+		t.Fatal("SetOrder accepted an empty group")
+	}
+	w.Lock()
+	if err := w.SetOrder(nil, nil); err == nil {
+		t.Fatal("SetOrder worked while locked")
 	}
 }
 

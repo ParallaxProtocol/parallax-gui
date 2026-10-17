@@ -134,6 +134,11 @@ type WalletInfo struct {
 	// has told the user (DismissDamaged): "vault", "labels", "contacts",
 	// "requests", "signed", "pending".
 	Damaged []string `json:"damaged"`
+	// GroupOrder and AccountOrder are the order the user put the groups
+	// and the accounts in (SetOrder), for the app to show them in; what
+	// neither lists keeps its own place after what they do.
+	GroupOrder   []string `json:"groupOrder"`
+	AccountOrder []string `json:"accountOrder"`
 }
 
 // walletMeta is what the wallet keeps beside the keystore: nothing secret,
@@ -154,6 +159,13 @@ type walletMeta struct {
 	Hardware []hardwareRef `json:"hardware"`
 	// HardwareWallets names the hardware wallets those accounts are on
 	HardwareWallets []hardwareWalletMeta `json:"hardwareWallets"`
+	// GroupOrder and AccountOrder are the order the user put the account
+	// groups (by the app's keys for them) and the accounts in, dragging
+	// them in the account switcher (SetOrder). Only the order: what is in
+	// each group isn't changed, nor Accounts' own order, which numbers
+	// the unnamed ones.
+	GroupOrder   []string `json:"groupOrder,omitempty"`
+	AccountOrder []string `json:"accountOrder,omitempty"`
 }
 
 // Wallet is the app's own wallet. It is safe for concurrent use.
@@ -380,7 +392,7 @@ func (w *Wallet) Info() WalletInfo {
 	defer w.mu.Unlock()
 	// Locked, nothing about the accounts is told: not even how many
 	if v != nil && !w.metaOpen {
-		return WalletInfo{Accounts: []WalletAccount{}, KeystoreDir: w.dir, HasPassword: true, Locked: true, Seeds: []SeedInfo{}, HardwareWallets: []HardwareWalletInfo{}, Damaged: []string{}}
+		return WalletInfo{Accounts: []WalletAccount{}, KeystoreDir: w.dir, HasPassword: true, Locked: true, Seeds: []SeedInfo{}, HardwareWallets: []HardwareWalletInfo{}, Damaged: []string{}, GroupOrder: []string{}, AccountOrder: []string{}}
 	}
 	info := WalletInfo{
 		Accounts:    make([]WalletAccount, 0, len(accs)),
@@ -392,6 +404,8 @@ func (w *Wallet) Info() WalletInfo {
 		// Named in the order they were first seen
 		HardwareWallets: w.hardwareInfosLocked(),
 		Damaged:         w.damagedStores(),
+		GroupOrder:      append([]string{}, w.meta.GroupOrder...),
+		AccountOrder:    append([]string{}, w.meta.AccountOrder...),
 	}
 	selected := false
 	for _, a := range accs {
@@ -516,6 +530,43 @@ func (w *Wallet) Rename(address, name string) error {
 	} else {
 		w.meta.Names[addr.Hex()] = name
 	}
+	return w.saveMeta()
+}
+
+// maxOrder bounds the order SetOrder keeps, far past any wallet's accounts.
+const maxOrder = 10000
+
+// SetOrder keeps the order the user put the account groups and the
+// accounts in, dragging them in the account switcher: groups by the app's
+// keys for them (a phrase's id, "keys", "hardware:<wallet or device>",
+// "watch"), accounts by address. Only the order is kept: what is in each
+// group stays as it is. Addresses not in the wallet are left out.
+func (w *Wallet) SetOrder(groups, accounts []string) error {
+	if err := w.requireOpen(); err != nil {
+		return err
+	}
+	if len(groups) > maxOrder || len(accounts) > maxOrder {
+		return errors.New("wallet: the order is too long")
+	}
+	gs := make([]string, 0, len(groups))
+	for _, g := range groups {
+		if g == "" || len(g) > 200 || !utf8.ValidString(g) {
+			return errors.New("wallet: not a valid group")
+		}
+		gs = append(gs, g)
+	}
+	as := make([]string, 0, len(accounts))
+	for _, a := range accounts {
+		addr, _, err := w.known(a)
+		if err != nil {
+			continue
+		}
+		as = append(as, addr.Hex())
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.meta.GroupOrder = gs
+	w.meta.AccountOrder = as
 	return w.saveMeta()
 }
 

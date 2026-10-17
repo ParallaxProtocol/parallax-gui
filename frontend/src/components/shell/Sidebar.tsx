@@ -1,6 +1,13 @@
-import { Fragment, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { animate, AnimatePresence, motion, useMotionValue, usePresence } from "motion/react";
+import { animate, AnimatePresence, motion, Reorder, useDragControls, useMotionValue, usePresence } from "motion/react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -20,7 +27,7 @@ import { useOfflineMode } from "../../lib/offline";
 import { MAC, SIDEBAR_RAIL, SIDEBAR_RAIL_MAC, SIDEBAR_WIDTH, TRAFFIC_LIGHTS_ROW, useSidebar } from "../../lib/sidebar";
 import { api } from "../../lib/api";
 import { FADE_IN, FADE_OUT, GLIDE, ROW_IN, SPRING, useStagger } from "../../lib/motion";
-import { accountLabel, groupAccounts, groupKey, useBalances, useWallet } from "../../lib/wallet";
+import { accountLabel, groupAccounts, groupKey, inOrder, useBalances, useWallet } from "../../lib/wallet";
 import { DEVICE_NAME } from "../hardware/Device";
 import { LogoMark } from "../ui/LogoMark";
 import { useT } from "../../i18n";
@@ -181,7 +188,7 @@ export default function Sidebar() {
 function AccountSwitcher() {
   const t = useT();
   const { openAt } = useSettingsSheet();
-  const { info, account, select } = useWallet();
+  const { info, account, select, refresh } = useWallet();
   const balances = useBalances();
   // An offline signer has no chain to read balances from
   const offline = useOfflineMode();
@@ -200,6 +207,19 @@ function AccountSwitcher() {
   const { collapsed } = useSidebar();
   const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
   const more = useMoreBelow(scroller);
+  // The order being dragged into: shown in the wallet's place from the
+  // first move until the wallet has kept it. The ref is what a drag's end
+  // reads, set as each move is
+  const [order, setOrderState] = useState<Order | null>(null);
+  const orderRef = useRef<Order | null>(null);
+  const setOrder = (o: Order) => {
+    orderRef.current = o;
+    setOrderState(o);
+  };
+  // What's being dragged, lifted over the rest; and that the press was a
+  // drag, so letting go doesn't choose the account too
+  const [dragging, setDragging] = useState<string | null>(null);
+  const dragged = useRef(false);
 
   // Another page closes it, however it was reached
   useEffect(() => setOpen(false), [pathname]);
@@ -238,8 +258,42 @@ function AccountSwitcher() {
 
   if (!info || !account) return null;
   const accounts = info.accounts;
-  // Grouped as Settings shows them, the empty groups left out
-  const shown = groupAccounts(info).filter((g) => g.accounts.length > 0);
+  // Grouped as Settings shows them, the empty groups left out, in the order being dragged into
+  const grouped = groupAccounts(info).filter((g) => g.accounts.length > 0);
+  const shown = order
+    ? inOrder(grouped, groupKey, order.groups).map((g) => ({
+        ...g,
+        accounts: inOrder(g.accounts, (a) => a.address, order.accounts[groupKey(g)]),
+      }))
+    : grouped;
+  const current: Order = order ?? {
+    groups: shown.map(groupKey),
+    accounts: Object.fromEntries(shown.map((g) => [groupKey(g), g.accounts.map((a) => a.address)])),
+  };
+
+  const startDrag = (key: string) => {
+    dragged.current = true;
+    setDragging(key);
+  };
+  // Let go: the wallet keeps the order, every account's in its group's place
+  const endDrag = () => {
+    setDragging(null);
+    const o = orderRef.current;
+    if (!o) return;
+    api
+      .walletSetOrder(
+        o.groups,
+        o.groups.flatMap((g) => o.accounts[g] ?? []),
+      )
+      .then(refresh)
+      .catch(() => {})
+      .finally(() => {
+        if (orderRef.current === o) {
+          orderRef.current = null;
+          setOrderState(null);
+        }
+      });
+  };
 
   const name = accountLabel(account, accounts, t);
 
@@ -253,68 +307,111 @@ function AccountSwitcher() {
       <div className="relative flex min-h-0 flex-col">
         <motion.div
           ref={setScroller}
-          // Positioned, so its rows' offsetTop is measured from it
-          className="relative flex max-h-[calc(100dvh-22rem)] min-h-0 flex-col gap-px overflow-y-auto overscroll-contain"
+          // Positioned, so its rows' offsetTop is measured from it; its
+          // scroll measured too, for the rows dragged in it
+          layoutScroll
+          className="relative flex max-h-[calc(100dvh-22rem)] min-h-0 flex-col overflow-y-auto overscroll-contain"
           {...stagger}
         >
-          {shown.map((g) => (
-            <Fragment key={groupKey(g)}>
-              {/* What keeps the accounts under it, a hairline above it parting it
-                from the group before, on the list's own glass */}
-              {/* A phrase or a hardware wallet by its own name, single keys and watch-only accounts by their kind */}
-              <motion.div
-                variants={ROW_IN}
-                className="mt-1.5 shrink-0 truncate border-t border-border px-2.5 pt-3 pb-1.5 font-semibold text-foreground/75 first:mt-0 first:border-t-0 first:pt-1.5"
-              >
-                {g.kind === "phrase"
-                  ? g.seed.name
-                  : g.kind === "keys"
-                    ? t("wallet.accounts.keys")
-                    : g.kind === "hardware"
-                      ? (g.wallet?.name ?? DEVICE_NAME[g.device])
-                      : t("offline.watchOnly")}
-              </motion.div>
-              {g.accounts.map((a) => {
-                const here = a.address === account.address;
-                return (
-                  <motion.button
-                    key={a.address}
-                    type="button"
-                    role="option"
-                    aria-selected={here}
-                    variants={ROW_IN}
-                    onClick={() => choose(a.address)}
-                    className="menu-item relative gap-2.5 py-1.5"
+          {/* The groups, dragged by their names, and in each its accounts, dragged within it */}
+          <Reorder.Group
+            as="div"
+            axis="y"
+            values={current.groups}
+            onReorder={(groups: string[]) => setOrder({ ...current, groups })}
+            className="flex flex-col"
+          >
+            {shown.map((g) => {
+              const key = groupKey(g);
+              return (
+                <DragGroup
+                  key={key}
+                  value={key}
+                  lifted={dragging === key}
+                  onDragStart={() => startDrag(key)}
+                  onDragEnd={endDrag}
+                  // What keeps the accounts under it, a hairline above it parting it
+                  // from the group before, on the list's own glass
+                  className="mt-1.5 border-t border-border pt-1.5 first:mt-0 first:border-t-0 first:pt-0"
+                  header={(grab) => (
+                    // A phrase or a hardware wallet by its own name, single keys and watch-only accounts by their kind
+                    <motion.div
+                      variants={ROW_IN}
+                      onPointerDown={grab}
+                      className="shrink-0 touch-none truncate px-2.5 pt-1.5 pb-1.5 font-semibold text-foreground/75"
+                    >
+                      {g.kind === "phrase"
+                        ? g.seed.name
+                        : g.kind === "keys"
+                          ? t("wallet.accounts.keys")
+                          : g.kind === "hardware"
+                            ? (g.wallet?.name ?? DEVICE_NAME[g.device])
+                            : t("offline.watchOnly")}
+                    </motion.div>
+                  )}
+                >
+                  <Reorder.Group
+                    as="div"
+                    axis="y"
+                    values={current.accounts[key] ?? []}
+                    onReorder={(addresses: string[]) =>
+                      setOrder({ ...current, accounts: { ...current.accounts, [key]: addresses } })
+                    }
+                    className="flex flex-col gap-px"
                   >
-                    {/* The chosen account is lit as the sidebar's page is, and the light glides to a new choice */}
-                    {here && (
-                      <motion.span
-                        layoutId="switcher-selection"
-                        transition={GLIDE}
-                        className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
-                      />
-                    )}
-                    <span className="relative flex">
-                      <AddressAvatar address={a.address} size={24} />
-                    </span>
-                    <span className="relative flex min-w-0 flex-1 flex-col">
-                      <span className="flex min-w-0 items-baseline gap-2">
-                        <span className={`min-w-0 flex-1 truncate text-[15px] ${here ? "font-medium" : ""}`}>
-                          {accountLabel(a, accounts, t)}
-                        </span>
-                        {!offline && (
-                          <span className="shrink-0 text-muted-foreground tabular-nums">
-                            <Balance wei={balances[a.address]} />
+                    {g.accounts.map((a) => {
+                      const here = a.address === account.address;
+                      return (
+                        <Reorder.Item
+                          key={a.address}
+                          value={a.address}
+                          as="button"
+                          type="button"
+                          role="option"
+                          aria-selected={here}
+                          variants={ROW_IN}
+                          onPointerDownCapture={() => (dragged.current = false)}
+                          onDragStart={() => startDrag(a.address)}
+                          onDragEnd={endDrag}
+                          onClick={() => {
+                            if (!dragged.current) choose(a.address);
+                          }}
+                          className={`menu-item relative touch-none gap-2.5 py-1.5 ${
+                            dragging === a.address ? "bg-popover shadow-[0_8px_24px_-8px_rgb(0_0_0/45%)]" : ""
+                          }`}
+                        >
+                          {/* The chosen account is lit as the sidebar's page is, and the light glides to a new choice */}
+                          {here && (
+                            <motion.span
+                              layoutId="switcher-selection"
+                              transition={GLIDE}
+                              className="absolute inset-0 rounded-lg bg-selected shadow-[0_1px_0_rgb(255_255_255/3%)_inset]"
+                            />
+                          )}
+                          <span className="relative flex">
+                            <AddressAvatar address={a.address} size={24} />
                           </span>
-                        )}
-                      </span>
-                      <CardAddress address={a.address} />
-                    </span>
-                  </motion.button>
-                );
-              })}
-            </Fragment>
-          ))}
+                          <span className="relative flex min-w-0 flex-1 flex-col">
+                            <span className="flex min-w-0 items-baseline gap-2">
+                              <span className={`min-w-0 flex-1 truncate text-[15px] ${here ? "font-medium" : ""}`}>
+                                {accountLabel(a, accounts, t)}
+                              </span>
+                              {!offline && (
+                                <span className="shrink-0 text-muted-foreground tabular-nums">
+                                  <Balance wei={balances[a.address]} />
+                                </span>
+                              )}
+                            </span>
+                            <CardAddress address={a.address} />
+                          </span>
+                        </Reorder.Item>
+                      );
+                    })}
+                  </Reorder.Group>
+                </DragGroup>
+              );
+            })}
+          </Reorder.Group>
         </motion.div>
         {/* With accounts still below, the list's foot frosts over, thinning
             upward to nothing, as the page does under its toolbar; edge to
@@ -625,6 +722,49 @@ function AccountSwitcher() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/** The order the switcher's groups and their accounts are being dragged into: group keys, and each group's addresses. */
+type Order = { groups: string[]; accounts: Record<string, string[]> };
+
+/**
+ * DragGroup is one of the switcher's groups as an item of their reorder:
+ * dragged by its name alone (`header` is handed what starts the drag), so
+ * a press on one of its accounts drags that account instead. Lifted, it
+ * floats over the rest on the list's surface.
+ */
+function DragGroup({
+  value,
+  lifted,
+  onDragStart,
+  onDragEnd,
+  className,
+  header,
+  children,
+}: {
+  value: string;
+  lifted: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  className: string;
+  header: (grab: (e: ReactPointerEvent) => void) => ReactNode;
+  children: ReactNode;
+}) {
+  const controls = useDragControls();
+  return (
+    <Reorder.Item
+      as="div"
+      value={value}
+      dragListener={false}
+      dragControls={controls}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      className={`relative rounded-lg ${className} ${lifted ? "bg-popover shadow-[0_8px_24px_-8px_rgb(0_0_0/45%)]" : ""}`}
+    >
+      {header((e) => controls.start(e))}
+      {children}
+    </Reorder.Item>
   );
 }
 

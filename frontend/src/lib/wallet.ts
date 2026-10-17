@@ -64,14 +64,15 @@ export const groupKey = (g: AccountGroup) =>
  * show them: the phrases in the order they were added, then single keys,
  * the hardware wallets in the order they were first seen (those of no
  * known wallet after), then watch-only accounts, each in the wallet's
- * order. An account whose
- * phrase is gone from the vault (another tool) counts as a single key, as
- * it is one now.
+ * order; or, once the user has dragged them into another (the switcher),
+ * the groups and the accounts in each in that order, what it doesn't list
+ * after. An account whose phrase is gone from the vault (another tool)
+ * counts as a single key, as it is one now.
  */
 export function groupAccounts(info: WalletInfo): AccountGroup[] {
   const seedIds = new Set(info.seeds.map((s) => s.id));
   const ofPhrase = (a: WalletAccount) => a.fromSeed && seedIds.has(a.seedId);
-  return [
+  const groups: AccountGroup[] = [
     ...info.seeds.map((seed) => ({
       kind: "phrase" as const,
       seed,
@@ -94,6 +95,24 @@ export function groupAccounts(info: WalletInfo): AccountGroup[] {
     })),
     { kind: "watch" as const, accounts: info.accounts.filter((a) => a.watchOnly) },
   ];
+  return inOrder(groups, groupKey, info.groupOrder).map((g) => ({
+    ...g,
+    accounts: inOrder(g.accounts, (a) => a.address, info.accountOrder),
+  }));
+}
+
+/**
+ * inOrder puts items in the order given by their keys, stably: those it
+ * lists first, as it lists them, then the rest as they were.
+ */
+export function inOrder<T>(items: T[], key: (x: T) => string, order: string[] | undefined): T[] {
+  if (!order?.length) return items;
+  const at = new Map(order.map((k, i) => [k, i]));
+  const place = (x: T) => at.get(key(x)) ?? Infinity;
+  return items
+    .map((x, i) => ({ x, i, o: place(x) }))
+    .sort((a, b) => (a.o === b.o ? a.i - b.i : a.o - b.o))
+    .map((e) => e.x);
 }
 
 /**

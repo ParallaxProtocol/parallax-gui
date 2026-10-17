@@ -526,6 +526,9 @@ export type WalletInfo = {
   hardwareWallets: HardwareWalletInfo[];
   /** What was found damaged as the wallet opened, and set aside or taken from its last good copy (backend/sealed.go). */
   damaged?: DamagedStore[];
+  /** The order the user dragged the groups (by groupKey) and the accounts (by address) into; what neither lists follows. */
+  groupOrder?: string[];
+  accountOrder?: string[];
 };
 
 /** A file of the wallet's that can be found damaged. */
@@ -1059,6 +1062,8 @@ export const api = {
   walletTouch: () => call<void>("WalletTouch"),
   walletSelect: (address: string) => call<void>("WalletSelect", address),
   walletRename: (address: string, name: string) => call<void>("WalletRename", address, name),
+  /** Keeps the order the account switcher's groups and accounts were dragged into. */
+  walletSetOrder: (groups: string[], accounts: string[]) => call<void>("WalletSetOrder", groups, accounts),
   walletCreate: (name: string) => call<WalletAccount>("WalletCreate", name),
   walletImportPrivateKey: (name: string, key: string) => call<WalletAccount>("WalletImportPrivateKey", name, key),
   /** filePassword is the keystore file's own. */
