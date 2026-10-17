@@ -272,6 +272,17 @@ button.glass:hover,
     cursor: default;
   }
 
+  /* A link is a place in the app, not a page on the web: the arrow, as a
+     button has, and nothing to drag away. The browser's own pointer would
+     win over body's otherwise. Images, too, stay where they are */
+  a {
+    cursor: default;
+    -webkit-user-drag: none;
+  }
+  img {
+    -webkit-user-drag: none;
+  }
+
   input,
   textarea,
   select,
