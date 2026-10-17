@@ -1191,8 +1191,8 @@ const es: Dict = {
   "storage.err.inside": "Elige una carpeta fuera de la que se está moviendo.",
   "storage.err.notEmpty": "Esa carpeta ya contiene otros archivos, y también la carpeta que se crearía dentro de ella.",
   "storage.err.busy": "Los datos se están moviendo o borrando. Vuelve a intentarlo cuando termine.",
-  "storage.move.cta": "Mover…",
-  "storage.delete.cta": "Borrar…",
+  "storage.move.cta": "Mover",
+  "storage.delete.cta": "Borrar",
   "storage.moveHint": "Si la carpeta ya contiene otros archivos, se crea una carpeta nueva dentro de ella.",
   "storage.progress": "{done} de {total}",
   "storage.wallet.pick": "Elige dónde guardar la billetera",
@@ -1215,7 +1215,7 @@ const es: Dict = {
   "storage.wallet.deleteTitle": "Borrar la billetera",
   "storage.wallet.deleteWarn":
     "Esto borra la billetera: se van todas las cuentas. Sin un respaldo de sus claves o frases de recuperación, sus fondos se pierden para siempre y nadie puede recuperarlos.",
-  "storage.wallet.wipeCta": "Borrar…",
+  "storage.wallet.wipeCta": "Borrar",
   "storage.wallet.deleteAfter":
     "La contraseña de la billetera también se borra. Luego la app empieza de cero como en el primer inicio: elegirás una nueva contraseña de la billetera y volverás a crear o importar tus cuentas.",
   "storage.wallet.deleteList":

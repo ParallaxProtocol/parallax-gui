@@ -1214,8 +1214,8 @@ const de: Dict = {
   "storage.err.inside": "Wählen Sie einen Ordner außerhalb des Ordners, der verschoben wird.",
   "storage.err.notEmpty": "Dieser Ordner enthält bereits andere Dateien, ebenso der Ordner, der darin angelegt würde.",
   "storage.err.busy": "Die Daten werden gerade verschoben oder gelöscht. Versuchen Sie es danach erneut.",
-  "storage.move.cta": "Verschieben…",
-  "storage.delete.cta": "Löschen…",
+  "storage.move.cta": "Verschieben",
+  "storage.delete.cta": "Löschen",
   "storage.moveHint": "Enthält der Ordner bereits andere Dateien, wird darin ein neuer Ordner angelegt.",
   "storage.progress": "{done} von {total}",
   "storage.wallet.pick": "Speicherort für die Wallet wählen",
@@ -1238,7 +1238,7 @@ const de: Dict = {
   "storage.wallet.deleteTitle": "Wallet löschen",
   "storage.wallet.deleteWarn":
     "Dies löscht die Wallet vollständig: Alle Konten gehen verloren. Ohne Sicherung ihrer Schlüssel oder Wiederherstellungsphrasen ist ihr Guthaben endgültig verloren, und niemand kann es zurückholen.",
-  "storage.wallet.wipeCta": "Löschen…",
+  "storage.wallet.wipeCta": "Löschen",
   "storage.wallet.deleteAfter":
     "Auch das Wallet-Passwort wird gelöscht. Die App beginnt dann wie beim ersten Start: Sie wählen ein neues Wallet-Passwort und erstellen oder importieren Ihre Konten erneut.",
   "storage.wallet.deleteList":

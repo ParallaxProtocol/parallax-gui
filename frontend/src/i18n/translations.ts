@@ -1186,8 +1186,8 @@ export const en: Dict = {
   "storage.err.inside": "Choose a folder outside the one being moved.",
   "storage.err.notEmpty": "That folder already holds other files, and so does the folder that would be made in it.",
   "storage.err.busy": "The data is being moved or cleared. Try again once that's done.",
-  "storage.move.cta": "Move…",
-  "storage.delete.cta": "Delete…",
+  "storage.move.cta": "Move",
+  "storage.delete.cta": "Delete",
   "storage.moveHint": "If the folder already holds other files, a new folder is made inside it.",
   "storage.progress": "{done} of {total}",
   "storage.wallet.pick": "Choose where to keep the wallet",
@@ -1210,7 +1210,7 @@ export const en: Dict = {
   "storage.wallet.deleteTitle": "Wipe the wallet",
   "storage.wallet.deleteWarn":
     "This wipes the wallet: every account goes. Without a backup of their keys or recovery phrases, their funds are lost for good, and nobody can bring them back.",
-  "storage.wallet.wipeCta": "Wipe…",
+  "storage.wallet.wipeCta": "Wipe",
   "storage.wallet.deleteAfter":
     "The wallet password goes too. The app then starts over as on a first launch: you'll choose a new wallet password, then create or import your accounts again.",
   "storage.wallet.deleteList":

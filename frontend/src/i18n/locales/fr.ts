@@ -1190,8 +1190,8 @@ const fr: Dict = {
   "storage.err.notEmpty": "Ce dossier contient déjà d’autres fichiers, tout comme le dossier qui y serait créé.",
   "storage.err.busy":
     "Les données sont en cours de déplacement ou d’effacement. Réessayez une fois l’opération terminée.",
-  "storage.move.cta": "Déplacer…",
-  "storage.delete.cta": "Supprimer…",
+  "storage.move.cta": "Déplacer",
+  "storage.delete.cta": "Supprimer",
   "storage.moveHint": "Si le dossier contient déjà d’autres fichiers, un nouveau dossier y est créé.",
   "storage.progress": "{done} sur {total}",
   "storage.wallet.pick": "Choisissez où conserver le portefeuille",
@@ -1214,7 +1214,7 @@ const fr: Dict = {
   "storage.wallet.deleteTitle": "Effacer le portefeuille",
   "storage.wallet.deleteWarn":
     "Cela efface le portefeuille : tous les comptes disparaissent. Sans sauvegarde de leurs clés ou de leurs phrases de récupération, leurs fonds sont perdus pour de bon, et personne ne pourra les récupérer.",
-  "storage.wallet.wipeCta": "Effacer…",
+  "storage.wallet.wipeCta": "Effacer",
   "storage.wallet.deleteAfter":
     "Le mot de passe du portefeuille disparaît aussi. L’application repart alors comme au premier lancement : vous choisirez un nouveau mot de passe du portefeuille, puis créerez ou importerez à nouveau vos comptes.",
   "storage.wallet.deleteList":

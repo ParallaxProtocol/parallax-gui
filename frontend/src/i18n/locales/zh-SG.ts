@@ -1104,8 +1104,8 @@ const zhSG: Dict = {
   "storage.err.inside": "请选择不在被移动文件夹内的位置。",
   "storage.err.notEmpty": "该文件夹中已有其他文件，在其中新建的文件夹中也已有文件。",
   "storage.err.busy": "数据正在移动或清除，请在完成后重试。",
-  "storage.move.cta": "移动…",
-  "storage.delete.cta": "删除…",
+  "storage.move.cta": "移动",
+  "storage.delete.cta": "删除",
   "storage.moveHint": "如果所选文件夹中已有其他文件，将在其中新建一个文件夹。",
   "storage.progress": "{done} / {total}",
   "storage.wallet.pick": "选择存放钱包的位置",
@@ -1125,7 +1125,7 @@ const zhSG: Dict = {
   "storage.wallet.deleteTitle": "清除钱包",
   "storage.wallet.deleteWarn":
     "此操作会清除钱包中的所有账户。如果没有备份其密钥或助记词，资金将永久丢失，任何人都无法找回。",
-  "storage.wallet.wipeCta": "清除…",
+  "storage.wallet.wipeCta": "清除",
   "storage.wallet.deleteAfter":
     "钱包密码也会一并删除。随后应用将像首次启动一样重新开始：您需要设置新的钱包密码，再重新创建或导入账户。",
   "storage.wallet.deleteList":

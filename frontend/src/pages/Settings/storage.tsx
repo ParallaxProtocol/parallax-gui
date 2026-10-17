@@ -93,7 +93,7 @@ export function WipeWallet() {
             <span className="font-medium text-critical-ink">{t("storage.wallet.delete")}</span>
             <span className="text-sm text-muted-foreground">{t("storage.wallet.deleteDesc")}</span>
           </div>
-          <button type="button" className="btn btn-danger btn-sm shrink-0" onClick={() => setWiping(true)}>
+          <button type="button" className="btn btn-danger-flat btn-sm shrink-0" onClick={() => setWiping(true)}>
             {t("storage.wallet.wipeCta")}
           </button>
         </div>

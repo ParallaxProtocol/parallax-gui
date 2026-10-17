@@ -1106,8 +1106,8 @@ const zhTW: Dict = {
   "storage.err.inside": "請選擇要移動的資料夾以外的位置。",
   "storage.err.notEmpty": "該資料夾中已有其他檔案，而要在其中建立的資料夾也一樣。",
   "storage.err.busy": "資料正在移動或清除中，請等完成後再試一次。",
-  "storage.move.cta": "移動…",
-  "storage.delete.cta": "刪除…",
+  "storage.move.cta": "移動",
+  "storage.delete.cta": "刪除",
   "storage.moveHint": "如果資料夾中已有其他檔案，會在其中建立新的資料夾。",
   "storage.progress": "{done} / {total}",
   "storage.wallet.pick": "選擇錢包的存放位置",
@@ -1127,7 +1127,7 @@ const zhTW: Dict = {
   "storage.wallet.deleteTitle": "清除錢包",
   "storage.wallet.deleteWarn":
     "這會清除錢包：所有帳戶都將刪除。若沒有備份它們的金鑰或助記詞，其中的資金將永久遺失，任何人都無法找回。",
-  "storage.wallet.wipeCta": "清除…",
+  "storage.wallet.wipeCta": "清除",
   "storage.wallet.deleteAfter":
     "錢包密碼也會一併刪除。接著應用程式會像首次啟動一樣重新開始：你需要選擇新的錢包密碼，再重新建立或匯入帳戶。",
   "storage.wallet.deleteList":

@@ -532,6 +532,15 @@ button.glass:hover,
   .btn-danger:hover:not(:disabled) {
     background-color: color-mix(in oklab, var(--glass-hover), var(--critical) 14%);
   }
+  /* A destructive action on glass: flat, as btn-flat is, its face a tint
+     of the destructive colour and its name in it */
+  .btn-danger-flat {
+    background-color: color-mix(in oklab, var(--critical) 12%, transparent);
+    color: var(--critical-ink);
+  }
+  .btn-danger-flat:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--critical) 18%, transparent);
+  }
 
   .input {
     width: 100%;

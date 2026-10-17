@@ -1190,8 +1190,8 @@ const ptBR: Dict = {
   "storage.err.inside": "Escolha uma pasta fora da que está sendo movida.",
   "storage.err.notEmpty": "Essa pasta já contém outros arquivos, assim como a pasta que seria criada dentro dela.",
   "storage.err.busy": "Os dados estão sendo movidos ou excluídos. Tente de novo quando terminar.",
-  "storage.move.cta": "Mover…",
-  "storage.delete.cta": "Excluir…",
+  "storage.move.cta": "Mover",
+  "storage.delete.cta": "Excluir",
   "storage.moveHint": "Se a pasta já contiver outros arquivos, uma nova pasta é criada dentro dela.",
   "storage.progress": "{done} de {total}",
   "storage.wallet.pick": "Escolha onde guardar a carteira",
@@ -1214,7 +1214,7 @@ const ptBR: Dict = {
   "storage.wallet.deleteTitle": "Apagar a carteira",
   "storage.wallet.deleteWarn":
     "Isto apaga a carteira: todas as contas vão junto. Sem um backup das chaves ou das frases de recuperação, os fundos se perdem para sempre, e ninguém pode recuperá-los.",
-  "storage.wallet.wipeCta": "Apagar…",
+  "storage.wallet.wipeCta": "Apagar",
   "storage.wallet.deleteAfter":
     "A senha da carteira também é apagada. O app então recomeça como na primeira vez: você vai escolher uma nova senha da carteira e depois criar ou importar suas contas de novo.",
   "storage.wallet.deleteList":
