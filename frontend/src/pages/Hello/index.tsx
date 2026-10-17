@@ -2,8 +2,15 @@ import { useCallback, useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Download, Loader2, Plus, ShieldCheck, Usb } from "lucide-react";
 import { NODE_ICON, NODE_ICON_STROKE } from "../../components/shell/NodeBar";
-import { CONFIG_UPDATED_EVENT } from "../../App";
-import { api, GUIConfig, NodeStatus, SeedCandidate, walletError, type HardwareDevice } from "../../lib/api";
+import {
+  api,
+  CONFIG_UPDATED_EVENT,
+  GUIConfig,
+  NodeStatus,
+  SeedCandidate,
+  walletError,
+  type HardwareDevice,
+} from "../../lib/api";
 import { DeviceStatus, deviceOf, firstScheme, useHardwareDevices } from "../../components/hardware/Device";
 import { formatInt } from "../../lib/format";
 import { syncProgress } from "../../lib/live";

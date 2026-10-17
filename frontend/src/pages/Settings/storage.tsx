@@ -1,10 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { FolderInput as FolderInputIcon, Loader2, Trash2, TriangleAlert } from "lucide-react";
-import { api, onEvent, pickFolder, type StorageProgress } from "../../lib/api";
+import { api, CONFIG_UPDATED_EVENT, onEvent, pickFolder, type StorageProgress } from "../../lib/api";
 import { formatBytes } from "../../lib/format";
 import { useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
-import { CONFIG_UPDATED_EVENT } from "../../App";
 import { Modal, ModalForm } from "../../components/ui/Modal";
 import { CopyButton, Meter, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";

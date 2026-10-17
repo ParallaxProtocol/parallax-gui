@@ -13,10 +13,9 @@ import {
   UserPlus,
   type LucideIcon,
 } from "lucide-react";
-import { api, type AssistantRequest } from "../../lib/api";
+import { api, CONFIG_UPDATED_EVENT, type AssistantRequest } from "../../lib/api";
 import { DEVICE_NAME, HardwareReady, SignOnDevice } from "../hardware/Device";
 import { useT } from "../../i18n";
-import { CONFIG_UPDATED_EVENT } from "../../App";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { useContacts } from "../../lib/contacts";
 import { useAssistant } from "../../lib/assistantContext";

@@ -1,14 +1,4 @@
-import {
-  createContext,
-  Fragment,
-  useContext,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type MutableRefObject,
-  type ReactNode,
-} from "react";
+import { Fragment, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft } from "lucide-react";
 import { FADE_IN, PAGE, SPRING } from "../../../lib/motion";
@@ -16,6 +6,7 @@ import { useT } from "../../../i18n";
 import { Row } from "../../../components/ui/Panel";
 import Toggle from "../../../components/ui/Toggle";
 import { StepMark } from "../../../components/ui/StepMark";
+import { DrillContext, type Progressed } from "./drill";
 
 /**
  * The layout of the pages Settings drills into from a section, as System
@@ -24,17 +15,6 @@ import { StepMark } from "../../../components/ui/StepMark";
  * below, in groups of rows as a Settings section is. Escape goes back a
  * step, as the step's own Back does, rather than closing Settings.
  */
-
-type Progressed = { steps: string[]; current: number; skipped?: number[] };
-
-type Drill = {
-  /** Shows the flow's progress in the drill-in's header (none when null). */
-  setProgress: (p: Progressed | null) => void;
-  /** The Back of the step at hand, for Escape. */
-  back: MutableRefObject<(() => void) | null>;
-};
-
-const DrillContext = createContext<Drill>({ setProgress: () => {}, back: { current: null } });
 
 /** DrillIn is a page within a Settings section: the way back to it, the page's name, and the page. */
 export function DrillIn({

@@ -1,7 +1,8 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { ReactNode, useContext, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "motion/react";
 import { FADE_IN } from "./motion";
+import { SlotContext } from "./toolbarSlot";
 
 /**
  * The toolbar's accessory slot: the page on screen puts its own controls
@@ -10,17 +11,12 @@ import { FADE_IN } from "./motion";
  * toolbar provides the element; a page renders <ToolbarAccessory> anywhere
  * in its tree and the content goes there, for as long as the page shows.
  */
-type Slot = { el: HTMLElement | null; setEl: (el: HTMLElement | null) => void };
-
-const SlotContext = createContext<Slot>({ el: null, setEl: () => {} });
-
 export function ToolbarSlotProvider({ children }: { children: ReactNode }) {
   const [el, setEl] = useState<HTMLElement | null>(null);
   return <SlotContext.Provider value={{ el, setEl }}>{children}</SlotContext.Provider>;
 }
 
-/** useToolbarSlot gives the toolbar the ref callback for its slot element. */
-export const useToolbarSlot = () => useContext(SlotContext).setEl;
+export { useToolbarSlot } from "./toolbarSlot";
 
 /** ToolbarAccessory shows its children in the toolbar, fading in as the page arrives. */
 export function ToolbarAccessory({ children }: { children: ReactNode }) {

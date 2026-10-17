@@ -18,14 +18,13 @@ import {
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
-import { api, GUIConfig, openExternal, UpdateInfo } from "../../lib/api";
+import { api, CONFIG_UPDATED_EVENT, GUIConfig, openExternal, UpdateInfo } from "../../lib/api";
 import { formatUnits, parseUnits } from "../../lib/format";
 import { applyTheme } from "../../lib/theme";
 import { FADE_IN, FADE_OUT, GLIDE, SPRING, usePageSwap } from "../../lib/motion";
-import { CONFIG_UPDATED_EVENT } from "../../App";
 import { useLang, useT, Lang } from "../../i18n";
 import { LANG_NAMES } from "../../i18n/translations";
-import { pageKey, useSettingsSheet, type SettingsSection } from "../../components/shell/SettingsSheet";
+import { pageKey, useSettingsSheet, type SettingsSection } from "../../lib/settingsSheet";
 import { Select } from "../../components/ui/Select";
 import { Tooltip } from "../../components/ui/Tooltip";
 import logo from "../../assets/logo.svg";

@@ -31,6 +31,15 @@ export function openExternal(url: string) {
 }
 
 /**
+ * CONFIG_UPDATED_EVENT is the window event dispatched whenever a new config
+ * is saved, so what follows it (App's animations, theme, notifications and
+ * keeping awake; the open settings) updates at once rather than on a timer.
+ * It lives here, not in App: a module importing App would re-run the whole
+ * app on a hot update during development.
+ */
+export const CONFIG_UPDATED_EVENT = "parallax:config-updated";
+
+/**
  * onEvent subscribes to a backend event (logs, update-progress, node…)
  * and returns the unsubscribe function.
  */

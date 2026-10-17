@@ -1,4 +1,4 @@
-import { createContext, lazy, ReactNode, Suspense, useContext, useEffect, useState } from "react";
+import { lazy, ReactNode, Suspense, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ChevronDown,
@@ -14,6 +14,7 @@ import { api } from "../../lib/api";
 import { formatDuration, formatInt } from "../../lib/format";
 import { nodeState, syncProgress, useNode, useRefresh } from "../../lib/live";
 import { useT } from "../../i18n";
+import { NodeSheetContext, useNodeSheet } from "../../lib/nodeSheet";
 import { Indicator, type Grade } from "../ui/Indicator";
 import { Meter } from "../ui/bits";
 import { Counter } from "../ui/Counter";
@@ -43,17 +44,12 @@ const STATE_GRADE: Record<ReturnType<typeof nodeState>, Grade> = {
   synced: "good",
 };
 
-// Whether the node bar is opened into the node's page, for the shell and
-// for whatever opens it (the /node route)
-type Sheet = { open: boolean; setOpen: (open: boolean) => void };
-const SheetContext = createContext<Sheet>({ open: false, setOpen: () => {} });
-
 export function NodeSheetProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  return <SheetContext.Provider value={{ open, setOpen }}>{children}</SheetContext.Provider>;
+  return <NodeSheetContext.Provider value={{ open, setOpen }}>{children}</NodeSheetContext.Provider>;
 }
 
-export const useNodeSheet = () => useContext(SheetContext);
+export { useNodeSheet };
 
 /** NodeSwitchProvider holds the node's power switch for the whole shell: the bar, the node's page and Send's Connect show one state. */
 export function NodeSwitchProvider({ children }: { children: ReactNode }) {

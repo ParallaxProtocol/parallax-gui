@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { api, onEvent, type MCPStatus } from "../../lib/api";
+import { api, CONFIG_UPDATED_EVENT, onEvent, type MCPStatus } from "../../lib/api";
 import { useT } from "../../i18n";
-import { CONFIG_UPDATED_EVENT } from "../../App";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Indicator } from "../../components/ui/Indicator";
 import { Panel, Row, Rows } from "../../components/ui/Panel";

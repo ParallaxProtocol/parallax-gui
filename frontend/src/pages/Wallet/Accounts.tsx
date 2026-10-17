@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import {
   api,
+  CONFIG_UPDATED_EVENT,
   SeedInfo,
   walletError,
   WalletAccount,
@@ -39,11 +40,10 @@ import { BackupModal, DeriveModal, PasswordModal, RemoveModal, RemoveSeedModal }
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { GroupedAddress, HardwareBadge } from "../../components/ui/AccountParts";
 import { RevealPhraseModal } from "./Phrase";
-import { useSettingsSheet, type SettingsPage } from "../../components/shell/SettingsSheet";
+import { useSettingsSheet, type SettingsPage } from "../../lib/settingsSheet";
 import { AccountPage } from "../Settings/accounts";
 import { RemoveWatchOnlyModal } from "./WatchOnly";
 import { Select } from "../../components/ui/Select";
-import { CONFIG_UPDATED_EVENT } from "../../App";
 
 type Action = "backup" | "remove";
 type SeedAction = "reveal" | "derive" | "remove";

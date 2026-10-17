@@ -1,20 +1,9 @@
-import {
-  createContext,
-  lazy,
-  ReactNode,
-  Suspense,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Minimize2, Settings2 } from "lucide-react";
-import type { HardwareKind } from "../../lib/api";
 import { useT } from "../../i18n";
 import { FADE_IN, FADE_OUT } from "../../lib/motion";
+import { useSettingsSheet } from "../../lib/settingsSheet";
 import { useSidebar } from "../../lib/sidebar";
 import { Tooltip } from "../ui/Tooltip";
 import { NODE_BAR_GAP, NODE_BAR_ROOM } from "./NodeBar";
@@ -23,111 +12,7 @@ import { TOP_BAR_HEIGHT } from "./TopBar";
 const Settings = lazy(() => import("../../pages/Settings"));
 
 /** How Settings grows out of its button, and shrinks back into it. */
-export const SETTINGS_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35 } as const;
-
-export const SETTINGS_SECTIONS = [
-  "general",
-  "appearance",
-  "storage",
-  "accounts",
-  "security",
-  "node",
-  "network",
-  "rpc",
-  "assistants",
-  "permissions",
-  "diagnostics",
-  "about",
-] as const;
-export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
-
-/**
- * The pages a section drills into, in place of the section. Finding a
- * phrase's accounts carries the password that opened it and the accounts
- * first read, for as long as the page shows.
- */
-export type SettingsPage =
-  | { kind: "accounts.add" }
-  | { kind: "accounts.import" }
-  /** Importing, at following a watch-only account (an offline signer's) */
-  | { kind: "accounts.watch" }
-  | { kind: "accounts.find"; seedId: string }
-  /** Finding more of a hardware wallet's accounts ("" for those of no known wallet), on a device of its kind */
-  | { kind: "accounts.findHardware"; device: HardwareKind; wallet: string };
-
-/** pageKey tells pages apart, for their transitions: by what they show, not the secrets they hold. */
-export const pageKey = (p: SettingsPage) =>
-  p.kind === "accounts.find"
-    ? `${p.kind}:${p.seedId}`
-    : p.kind === "accounts.findHardware"
-      ? `${p.kind}:${p.device}:${p.wallet}`
-      : p.kind;
-
-// Whether Settings is open, over the page it was opened from, and the
-// section it shows (General each time it opens, unless it was opened at
-// another), and the page within it drilled into, if any (not kept: a flow
-// left half done starts over)
-type Sheet = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  section: SettingsSection;
-  setSection: (section: SettingsSection) => void;
-  page: SettingsPage | null;
-  setPage: (page: SettingsPage | null) => void;
-  /** openAt opens Settings at a section, or at a page within it. */
-  openAt: (section: SettingsSection, page?: SettingsPage) => void;
-};
-const SheetContext = createContext<Sheet>({
-  open: false,
-  setOpen: () => {},
-  section: "general",
-  setSection: () => {},
-  page: null,
-  setPage: () => {},
-  openAt: () => {},
-});
-
-export function SettingsSheetProvider({ children }: { children: ReactNode }) {
-  const [open, setOpenState] = useState(false);
-  const [section, setSectionState] = useState<SettingsSection>("general");
-  const [page, setPage] = useState<SettingsPage | null>(null);
-  // Whether it is open, read as it opens without a re-render
-  const wasOpen = useRef(false);
-  // Choosing a section leaves the page drilled into
-  const setSection = useCallback((s: SettingsSection) => {
-    setSectionState(s);
-    setPage(null);
-  }, []);
-  // Stable, so a caller's effect that opens Settings (OpenSettings, for
-  // /accounts) runs once, not again on every section chosen after it
-  const openAt = useCallback((s: SettingsSection, p?: SettingsPage) => {
-    setSectionState(s);
-    setPage(p ?? null);
-    wasOpen.current = true;
-    setOpenState(true);
-  }, []);
-  // Opened as it is (its button, its shortcut), it starts at General, not
-  // the section it was left at; closing leaves the section be, so the
-  // panel doesn't change as it goes
-  const setOpen = useCallback((o: boolean) => {
-    if (o && !wasOpen.current) {
-      setSectionState("general");
-      setPage(null);
-    }
-    wasOpen.current = o;
-    setOpenState(o);
-  }, []);
-  useEffect(() => {
-    if (!open) setPage(null);
-  }, [open]);
-  const value = useMemo(
-    () => ({ open, setOpen, section, setSection, page, setPage, openAt }),
-    [open, section, setSection, page, openAt],
-  );
-  return <SheetContext.Provider value={value}>{children}</SheetContext.Provider>;
-}
-
-export const useSettingsSheet = () => useContext(SheetContext);
+const SETTINGS_SPRING = { type: "spring", bounce: 0, visualDuration: 0.35 } as const;
 
 /**
  * SettingsButton is Settings at the sidebar's foot. Its face and its title

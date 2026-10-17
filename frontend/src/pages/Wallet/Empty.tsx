@@ -5,7 +5,7 @@ import { STAGGER, useStagger } from "../../lib/motion";
 import { EASE, Glow } from "../../components/ui/Glow";
 import { LinkRow, LinkRows } from "../../components/ui/LinkRow";
 import { LogoMark } from "../../components/ui/LogoMark";
-import { useSettingsSheet } from "../../components/shell/SettingsSheet";
+import { useSettingsSheet } from "../../lib/settingsSheet";
 import { NODE_BAR_GAP, NODE_BAR_ROOM } from "../../components/shell/NodeBar";
 
 /**

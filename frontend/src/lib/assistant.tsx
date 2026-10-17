@@ -1,6 +1,5 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { api, onEvent, type AssistantRequest, type MCPActivity, type MCPStatus } from "./api";
-import { CONFIG_UPDATED_EVENT } from "../App";
+import { api, CONFIG_UPDATED_EVENT, onEvent, type AssistantRequest, type MCPActivity, type MCPStatus } from "./api";
 import { notify } from "./desktop";
 import { useT } from "../i18n";
 import { requestTitle, wideRequest } from "./assistantRequests";

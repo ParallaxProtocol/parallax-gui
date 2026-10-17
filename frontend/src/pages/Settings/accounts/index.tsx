@@ -1,5 +1,5 @@
 import { ScrollText, Usb } from "lucide-react";
-import type { SettingsPage } from "../../../components/shell/SettingsSheet";
+import type { SettingsPage } from "../../../lib/settingsSheet";
 import { useWallet } from "../../../lib/wallet";
 import { useT } from "../../../i18n";
 import { AddAccounts, ImportAccounts } from "./Add";

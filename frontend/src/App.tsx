@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "rea
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { motion, MotionConfig, MotionGlobalConfig } from "motion/react";
 import { Loader2 } from "lucide-react";
-import { api } from "./lib/api";
+import { api, CONFIG_UPDATED_EVENT } from "./lib/api";
 import { applyTheme } from "./lib/theme";
 import { LiveProvider } from "./lib/LiveProvider";
 import { useWallet } from "./lib/wallet";
@@ -37,12 +37,9 @@ import NodeBar, {
   useNodeSheet,
 } from "./components/shell/NodeBar";
 import TopBar from "./components/shell/TopBar";
-import SettingsSheet, {
-  SettingsSheetProvider,
-  useSettingsSheet,
-  type SettingsPage,
-  type SettingsSection,
-} from "./components/shell/SettingsSheet";
+import SettingsSheet from "./components/shell/SettingsSheet";
+import { useSettingsSheet, type SettingsPage, type SettingsSection } from "./lib/settingsSheet";
+import { SettingsSheetProvider } from "./lib/SettingsSheetProvider";
 import { NotificationsProvider } from "./lib/notifications";
 import AssistantBar from "./components/shell/AssistantBar";
 import { LockGate } from "./components/shell/LockScreen";
@@ -54,11 +51,6 @@ import { OfflineMode, useOfflineMode } from "./lib/offline";
 import { UpdateProvider } from "./lib/update";
 import { useT } from "./i18n";
 import { BrandMark } from "./components/ui/BrandMark";
-
-// Custom event the Settings page dispatches whenever it persists a new
-// config. App listens for it so globally-applied flags (animations, theme,
-// notifications, keeping awake) update instantly without a reload, instead of being polled on a timer.
-export const CONFIG_UPDATED_EVENT = "parallax:config-updated";
 
 export default function App() {
   const [bootChecked, setBootChecked] = useState(false);

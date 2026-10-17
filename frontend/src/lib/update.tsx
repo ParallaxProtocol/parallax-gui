@@ -1,32 +1,9 @@
-import { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { api, onEvent } from "./api";
 import type { UpdateInfo, UpdateProgress } from "./api";
+import { UpdateContext, type UpdateCtx, type UpdateState } from "./updateContext";
 import { useNotifications } from "./notifications";
 import { useT } from "../i18n";
-
-export type UpdateState =
-  | { kind: "hidden" }
-  | { kind: "available"; info: UpdateInfo }
-  | { kind: "downloading"; info: UpdateInfo; percent: number }
-  | { kind: "verifying"; info: UpdateInfo }
-  | { kind: "extracting"; info: UpdateInfo }
-  | { kind: "ready"; info: UpdateInfo }
-  | { kind: "ready-manual"; info: UpdateInfo }
-  | { kind: "error"; info: UpdateInfo; message: string };
-
-type Ctx = {
-  state: UpdateState;
-  update: () => void;
-  dismiss: () => void;
-  retry: () => void;
-};
-
-const UpdateContext = createContext<Ctx>({
-  state: { kind: "hidden" },
-  update: () => {},
-  dismiss: () => {},
-  retry: () => {},
-});
 
 /**
  * UpdateProvider follows the app's own updates: whether a new release is
@@ -95,7 +72,7 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const value = useMemo<Ctx>(
+  const value = useMemo<UpdateCtx>(
     () => ({
       state,
       update: () => {
@@ -118,4 +95,4 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
   return <UpdateContext.Provider value={value}>{children}</UpdateContext.Provider>;
 }
 
-export const useUpdate = () => useContext(UpdateContext);
+export { useUpdate, type UpdateState } from "./updateContext";
