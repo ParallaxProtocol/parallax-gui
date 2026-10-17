@@ -1,10 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Delete, Loader2, Usb } from "lucide-react";
+import { motion } from "motion/react";
+import { Delete, Loader2, OctagonAlert, Usb } from "lucide-react";
 import { api, walletError, type HardwareDevice, type HardwareKind, type SeedScheme } from "../../lib/api";
 import { useT } from "../../i18n";
 import { Notice } from "../ui/bits";
 import { Panel } from "../ui/Panel";
 import { Indicator, type Grade } from "../ui/Indicator";
+import { CardRow } from "../ui/CardRow";
+import { STAGGER } from "../../lib/motion";
 
 /** The devices' own names, the same in every language. */
 export const DEVICE_NAME: Record<HardwareKind, string> = { ledger: "Ledger", trezor: "Trezor" };
@@ -80,24 +83,37 @@ const GRADE: Record<HardwareDevice["state"], Grade> = {
  * and, while it waits on the user, what to do, with the PIN pad or
  * passphrase field a Trezor One asks for here and, on a Linux that won't
  * let the app open it, the way to set up USB access. With none connected
- * it says to connect one (of kind, if given).
+ * it says to connect one (of kind, if given). `flat`, it is a GlowCard's
+ * row (CardRow) instead, for a page whose card says what it has to say.
  */
 export function DeviceStatus({
   device,
   kind,
   error,
+  flat,
 }: {
   device: HardwareDevice | null;
   kind?: HardwareKind;
   /** The backend failing to look for devices at all. */
   error?: string | null;
+  flat?: boolean;
 }) {
   const t = useT();
-  if (error) return <Notice tone="critical">{error}</Notice>;
+  if (error) {
+    return flat ? (
+      <CardRow tone="critical" icon={OctagonAlert} desc={error} />
+    ) : (
+      <Notice tone="critical">{error}</Notice>
+    );
+  }
   const name = DEVICE_NAME[device?.kind ?? kind ?? "ledger"];
   if (!device) {
     return (
-      <StatusPanel grade="off" title={kind ? t("hardware.state.none", { device: name }) : t("hardware.state.noneAny")}>
+      <StatusPanel
+        grade="off"
+        flat={flat}
+        title={kind ? t("hardware.state.none", { device: name }) : t("hardware.state.noneAny")}
+      >
         {t("hardware.state.noneDesc")}
       </StatusPanel>
     );
@@ -105,7 +121,12 @@ export function DeviceStatus({
   const title = t(`hardware.state.${device.state}`, { device: name });
   const desc = t(`hardware.state.${device.state}Desc`, { device: name });
   return (
-    <StatusPanel grade={GRADE[device.state]} title={title} busy={device.state === "confirm" || device.state === "busy"}>
+    <StatusPanel
+      grade={GRADE[device.state]}
+      flat={flat}
+      title={title}
+      busy={device.state === "confirm" || device.state === "busy"}
+    >
       {desc}
       {device.error && device.state !== "access" && <span className="text-critical-ink"> {device.error}</span>}
       {device.state === "pin" && <PinPad device={device} />}
@@ -115,17 +136,48 @@ export function DeviceStatus({
   );
 }
 
+/** The ink a flat status's symbol is drawn in, for its grade. */
+const GRADE_INK: Record<Grade, string> = {
+  good: "text-good-ink",
+  warn: "text-warn-ink",
+  serious: "text-serious-ink",
+  critical: "text-critical-ink",
+  info: "text-info-ink",
+  off: "text-faint",
+};
+
 function StatusPanel({
   grade,
   title,
   busy,
+  flat,
   children,
 }: {
   grade: Grade;
   title: string;
   busy?: boolean;
+  flat?: boolean;
   children: ReactNode;
 }) {
+  if (flat) {
+    // As a CardRow: the symbol tinted for the grade in the dot's place
+    return (
+      <motion.div
+        variants={STAGGER.item}
+        className="flex items-start gap-3.5 border-t border-border px-6 py-4 text-left"
+        role="status"
+      >
+        <Usb className={`size-6 shrink-0 ${GRADE_INK[grade]}`} strokeWidth={1.75} aria-hidden />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="flex items-center gap-2 font-medium">
+            {busy && <Loader2 className="size-3.5 animate-spin text-info-ink" />}
+            {title}
+          </span>
+          <div className="flex flex-col gap-3 text-sm text-muted-foreground">{children}</div>
+        </div>
+      </motion.div>
+    );
+  }
   return (
     <Panel className="flex items-start gap-3.5 p-4">
       <Usb className="mt-0.5 size-5 shrink-0 text-brand" strokeWidth={1.75} aria-hidden />
@@ -311,10 +363,10 @@ export function SignOnDevice({ kind, message }: { kind: HardwareKind; message?: 
  * send needs, read while the page shows it, with nothing said once that
  * device is ready: the button's confirm step then says the rest.
  */
-export function HardwareReady({ kind, active }: { kind: HardwareKind; active: boolean }) {
+export function HardwareReady({ kind, active, flat }: { kind: HardwareKind; active: boolean; flat?: boolean }) {
   const { devices, error } = useHardwareDevices(active);
   const device = deviceOf(devices, kind);
   if (devices === null && !error) return null;
   if (device?.state === "ready" || device?.state === "busy") return null;
-  return <DeviceStatus device={device} kind={kind} error={error} />;
+  return <DeviceStatus device={device} kind={kind} error={error} flat={flat} />;
 }

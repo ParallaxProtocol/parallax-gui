@@ -1,11 +1,10 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import {
   ArrowDownLeft,
   ArrowRight,
   ArrowUpRight,
-  ChevronRight,
   Clock,
   Download,
   Eye,
@@ -14,24 +13,21 @@ import {
   Lock,
   Plus,
   OctagonAlert,
-  Server,
   TriangleAlert,
-  type LucideIcon,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { formatBalanceAmount, formatInt, formatLax, sameAddress, shortHex } from "../../lib/format";
 import { useNow } from "../../lib/useNow";
-import { useNodeSwitch } from "../../lib/nodeSwitch";
 import { STAGGER, useStagger } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { useT } from "../../i18n";
 import { Counter } from "../../components/ui/Counter";
-import { ActivitySpinner } from "../../components/ui/ActivitySpinner";
 import { Pill } from "../../components/ui/Pill";
 import { CopyButton } from "../../components/ui/bits";
+import { CardRow, CardRows } from "../../components/ui/CardRow";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { BackupModal } from "./AccountForms";
-import { useSummary } from "./common";
+import { NodeOffRow, useSummary } from "./common";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { PAGE_WIDE } from "../../lib/layout";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
@@ -80,33 +76,6 @@ function DamagedRow({ damaged }: { damaged: string[] }) {
           }
         >
           {t("common.done")}
-        </button>
-      }
-    />
-  );
-}
-
-/**
- * NodeOffRow is the account card's row while the node is off: what
- * connecting brings, and Connect at its end, the node bar's switch, so the
- * bar and History show it connecting too. Once a start has failed, the
- * row says so, with what the node said under it, and Connect is Try again.
- */
-function NodeOffRow() {
-  const t = useT();
-  const { busy, err, toggle, waiting } = useNodeSwitch();
-  const failed = !!err && !busy && !waiting;
-  return (
-    <CardRow
-      tone={failed ? "critical" : "info"}
-      icon={failed ? OctagonAlert : Server}
-      title={failed ? t("wallet.nodeOff.failedTitle") : t("wallet.nodeOff.title")}
-      desc={failed ? t("wallet.nodeOff.failedDesc") : t("wallet.nodeOff")}
-      detail={failed ? err : null}
-      action={
-        <button type="button" className="btn btn-tinted shrink-0" onClick={toggle} disabled={busy || !!waiting}>
-          {(busy || waiting) && <ActivitySpinner size={14} />}
-          {waiting ?? (busy ? t("node.starting") : failed ? t("wallet.nodeOff.retry") : t("node.start"))}
         </button>
       }
     />
@@ -195,41 +164,39 @@ function Overview() {
           </motion.div>
 
           {/* What needs attention, the wallet first, then the node and the balance read from it, then the account: rows across the card's foot, under a hairline each */}
-          {(damaged.length > 0 || !running || err || !account.backedUp) && (
-            <div className="-mx-6 -mb-6 flex flex-col">
-              {damaged.length > 0 && <DamagedRow damaged={damaged} />}
-              {!running && <NodeOffRow />}
-              {err && (
+          <CardRows>
+            {damaged.length > 0 && <DamagedRow damaged={damaged} />}
+            {!running && <NodeOffRow />}
+            {err && (
+              <CardRow
+                tone="critical"
+                icon={OctagonAlert}
+                title={t("wallet.balanceErr.title")}
+                desc={t("wallet.balanceErr.desc")}
+                detail={err}
+              />
+            )}
+            {!account.backedUp &&
+              (account.fromSeed ? (
                 <CardRow
-                  tone="critical"
-                  icon={OctagonAlert}
-                  title={t("wallet.balanceErr.title")}
-                  desc={t("wallet.balanceErr.desc")}
-                  detail={err}
+                  tone="warn"
+                  icon={TriangleAlert}
+                  title={t("wallet.phrase.missingTitle")}
+                  desc={t("wallet.phrase.missingDesc")}
+                  label={`${t("wallet.phrase.missingTitle")}. ${t("wallet.phrase.showConfirm")}`}
+                  onClick={() => setReveal(true)}
                 />
-              )}
-              {!account.backedUp &&
-                (account.fromSeed ? (
-                  <CardRow
-                    tone="warn"
-                    icon={TriangleAlert}
-                    title={t("wallet.phrase.missingTitle")}
-                    desc={t("wallet.phrase.missingDesc")}
-                    label={`${t("wallet.phrase.missingTitle")}. ${t("wallet.phrase.showConfirm")}`}
-                    onClick={() => setReveal(true)}
-                  />
-                ) : (
-                  <CardRow
-                    tone="warn"
-                    icon={TriangleAlert}
-                    title={t("wallet.backup.missingTitle")}
-                    desc={t("wallet.backup.missingDesc")}
-                    label={`${t("wallet.backup.missingTitle")}. ${t("wallet.backup.cta")}`}
-                    onClick={() => setBackup(true)}
-                  />
-                ))}
-            </div>
-          )}
+              ) : (
+                <CardRow
+                  tone="warn"
+                  icon={TriangleAlert}
+                  title={t("wallet.backup.missingTitle")}
+                  desc={t("wallet.backup.missingDesc")}
+                  label={`${t("wallet.backup.missingTitle")}. ${t("wallet.backup.cta")}`}
+                  onClick={() => setBackup(true)}
+                />
+              ))}
+          </CardRows>
         </div>
       </GlowCard>
 
@@ -241,64 +208,5 @@ function Overview() {
       <RevealPhraseModal open={reveal} onClose={() => setReveal(false)} seedId={account.seedId || null} />
       <BackupModal open={backup} onClose={() => setBackup(false)} account={account} label={label} />
     </div>
-  );
-}
-
-/** The ink each tone's symbol is drawn in, as a Notice's. */
-const INK = { info: "text-info-ink", warn: "text-warn-ink", critical: "text-critical-ink" } as const;
-
-/**
- * CardRow is a row across the account card's foot, as the "Finish setting
- * up" row atop a Mac's System Settings: its symbol in the tone's colour,
- * the title over a muted line (or the line alone), and at its end a
- * chevron, the whole row the button (`onClick`), or `action`, a flat
- * capsule for what is done in place, or nothing. Flat, under a hairline
- * across the card, as it sits on the card's glass.
- */
-function CardRow({
-  tone,
-  icon: Icon,
-  title,
-  desc,
-  detail,
-  ...end
-}: {
-  tone: "info" | "warn" | "critical";
-  icon: LucideIcon;
-  title?: string;
-  desc: string;
-  /** What went wrong, as it was said: small, under the line, to copy into a report. */
-  detail?: string | null;
-} & ({ action?: ReactNode } | { label: string; onClick: () => void })) {
-  const body = (
-    <>
-      <Icon className={`size-6 shrink-0 ${INK[tone]}`} strokeWidth={1.75} aria-hidden />
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        {title && <span className="font-medium">{title}</span>}
-        <span className={title ? "text-sm text-muted-foreground" : ""}>{desc}</span>
-        {detail && <span className="selectable mt-0.5 font-mono text-xs break-words text-faint">{detail}</span>}
-      </span>
-    </>
-  );
-  const row = "flex items-center gap-3.5 border-t border-border px-6 py-4 text-left";
-  if (!("onClick" in end)) {
-    return (
-      <motion.div variants={STAGGER.item} className={row} role={tone === "critical" ? "alert" : "status"}>
-        {body}
-        {end.action}
-      </motion.div>
-    );
-  }
-  return (
-    <motion.button
-      type="button"
-      variants={STAGGER.item}
-      onClick={end.onClick}
-      aria-label={end.label}
-      className={`${row} transition-colors hover:bg-hover focus-visible:-outline-offset-2`}
-    >
-      {body}
-      <ChevronRight className="size-4 shrink-0 text-faint" strokeWidth={2.5} />
-    </motion.button>
   );
 }

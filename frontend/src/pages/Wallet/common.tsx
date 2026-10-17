@@ -1,9 +1,12 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, OctagonAlert, Server } from "lucide-react";
 import { api, AddressView } from "../../lib/api";
 import { useHiddenFromCapture } from "../../lib/desktop";
 import { useNode } from "../../lib/live";
+import { useNodeSwitch } from "../../lib/nodeSwitch";
+import { CardRow } from "../../components/ui/CardRow";
+import { ActivitySpinner } from "../../components/ui/ActivitySpinner";
 import { useT } from "../../i18n";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { GroupedAddress } from "../../components/ui/AccountParts";
@@ -354,5 +357,32 @@ export function WalletPasswordPrompt({
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * NodeOffRow is a card's row while the node is off: what connecting
+ * brings (`desc`, or what it brings the wallet), and Connect at its end, the node bar's switch, so the
+ * bar and History show it connecting too. Once a start has failed, the
+ * row says so, with what the node said under it, and Connect is Try again.
+ */
+export function NodeOffRow({ desc }: { desc?: string }) {
+  const t = useT();
+  const { busy, err, toggle, waiting } = useNodeSwitch();
+  const failed = !!err && !busy && !waiting;
+  return (
+    <CardRow
+      tone={failed ? "critical" : "info"}
+      icon={failed ? OctagonAlert : Server}
+      title={failed ? t("wallet.nodeOff.failedTitle") : t("wallet.nodeOff.title")}
+      desc={failed ? t("wallet.nodeOff.failedDesc") : (desc ?? t("wallet.nodeOff"))}
+      detail={failed ? err : null}
+      action={
+        <button type="button" className="btn btn-tinted shrink-0" onClick={toggle} disabled={busy || !!waiting}>
+          {(busy || waiting) && <ActivitySpinner size={14} />}
+          {waiting ?? (busy ? t("node.starting") : failed ? t("wallet.nodeOff.retry") : t("node.start"))}
+        </button>
+      }
+    />
   );
 }

@@ -8,10 +8,16 @@ import {
   ArrowRight,
   BookUser,
   Check,
+  Info,
   Loader2,
+  OctagonAlert,
   QrCode,
+  Radar,
+  RefreshCw,
   ScanLine,
   Send as SendIcon,
+  TriangleAlert,
+  Usb,
   X,
 } from "lucide-react";
 import {
@@ -23,7 +29,7 @@ import {
   type AddressView,
   type HardwareKind,
 } from "../../lib/api";
-import { DEVICE_NAME, HardwareReady, SignOnDevice } from "../../components/hardware/Device";
+import { DEVICE_NAME, HardwareReady } from "../../components/hardware/Device";
 import {
   formatGwei,
   formatInt,
@@ -50,7 +56,6 @@ import { DocCard } from "../../components/offline/parts";
 import { docFileName } from "../../lib/offline";
 import { BroadcastFlow } from "../Offline/Broadcast";
 import { syncProgress, useNode } from "../../lib/live";
-import { useNodeSwitch } from "../../lib/nodeSwitch";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { ToolbarAccessory } from "../../lib/toolbar";
 import { useAgo, useT } from "../../i18n";
@@ -58,7 +63,8 @@ import { Panel, Property, Rows } from "../../components/ui/Panel";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { Segmented } from "../../components/ui/Segmented";
 import { Pill } from "../../components/ui/Pill";
-import { Address, DrawnCheck, Field, useSummary } from "./common";
+import { CardRow, CardRows } from "../../components/ui/CardRow";
+import { Address, DrawnCheck, Field, NodeOffRow, useSummary } from "./common";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { Steps } from "./flow";
 import { AccountSelect } from "./AccountSelect";
@@ -325,75 +331,49 @@ function FeeSwitch({
   );
 }
 
-type NotReady = { kind: "stopped" | "noPeers" | "syncing"; hint: string };
+type NotReady = { kind: "stopped" | "noPeers" | "syncing" };
 
 /** The node's readiness to send: why not, or null when it can. */
 function useNotReady(): NotReady | null {
-  const t = useT();
   const node = useNode();
-  if (!node?.running) return { kind: "stopped", hint: t("wallet.send.connectHint") };
+  if (!node?.running) return { kind: "stopped" };
   // The development chain has no peers: it seals what it is sent itself
-  if (node.peers === 0 && !node.devChain) return { kind: "noPeers", hint: t("wallet.err.noPeers") };
-  if (node.syncing) return { kind: "syncing", hint: t("wallet.err.syncing") };
+  if (node.peers === 0 && !node.devChain) return { kind: "noPeers" };
+  if (node.syncing) return { kind: "syncing" };
   return null;
 }
 
 /**
  * SendButton is the form's one button: Review once the node can send.
- * Before, it says why not where the eye already is: Connect while the node
- * is off, a click away, or what the node is waiting on, with the reason
- * under it. What's typed stays meanwhile.
+ * Before, it says what the node is waiting on; the amount card says why,
+ * and while the node is off holds the way to connect. What's typed stays
+ * meanwhile.
  */
 function SendButton({ notReady, ready, busy }: { notReady: NotReady | null; ready: boolean; busy: boolean }) {
   const t = useT();
   const node = useNode();
-  const { busy: connecting, err, toggle: connect, waiting } = useNodeSwitch();
   const progress = syncProgress(node);
 
-  let button: ReactNode;
-  if (notReady?.kind === "stopped") {
-    button = (
-      <button
-        type="button"
-        className="btn btn-primary btn-lg min-w-64"
-        onClick={connect}
-        disabled={connecting || !!waiting}
-      >
-        {(connecting || waiting) && <Loader2 className="size-4 animate-spin" />}
-        {waiting ?? (connecting ? t("node.starting") : t("node.start"))}
-      </button>
+  if (notReady && notReady.kind !== "stopped") {
+    return (
+      <div className="flex justify-center">
+        <button type="button" className="btn btn-primary btn-lg min-w-64" disabled>
+          <Loader2 className="size-4 animate-spin" />
+          {notReady.kind === "syncing" ? t("wallet.send.syncing") : t("wallet.send.findingPeers")}
+          {notReady.kind === "syncing" && progress > 0 && (
+            <span className="tabular-nums">{formatPercent(progress)}</span>
+          )}
+        </button>
+      </div>
     );
-  } else if (notReady) {
-    button = (
-      <button type="button" className="btn btn-primary btn-lg min-w-64" disabled>
-        <Loader2 className="size-4 animate-spin" />
-        {notReady.kind === "syncing" ? t("wallet.send.syncing") : t("wallet.send.findingPeers")}
-        {notReady.kind === "syncing" && progress > 0 && <span className="tabular-nums">{formatPercent(progress)}</span>}
-      </button>
-    );
-  } else {
-    button = (
-      <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!ready || busy}>
+  }
+  return (
+    <div className="flex justify-center">
+      <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!!notReady || !ready || busy}>
         {busy && <Loader2 className="size-4 animate-spin" />}
         {t("wallet.send.review")}
         {!busy && <ArrowRight className="size-4" />}
       </button>
-    );
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-2.5">
-      {notReady?.kind === "stopped" && err && (
-        <Notice tone="critical" className="w-full">
-          {err}
-        </Notice>
-      )}
-      {button}
-      {notReady && (
-        <p className="max-w-md text-center text-sm text-muted-foreground" role="status">
-          {notReady.hint}
-        </p>
-      )}
     </div>
   );
 }
@@ -509,6 +489,22 @@ function SendForm({
             )}
           </motion.div>
         </div>
+        {/* Why it can't go yet, and what went wrong reviewing it */}
+        <CardRows className="mt-2">
+          {notReady?.kind === "stopped" && <NodeOffRow desc={t("wallet.send.connectHint")} />}
+          {notReady?.kind === "syncing" && (
+            <CardRow
+              tone="info"
+              icon={RefreshCw}
+              title={t("wallet.send.syncingTitle")}
+              desc={t("wallet.err.syncing")}
+            />
+          )}
+          {notReady?.kind === "noPeers" && (
+            <CardRow tone="info" icon={Radar} title={t("wallet.send.noPeersTitle")} desc={t("wallet.err.noPeers")} />
+          )}
+          {error && <CardRow tone="critical" icon={OctagonAlert} title={t("wallet.send.quoteFailed")} desc={error} />}
+        </CardRows>
       </GlowCard>
 
       {/* Where it comes from and goes to, and what the network takes */}
@@ -537,7 +533,6 @@ function SendForm({
         </div>
       </Panel>
 
-      {error && <Notice tone="critical">{error}</Notice>}
       <SendButton notReady={notReady} ready={ready} busy={busy !== null} />
     </form>
   );
@@ -667,6 +662,54 @@ function Review({
             )}
           </div>
         </div>
+        {/* What to know before it goes, and what went wrong sending it */}
+        <CardRows className="mt-4">
+          {!quote.sufficient && (
+            <CardRow
+              tone="critical"
+              icon={OctagonAlert}
+              title={t("wallet.review.insufficientTitle")}
+              desc={t("wallet.err.insufficient")}
+            />
+          )}
+          {dear && (
+            <CardRow
+              tone="warn"
+              icon={TriangleAlert}
+              title={t("wallet.review.dearTitle")}
+              desc={t("wallet.review.dear", { price: formatGwei(quote.suggestedPriceWei) })}
+            />
+          )}
+          {quote.toContract && (
+            <CardRow
+              tone="warn"
+              icon={TriangleAlert}
+              title={t("wallet.review.toContractTitle")}
+              desc={t("wallet.review.toContract")}
+            />
+          )}
+          {quote.toSelf && (
+            <CardRow tone="info" icon={Info} title={t("wallet.review.toSelfTitle")} desc={t("wallet.review.toSelf")} />
+          )}
+          {/* The device it signs on: how it stands until it's ready, then what to check on it */}
+          {hardware && !busy && <HardwareReady kind={hardware} active flat />}
+          {hardware && busy && (
+            <CardRow
+              tone="info"
+              icon={Usb}
+              title={t("hardware.confirm.title", { device: DEVICE_NAME[hardware] })}
+              desc={t("hardware.confirm.tx", { device: DEVICE_NAME[hardware] })}
+            />
+          )}
+          {error && (
+            <CardRow
+              tone="critical"
+              icon={OctagonAlert}
+              title={watchOnly ? t("wallet.review.requestFailed") : t("wallet.review.sendFailed")}
+              desc={error}
+            />
+          )}
+        </CardRows>
       </GlowCard>
 
       <Rows as="dl">
@@ -686,11 +729,6 @@ function Review({
           <span className="font-semibold text-foreground">{formatUnits(quote.totalWei, LAX_DECIMALS)} LAX</span>
         </Property>
       </Rows>
-
-      {!quote.sufficient && <Notice tone="critical">{t("wallet.err.insufficient")}</Notice>}
-      {quote.toSelf && <Notice tone="info">{t("wallet.review.toSelf")}</Notice>}
-      {quote.toContract && <Notice tone="warn">{t("wallet.review.toContract")}</Notice>}
-      {dear && <Notice tone="warn">{t("wallet.review.dear", { price: formatGwei(quote.suggestedPriceWei) })}</Notice>}
 
       <form
         className="flex flex-col gap-5"
@@ -718,9 +756,6 @@ function Review({
             </Field>
           </Panel>
         )}
-        {/* A device to confirm on: how it stands until it's ready, then what to check on it */}
-        {hardware && (busy ? <SignOnDevice kind={hardware} /> : <HardwareReady kind={hardware} active={!busy} />)}
-        {error && <Notice tone="critical">{error}</Notice>}
         <div className="flex justify-center gap-3">
           <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={onBack} disabled={busy}>
             <ArrowLeft className="size-4" />
