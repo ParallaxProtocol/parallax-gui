@@ -531,6 +531,8 @@ const zhTW: Dict = {
   "hardware.import.busy": "新增中…",
   "hardware.remove.title": "移除硬體錢包帳戶",
   "hardware.remove.desc": "此錢包將不再追蹤這個帳戶。其金鑰仍保留在你的 {device} 上，你隨時都能再次新增。",
+  "hardware.verify.title": "在你的 {device} 上核對",
+  "hardware.verify.failed": "無法在你的 {device} 上顯示",
   "hardware.verify.cta": "在 {device} 上驗證",
   "hardware.verify.desc": "分享此地址前，請確認你的 {device} 顯示的地址與這裡相符。",
   "hardware.verify.busy": "請在你的 {device} 上比對…",
@@ -990,7 +992,6 @@ const zhTW: Dict = {
   "wallet.receive.title": "你的地址",
   "wallet.receive.desc": "分享此地址即可接收 LAX。同一個地址可以重複使用。",
   "wallet.receive.qr": "地址的 QR 碼",
-  "wallet.receive.network": "請只透過 Parallax 網路（鏈 2110）將 LAX 傳送到此地址。",
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "加上密碼短語（進階）",

@@ -557,6 +557,8 @@ const ru: Dict = {
   "hardware.remove.title": "Удаление аккаунта аппаратного кошелька",
   "hardware.remove.desc":
     "Кошелёк перестанет его отслеживать. Ключ останется на вашем {device}, и вы сможете снова добавить аккаунт в любое время.",
+  "hardware.verify.title": "Проверьте на {device}",
+  "hardware.verify.failed": "Не удалось показать на {device}",
   "hardware.verify.cta": "Проверить на {device}",
   "hardware.verify.desc": "Прежде чем делиться адресом, убедитесь, что адрес на {device} совпадает с этим.",
   "hardware.verify.busy": "Сверьте адрес на {device}…",
@@ -1064,7 +1066,6 @@ const ru: Dict = {
   "wallet.receive.title": "Ваш адрес",
   "wallet.receive.desc": "Поделитесь этим адресом, чтобы получить LAX. Его можно использовать сколько угодно раз.",
   "wallet.receive.qr": "QR-код адреса",
-  "wallet.receive.network": "Отправляйте на этот адрес только LAX в сети Parallax (chain 2110).",
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Добавить парольную фразу (для опытных)",

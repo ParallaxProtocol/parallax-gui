@@ -570,6 +570,8 @@ export const en: Dict = {
   "hardware.remove.title": "Remove hardware wallet account",
   "hardware.remove.desc":
     "This wallet stops following it. Its key stays on your {device}, and you can add it again any time.",
+  "hardware.verify.title": "Check it on your {device}",
+  "hardware.verify.failed": "Couldn't show it on your {device}",
   "hardware.verify.cta": "Verify on {device}",
   "hardware.verify.desc": "Check that the address your {device} shows matches this one before you share it.",
   "hardware.verify.busy": "Compare it on your {device}…",
@@ -1064,7 +1066,6 @@ export const en: Dict = {
   "wallet.receive.title": "Your address",
   "wallet.receive.desc": "Share this address to receive LAX. You can use it as many times as you like.",
   "wallet.receive.qr": "QR code of the address",
-  "wallet.receive.network": "Only send LAX on the Parallax network (chain 2110) to this address.",
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Add a passphrase (advanced)",

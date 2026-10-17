@@ -530,6 +530,8 @@ const zhSG: Dict = {
   "hardware.import.busy": "正在添加…",
   "hardware.remove.title": "移除硬件钱包账户",
   "hardware.remove.desc": "此钱包将不再跟踪该账户。其密钥仍保存在您的 {device} 上，您可以随时重新添加。",
+  "hardware.verify.title": "在您的 {device} 上核对",
+  "hardware.verify.failed": "无法在您的 {device} 上显示",
   "hardware.verify.cta": "在 {device} 上验证",
   "hardware.verify.desc": "分享前，请核对 {device} 上显示的地址与此处一致。",
   "hardware.verify.busy": "请在 {device} 上核对…",
@@ -989,7 +991,6 @@ const zhSG: Dict = {
   "wallet.receive.title": "您的地址",
   "wallet.receive.desc": "分享此地址即可接收 LAX。该地址可以重复使用。",
   "wallet.receive.qr": "地址二维码",
-  "wallet.receive.network": "请仅向此地址发送 Parallax 网络（链 2110）上的 LAX。",
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "添加密码短语（高级）",

@@ -559,6 +559,8 @@ const ptBR: Dict = {
   "hardware.remove.title": "Remover conta da carteira de hardware",
   "hardware.remove.desc":
     "Esta carteira deixa de acompanhá-la. A chave continua no seu {device}, e você pode adicioná-la de novo quando quiser.",
+  "hardware.verify.title": "Confira no seu {device}",
+  "hardware.verify.failed": "Não foi possível mostrar no seu {device}",
   "hardware.verify.cta": "Verificar no {device}",
   "hardware.verify.desc": "Confira se o endereço que seu {device} mostra é o mesmo que este antes de compartilhá-lo.",
   "hardware.verify.busy": "Compare no seu {device}…",
@@ -1067,7 +1069,6 @@ const ptBR: Dict = {
   "wallet.receive.title": "Seu endereço",
   "wallet.receive.desc": "Compartilhe este endereço para receber LAX. Você pode usá-lo quantas vezes quiser.",
   "wallet.receive.qr": "QR code do endereço",
-  "wallet.receive.network": "Envie para este endereço apenas LAX na rede Parallax (chain 2110).",
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Adicionar uma passphrase (avançado)",

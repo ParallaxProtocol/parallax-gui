@@ -568,6 +568,8 @@ const de: Dict = {
   "hardware.remove.title": "Hardware-Wallet-Konto entfernen",
   "hardware.remove.desc":
     "Diese Wallet verfolgt es nicht mehr. Sein Schlüssel bleibt auf Ihrem {device}, und Sie können es jederzeit wieder hinzufügen.",
+  "hardware.verify.title": "Auf Ihrem {device} prüfen",
+  "hardware.verify.failed": "Konnte nicht auf Ihrem {device} angezeigt werden",
   "hardware.verify.cta": "Auf {device} prüfen",
   "hardware.verify.desc":
     "Prüfen Sie, ob die Adresse auf Ihrem {device} mit dieser übereinstimmt, bevor Sie sie weitergeben.",
@@ -1089,7 +1091,6 @@ const de: Dict = {
   "wallet.receive.title": "Ihre Adresse",
   "wallet.receive.desc": "Teilen Sie diese Adresse, um LAX zu empfangen. Sie können sie beliebig oft verwenden.",
   "wallet.receive.qr": "QR-Code der Adresse",
-  "wallet.receive.network": "Senden Sie an diese Adresse nur LAX im Parallax-Netzwerk (Chain 2110).",
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Passphrase hinzufügen (erweitert)",

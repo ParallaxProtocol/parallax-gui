@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, OctagonAlert, ShieldCheck, Usb } from "lucide-react";
 import { api, walletError, type WalletAccount } from "../../lib/api";
 import { DEVICE_NAME } from "../../components/hardware/Device";
 import { accountLabel, useWallet } from "../../lib/wallet";
@@ -13,6 +13,7 @@ import { PAGE_WIDE } from "../../lib/layout";
 import { STAGGER, useStagger } from "../../lib/motion";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { QRCode } from "../../components/ui/QRCode";
+import { CardRow, CardRows } from "../../components/ui/CardRow";
 
 /**
  * ReceivePage shows where to send LAX to the selected account: its address
@@ -66,9 +67,11 @@ export default function ReceivePage() {
             {t("wallet.receive.desc")}
           </motion.p>
         </div>
+        {/* Checking it on the device it belongs to */}
+        <CardRows className="mt-2">
+          {account.hardware && <VerifyOnDevice key={account.address} account={account} />}
+        </CardRows>
       </GlowCard>
-      {account.hardware && <VerifyOnDevice key={account.address} account={account} />}
-      <Notice tone="info">{t("wallet.receive.network")}</Notice>
     </div>
   );
 }
@@ -76,7 +79,8 @@ export default function ReceivePage() {
 /**
  * VerifyOnDevice shows a hardware wallet account's address on its device,
  * for the user to compare with the one on the page: what the computer
- * shows could have been tampered with, what the device shows can't.
+ * shows could have been tampered with, what the device shows can't. Rows
+ * of the address card: the check, and what went wrong showing it.
  */
 function VerifyOnDevice({ account }: { account: WalletAccount }) {
   const t = useT();
@@ -100,22 +104,27 @@ function VerifyOnDevice({ account }: { account: WalletAccount }) {
   };
   return (
     <>
-      <Notice
-        tone="info"
+      <CardRow
+        tone={done ? "good" : "info"}
+        icon={done ? ShieldCheck : Usb}
+        title={t("hardware.verify.title", { device })}
+        desc={
+          busy
+            ? t("hardware.verify.busy", { device })
+            : done
+              ? t("hardware.verify.done", { device })
+              : t("hardware.verify.desc", { device })
+        }
         action={
-          <button type="button" className="btn btn-tinted" disabled={busy} onClick={verify}>
+          <button type="button" className="btn btn-tinted shrink-0" disabled={busy} onClick={verify}>
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : <ShieldCheck className="size-3.5" />}
             {t("hardware.verify.cta", { device })}
           </button>
         }
-      >
-        {busy
-          ? t("hardware.verify.busy", { device })
-          : done
-            ? t("hardware.verify.done", { device })
-            : t("hardware.verify.desc", { device })}
-      </Notice>
-      {error && <Notice tone="critical">{error}</Notice>}
+      />
+      {error && (
+        <CardRow tone="critical" icon={OctagonAlert} title={t("hardware.verify.failed", { device })} desc={error} />
+      )}
     </>
   );
 }

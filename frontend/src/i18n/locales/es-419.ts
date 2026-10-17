@@ -557,6 +557,8 @@ const es: Dict = {
   "hardware.remove.title": "Quitar cuenta de billetera de hardware",
   "hardware.remove.desc":
     "Esta billetera deja de seguirla. Su clave permanece en tu {device} y puedes volver a agregarla cuando quieras.",
+  "hardware.verify.title": "Revísala en tu {device}",
+  "hardware.verify.failed": "No se pudo mostrar en tu {device}",
   "hardware.verify.cta": "Verificar en {device}",
   "hardware.verify.desc": "Comprueba que la dirección que muestra tu {device} coincida con esta antes de compartirla.",
   "hardware.verify.busy": "Compárala en tu {device}…",
@@ -1065,7 +1067,6 @@ const es: Dict = {
   "wallet.receive.title": "Tu dirección",
   "wallet.receive.desc": "Comparte esta dirección para recibir LAX. Puedes usarla todas las veces que quieras.",
   "wallet.receive.qr": "Código QR de la dirección",
-  "wallet.receive.network": "Envía a esta dirección solo LAX de la red Parallax (cadena 2110).",
 
   // Wallet: passphrase
   "wallet.passphrase.toggle": "Agregar una frase de contraseña (avanzado)",

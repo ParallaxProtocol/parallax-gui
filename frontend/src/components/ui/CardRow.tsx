@@ -4,7 +4,12 @@ import { ChevronRight, type LucideIcon } from "lucide-react";
 import { STAGGER } from "../../lib/motion";
 
 /** The ink each tone's symbol is drawn in, as a Notice's. */
-const INK = { info: "text-info-ink", warn: "text-warn-ink", critical: "text-critical-ink" } as const;
+const INK = {
+  good: "text-good-ink",
+  info: "text-info-ink",
+  warn: "text-warn-ink",
+  critical: "text-critical-ink",
+} as const;
 
 /**
  * CardRows holds a GlowCard's CardRows, across the card's foot: out to its
