@@ -483,6 +483,16 @@ button.glass:hover,
     background-color: var(--hover);
   }
 
+  /* A push button on glass (a GlowCard): flat, as glass doesn't sit on
+     glass. Its face is a tint of what is behind it, with no frost of its own */
+  .btn-flat {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+  .btn-flat:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--muted), var(--foreground) 8%);
+  }
+
   /* A row's button, as in a settings list: a flat, quietly tinted capsule */
   .btn-tinted {
     border-radius: 9999px;

@@ -52,19 +52,26 @@ export default function SignerHome() {
           ) : (
             <motion.ul {...stagger} className="flex flex-col divide-y divide-border">
               {accounts.map((a) => (
-                <motion.li variants={STAGGER.item} key={a.address} className="flex items-center gap-3.5 px-4 py-3">
-                  <AddressAvatar address={a.address} size={36} />
-                  <div className="min-w-0 flex-1">
+                <motion.li variants={STAGGER.rise} key={a.address} className="flex items-center gap-3.5 px-4 py-3">
+                  <motion.span variants={STAGGER.fade} className="flex">
+                    <AddressAvatar address={a.address} size={36} />
+                  </motion.span>
+                  <motion.div variants={STAGGER.fade} className="min-w-0 flex-1">
                     <div className="truncate font-medium">{accountLabel(a, info.accounts, t)}</div>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <span className="font-mono">{shortHex(a.address, 12, 10)}</span>
                       <CopyButton value={a.address} className="-my-1" />
                     </div>
-                  </div>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShown(a)}>
+                  </motion.div>
+                  <motion.button
+                    variants={STAGGER.fade}
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setShown(a)}
+                  >
                     <QrCode className="size-3.5" />
                     {t("offline.home.showAddress")}
-                  </button>
+                  </motion.button>
                 </motion.li>
               ))}
             </motion.ul>

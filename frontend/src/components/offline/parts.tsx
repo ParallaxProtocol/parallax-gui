@@ -90,13 +90,13 @@ export function DocBody({
       <div className="flex flex-wrap justify-center gap-2">
         <button
           type="button"
-          className="btn btn-secondary"
+          className="btn btn-flat"
           onClick={async () => setSaved(await saveSigningDoc(fileName, doc).catch(() => false))}
         >
           {saved ? <Check className="size-4" /> : <Download className="size-4" />}
           {saved ? t("offline.saved") : t("offline.saveFile")}
         </button>
-        <CopyButton value={doc} label />
+        <CopyButton value={doc} label flat />
       </div>
     </div>
   );

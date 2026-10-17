@@ -149,11 +149,7 @@ export default function ContactsPage() {
                 <Plus className="size-4" />
                 {t("contacts.add.title")}
               </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-lg min-w-40"
-                onClick={() => fileInput.current?.click()}
-              >
+              <button type="button" className="btn btn-flat btn-lg min-w-40" onClick={() => fileInput.current?.click()}>
                 <Download className="size-4" />
                 {t("contacts.import")}
               </button>
@@ -257,12 +253,13 @@ function FavoriteTile({ contact: c, onSend }: { contact: Contact; onSend: () => 
   return (
     <motion.li
       layout
-      variants={STAGGER.item}
+      variants={STAGGER.rise}
       exit={{ opacity: 0, scale: 0.92, transition: FADE_OUT }}
       className="min-w-0"
     >
       <Tooltip content={t("contacts.sendTo", { name: c.name })}>
         <motion.button
+          variants={STAGGER.fade}
           type="button"
           onClick={onSend}
           whileHover={{ y: -2 }}

@@ -210,7 +210,7 @@ function Overview() {
               <ArrowUpRight className="size-4" />
               {t("wallet.send")}
             </Link>
-            <Link to="/receive" className="btn btn-secondary btn-lg min-w-40">
+            <Link to="/receive" className="btn btn-flat btn-lg min-w-40">
               <ArrowDownLeft className="size-4" />
               {t("wallet.receive")}
             </Link>

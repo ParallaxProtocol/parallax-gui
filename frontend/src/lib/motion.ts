@@ -37,10 +37,20 @@ export function usePageSwap() {
   return { initial: mounted.current ? PAGE.initial : false, animate: PAGE.animate };
 }
 
-/** Items of a list shown for the first time arrive one after another. */
+/**
+ * Items of a list shown for the first time arrive one after another.
+ *
+ * `rise` and `fade` are `item` split in two, for an item holding glass (a
+ * `.btn-secondary`): while an element fades, a backdrop-filter inside it
+ * blurs only what is inside it too, so the glass shows its bare tint and
+ * takes on what is behind it with a jump on the last frame. The item
+ * rises (a transform doesn't bound the blur) and the glass fades itself.
+ */
 export const STAGGER = {
   container: { hidden: {}, visible: { transition: { staggerChildren: 0.035 } } },
   item: { hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0, transition: SPRING } },
+  rise: { hidden: { y: 6 }, visible: { y: 0, transition: SPRING } },
+  fade: { hidden: { opacity: 0 }, visible: { opacity: 1, transition: SPRING } },
 };
 
 /**
@@ -76,4 +86,18 @@ export const POPUP_ROW = { hidden: { opacity: 0, y: -4 }, visible: { opacity: 1,
 export function useStagger() {
   const off = useAnimationsOff();
   return { variants: STAGGER.container, initial: off ? false : "hidden", animate: "visible" } as const;
+}
+
+/**
+ * useStepSwap is PAGE for a flow's step (Send, a message's signing), keyed
+ * by `step` under AnimatePresence: the step the page opens on doesn't
+ * arrive, those after it do. AnimatePresence's own `initial={false}` would
+ * hold the first step still too, but it holds back everything beneath it
+ * as well, so the step's own parts (a GlowCard's rows) wouldn't arrive.
+ */
+export function useStepSwap(step: string) {
+  const first = useRef(step);
+  const moved = useRef(false);
+  if (step !== first.current) moved.current = true;
+  return moved.current ? PAGE : { ...PAGE, initial: false as const };
 }

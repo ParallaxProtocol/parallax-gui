@@ -79,11 +79,11 @@ export function QRScanner({
           aria-hidden
           onChange={(e) => fromFile(e.target.files?.[0])}
         />
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => fileInput.current?.click()}>
+        <button type="button" className="btn btn-flat btn-sm" onClick={() => fileInput.current?.click()}>
           <FileUp className="size-3.5" />
           {t("offline.scan.file")}
         </button>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={fromClipboard}>
+        <button type="button" className="btn btn-flat btn-sm" onClick={fromClipboard}>
           <ClipboardPaste className="size-3.5" />
           {t("offline.scan.paste")}
         </button>

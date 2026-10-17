@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { api, walletError, type WalletAccount } from "../../lib/api";
 import { DEVICE_NAME } from "../../components/hardware/Device";
@@ -9,6 +10,7 @@ import { CopyButton, Notice } from "../../components/ui/bits";
 import { Address } from "./common";
 import { GlowCard } from "../../components/ui/GlowCard";
 import { PAGE_WIDE } from "../../lib/layout";
+import { STAGGER, useStagger } from "../../lib/motion";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { QRCode } from "../../components/ui/QRCode";
 
@@ -21,6 +23,7 @@ import { QRCode } from "../../components/ui/QRCode";
 export default function ReceivePage() {
   const t = useT();
   const { info, account } = useWallet();
+  const stagger = useStagger();
   if (!info) return null;
   if (!account) {
     return (
@@ -42,19 +45,26 @@ export default function ReceivePage() {
   return (
     <div className={`flex flex-col gap-5 p-5 ${PAGE_WIDE}`}>
       {/* The address, to scan or to copy, as the page's one subject */}
-      <GlowCard aria-label={t("wallet.receive.title")}>
+      <GlowCard {...stagger} aria-label={t("wallet.receive.title")}>
         <div className="flex flex-col items-center gap-6 py-4 text-center">
-          <div className="flex flex-col items-center gap-2">
+          <motion.div variants={STAGGER.item} className="flex flex-col items-center gap-2">
             <AddressAvatar address={account.address} size={44} />
             <span className="text-lg font-semibold">{label}</span>
             <span className="text-sm text-muted-foreground">{t("wallet.receive.title")}</span>
-          </div>
-          <div className="rounded-3xl bg-white p-3 shadow-[0_12px_40px_-12px_rgb(0_0_0/45%)] ring-1 ring-black/5">
+          </motion.div>
+          <motion.div
+            variants={STAGGER.item}
+            className="rounded-3xl bg-white p-3 shadow-[0_12px_40px_-12px_rgb(0_0_0/45%)] ring-1 ring-black/5"
+          >
             <QRCode value={account.address} label={t("wallet.receive.qr")} />
-          </div>
-          <Address value={account.address} className="max-w-md text-lg leading-relaxed" />
-          <CopyButton value={account.address} label className="btn-lg min-w-48" />
-          <p className="max-w-md text-muted-foreground">{t("wallet.receive.desc")}</p>
+          </motion.div>
+          <motion.div variants={STAGGER.item} className="flex w-full flex-col items-center gap-6">
+            <Address value={account.address} className="max-w-md text-lg leading-relaxed" />
+            <CopyButton value={account.address} label flat className="btn-lg min-w-48" />
+          </motion.div>
+          <motion.p variants={STAGGER.item} className="max-w-md text-muted-foreground">
+            {t("wallet.receive.desc")}
+          </motion.p>
         </div>
       </GlowCard>
       {account.hardware && <VerifyOnDevice key={account.address} account={account} />}

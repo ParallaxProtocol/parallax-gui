@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { motion, type Variants } from "motion/react";
 import { AlertTriangle, Check, Copy, Info, OctagonAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useT } from "../../i18n";
@@ -132,13 +133,30 @@ export function Notice({
   );
 }
 
-/** CopyButton copies a value, its icon turning to a check for a moment: an inline icon, or with `label` a push button. */
-export function CopyButton({ value, label, className = "" }: { value: string; label?: boolean; className?: string }) {
+/**
+ * CopyButton copies a value, its icon turning to a check for a moment: an
+ * inline icon, or with `label` a push button, `flat` on glass. `variants`
+ * lets it arrive as part of a stagger.
+ */
+export function CopyButton({
+  value,
+  label,
+  flat,
+  className = "",
+  variants,
+}: {
+  value: string;
+  label?: boolean;
+  flat?: boolean;
+  className?: string;
+  variants?: Variants;
+}) {
   const t = useT();
   const [copied, setCopied] = useState(false);
   const button = (
-    <button
+    <motion.button
       type="button"
+      variants={variants}
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(value);
@@ -148,12 +166,12 @@ export function CopyButton({ value, label, className = "" }: { value: string; la
           /* clipboard denied: the value stays selectable */
         }
       }}
-      className={`btn ${label ? "btn-secondary" : "btn-ghost btn-sm btn-icon"} ${className}`}
+      className={`btn ${label ? (flat ? "btn-flat" : "btn-secondary") : "btn-ghost btn-sm btn-icon"} ${className}`}
       aria-label={copied ? t("common.copied") : t("common.copy")}
     >
       {copied ? <Check className="size-3.5 text-brand" /> : <Copy className="size-3.5" />}
       {label && (copied ? t("common.copied") : t("common.copy"))}
-    </button>
+    </motion.button>
   );
   return label ? button : <Tooltip content={copied ? t("common.copied") : t("common.copy")}>{button}</Tooltip>;
 }

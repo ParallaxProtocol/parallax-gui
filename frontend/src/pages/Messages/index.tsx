@@ -7,7 +7,7 @@ import { isAddress, sameAddress, shortHex } from "../../lib/format";
 import { docKind, messageFileName, useOfflineMode } from "../../lib/offline";
 import { useContacts } from "../../lib/contacts";
 import { useWallet, accountLabel } from "../../lib/wallet";
-import { PAGE } from "../../lib/motion";
+import { STAGGER, useStagger, useStepSwap } from "../../lib/motion";
 import { PAGE_WIDE } from "../../lib/layout";
 import { ToolbarAccessory } from "../../lib/toolbar";
 import { useT } from "../../i18n";
@@ -47,6 +47,7 @@ export function SignMessagePage() {
   const t = useT();
   const offline = useOfflineMode();
   const { info, account } = useWallet();
+  const stagger = useStagger();
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +61,9 @@ export function SignMessagePage() {
     setScanning(false);
     setError(null);
   }, [account?.address]);
+
+  const step = result ? "signed" : scanning ? "scan" : request ? "request" : "write";
+  const swap = useStepSwap(step);
 
   if (!info) return null;
   if (!account) {
@@ -94,7 +98,6 @@ export function SignMessagePage() {
     ? [t("message.step.write"), t("offline.send.step.sign"), t("message.step.signed")]
     : [t("message.step.write"), t("message.step.signed")];
   const current = result ? steps.length : watch && request ? 1 : 0;
-  const step = result ? "signed" : scanning ? "scan" : request ? "request" : "write";
   const ready = messageOk(message) && (!watch || !offline) && !busy;
 
   return (
@@ -102,8 +105,8 @@ export function SignMessagePage() {
       <ToolbarAccessory>
         <Steps steps={steps} current={current} />
       </ToolbarAccessory>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={step} {...PAGE} className="flex flex-col gap-5">
+      <AnimatePresence mode="wait">
+        <motion.div key={step} {...swap} className="flex flex-col gap-5">
           {result ? (
             <Signed signed={result} onAgain={again} />
           ) : scanning && request ? (
@@ -157,7 +160,7 @@ export function SignMessagePage() {
               }}
             >
               {/* The message, as the page's subject */}
-              <GlowCard>
+              <GlowCard {...stagger}>
                 <MessageInput value={message} onChange={setMessage} autoFocus />
               </GlowCard>
 
@@ -220,15 +223,16 @@ function MessageInput({
     bytes > MAX_MESSAGE_BYTES ? t("message.err.tooLong") : hasControl(value) ? t("message.err.control") : null;
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="flex items-baseline justify-between gap-3">
+      <motion.div variants={STAGGER.item} className="flex items-baseline justify-between gap-3">
         <span className="text-sm font-medium text-muted-foreground">{t("message.text")}</span>
         <span
           className={`text-xs tabular-nums ${bytes > MAX_MESSAGE_BYTES ? "text-critical-ink" : "text-muted-foreground"}`}
         >
           {t("message.bytes", { n: bytes, max: MAX_MESSAGE_BYTES })}
         </span>
-      </div>
-      <textarea
+      </motion.div>
+      <motion.textarea
+        variants={STAGGER.item}
         aria-label={t("message.text")}
         className="min-h-36 w-full resize-y bg-transparent text-xl leading-relaxed outline-none placeholder:text-faint"
         rows={5}
@@ -320,6 +324,7 @@ function ScanPanel({
 /** VerifyMessagePage checks anyone's signed message: it needs no account. */
 export function VerifyMessagePage() {
   const t = useT();
+  const stagger = useStagger();
   const { info } = useWallet();
   const { byAddress } = useContacts();
   const [address, setAddress] = useState("");
@@ -355,10 +360,11 @@ export function VerifyMessagePage() {
 
   const step = check ? "result" : scanning ? "scan" : "form";
   const known = isAddress(addr) ? name(addr) : null;
+  const swap = useStepSwap(step);
   return (
     <div className={`flex flex-col gap-6 p-5 ${PAGE_WIDE}`}>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={step} {...PAGE} className="flex flex-col gap-5">
+      <AnimatePresence mode="wait">
+        <motion.div key={step} {...swap} className="flex flex-col gap-5">
           {check ? (
             <VerifyResult
               check={check}
@@ -398,7 +404,7 @@ export function VerifyMessagePage() {
               }}
             >
               {/* The message, as the page's subject */}
-              <GlowCard>
+              <GlowCard {...stagger}>
                 <MessageInput value={message} onChange={setMessage} autoFocus />
               </GlowCard>
 

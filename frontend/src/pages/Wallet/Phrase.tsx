@@ -368,17 +368,20 @@ function Reveal({ seedId, confirmed, onClose }: { seedId: string; confirmed: boo
               animate="visible"
             >
               <motion.p variants={STAGGER.item}>{t("wallet.phrase.writeDown")}</motion.p>
-              <motion.div variants={STAGGER.item} className="flex flex-col gap-2">
-                <div className="glass flex flex-col divide-y divide-border overflow-hidden">
+              <motion.div variants={STAGGER.rise} className="flex flex-col gap-2">
+                <motion.div
+                  variants={STAGGER.fade}
+                  className="glass flex flex-col divide-y divide-border overflow-hidden"
+                >
                   <div className="px-5 py-4">
                     <PhraseGrid words={words} />
                   </div>
                   {passphrase && <ShownPassphrase value={passphrase} />}
-                </div>
-                <div className="flex flex-col gap-1.5 px-4">
+                </motion.div>
+                <motion.div variants={STAGGER.fade} className="flex flex-col gap-1.5 px-4">
                   {passphrase && <p className="text-sm text-muted-foreground">{t("wallet.passphrase.remember")}</p>}
                   <PhraseWarning />
-                </div>
+                </motion.div>
               </motion.div>
             </motion.div>
           )}

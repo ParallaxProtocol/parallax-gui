@@ -35,13 +35,22 @@ import {
   shortHex,
 } from "../../lib/format";
 import { useContacts } from "../../lib/contacts";
-import { FADE_IN, FADE_OUT, POPUP, POPUP_ROW, POPUP_ROWS, SPRING, useStagger } from "../../lib/motion";
+import {
+  FADE_IN,
+  FADE_OUT,
+  POPUP,
+  POPUP_ROW,
+  POPUP_ROWS,
+  SPRING,
+  STAGGER,
+  useStagger,
+  useStepSwap,
+} from "../../lib/motion";
 import { DocCard } from "../../components/offline/parts";
 import { docFileName } from "../../lib/offline";
 import { BroadcastFlow } from "../Offline/Broadcast";
 import { syncProgress, useNode } from "../../lib/live";
 import { useNodeSwitch } from "../../lib/nodeSwitch";
-import { PAGE } from "../../lib/motion";
 import { accountLabel, useWallet } from "../../lib/wallet";
 import { ToolbarAccessory } from "../../lib/toolbar";
 import { useAgo, useT } from "../../i18n";
@@ -106,6 +115,9 @@ export default function SendPage() {
     setParams({}, { replace: true });
   }, [toParam, setParams]);
 
+  const step = sent ? "sent" : scanning ? "scan" : request ? "request" : quote ? "review" : "form";
+  const swap = useStepSwap(step);
+
   if (!info) return null;
   if (!account) {
     return (
@@ -125,7 +137,6 @@ export default function SendPage() {
   }
   const label = accountLabel(account, info.accounts, t);
   const watch = account.watchOnly;
-  const step = sent ? "sent" : scanning ? "scan" : request ? "request" : quote ? "review" : "form";
   const steps = watch
     ? [
         t("wallet.send.step.details"),
@@ -141,8 +152,8 @@ export default function SendPage() {
       <ToolbarAccessory>
         <Steps steps={steps} current={current} />
       </ToolbarAccessory>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={step} {...PAGE}>
+      <AnimatePresence mode="wait">
+        <motion.div key={step} {...swap}>
           {sent && quote ? (
             <Sent tx={sent} quote={quote} />
           ) : scanning && request ? (
@@ -404,6 +415,7 @@ function SendForm({
   onQuote: (q: SendQuote) => void;
 }) {
   const t = useT();
+  const stagger = useStagger();
   const notReady = useNotReady();
   const { view } = useSummary(from);
   const [busy, setBusy] = useState<"max" | "quote" | null>(null);
@@ -456,12 +468,16 @@ function SendForm({
       }}
     >
       {/* The amount, large, as the page's subject */}
-      <GlowCard>
+      <GlowCard {...stagger}>
         <div className="flex flex-col items-center gap-3 py-4">
-          <label htmlFor={amountId} className="text-sm font-medium text-muted-foreground">
+          <motion.label
+            variants={STAGGER.item}
+            htmlFor={amountId}
+            className="text-sm font-medium text-muted-foreground"
+          >
             {t("wallet.send.amount")}
-          </label>
-          <div className="flex max-w-full items-baseline justify-center gap-2.5">
+          </motion.label>
+          <motion.div variants={STAGGER.item} className="flex max-w-full items-baseline justify-center gap-2.5">
             <input
               id={amountId}
               className="min-w-0 bg-transparent text-center text-6xl font-semibold tracking-tight tabular-nums outline-none placeholder:text-faint"
@@ -474,22 +490,24 @@ function SendForm({
               autoComplete="off"
             />
             <span className="text-3xl font-medium text-muted-foreground">LAX</span>
-          </div>
-          {amount && valueWei === null ? (
-            <span className="text-sm text-critical-ink" role="alert">
-              {t("wallet.err.badAmount")}
-            </span>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm rounded-full px-4"
-              onClick={max}
-              disabled={!toOk || !!notReady || busy !== null}
-            >
-              {busy === "max" && <Loader2 className="size-3 animate-spin" />}
-              {t("wallet.send.max")}
-            </button>
-          )}
+          </motion.div>
+          <motion.div variants={STAGGER.item} className="flex">
+            {amount && valueWei === null ? (
+              <span className="text-sm text-critical-ink" role="alert">
+                {t("wallet.err.badAmount")}
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-flat btn-sm rounded-full px-4"
+                onClick={max}
+                disabled={!toOk || !!notReady || busy !== null}
+              >
+                {busy === "max" && <Loader2 className="size-3 animate-spin" />}
+                {t("wallet.send.max")}
+              </button>
+            )}
+          </motion.div>
         </div>
       </GlowCard>
 
