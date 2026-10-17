@@ -1298,8 +1298,8 @@ const es: Dict = {
   "settings.mcp.tools": "Herramientas disponibles: {n}.",
   "settings.section.assistants": "Resumen",
   "settings.section.permissions": "Permisos",
-  "settings.mcp.permissionsOff":
-    "El acceso de asistentes está desactivado. Esto se aplica cuando lo actives en Resumen.",
+  "settings.mcp.turnOn": "Activar",
+  "settings.mcp.permissionsOff": "El acceso de asistentes está desactivado.",
   "settings.mcp.always": "Siempre",
   "settings.mcp.mode.allow": "Permitir",
   "settings.mcp.mode.ask": "Preguntar",

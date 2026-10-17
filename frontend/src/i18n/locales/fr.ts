@@ -1299,8 +1299,8 @@ const fr: Dict = {
   "settings.mcp.tools": "{n} outils disponibles.",
   "settings.section.assistants": "Vue d’ensemble",
   "settings.section.permissions": "Autorisations",
-  "settings.mcp.permissionsOff":
-    "L’accès des assistants est désactivé. Ces réglages prendront effet une fois que vous l’aurez activé dans Vue d’ensemble.",
+  "settings.mcp.turnOn": "Activer",
+  "settings.mcp.permissionsOff": "L’accès des assistants est désactivé.",
   "settings.mcp.always": "Toujours",
   "settings.mcp.mode.allow": "Autoriser",
   "settings.mcp.mode.ask": "Demander",

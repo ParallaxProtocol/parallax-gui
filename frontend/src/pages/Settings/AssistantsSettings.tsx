@@ -113,7 +113,18 @@ export function AssistantsPermissions({ cfg, update }: PageProps) {
 
   return (
     <>
-      {!cfg.mcpEnabled && <Notice tone="info">{t("settings.mcp.permissionsOff")}</Notice>}
+      {!cfg.mcpEnabled && (
+        <Notice
+          tone="info"
+          action={
+            <button type="button" className="btn btn-tinted btn-sm" onClick={() => update({ mcpEnabled: true })}>
+              {t("settings.mcp.turnOn")}
+            </button>
+          }
+        >
+          {t("settings.mcp.permissionsOff")}
+        </Notice>
+      )}
       <Group title={t("settings.mcp.see")} desc={t("settings.mcp.see.desc")}>
         <Rows>
           <Row title={t("settings.mcp.allow.chain")} desc={t("settings.mcp.allow.chain.desc")}>

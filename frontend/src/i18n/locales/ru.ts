@@ -1294,8 +1294,8 @@ const ru: Dict = {
   "settings.mcp.tools": "Доступно инструментов: {n}.",
   "settings.section.assistants": "Обзор",
   "settings.section.permissions": "Разрешения",
-  "settings.mcp.permissionsOff":
-    "Доступ для ассистентов выключен. Эти настройки вступят в силу, когда вы включите его в разделе «Обзор».",
+  "settings.mcp.turnOn": "Включить",
+  "settings.mcp.permissionsOff": "Доступ для ассистентов выключен.",
   "settings.mcp.always": "Всегда",
   "settings.mcp.mode.allow": "Разрешить",
   "settings.mcp.mode.ask": "Спрашивать",

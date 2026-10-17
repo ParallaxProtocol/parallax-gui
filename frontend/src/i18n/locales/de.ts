@@ -1322,8 +1322,8 @@ const de: Dict = {
   "settings.mcp.tools": "{n} Tools verfügbar.",
   "settings.section.assistants": "Übersicht",
   "settings.section.permissions": "Berechtigungen",
-  "settings.mcp.permissionsOff":
-    "Der Assistentenzugriff ist deaktiviert. Diese Einstellungen greifen, sobald Sie ihn unter „Übersicht“ aktivieren.",
+  "settings.mcp.turnOn": "Einschalten",
+  "settings.mcp.permissionsOff": "Der Assistentenzugriff ist deaktiviert.",
   "settings.mcp.always": "Immer",
   "settings.mcp.mode.allow": "Erlauben",
   "settings.mcp.mode.ask": "Fragen",

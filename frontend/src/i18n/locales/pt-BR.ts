@@ -1297,8 +1297,8 @@ const ptBR: Dict = {
   "settings.mcp.tools": "{n} ferramentas disponíveis.",
   "settings.section.assistants": "Visão geral",
   "settings.section.permissions": "Permissões",
-  "settings.mcp.permissionsOff":
-    "O acesso de assistentes está desativado. Estas opções passam a valer quando você ativá-lo em Visão geral.",
+  "settings.mcp.turnOn": "Ativar",
+  "settings.mcp.permissionsOff": "O acesso de assistentes está desativado.",
   "settings.mcp.always": "Sempre",
   "settings.mcp.mode.allow": "Permitir",
   "settings.mcp.mode.ask": "Perguntar",
