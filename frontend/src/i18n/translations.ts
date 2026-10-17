@@ -457,6 +457,9 @@ export const en: Dict = {
   "message.placeholder": "The text to sign, for example: I control this address. 2026-10-14",
   "message.bytes": "{n} / {max} bytes",
   "message.signingAs": "Signing as",
+  "message.cautionTitle": "Before you sign",
+  "message.signFailed": "Couldn't sign",
+  "message.verifyFailed": "Couldn't verify",
   "message.caution":
     "Only sign text you wrote or fully understand. Anyone you share the signature with can show it as proof that this address signed it. Signing a message never moves funds.",
   "message.signCta": "Sign message",

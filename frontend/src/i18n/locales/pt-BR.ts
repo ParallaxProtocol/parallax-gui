@@ -444,6 +444,9 @@ const ptBR: Dict = {
   "message.placeholder": "O texto a assinar, por exemplo: Eu controlo este endereço. 2026-10-14",
   "message.bytes": "{n} / {max} bytes",
   "message.signingAs": "Assinando como",
+  "message.cautionTitle": "Antes de assinar",
+  "message.signFailed": "Não foi possível assinar",
+  "message.verifyFailed": "Não foi possível verificar",
   "message.caution":
     "Só assine textos que você escreveu ou entende por completo. Qualquer pessoa com quem você compartilhar a assinatura pode apresentá-la como prova de que este endereço assinou o texto. Assinar uma mensagem nunca movimenta fundos.",
   "message.signCta": "Assinar mensagem",

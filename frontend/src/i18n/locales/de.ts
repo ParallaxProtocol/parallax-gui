@@ -449,6 +449,9 @@ const de: Dict = {
   "message.placeholder": "Der zu signierende Text, zum Beispiel: Ich kontrolliere diese Adresse. 2026-10-14",
   "message.bytes": "{n} / {max} Bytes",
   "message.signingAs": "Signieren als",
+  "message.cautionTitle": "Bevor Sie signieren",
+  "message.signFailed": "Signieren fehlgeschlagen",
+  "message.verifyFailed": "Prüfung fehlgeschlagen",
   "message.caution":
     "Signieren Sie nur Text, den Sie selbst geschrieben oder vollständig verstanden haben. Jeder, dem Sie die Signatur geben, kann sie als Beweis vorzeigen, dass diese Adresse ihn signiert hat. Das Signieren einer Nachricht bewegt nie Guthaben.",
   "message.signCta": "Nachricht signieren",

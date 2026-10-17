@@ -443,6 +443,9 @@ const es: Dict = {
   "message.placeholder": "El texto a firmar, por ejemplo: Controlo esta dirección. 2026-10-14",
   "message.bytes": "{n} / {max} bytes",
   "message.signingAs": "Firmando como",
+  "message.cautionTitle": "Antes de firmar",
+  "message.signFailed": "No se pudo firmar",
+  "message.verifyFailed": "No se pudo verificar",
   "message.caution":
     "Firma solo textos que escribiste o entiendes por completo. Cualquiera con quien compartas la firma puede mostrarla como prueba de que esta dirección lo firmó. Firmar un mensaje nunca mueve fondos.",
   "message.signCta": "Firmar mensaje",

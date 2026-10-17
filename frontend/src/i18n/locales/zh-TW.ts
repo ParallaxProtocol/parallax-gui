@@ -428,6 +428,9 @@ const zhTW: Dict = {
   "message.placeholder": "要簽署的文字，例如：我持有這個地址。2026-10-14",
   "message.bytes": "{n} / {max} 位元組",
   "message.signingAs": "簽署帳戶",
+  "message.cautionTitle": "簽署之前",
+  "message.signFailed": "簽署失敗",
+  "message.verifyFailed": "驗證失敗",
   "message.caution":
     "只簽署你親自撰寫或完全理解的文字。任何拿到簽章的人，都能用它證明這個地址簽署過這段文字。簽署訊息絕不會轉移資金。",
   "message.signCta": "簽署訊息",

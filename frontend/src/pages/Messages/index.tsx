@@ -1,8 +1,20 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ArrowRight, FileCheck, Loader2, PenLine, QrCode, ScanLine, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  FileCheck,
+  Info,
+  Loader2,
+  OctagonAlert,
+  PenLine,
+  QrCode,
+  ScanLine,
+  Usb,
+  X,
+} from "lucide-react";
 import { api, MessageCheck, MessageRequest, SignedMessage, walletError } from "../../lib/api";
-import { DEVICE_NAME, HardwareReady, SignOnDevice } from "../../components/hardware/Device";
+import { DEVICE_NAME, HardwareReady } from "../../components/hardware/Device";
 import { isAddress, sameAddress, shortHex } from "../../lib/format";
 import { docKind, messageFileName, useOfflineMode } from "../../lib/offline";
 import { useContacts } from "../../lib/contacts";
@@ -15,6 +27,7 @@ import { GlowCard } from "../../components/ui/GlowCard";
 import { Panel, Property, Rows } from "../../components/ui/Panel";
 import { CopyButton, Notice } from "../../components/ui/bits";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
+import { CardRow, CardRows } from "../../components/ui/CardRow";
 import { ScanCard } from "../../components/offline/QRScanner";
 import { DocCard } from "../../components/offline/parts";
 import { Address, DrawnCheck, Field } from "../Wallet/common";
@@ -162,6 +175,27 @@ export function SignMessagePage() {
               {/* The message, as the page's subject */}
               <GlowCard {...stagger}>
                 <MessageInput value={message} onChange={setMessage} autoFocus />
+                {/* What signing means, the device it's signed on, and what went wrong signing it */}
+                <CardRows className="mt-5">
+                  <CardRow tone="info" icon={Info} title={t("message.cautionTitle")} desc={t("message.caution")} />
+                  {account.hardware && !busy && <HardwareReady kind={account.hardware} active flat />}
+                  {account.hardware && busy && (
+                    <CardRow
+                      tone="info"
+                      icon={Usb}
+                      title={t("hardware.confirm.title", { device: DEVICE_NAME[account.hardware] })}
+                      desc={t("hardware.confirm.message", { device: DEVICE_NAME[account.hardware] })}
+                    />
+                  )}
+                  {error && (
+                    <CardRow
+                      tone="critical"
+                      icon={OctagonAlert}
+                      title={watch ? t("wallet.review.requestFailed") : t("message.signFailed")}
+                      desc={error}
+                    />
+                  )}
+                </CardRows>
               </GlowCard>
 
               {/* Who signs it */}
@@ -171,15 +205,6 @@ export function SignMessagePage() {
                 </Field>
               </Panel>
 
-              <Notice tone="info">{t("message.caution")}</Notice>
-              {/* A device to confirm on: how it stands until it's ready, then what to check on it */}
-              {account.hardware &&
-                (busy ? (
-                  <SignOnDevice kind={account.hardware} message />
-                ) : (
-                  <HardwareReady kind={account.hardware} active />
-                ))}
-              {error && <Notice tone="critical">{error}</Notice>}
               <div className="flex justify-center">
                 <button type="submit" className="btn btn-primary btn-lg min-w-64" disabled={!ready}>
                   {busy ? (
@@ -406,6 +431,11 @@ export function VerifyMessagePage() {
               {/* The message, as the page's subject */}
               <GlowCard {...stagger}>
                 <MessageInput value={message} onChange={setMessage} autoFocus />
+                <CardRows className="mt-5">
+                  {error && (
+                    <CardRow tone="critical" icon={OctagonAlert} title={t("message.verifyFailed")} desc={error} />
+                  )}
+                </CardRows>
               </GlowCard>
 
               {/* Who is said to have signed it, and the signature */}
@@ -449,7 +479,6 @@ export function VerifyMessagePage() {
                 </div>
               </Panel>
 
-              {error && <Notice tone="critical">{error}</Notice>}
               <div className="flex justify-center gap-3">
                 <button type="button" className="btn btn-secondary btn-lg min-w-36" onClick={() => setScanning(true)}>
                   <ScanLine className="size-4" />

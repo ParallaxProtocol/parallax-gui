@@ -428,6 +428,9 @@ const zhSG: Dict = {
   "message.placeholder": "要签名的文本，例如：我控制此地址。2026-10-14",
   "message.bytes": "{n} / {max} 字节",
   "message.signingAs": "签名账户",
+  "message.cautionTitle": "签名之前",
+  "message.signFailed": "签名失败",
+  "message.verifyFailed": "验证失败",
   "message.caution":
     "只签名您自己写的或完全理解的文本。任何拿到签名的人都可以用它证明此地址签署过该内容。签名消息不会转移任何资金。",
   "message.signCta": "签名消息",
