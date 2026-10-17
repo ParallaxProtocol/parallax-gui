@@ -435,16 +435,16 @@ func (u *Updater) verifySHA256(info *UpdateInfo, zipPath string) error {
 	// Asset URLs: https://github.com/.../releases/download/<tag>/<filename>
 	sumsURL := strings.TrimSuffix(info.AssetURL, info.AssetName) + "SHA256SUMS.txt"
 
+	// Every release publishes its hashes: without them the download isn't
+	// installed, whatever kept them from being read
 	resp, err := u.http.Get(sumsURL)
 	if err != nil {
-		logging.Warn("Could not fetch SHA256SUMS.txt, skipping verification", "err", err)
-		return nil
+		return fmt.Errorf("fetch SHA256SUMS.txt: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		logging.Warn("SHA256SUMS.txt not found, skipping verification", "status", resp.StatusCode)
-		return nil
+		return fmt.Errorf("fetch SHA256SUMS.txt: HTTP %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -463,8 +463,7 @@ func (u *Updater) verifySHA256(info *UpdateInfo, zipPath string) error {
 	}
 
 	if expectedHash == "" {
-		logging.Warn("Asset not found in SHA256SUMS.txt, skipping verification", "asset", info.AssetName)
-		return nil
+		return fmt.Errorf("%s is not in SHA256SUMS.txt", info.AssetName)
 	}
 
 	f, err := os.Open(zipPath)
