@@ -26,6 +26,7 @@ import { LogoMark } from "../ui/LogoMark";
 import { useT } from "../../i18n";
 import { NODE_BAR_ROOM } from "./NodeBar";
 import { TOP_BAR_HEIGHT } from "./TopBar";
+import { TorBarSpacer } from "./TorBar";
 import { useSettingsSheet } from "../../lib/settingsSheet";
 import { SettingsButton } from "./SettingsSheet";
 import { AddressAvatar } from "../ui/AddressAvatar";
@@ -108,6 +109,8 @@ export default function Sidebar() {
           <ProfileBadge />
         </motion.span>
       </motion.div>
+      {/* The Tor bar's room, while Tor is on: it runs across under the title bar */}
+      <TorBarSpacer />
 
       <div className="flex min-h-0 flex-1 flex-col border-r border-border" style={{ paddingBottom: NODE_BAR_ROOM }}>
         {/* Grouped by scope: what is about the account the switcher shows,

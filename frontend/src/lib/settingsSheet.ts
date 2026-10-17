@@ -4,6 +4,7 @@ import type { HardwareKind } from "./api";
 export const SETTINGS_SECTIONS = [
   "general",
   "appearance",
+  "privacy",
   "storage",
   "accounts",
   "security",

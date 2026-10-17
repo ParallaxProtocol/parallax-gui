@@ -60,6 +60,10 @@ run(
     env: process.platform === "linux" ? { ...process.env, GOEXPERIMENT: "runtimesecret" } : process.env,
   },
 );
+// The Tor the app ships, beside the backend as in a release (make tor)
+const goos = win ? "windows" : process.platform;
+const goarch = process.arch === "x64" ? "amd64" : process.arch;
+run("node", [path.join(here, "fetch-tor.mjs"), goos, goarch, path.join(path.dirname(bin), "tor")]);
 run("node", ["build.mjs"], { cwd: desktop });
 
 // The first port from 5173 nobody listens on

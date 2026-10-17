@@ -50,3 +50,34 @@ export const SparklesSymbol = forwardRef<SVGSVGElement, LucideProps>(function Sp
     </svg>
   );
 });
+
+/**
+ * OnionSymbol is Tor's onion, which Lucide hasn't: a bulb in layers under
+ * its sprout, drawn as Lucide draws, on its 24-unit grid in lines of
+ * `strokeWidth`, so it stands in for a Lucide icon anywhere one is taken.
+ */
+export const OnionSymbol = forwardRef<SVGSVGElement, LucideProps>(function OnionSymbol(
+  { size = 24, strokeWidth = 2, absoluteStrokeWidth: _absolute, color = "currentColor", ...rest },
+  ref,
+) {
+  return (
+    <svg
+      ref={ref}
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...rest}
+    >
+      <path d="M12 8C8 9.5 5 12 5 15.25 5 18.6 8.1 21 12 21s7-2.4 7-5.75C19 12 16 9.5 12 8Z" />
+      <path d="M12 11.5c-2 .9-3.25 2.25-3.25 3.9 0 1.75 1.45 2.85 3.25 2.85s3.25-1.1 3.25-2.85c0-1.65-1.25-3-3.25-3.9Z" />
+      <path d="M12 8V5.5" />
+      <path d="M12 5.5c0-1.4 1.1-2.5 2.75-2.5" />
+    </svg>
+  );
+});

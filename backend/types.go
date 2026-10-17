@@ -107,6 +107,19 @@ type GUIConfig struct {
 	TorControl       string   `json:"torControl"`       // --torcontrol
 	TorPassword      string   `json:"torPassword"`      // --torpassword
 
+	// Tor is the Tor switch (tor.go): every connection the app makes, the
+	// node's peers and its own requests, goes through Tor, the one the app
+	// ships or, with TorSystem or in a build without one, the one running
+	// on this computer (at Proxy and TorControl, when they're set). It sets
+	// the proxy, the control port and NAT for the node itself, and keeps
+	// its listener to the onion service (applyTorRoute, flags.go); off by
+	// default. Tor itself starts or stops as it's saved, the node goes
+	// behind it as it restarts. TorOnionOnly has the node dial onion peers
+	// only, as --onlynet onion
+	Tor          bool `json:"tor"`
+	TorOnionOnly bool `json:"torOnionOnly"`
+	TorSystem    bool `json:"torSystem"`
+
 	// RPC
 	HTTPHost            string   `json:"httpHost"`            // --http.addr (empty = 127.0.0.1)
 	HTTPAPIs            []string `json:"httpApis"`            // --http.api (empty = net, web3, eth, debug)

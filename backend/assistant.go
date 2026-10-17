@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"slices"
 	"strings"
 	"sync"
@@ -71,6 +72,9 @@ type AssistantDeps struct {
 	Wallet   *Wallet   // nil when it could not be opened
 	Contacts *Contacts // likewise
 	Logs     *LogTail
+	// HTTP is what the explorer and the status page are asked by: through
+	// Tor while its switch is on (tor.go)
+	HTTP *http.Client
 }
 
 // Request kinds

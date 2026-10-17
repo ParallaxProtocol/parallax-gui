@@ -18,7 +18,7 @@ import {
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
-import { api, CONFIG_UPDATED_EVENT, GUIConfig, openExternal, UpdateInfo } from "../../lib/api";
+import { api, CONFIG_UPDATED_EVENT, GUIConfig, openExternal, UpdateInfo, type TorStatus } from "../../lib/api";
 import { formatUnits, parseUnits } from "../../lib/format";
 import { applyTheme } from "../../lib/theme";
 import { FADE_IN, FADE_OUT, GLIDE, SPRING, usePageSwap } from "../../lib/motion";
@@ -28,7 +28,7 @@ import { pageKey, useSettingsSheet, type SettingsSection } from "../../lib/setti
 import { LogoMark } from "../../components/ui/LogoMark";
 import { Select } from "../../components/ui/Select";
 import { Tooltip } from "../../components/ui/Tooltip";
-import { SparklesSymbol } from "../../components/ui/symbols";
+import { OnionSymbol, SparklesSymbol } from "../../components/ui/symbols";
 import { IconTile, TILE } from "../../components/ui/IconTile";
 import { AccountsSettings, SecuritySettings } from "../Wallet/Accounts";
 import { NodeStorageActions, WalletStorage, WipeWallet } from "./storage";
@@ -36,10 +36,11 @@ import { Indicator } from "../../components/ui/Indicator";
 import { Row, Rows } from "../../components/ui/Panel";
 import { Segmented } from "../../components/ui/Segmented";
 import Toggle from "../../components/ui/Toggle";
-import { Notice } from "../../components/ui/bits";
+import { CopyButton, Meter, Notice } from "../../components/ui/bits";
+import { useTorStatus } from "../../lib/torStatus";
 import LogsPanel from "./LogsPanel";
 import { AssistantsOverview, AssistantsPermissions } from "./AssistantsSettings";
-import { Advanced, countSet, FolderInput, Group, ListInput, NumberInput, Setting, TextInput } from "./fields";
+import { Advanced, countSet, FolderInput, Group, ListInput, NumberInput, Reveal, Setting, TextInput } from "./fields";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { useOfflineMode } from "../../lib/offline";
 import { useWallet } from "../../lib/wallet";
@@ -94,6 +95,8 @@ export default function Settings() {
   // A stopped node reads the saved settings when it next starts: nothing
   // waits on its restart then
   const nodeRunning = !!useNode()?.running;
+  // Whether this build ships a Tor of its own, for the Tor settings
+  const torBundled = useTorStatus()?.bundled ?? true;
   useEffect(() => {
     if (!nodeRunning) setRestartPending(false);
   }, [nodeRunning]);
@@ -105,7 +108,7 @@ export default function Settings() {
   // it), it isn't shown, and one left open shows Accounts instead
   const { info: walletInfo } = useWallet();
   const hidden = (id: SettingsSection) =>
-    (offline && NODE_SECTIONS.has(id)) || (id === "security" && !walletInfo?.hasPassword);
+    (offline && (NODE_SECTIONS.has(id) || id === "privacy")) || (id === "security" && !walletInfo?.hasPassword);
   const section = !hidden(chosen) ? chosen : chosen === "security" ? "accounts" : "general";
   const [login, setLogin] = useState<{ supported: boolean; enabled: boolean }>({ supported: false, enabled: false });
   const swap = usePageSwap();
@@ -271,6 +274,9 @@ export default function Settings() {
   );
 
   const inbound = !cfg.blockInbound;
+  // With the Tor switch on, Tor sets the node's proxy and Tor ports: the
+  // app's own, or the Tor on this computer, which Privacy says where to find
+  const torSets = orig.tor || cfg.tor;
 
   return (
     <div className="flex min-h-0 flex-1">
@@ -346,6 +352,89 @@ export default function Settings() {
                   </Group>
                 )}
               </>
+            )}
+
+            {/* Tor, for everything the app sends: applied at once, as a theme is */}
+            {section === "privacy" && (
+              <Group title={t("tor.switch")} desc={t("settings.torGroup.desc")}>
+                <Rows>
+                  <Setting
+                    title={t("settings.tor")}
+                    more={t("settings.tor.more")}
+                    desc={t("settings.tor.desc")}
+                    restart={restart("tor")}
+                  >
+                    <Toggle checked={cfg.tor} onChange={(v) => update({ tor: v })} label={t("settings.tor")} />
+                  </Setting>
+                  {/* How the saved switch's Tor is doing, while it's on */}
+                  <TorStatusRow on={orig.tor} />
+                  <Reveal show={cfg.tor}>
+                    <Setting
+                      title={t("settings.torPeers")}
+                      more={t("settings.torPeers.more")}
+                      desc={t("settings.torPeers.desc")}
+                      restart={restart("torOnionOnly")}
+                    >
+                      <Segmented
+                        size="sm"
+                        value={cfg.torOnionOnly ? "onion" : "all"}
+                        onChange={(v) => update({ torOnionOnly: v === "onion" })}
+                        options={[
+                          { value: "all", label: t("settings.torPeers.all") },
+                          { value: "onion", label: t("settings.torPeers.onion") },
+                        ]}
+                      />
+                    </Setting>
+                  </Reveal>
+                  <TorSystemSetting
+                    checked={cfg.torSystem}
+                    restart={restart("torSystem")}
+                    onChange={(v) => update({ torSystem: v })}
+                  />
+                  {/* Where the Tor on this computer is: the node's proxy and
+                      Tor control settings, found on the usual ports when empty */}
+                  <Reveal show={cfg.torSystem || !torBundled}>
+                    <Setting
+                      title={t("settings.torSocks")}
+                      desc={t("settings.torSocks.desc")}
+                      flag="--proxy"
+                      restart={restart("proxy")}
+                    >
+                      <TextInput
+                        width="w-44"
+                        value={cfg.proxy}
+                        placeholder={t("settings.torSocks.placeholder")}
+                        onChange={(v) => update({ proxy: v })}
+                      />
+                    </Setting>
+                    <Setting
+                      title={t("settings.torControl")}
+                      desc={t("settings.torControl.desc")}
+                      restart={restart("torControl")}
+                    >
+                      <TextInput
+                        width="w-44"
+                        value={cfg.torControl}
+                        placeholder={t("settings.torControl.placeholderAuto")}
+                        onChange={(v) => update({ torControl: v })}
+                      />
+                    </Setting>
+                    <Setting
+                      title={t("settings.torPassword")}
+                      desc={t("settings.torPassword.desc")}
+                      restart={restart("torPassword")}
+                    >
+                      <TextInput
+                        type="password"
+                        width="w-44"
+                        value={cfg.torPassword}
+                        placeholder={t("settings.torPassword.placeholder")}
+                        onChange={(v) => update({ torPassword: v })}
+                      />
+                    </Setting>
+                  </Reveal>
+                </Rows>
+              </Group>
             )}
 
             {section === "general" && (
@@ -1003,7 +1092,21 @@ export default function Settings() {
                 </Group>
 
                 <Group title={t("settings.group.privacy")} desc={t("settings.privacy.desc")}>
+                  {torSets && (
+                    <Notice
+                      tone="info"
+                      action={
+                        <button type="button" className="btn btn-secondary" onClick={() => setSection("privacy")}>
+                          {t("settings.section.privacy")}
+                        </button>
+                      }
+                    >
+                      {t("settings.privacy.torOn")}
+                    </Notice>
+                  )}
                   <Rows>
+                    {/* While Tor is on, the app's own Tor sets the proxy and
+                        the control port, the one on this computer may take them */}
                     <Setting
                       title={t("settings.proxy")}
                       more={t("settings.proxy.more")}
@@ -1015,6 +1118,7 @@ export default function Settings() {
                         width="w-44"
                         value={cfg.proxy}
                         placeholder="127.0.0.1:9050"
+                        disabled={torSets}
                         onChange={(v) => update({ proxy: v })}
                       />
                     </Setting>
@@ -1049,7 +1153,8 @@ export default function Settings() {
                         restart={restart("onlyNet")}
                       >
                         <NetworkPicker
-                          value={cfg.onlyNet ?? []}
+                          value={torSets && cfg.torOnionOnly ? ["onion"] : (cfg.onlyNet ?? [])}
+                          disabled={torSets && cfg.torOnionOnly}
                           onChange={(v) => update({ onlyNet: v.length ? v : null })}
                         />
                       </Setting>
@@ -1064,6 +1169,7 @@ export default function Settings() {
                           width="w-44"
                           value={cfg.onionProxy}
                           placeholder={t("settings.onionProxy.placeholder")}
+                          disabled={torSets}
                           onChange={(v) => update({ onionProxy: v })}
                         />
                       </Setting>
@@ -1089,6 +1195,7 @@ export default function Settings() {
                           width="w-44"
                           value={cfg.torControl}
                           placeholder="127.0.0.1:9051"
+                          disabled={torSets}
                           onChange={(v) => update({ torControl: v })}
                         />
                       </Setting>
@@ -1102,6 +1209,7 @@ export default function Settings() {
                           width="w-44"
                           value={cfg.torPassword}
                           placeholder={t("settings.torPassword.placeholder")}
+                          disabled={torSets}
                           onChange={(v) => update({ torPassword: v })}
                         />
                       </Setting>
@@ -1549,7 +1657,90 @@ function WeiInput({
 }
 
 /** NetworkPicker chooses any of the networks outbound connections may use; none means all. */
-function NetworkPicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+/** TorStatusRow says how Tor is doing while its switch is on, and the node's onion address once it has one. */
+function TorStatusRow({ on }: { on: boolean }) {
+  const st = useTorStatus();
+  return <Reveal show={on && !!st?.enabled}>{st && <TorStatusContent st={st} />}</Reveal>;
+}
+
+function TorStatusContent({ st }: { st: TorStatus }) {
+  const t = useT();
+  const desc =
+    st.state === "starting"
+      ? `${t("tor.state.starting", { n: st.progress })}${st.summary ? ` · ${st.summary}` : ""}`
+      : st.state === "ready"
+        ? t(st.system ? "tor.state.readySystem" : "tor.state.ready", { socks: st.socks })
+        : st.state === "failed"
+          ? `${t(`tor.reason.${st.reason || "exited"}`)}${st.error ? ` (${st.error})` : ""}`
+          : "";
+  // What shows at the row's end, swapped in place as Tor goes along, as the save bar swaps its message
+  const shown = st.state === "starting" ? "progress" : st.onion ? "onion" : st.state;
+  return (
+    <Setting title={t("settings.torStatus")} desc={desc}>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={shown}
+          className="flex min-w-0 items-center gap-1"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0, transition: FADE_IN }}
+          exit={{ opacity: 0, y: -10, transition: FADE_OUT }}
+        >
+          {shown === "progress" ? (
+            <Meter value={st.progress / 100} live className="w-32" label={desc} />
+          ) : shown === "onion" ? (
+            <>
+              <Tooltip content={t("tor.onion")}>
+                <span className="max-w-56 truncate font-mono text-sm">{st.onion}</span>
+              </Tooltip>
+              <CopyButton value={st.onion} />
+            </>
+          ) : (
+            <Indicator
+              grade={st.state === "ready" ? "good" : st.state === "failed" ? "critical" : "off"}
+              ping={st.state === "ready"}
+              label={desc}
+            />
+          )}
+        </motion.span>
+      </AnimatePresence>
+    </Setting>
+  );
+}
+
+/** TorSystemSetting picks the Tor on this computer over the app's own; in a build with none of its own, it's the only one. */
+function TorSystemSetting({
+  checked,
+  restart,
+  onChange,
+}: {
+  checked: boolean;
+  restart: boolean | "app";
+  onChange: (v: boolean) => void;
+}) {
+  const t = useT();
+  const st = useTorStatus();
+  const bundled = st?.bundled ?? true;
+  return (
+    <Setting
+      title={t("settings.torSystem")}
+      more={t("settings.torSystem.more")}
+      desc={bundled ? t("settings.torSystem.desc") : t("settings.torSystem.only")}
+      restart={restart}
+    >
+      <Toggle checked={checked || !bundled} disabled={!bundled} onChange={onChange} label={t("settings.torSystem")} />
+    </Setting>
+  );
+}
+
+function NetworkPicker({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string[];
+  disabled?: boolean;
+  onChange: (v: string[]) => void;
+}) {
   const t = useT();
   return (
     <div className="flex gap-1">
@@ -1559,6 +1750,7 @@ function NetworkPicker({ value, onChange }: { value: string[]; onChange: (v: str
           <button
             key={n}
             type="button"
+            disabled={disabled}
             aria-pressed={on}
             onClick={() => onChange(on ? value.filter((x) => x !== n) : [...value, n])}
             className={`btn ${on ? "btn-primary" : "btn-secondary"}`}
@@ -1842,7 +2034,7 @@ function SaveBar({
 const NODE_SECTIONS = new Set<SettingsSection>(["node", "network", "rpc", "assistants", "permissions"]);
 
 const NAV_GROUPS: { title: string; sections: SettingsSection[] }[] = [
-  { title: "settings.navGroup.app", sections: ["general", "appearance", "storage"] },
+  { title: "settings.navGroup.app", sections: ["general", "appearance", "privacy", "storage"] },
   { title: "nav.wallet", sections: ["accounts", "security"] },
   { title: "nav.node", sections: ["node", "network", "rpc"] },
   { title: "settings.navGroup.assistants", sections: ["assistants", "permissions"] },
@@ -1856,6 +2048,7 @@ const SECTION_LOOK: Record<SettingsSection, { icon: LucideIcon; color: string }>
   storage: { icon: HardDrive, color: TILE.gray },
   general: { icon: Settings2, color: TILE.gray },
   appearance: { icon: Palette, color: TILE.blue },
+  privacy: { icon: OnionSymbol, color: TILE.purple },
   node: { icon: Server, color: TILE.purple },
   network: { icon: Globe, color: TILE.green },
   rpc: { icon: Plug, color: TILE.orange },

@@ -60,6 +60,16 @@ type NodeController struct {
 
 	emitter func(NodeEvent)
 
+	// tor is the Tor switch (tor.go): with it on, the node starts behind
+	// Tor or not at all
+	tor *TorController
+	// startMu keeps to one Start at a time; cancelStart ends the one
+	// waiting on Tor, for Stop
+	startMu     sync.Mutex
+	cancelStart context.CancelFunc
+	// behindTor is set while the running node went behind Tor as it started
+	behindTor bool
+
 	// The data directory's size, re-measured at most every diskUsageTTL:
 	// walking a multi-gigabyte chain database on every status poll is
 	// far too slow.
@@ -93,6 +103,13 @@ var processMetricsOnce sync.Once
 // called.
 func NewNodeController(cfg *ConfigStore) *NodeController {
 	return &NodeController{cfg: cfg}
+}
+
+// SetTor gives the node the Tor switch to start behind.
+func (n *NodeController) SetTor(t *TorController) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.tor = t
 }
 
 // SetEmitter installs an event sink. Pass nil to disable.
@@ -149,6 +166,8 @@ func (n *NodeController) Stack() *node.Node {
 //  8. spawn the free-disk-space monitor (per Start, stops on Stop)
 //  9. log a one-time legacy receipts warning if the freezer needs migration
 func (n *NodeController) Start(ctx context.Context) error {
+	n.startMu.Lock()
+	defer n.startMu.Unlock()
 	n.mu.Lock()
 	if n.stack != nil {
 		n.mu.Unlock()
@@ -159,7 +178,16 @@ func (n *NodeController) Start(ctx context.Context) error {
 		return ErrStorageBusy
 	}
 	guiCfg := n.cfg.Get()
+	tor := n.tor
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	n.cancelStart = cancel
 	n.mu.Unlock()
+	defer func() {
+		n.mu.Lock()
+		n.cancelStart = nil
+		n.mu.Unlock()
+	}()
 	// An offline signer never goes online, whoever asks
 	if guiCfg.OfflineSigner {
 		return ErrOfflineSigner
@@ -169,6 +197,18 @@ func (n *NodeController) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	// With the Tor switch on, the node waits for Tor and goes behind it,
+	// or doesn't start: it never goes out directly
+	if guiCfg.Tor && tor != nil {
+		route, err := tor.Route(ctx)
+		if err != nil {
+			return err
+		}
+		if err := applyTorRoute(guiCfg, route, &nodeCfg.P2P); err != nil {
+			return err
+		}
+	}
+	behindTor := guiCfg.Tor && tor != nil
 	prlCfg.DatabaseHandles = tuneProcess(guiCfg, &prlCfg)
 
 	stack, err := node.New(&nodeCfg)
@@ -238,6 +278,7 @@ func (n *NodeController) Start(ctx context.Context) error {
 	n.startedAt = time.Now()
 	n.stopCh = stopCh
 	n.dev = dev
+	n.behindTor = behindTor
 	n.mu.Unlock()
 
 	// The development chain seals a block for each transaction, as
@@ -282,6 +323,10 @@ func (n *NodeController) Start(ctx context.Context) error {
 // Stop tears down the node. It is idempotent.
 func (n *NodeController) Stop() error {
 	n.mu.Lock()
+	// A start still waiting on Tor gives up
+	if n.cancelStart != nil {
+		n.cancelStart()
+	}
 	stack := n.stack
 	stopCh := n.stopCh
 	history := n.history
@@ -290,6 +335,7 @@ func (n *NodeController) Stop() error {
 	n.history = nil
 	n.stopCh = nil
 	n.dev = false
+	n.behindTor = false
 	n.mu.Unlock()
 	if stack == nil {
 		return nil
@@ -306,6 +352,28 @@ func (n *NodeController) Stop() error {
 	err := stack.Close()
 	n.emit("stopped", nil)
 	return err
+}
+
+// BehindTor reports whether the running node went behind Tor as it
+// started; false while it's stopped.
+func (n *NodeController) BehindTor() bool {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.stack != nil && n.behindTor
+}
+
+// OnionService is the node's onion address (<name>.onion:port) while its
+// onion service is up, "" otherwise.
+func (n *NodeController) OnionService() string {
+	stack := n.Stack()
+	if stack == nil || stack.Server() == nil {
+		return ""
+	}
+	addr, ok := stack.Server().OnionService()
+	if !ok {
+		return ""
+	}
+	return addr.String()
 }
 
 // Status returns the dashboard snapshot.

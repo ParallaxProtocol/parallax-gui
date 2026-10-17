@@ -40,6 +40,8 @@ import TopBar from "./components/shell/TopBar";
 import SettingsSheet from "./components/shell/SettingsSheet";
 import { useSettingsSheet, type SettingsPage, type SettingsSection } from "./lib/settingsSheet";
 import { SettingsSheetProvider } from "./lib/SettingsSheetProvider";
+import { TorProvider } from "./lib/TorProvider";
+import TorBar, { TorBarSpacer } from "./components/shell/TorBar";
 import { NotificationsProvider } from "./lib/notifications";
 import AssistantBar from "./components/shell/AssistantBar";
 import { LockGate } from "./components/shell/LockScreen";
@@ -160,15 +162,17 @@ export default function App() {
                     <NodeSheetProvider>
                       <NodeSwitchProvider>
                         <SidebarProvider>
-                          <SettingsSheetProvider>
-                            <AssistantProvider enabled={!offline}>
-                              <DesktopBehaviors {...desktop} />
-                              {/* The whole window, behind the lock screen while the wallet is locked */}
-                              <LockGate>
-                                <Shell offline={offline} animate={!animationsDisabled} />
-                              </LockGate>
-                            </AssistantProvider>
-                          </SettingsSheetProvider>
+                          <TorProvider>
+                            <SettingsSheetProvider>
+                              <AssistantProvider enabled={!offline}>
+                                <DesktopBehaviors {...desktop} />
+                                {/* The whole window, behind the lock screen while the wallet is locked */}
+                                <LockGate>
+                                  <Shell offline={offline} animate={!animationsDisabled} />
+                                </LockGate>
+                              </AssistantProvider>
+                            </SettingsSheetProvider>
+                          </TorProvider>
                         </SidebarProvider>
                       </NodeSwitchProvider>
                     </NodeSheetProvider>
@@ -220,12 +224,14 @@ function Shell({ offline, animate }: { offline: boolean; animate: boolean }) {
       ) : (
         // Under Settings, which may be open over it as the first account is made
         <Arrival play={wasEmpty.current} coverClassName="z-20">
-          <div className="flex h-full">
+          <div className="relative flex h-full">
             <Sidebar />
             <div className="flex min-w-0 flex-1 flex-col bg-background">
               <TopBar />
+              <TorBarSpacer />
               <RoutedContent animate={animate} />
             </div>
+            <TorBar />
           </div>
         </Arrival>
       )}

@@ -275,6 +275,34 @@ export function Advanced({ id, changed, children }: { id: string; changed: numbe
   );
 }
 
+/**
+ * Reveal is the rows a setting above them shows, placed among a Rows
+ * panel's own: they unfold beneath it in the same panel, as Advanced's
+ * options do, and fold away again, the hairline under them folding with
+ * them rather than snapping off as they leave.
+ */
+export function Reveal({ show, children }: { show: boolean; children: ReactNode }) {
+  return (
+    <AnimatePresence initial={false}>
+      {show && (
+        <motion.div
+          key="reveal"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={SPRING}
+          // The panel's own hairline under it is drawn inside, to fold with it
+          className="reveal overflow-hidden !border-b-0"
+        >
+          <div className="flex flex-col divide-y divide-border [.reveal:not(:last-child)>&]:border-b [.reveal:not(:last-child)>&]:border-border">
+            {children}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 /** Count is how many of a config's values differ from their defaults (null, "", false, 0, []). */
 export function countSet(values: unknown[]): number {
   return values.filter(

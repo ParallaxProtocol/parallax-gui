@@ -1,4 +1,4 @@
-.PHONY: backend frontend desktop-deps prlx-gui prlx-gui-package dev clean
+.PHONY: backend tor frontend desktop-deps prlx-gui prlx-gui-package dev clean
 
 SHELL := /bin/bash
 
@@ -54,6 +54,12 @@ backend:
 	  -ldflags "$(LDFLAGS) $(BACKEND_LINK) -X github.com/ParallaxProtocol/parallax-gui/backend.GUIVersion=$(VERSION) -X github.com/ParallaxProtocol/parallax-gui/backend.DaemonCommit=$(DAEMON_COMMIT)" \
 	  -o $(BACKEND_DIR)/$(BACKEND_EXE) .
 
+# tor puts the Tor the app ships beside the backend (backend/tor.go,
+# desktop/scripts/fetch-tor.mjs): the Tor Project's build for the platform,
+# checked against its pinned hash
+tor:
+	node desktop/scripts/fetch-tor.mjs $(GOOS) $(GOARCH) $(BACKEND_DIR)/tor
+
 frontend:
 	cd frontend && npm ci && npm run build
 
@@ -62,7 +68,7 @@ desktop-deps:
 
 # prlx-gui builds an unpacked app for this machine under build/package
 # (e.g. build/package/linux-unpacked/parallax-wallet-app), quick to try out.
-prlx-gui: backend frontend desktop-deps
+prlx-gui: backend tor frontend desktop-deps
 	cd desktop && npm run build && DISPLAY_ARCH=$(DISPLAY_ARCH) npx electron-builder \
 	  $(EB_PLATFORM) --$(EB_ARCH) --dir -c.extraMetadata.version=$(VERSION)
 	@echo "Done building Parallax Wallet in build/package/"
@@ -70,7 +76,7 @@ prlx-gui: backend frontend desktop-deps
 # prlx-gui-package builds the release artifacts for GOOS/GOARCH: the
 # AppImage on Linux, the DMG on macOS, the installer and the portable
 # executable on Windows.
-prlx-gui-package: backend frontend desktop-deps
+prlx-gui-package: backend tor frontend desktop-deps
 	cd desktop && npm run build && DISPLAY_ARCH=$(DISPLAY_ARCH) npx electron-builder \
 	  $(EB_PLATFORM) --$(EB_ARCH) --publish never -c.extraMetadata.version=$(VERSION)
 	@ls -lh build/package/Parallax-Wallet-* 2>/dev/null || true
@@ -83,4 +89,4 @@ dev:
 	cd desktop && npm install && PROFILE=$(PROFILE) npm run dev
 
 clean:
-	rm -rf build/backend build/package frontend/dist desktop/dist
+	rm -rf build/backend build/package build/tor frontend/dist desktop/dist

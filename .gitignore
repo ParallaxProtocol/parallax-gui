@@ -1,6 +1,7 @@
 build/bin/
 build/backend/
 build/package/
+build/tor/
 frontend/node_modules/
 frontend/dist/*
 !frontend/dist/.gitkeep

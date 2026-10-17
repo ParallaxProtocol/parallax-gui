@@ -32,6 +32,7 @@ type App struct {
 	contacts *backend.Contacts
 	mcp      *backend.MCPServer
 	updater  *backend.Updater
+	tor      *backend.TorController
 
 	// walletErr is why the wallet didn't open, when it didn't
 	walletErr error
@@ -88,6 +89,19 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	a.node = backend.NewNodeController(cfg)
+	// Tor, when its switch is on, before anything goes out: the node and
+	// the app's own requests wait for it
+	dir := ""
+	if cfg != nil {
+		dir = cfg.Dir()
+	}
+	a.tor = backend.NewTorController(dir)
+	a.tor.SetEmitter(func(st backend.TorStatus) {
+		a.events.emit("tor", st)
+	})
+	a.tor.SetRouteListener(a.rerouteNode)
+	a.tor.Apply(conf)
+	a.node.SetTor(a.tor)
 	a.node.SetEmitter(func(evt backend.NodeEvent) {
 		a.events.emit("node", evt)
 		// The node keeps no journal: the wallet sends again what's waiting
@@ -132,6 +146,7 @@ func (a *App) startup(ctx context.Context) {
 			Wallet:   a.wallet,
 			Contacts: a.contacts,
 			Logs:     a.logs,
+			HTTP:     a.tor.HTTPClient(),
 		})
 		a.mcp.SetEmitter(func(st backend.MCPStatus) {
 			a.events.emit("mcp", st)
@@ -156,7 +171,7 @@ func (a *App) startup(ctx context.Context) {
 
 	// Auto-updater: check for new releases on startup and periodically.
 	backend.CleanupOldBinary()
-	a.updater = backend.NewUpdater()
+	a.updater = backend.NewUpdater(a.tor.HTTPClient())
 	a.updater.SetEmitter(func(p backend.UpdateProgress) {
 		a.events.emit("update-progress", p)
 	})
@@ -223,6 +238,9 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.node != nil {
 		_ = a.node.Stop()
 	}
+	if a.tor != nil {
+		a.tor.Close()
+	}
 	if a.logs != nil {
 		a.logs.Close()
 	}
@@ -275,6 +293,9 @@ func (a *App) UpdateConfig(c backend.GUIConfig) error {
 	if a.mcp != nil {
 		a.mcp.Apply(c)
 	}
+	// Tor starts or stops at once, for the app's own requests; a running
+	// node goes behind it, or out of it, as it restarts (Settings asks)
+	a.tor.Apply(c)
 	if a.wallet != nil {
 		a.wallet.SetAutoLock(c.AutoLock())
 	}
@@ -286,6 +307,32 @@ func (a *App) UpdateConfig(c backend.GUIConfig) error {
 		a.logs.SetVerbosity(level)
 	}
 	return nil
+}
+
+// rerouteNode starts a running node again, in the background, on the
+// route Tor is ready on now (TorController.SetRouteListener).
+func (a *App) rerouteNode() {
+	if a.node.Stack() == nil {
+		return
+	}
+	go func() {
+		if err := a.node.Stop(); err != nil {
+			logging.Warn("Failed to stop the node for Tor", "err", err)
+		}
+		if err := a.node.Start(a.ctx); err != nil {
+			logging.Error("Failed to start the node again for Tor", "err", err)
+		}
+	}()
+}
+
+// TorStatus reports the Tor switch, how Tor is doing, and the node: its
+// onion service while it has one, and whether it's behind Tor yet.
+func (a *App) TorStatus() backend.TorStatus {
+	st := a.tor.Status()
+	st.Onion = a.node.OnionService()
+	st.NodeRunning = a.node.Stack() != nil
+	st.NodeBehind = a.node.BehindTor()
+	return st
 }
 
 // ---------------------------------------------------------------------------

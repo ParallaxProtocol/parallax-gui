@@ -158,6 +158,33 @@ func applyP2PFlags(g GUIConfig, cfg *p2p.Config) error {
 	return nil
 }
 
+// applyTorRoute puts the node behind the Tor at route, for the Tor switch
+// (tor.go), over what the privacy settings ask: every peer it dials, onion
+// ones included, through Tor's SOCKS port, the DNS seeds resolved there
+// too, and its onion service made through Tor's control port. Its
+// listener keeps to the loopback interface, where only the onion service
+// reaches it, and no NAT mapping opens a port on the router: peers reach
+// it over Tor alone, as Bitcoin Core's -proxy without -listen. With
+// TorOnionOnly it dials onion peers only.
+func applyTorRoute(g GUIConfig, route torRoute, cfg *p2p.Config) error {
+	cfg.ProxyAddr = route.SOCKS
+	cfg.OnionProxyAddr = ""
+	cfg.TorControlAddr = route.Control
+	cfg.TorPassword = route.Password
+	cfg.NAT = nil
+	if g.TorOnionOnly {
+		cfg.OnlyNet = []string{"onion"}
+	}
+	if cfg.ListenAddr != "" {
+		_, port, err := net.SplitHostPort(cfg.ListenAddr)
+		if err != nil {
+			return fmt.Errorf("listen address %q: %w", cfg.ListenAddr, err)
+		}
+		cfg.ListenAddr = net.JoinHostPort("127.0.0.1", port)
+	}
+	return nil
+}
+
 // applyRPCFlags mirrors setHTTP, setWS, setGraphQL and setIPC.
 func applyRPCFlags(g GUIConfig, cfg *node.Config) error {
 	// Browser dapps make cross-origin calls; the listener is on loopback

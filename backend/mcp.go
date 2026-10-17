@@ -85,6 +85,7 @@ type MCPServer struct {
 	dir       string
 	node      *NodeController
 	assistant *Assistant
+	http      *http.Client // the explorer's and the status page's requests go by it
 
 	mu sync.Mutex
 	mcpSettings
@@ -103,7 +104,7 @@ type MCPServer struct {
 // the chain's tools it serves the app's own (assistant.go), each answering
 // only when the user allows it.
 func NewMCPServer(dir string, deps AssistantDeps) *MCPServer {
-	return &MCPServer{dir: dir, node: deps.Node, assistant: NewAssistant(deps)}
+	return &MCPServer{dir: dir, node: deps.Node, http: deps.HTTP, assistant: NewAssistant(deps)}
 }
 
 // Assistant holds the requests assistants make of the app.
@@ -283,11 +284,11 @@ func (m *MCPServer) startLocked() error {
 	deps := server.Deps{Cfg: cfg, Node: n, Log: log, Instructions: mcpInstructions(m.chainID, m.explorer, m.statusPage)}
 	ua := "parallax-wallet-app/" + GUIVersion
 	if cfg.ExplorerURL != "" {
-		deps.Explorer = blockscout.New(httpx.Options{BaseURL: cfg.ExplorerURL, Timeout: cfg.BackendTimeout, Retries: cfg.BackendRetries, UserAgent: ua})
-		deps.ExplorerStats = blockscout.NewStats(httpx.Options{BaseURL: cfg.StatsURL(), Timeout: cfg.BackendTimeout, Retries: cfg.BackendRetries, UserAgent: ua})
+		deps.Explorer = blockscout.New(httpx.Options{BaseURL: cfg.ExplorerURL, Timeout: cfg.BackendTimeout, Retries: cfg.BackendRetries, UserAgent: ua, HTTPClient: m.http})
+		deps.ExplorerStats = blockscout.NewStats(httpx.Options{BaseURL: cfg.StatsURL(), Timeout: cfg.BackendTimeout, Retries: cfg.BackendRetries, UserAgent: ua, HTTPClient: m.http})
 	}
 	if cfg.StatusURL != "" {
-		deps.Status = status.New(httpx.Options{BaseURL: cfg.StatusURL, Timeout: cfg.BackendTimeout, Retries: cfg.BackendRetries, UserAgent: ua}, cfg.StatusCacheTTL)
+		deps.Status = status.New(httpx.Options{BaseURL: cfg.StatusURL, Timeout: cfg.BackendTimeout, Retries: cfg.BackendRetries, UserAgent: ua, HTTPClient: m.http}, cfg.StatusCacheTTL)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

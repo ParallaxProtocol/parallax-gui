@@ -38,6 +38,9 @@ type Updater struct {
 	lastCheck   time.Time
 	emitter     func(UpdateProgress)
 	stopCh      chan struct{}
+	// http is what the checks and downloads go by: through Tor while its
+	// switch is on (tor.go)
+	http *http.Client
 	// installer is a downloaded Windows installer waiting to be run by the
 	// shell on restart.
 	installer string
@@ -57,9 +60,10 @@ func (u *Updater) PendingInstaller() string {
 }
 
 // NewUpdater creates a new Updater.
-func NewUpdater() *Updater {
+func NewUpdater(hc *http.Client) *Updater {
 	return &Updater{
 		stopCh: make(chan struct{}),
+		http:   hc,
 	}
 }
 
@@ -163,7 +167,7 @@ func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
 
 	logging.Info("Checking for updates", "current", GUIVersion)
 
-	resp, err := http.Get(guiReleasesAPI)
+	resp, err := u.http.Get(guiReleasesAPI)
 	if err != nil {
 		return nil, fmt.Errorf("fetch releases: %w", err)
 	}
@@ -364,7 +368,7 @@ func (u *Updater) downloadWithProgress(ctx context.Context, url string, expected
 		return "", err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := u.http.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -431,7 +435,7 @@ func (u *Updater) verifySHA256(info *UpdateInfo, zipPath string) error {
 	// Asset URLs: https://github.com/.../releases/download/<tag>/<filename>
 	sumsURL := strings.TrimSuffix(info.AssetURL, info.AssetName) + "SHA256SUMS.txt"
 
-	resp, err := http.Get(sumsURL)
+	resp, err := u.http.Get(sumsURL)
 	if err != nil {
 		logging.Warn("Could not fetch SHA256SUMS.txt, skipping verification", "err", err)
 		return nil

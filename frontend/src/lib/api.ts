@@ -108,6 +108,12 @@ export type GUIConfig = {
   noListenOnion: boolean;
   torControl: string;
   torPassword: string;
+  /** The Tor switch: everything the app sends goes through Tor (backend/tor.go). */
+  tor: boolean;
+  /** With it on, the node dials onion peers only. */
+  torOnionOnly: boolean;
+  /** Use the Tor running on this computer instead of the app's own. */
+  torSystem: boolean;
 
   httpHost: string;
   httpApis: string[] | null;
@@ -967,6 +973,28 @@ export type MCPActivity = {
   block?: number;
 };
 
+/** The Tor switch and how Tor is doing (backend/tor.go). */
+export type TorStatus = {
+  enabled: boolean;
+  onionOnly: boolean;
+  /** This build ships a Tor of its own. */
+  bundled: boolean;
+  /** The Tor running on this computer is used instead. */
+  system: boolean;
+  state: "off" | "starting" | "ready" | "failed";
+  /** Tor's bootstrap, 0 to 100 (the app's own Tor only). */
+  progress: number;
+  summary: string;
+  reason: "" | "notFound" | "exited" | "start";
+  error: string;
+  socks: string;
+  /** The node's onion address while its onion service is up. */
+  onion: string;
+  nodeRunning: boolean;
+  /** The running node went behind Tor as it started: one started before Tor was turned on goes behind it as it restarts. */
+  nodeBehind: boolean;
+};
+
 export type UpdateProgress = {
   step: "downloading" | "verifying" | "extracting" | "ready" | "ready-manual" | "error";
   percent: number;
@@ -997,6 +1025,8 @@ export const api = {
   assistantReject: (id: string) => call<void>("AssistantReject", id),
   /** Answers a permission prompt: once (this assistant's connection) or always. */
   assistantAllow: (id: string, always: boolean) => call<AssistantRequest>("AssistantAllow", id, always),
+
+  torStatus: () => call<TorStatus>("TorStatus"),
 
   startNode: () => call<void>("StartNode"),
   stopNode: () => call<void>("StopNode"),
