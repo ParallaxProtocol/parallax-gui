@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from "react";
 
 /** What a notification is about, for its icon. */
-export type NoticeKind = "synced" | "lowdisk" | "update" | "received" | "sent" | "failed";
+export type NoticeKind = "synced" | "lowdisk" | "received" | "sent" | "failed";
 
 export type AppNotice = {
   id: number;

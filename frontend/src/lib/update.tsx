@@ -2,46 +2,40 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { api, onEvent } from "./api";
 import type { UpdateInfo, UpdateProgress } from "./api";
 import { UpdateContext, type UpdateCtx, type UpdateState } from "./updateContext";
-import { useNotifications } from "./notifications";
-import { useT } from "../i18n";
 
 /**
  * UpdateProvider follows the app's own updates: whether a new release is
- * out (checked every minute), and its download, verification and install
- * once the user takes it. A new release is also a notification, once.
+ * out (told by the backend the moment its check finds one), and its
+ * download, verification and install once the user takes it. A new
+ * release is the top bar's Update button alone, not a notification too.
  */
 export function UpdateProvider({ children }: { children: ReactNode }) {
-  const t = useT();
-  const { push } = useNotifications();
   const [state, setState] = useState<UpdateState>({ kind: "hidden" });
   const infoRef = useRef<UpdateInfo | null>(null);
-  const announced = useRef("");
+  // Whether an update is under way, for a release found meanwhile to wait
+  const working = useRef(false);
+  working.current = state.kind !== "hidden" && state.kind !== "available";
 
   useEffect(() => {
     let cancelled = false;
-    const check = () => {
-      api
-        .getLatestUpdate()
-        .then((info) => {
-          if (cancelled || !info) return;
-          infoRef.current = info;
-          // A poll must not knock an install in progress back to the offer
-          setState((s) => (s.kind === "hidden" ? { kind: "available", info } : s));
-          if (announced.current !== info.latestVersion) {
-            announced.current = info.latestVersion;
-            push("update", t("updater.available"), `v${info.latestVersion}`);
-          }
-        })
-        .catch(() => {});
+    const offer = (info: UpdateInfo) => {
+      // A later find must not knock an install in progress back to the offer
+      if (working.current) return;
+      infoRef.current = info;
+      setState({ kind: "available", info });
     };
-    check();
-    // Re-check periodically, in case the background check found something
-    const id = setInterval(check, 60_000);
+    // What a check already found before the app was here to be told, then
+    // each release a check finds, as it finds it
+    api
+      .getLatestUpdate()
+      .then((info) => !cancelled && info && offer(info))
+      .catch(() => {});
+    const off = onEvent<UpdateInfo>("update-available", offer);
     return () => {
       cancelled = true;
-      clearInterval(id);
+      off();
     };
-  }, [push, t]);
+  }, []);
 
   useEffect(
     () =>
@@ -80,10 +74,6 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
           const info = infoRef.current;
           if (info) setState({ kind: "error", info, message: String(err) });
         });
-      },
-      dismiss: () => {
-        api.dismissUpdate().catch(() => {});
-        setState({ kind: "hidden" });
       },
       retry: () => {
         const info = infoRef.current;

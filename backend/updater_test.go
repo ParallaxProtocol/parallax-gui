@@ -7,7 +7,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 // TestVerifySHA256 checks that an update is installed only against the
@@ -53,5 +55,51 @@ func TestVerifySHA256(t *testing.T) {
 	srv.Close()
 	if err := u.verifySHA256(info, file); err == nil {
 		t.Error("verified with the release unreachable")
+	}
+}
+
+// TestClipNotes checks that long release notes are cut short, at a whole
+// character, and short ones kept as they are.
+func TestClipNotes(t *testing.T) {
+	if got := clipNotes("## Fixes\n- one"); got != "## Fixes\n- one" {
+		t.Fatalf("clipNotes(short) = %q", got)
+	}
+	long := "a" + strings.Repeat("é", maxNotes) // two bytes each after one: the cut lands mid-rune
+	got := clipNotes(long)
+	if !utf8.ValidString(got) || !strings.HasSuffix(got, "…") || len(got) > maxNotes+len("…") {
+		t.Fatalf("clipNotes(long) = %d bytes, valid %v", len(got), utf8.ValidString(got))
+	}
+}
+
+// TestReleasesBetween checks that the notes shown are every published
+// release after the one running, up to the latest, newest first: not the
+// running one or older, not drafts or prereleases, not one past the latest.
+func TestReleasesBetween(t *testing.T) {
+	list := []githubRelease{
+		{TagName: "v1.4.0", Body: "too new"},
+		{TagName: "v1.3.0", Body: "latest, from the list"},
+		{TagName: "v1.2.1", Body: "fix"},
+		{TagName: "v1.2.1-rc1", Prerelease: true},
+		{TagName: "v1.2.5", Draft: true},
+		{TagName: "v1.1.0", Body: "minor"},
+		{TagName: "v1.2.0", Body: "feature"},
+		{TagName: "v1.0.1", Body: "running"},
+		{TagName: "v0.9.0", Body: "old"},
+	}
+	latest := ReleaseNotes{Version: "1.3.0", Notes: "latest"}
+	got := releasesBetween(list, "1.0.1", latest)
+	var versions []string
+	for _, r := range got {
+		versions = append(versions, r.Version)
+	}
+	want := []string{"1.3.0", "1.2.1", "1.2.0", "1.1.0"}
+	if strings.Join(versions, " ") != strings.Join(want, " ") {
+		t.Fatalf("releasesBetween = %v, want %v", versions, want)
+	}
+	if got[0].Notes != "latest" {
+		t.Fatalf("latest's notes = %q, want the release it was found by", got[0].Notes)
+	}
+	if got := releasesBetween(nil, "1.0.1", latest); len(got) != 1 || got[0].Version != "1.3.0" {
+		t.Fatalf("releasesBetween(no list) = %v, want the latest alone", got)
 	}
 }

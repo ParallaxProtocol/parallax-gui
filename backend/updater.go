@@ -15,17 +15,21 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ParallaxProtocol/parallax/v2/logging"
 )
 
 const (
 	guiReleasesAPI = "https://api.github.com/repos/ParallaxProtocol/parallax-gui/releases/latest"
-	checkCooldown  = 5 * time.Minute // minimum interval between checks
+	// guiReleaseListAPI lists the releases, newest first, for their notes
+	guiReleaseListAPI = "https://api.github.com/repos/ParallaxProtocol/parallax-gui/releases?per_page=100"
+	checkCooldown     = 5 * time.Minute // minimum interval between checks
 )
 
 // Updater checks GitHub Releases for new versions of Parallax Wallet and
@@ -33,11 +37,12 @@ const (
 type Updater struct {
 	mu          sync.Mutex
 	latest      *UpdateInfo
-	dismissed   string // version the user dismissed
 	downloading bool
 	lastCheck   time.Time
 	emitter     func(UpdateProgress)
-	stopCh      chan struct{}
+	// found is told each release a check finds, for the app to offer at once
+	found  func(*UpdateInfo)
+	stopCh chan struct{}
 	// http is what the checks and downloads go by: through Tor while its
 	// switch is on (tor.go)
 	http *http.Client
@@ -73,6 +78,14 @@ func (u *Updater) SetEmitter(fn func(UpdateProgress)) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	u.emitter = fn
+}
+
+// OnFound installs the callback told each newer release a check finds,
+// as it finds it, so the app needn't wait to ask for it.
+func (u *Updater) OnFound(fn func(*UpdateInfo)) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	u.found = fn
 }
 
 func (u *Updater) emit(p UpdateProgress) {
@@ -142,17 +155,6 @@ func (u *Updater) Latest() *UpdateInfo {
 	return u.latest
 }
 
-// Dismiss marks the current latest version as dismissed. The banner will not
-// reappear until a newer version is found.
-func (u *Updater) Dismiss() {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-	if u.latest != nil {
-		u.dismissed = u.latest.LatestVersion
-		u.latest = nil
-	}
-}
-
 // CheckForUpdate queries the GitHub Releases API and returns update info if a
 // newer version is available. Returns nil when already up-to-date.
 func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
@@ -181,6 +183,7 @@ func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
 		TagName     string `json:"tag_name"`
 		HTMLURL     string `json:"html_url"`
 		PublishedAt string `json:"published_at"`
+		Body        string `json:"body"`
 		Draft       bool   `json:"draft"`
 		Prerelease  bool   `json:"prerelease"`
 		Assets      []struct {
@@ -244,15 +247,21 @@ func (u *Updater) CheckForUpdate() (*UpdateInfo, error) {
 		AssetSize:      assetSize,
 		PublishedAt:    release.PublishedAt,
 	}
+	latestNotes := ReleaseNotes{
+		Version:     latestVersion,
+		PublishedAt: release.PublishedAt,
+		URL:         release.HTMLURL,
+		Notes:       clipNotes(release.Body),
+	}
+	info.Releases = u.notesSince(GUIVersion, latestNotes)
 
 	u.mu.Lock()
-	if u.dismissed == latestVersion {
-		u.mu.Unlock()
-		logging.Info("Update available but dismissed by user", "version", latestVersion)
-		return nil, nil
-	}
 	u.latest = info
+	found := u.found
 	u.mu.Unlock()
+	if found != nil {
+		found(info)
+	}
 
 	logging.Info("Update available", "current", GUIVersion, "latest", latestVersion)
 	return info, nil
@@ -673,4 +682,80 @@ func semverNewer(current, candidate string) bool {
 		}
 	}
 	return false
+}
+
+// githubRelease is what the release list says of each release.
+type githubRelease struct {
+	TagName     string `json:"tag_name"`
+	HTMLURL     string `json:"html_url"`
+	PublishedAt string `json:"published_at"`
+	Body        string `json:"body"`
+	Draft       bool   `json:"draft"`
+	Prerelease  bool   `json:"prerelease"`
+}
+
+// notesSince reads the notes of every release from the one running to the
+// latest, for the app to show what updating brings. Without the list
+// (GitHub unreachable, or refusing), the latest's notes alone.
+func (u *Updater) notesSince(current string, latest ReleaseNotes) []ReleaseNotes {
+	resp, err := u.http.Get(guiReleaseListAPI)
+	if err != nil {
+		logging.Warn("Failed to read the releases' notes", "err", err)
+		return []ReleaseNotes{latest}
+	}
+	defer resp.Body.Close()
+	var list []githubRelease
+	if resp.StatusCode != 200 {
+		logging.Warn("Failed to read the releases' notes", "status", resp.StatusCode)
+		return []ReleaseNotes{latest}
+	}
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxReleaseList)).Decode(&list); err != nil {
+		logging.Warn("Failed to read the releases' notes", "err", err)
+		return []ReleaseNotes{latest}
+	}
+	return releasesBetween(list, current, latest)
+}
+
+// maxReleaseList bounds the release list read: a hundred releases' notes
+// and assets, with plenty of room.
+const maxReleaseList = 16 << 20
+
+// maxReleasesShown bounds how many releases' notes are kept, newest first.
+const maxReleasesShown = 50
+
+// releasesBetween keeps, of a release list, the published releases newer
+// than current and no newer than latest, newest first, each one's notes
+// clipped; latest's own (from the release it was found by) always first.
+func releasesBetween(list []githubRelease, current string, latest ReleaseNotes) []ReleaseNotes {
+	out := []ReleaseNotes{latest}
+	for _, r := range list {
+		v := strings.TrimPrefix(r.TagName, "v")
+		if r.Draft || r.Prerelease || v == latest.Version {
+			continue
+		}
+		if !semverNewer(current, v) || semverNewer(latest.Version, v) {
+			continue
+		}
+		out = append(out, ReleaseNotes{Version: v, PublishedAt: r.PublishedAt, URL: r.HTMLURL, Notes: clipNotes(r.Body)})
+	}
+	sort.SliceStable(out[1:], func(i, j int) bool { return semverNewer(out[1+j].Version, out[1+i].Version) })
+	if len(out) > maxReleasesShown {
+		out = out[:maxReleasesShown]
+	}
+	return out
+}
+
+// maxNotes bounds the release notes kept for the app to show.
+const maxNotes = 64 << 10
+
+// clipNotes keeps a release's notes to maxNotes bytes, cut at a rune.
+func clipNotes(s string) string {
+	if len(s) <= maxNotes {
+		return s
+	}
+	s = s[:maxNotes]
+	for len(s) > 0 && !utf8.ValidString(s) {
+		s = s[:len(s)-1]
+	}
+	return s + "…"
 }

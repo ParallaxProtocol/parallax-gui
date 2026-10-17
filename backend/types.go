@@ -419,6 +419,17 @@ type UpdateInfo struct {
 	AssetName      string `json:"assetName"`
 	AssetSize      int64  `json:"assetSize"` // bytes
 	PublishedAt    string `json:"publishedAt"`
+	// Releases are the notes of every release from the one running to the
+	// latest, newest first: what updating brings
+	Releases []ReleaseNotes `json:"releases"`
+}
+
+// ReleaseNotes is one release's notes, as written on GitHub, in Markdown.
+type ReleaseNotes struct {
+	Version     string `json:"version"`
+	PublishedAt string `json:"publishedAt"`
+	URL         string `json:"url"`
+	Notes       string `json:"notes"`
 }
 
 // UpdateProgress is broadcast as the "update-progress" event.

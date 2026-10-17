@@ -18,14 +18,12 @@ export type UpdateState =
 export type UpdateCtx = {
   state: UpdateState;
   update: () => void;
-  dismiss: () => void;
   retry: () => void;
 };
 
 export const UpdateContext = createContext<UpdateCtx>({
   state: { kind: "hidden" },
   update: () => {},
-  dismiss: () => {},
   retry: () => {},
 });
 

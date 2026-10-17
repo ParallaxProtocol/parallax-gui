@@ -21,6 +21,8 @@ export function Modal({
   subtitle,
   icon,
   tone = "default",
+  wide,
+  footer,
   children,
 }: {
   open: boolean;
@@ -31,6 +33,10 @@ export function Modal({
   icon?: ReactNode;
   /** "danger" colours the icon's disc for a destructive decision. */
   tone?: "default" | "danger";
+  /** Wider and less tall, for reading: a release's notes. */
+  wide?: boolean;
+  /** Held under what scrolls, never scrolled with it: its scrollbar ends above it. */
+  footer?: ReactNode;
   children: ReactNode;
 }) {
   const t = useT();
@@ -97,13 +103,16 @@ export function Modal({
             aria-label={title}
             tabIndex={-1}
             // Frosted glass, as the Settings sheet and drawers: what's behind shows through, blurred
-            className="relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl border border-glass-edge bg-popover/80 shadow-[var(--glass-shine),var(--shadow-popover)] backdrop-blur-2xl backdrop-saturate-150 outline-none"
+            className={`relative flex w-full ${wide ? "max-h-[min(100%,52rem)] max-w-3xl" : "max-h-full max-w-md"} flex-col overflow-hidden rounded-2xl border border-glass-edge bg-popover/80 shadow-[var(--glass-shine),var(--shadow-popover)] backdrop-blur-2xl backdrop-saturate-150 outline-none`}
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: 4, transition: FADE_OUT }}
             transition={SPRING}
           >
-            <header className="flex items-center gap-3 px-5 pt-5">
+            <header
+              // Wide, what's under it scrolls: a hairline parts the two, as the footer's does below
+              className={`flex shrink-0 items-center gap-3 px-5 pt-5 ${wide ? "border-b border-border pb-4" : ""}`}
+            >
               {/* Its symbol bare, as a sheet leads with one, in its tone; given
                   at any size, it's drawn at the title's, at the app's weight */}
               {icon && (
@@ -130,6 +139,7 @@ export function Modal({
               </button>
             </header>
             <div className="min-h-0 overflow-y-auto">{children}</div>
+            {footer && <div className="shrink-0">{footer}</div>}
           </motion.div>
         </div>
       )}

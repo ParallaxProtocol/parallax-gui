@@ -176,6 +176,12 @@ func (a *App) startup(ctx context.Context) {
 	a.updater.SetEmitter(func(p backend.UpdateProgress) {
 		a.events.emit("update-progress", p)
 	})
+	// A release found is offered at once, not at the app's next look
+	a.updater.OnFound(func(info *backend.UpdateInfo) {
+		if !a.offline() {
+			a.events.emit("update-available", info)
+		}
+	})
 	a.updater.StartPeriodicCheck(30*time.Minute, func() bool {
 		// An offline signer never reaches out, not even for updates
 		return a.cfg != nil && !a.cfg.Get().NoUpdateCheck && !a.cfg.Get().OfflineSigner
@@ -1283,11 +1289,6 @@ func (a *App) ApplyUpdate() error {
 		return backend.ErrOfflineSigner
 	}
 	return a.updater.DownloadAndInstall(a.ctx)
-}
-
-// DismissUpdate hides the update notification until a newer version appears.
-func (a *App) DismissUpdate() {
-	a.updater.Dismiss()
 }
 
 // RestartApp asks the shell to restart the app, onto the update just

@@ -8,10 +8,11 @@ import {
   CheckCircle2,
   Download,
   HardDrive,
-  Loader2,
   Lock,
+  OctagonAlert,
   PanelLeftClose,
   PanelLeftOpen,
+  RotateCw,
   XCircle,
 } from "lucide-react";
 import { FADE_IN, FADE_OUT, GLIDE, SPRING } from "../../lib/motion";
@@ -23,9 +24,10 @@ import { useWallet } from "../../lib/wallet";
 import { useAgo, useT } from "../../i18n";
 import { useNow } from "../../lib/useNow";
 import { Tooltip } from "../ui/Tooltip";
-import UpdatePanel from "../UpdatePanel";
+import UpdateModal from "../UpdateModal";
 import { IconBadge } from "../ui/IconBadge";
 import { EmptySymbol } from "../ui/bits";
+import { ActivitySpinner } from "../ui/ActivitySpinner";
 
 /** The top bar's height, the window's title bar, with macOS's row for its traffic lights over it. */
 export const TOP_BAR_HEIGHT = 52 + TRAFFIC_LIGHTS_ROW;
@@ -41,6 +43,7 @@ export const TOP_BAR_HEIGHT = 52 + TRAFFIC_LIGHTS_ROW;
 export default function TopBar() {
   const t = useT();
   const { state } = useUpdate();
+  const [updateOpen, setUpdateOpen] = useState(false);
   const { unread, markRead } = useNotifications();
   const sidebar = useSidebar();
   const sidebarLabel = sidebar.collapsed ? t("nav.expandSidebar") : t("nav.collapseSidebar");
@@ -64,28 +67,52 @@ export default function TopBar() {
       <span className="flex-1" />
 
       {state.kind !== "hidden" && (
-        <Popover
-          label={t("updater.available")}
-          button={(open) => (
-            <span
-              className={`btn btn-sm ${state.kind === "available" ? "btn-primary" : "btn-secondary"} ${open ? "brightness-95" : ""}`}
+        <>
+          <Tooltip content={t("updater.available")}>
+            <button
+              type="button"
+              aria-label={t("updater.available")}
+              aria-haspopup="dialog"
+              onClick={() => setUpdateOpen(true)}
+              // A box of its face's size, as the popovers' buttons
+              className="flex"
             >
-              {state.kind === "downloading" ? (
-                <>
-                  <Loader2 className="size-3 animate-spin" />
-                  {state.percent}%
-                </>
-              ) : (
-                <>
-                  <Download className="size-3" />
-                  {t("updater.update")}
-                </>
-              )}
-            </span>
-          )}
-        >
-          <UpdatePanel />
-        </Popover>
+              {/* The step it's at, at a glance: on offer and ready to restart in
+                  the accent, working with the activity indicator, failed in red */}
+              <span
+                className={`btn btn-sm ${state.kind === "available" || state.kind === "ready" ? "btn-primary" : "btn-secondary"} ${updateOpen ? "brightness-95" : ""}`}
+              >
+                {state.kind === "downloading" ? (
+                  <>
+                    <ActivitySpinner size={12} />
+                    <span className="tabular-nums">{state.percent}%</span>
+                  </>
+                ) : state.kind === "verifying" || state.kind === "extracting" ? (
+                  <>
+                    <ActivitySpinner size={12} />
+                    {t("updater.update")}
+                  </>
+                ) : state.kind === "ready" ? (
+                  <>
+                    <RotateCw className="size-3" />
+                    {t("updater.restart")}
+                  </>
+                ) : state.kind === "error" ? (
+                  <>
+                    <OctagonAlert className="size-3 text-critical-ink" />
+                    {t("updater.update")}
+                  </>
+                ) : (
+                  <>
+                    <Download className="size-3" />
+                    {t("updater.update")}
+                  </>
+                )}
+              </span>
+            </button>
+          </Tooltip>
+          <UpdateModal open={updateOpen} onClose={() => setUpdateOpen(false)} />
+        </>
       )}
 
       <Popover
@@ -201,16 +228,14 @@ function Popover({
 const KIND_ICON: Record<NoticeKind, typeof Bell> = {
   synced: CheckCircle2,
   lowdisk: HardDrive,
-  update: Download,
   received: ArrowDownLeft,
   sent: ArrowUpRight,
   failed: XCircle,
 };
 
-const KIND_TONE: Record<NoticeKind, "critical" | "good" | "brand" | "neutral"> = {
+const KIND_TONE: Record<NoticeKind, "critical" | "good" | "neutral"> = {
   synced: "good",
   lowdisk: "critical",
-  update: "brand",
   received: "good",
   sent: "neutral",
   failed: "critical",

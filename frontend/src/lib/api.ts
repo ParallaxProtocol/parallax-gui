@@ -867,7 +867,12 @@ export type UpdateInfo = {
   assetName: string;
   assetSize: number;
   publishedAt: string;
+  /** The notes of every release from the one running to the latest, newest first. */
+  releases?: ReleaseNotes[];
 };
+
+/** One release's notes, as written on GitHub, in Markdown. */
+export type ReleaseNotes = { version: string; publishedAt: string; url: string; notes: string };
 
 /**
  * How the app answers an assistant's use of a feature: without asking, by
@@ -1171,6 +1176,5 @@ export const api = {
   checkForUpdate: () => call<UpdateInfo | null>("CheckForUpdate"),
   getLatestUpdate: () => call<UpdateInfo | null>("GetLatestUpdate"),
   applyUpdate: () => call<void>("ApplyUpdate"),
-  dismissUpdate: () => call<void>("DismissUpdate"),
   restartApp: () => call<void>("RestartApp"),
 };
