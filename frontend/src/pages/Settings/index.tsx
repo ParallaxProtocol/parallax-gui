@@ -18,7 +18,15 @@ import {
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
-import { api, CONFIG_UPDATED_EVENT, GUIConfig, openExternal, UpdateInfo, type TorStatus } from "../../lib/api";
+import {
+  api,
+  beforeNodeStart,
+  CONFIG_UPDATED_EVENT,
+  GUIConfig,
+  openExternal,
+  UpdateInfo,
+  type TorStatus,
+} from "../../lib/api";
 import { formatUnits, parseUnits } from "../../lib/format";
 import { applyTheme } from "../../lib/theme";
 import { FADE_IN, FADE_OUT, GLIDE, SPRING, usePageSwap } from "../../lib/motion";
@@ -38,9 +46,21 @@ import { Segmented } from "../../components/ui/Segmented";
 import Toggle from "../../components/ui/Toggle";
 import { CopyButton, Meter, Notice } from "../../components/ui/bits";
 import { useTorStatus } from "../../lib/torStatus";
+import { ReleaseNotesModal } from "../../components/ReleaseNotes";
 import LogsPanel from "./LogsPanel";
 import { AssistantsOverview, AssistantsPermissions } from "./AssistantsSettings";
-import { Advanced, countSet, FolderInput, Group, ListInput, NumberInput, Reveal, Setting, TextInput } from "./fields";
+import {
+  Advanced,
+  countSet,
+  Fold,
+  FolderInput,
+  Group,
+  ListInput,
+  NumberInput,
+  Reveal,
+  Setting,
+  TextInput,
+} from "./fields";
 import { AddressAvatar } from "../../components/ui/AddressAvatar";
 import { useOfflineMode } from "../../lib/offline";
 import { useWallet } from "../../lib/wallet";
@@ -73,6 +93,12 @@ const LIVE_FIELDS = new Set<keyof GUIConfig>([
   "mcpAllow",
 ]);
 
+// Of the fields above, those typed: saved once the typing pauses, so a
+// half-typed value (a port's first digits) is never applied. The node's
+// own, saved at once only while it's stopped, all wait for the pause
+const TYPED_FIELDS = new Set<keyof GUIConfig>(["mcpPort", "offlineFeeCapWei", "staticPeers", "trustedPeers"]);
+const TYPING_PAUSE_MS = 800;
+
 // Fields the daemon reads only as its process starts, from its argv:
 // they wait on a restart of the whole app
 const APP_FIELDS = new Set<keyof GUIConfig>(["metrics", "metricsExpensive", "metricsAddr", "metricsPort"]);
@@ -92,6 +118,21 @@ export default function Settings() {
   const [restartPending, setRestartPending] = useState(false);
   const [appRestartPending, setAppRestartPending] = useState(false);
   const [restarting, setRestarting] = useState(false);
+  // Changes that save without the save bar: those waiting for the typing to
+  // pause, those being saved, and the flush that saves what's waiting, run
+  // as Settings closes and before the node starts too
+  const waiting = useRef<Partial<GUIConfig>>({});
+  const saving = useRef(new Set<keyof GUIConfig>());
+  const waitTimer = useRef<ReturnType<typeof setTimeout>>();
+  const flush = useRef<() => Promise<void>>(async () => {});
+  useEffect(() => {
+    const before = () => flush.current();
+    beforeNodeStart.add(before);
+    return () => {
+      beforeNodeStart.delete(before);
+      flush.current();
+    };
+  }, []);
   // A stopped node reads the saved settings when it next starts: nothing
   // waits on its restart then
   const nodeRunning = !!useNode()?.running;
@@ -107,6 +148,11 @@ export default function Settings() {
         : t("node.waitTorFailed");
   useEffect(() => {
     if (!nodeRunning) setRestartPending(false);
+    // Started some other way (on launch, by an assistant) with the node's
+    // changes still waiting: saved now, and the restart they need asked for
+    else if (Object.keys(waiting.current).some((k) => !LIVE_FIELDS.has(k as keyof GUIConfig))) {
+      flush.current().then(() => setRestartPending(true));
+    }
   }, [nodeRunning]);
   const { section: chosen, setSection, page } = useSettingsSheet();
   // An offline signer never runs its node: its sections aren't shown, and
@@ -158,7 +204,54 @@ export default function Settings() {
 
   if (!cfg || !orig) return null;
 
-  const update = (patch: Partial<GUIConfig>) => setCfg({ ...cfg, ...patch });
+  // Saves changes that don't wait for the save bar on top of the config as
+  // it is now, then counts them saved
+  const saveNow = async (patch: Partial<GUIConfig>) => {
+    const ks = Object.keys(patch) as (keyof GUIConfig)[];
+    if (ks.length === 0) return;
+    ks.forEach((k) => saving.current.add(k));
+    try {
+      const fresh = await api.getConfig();
+      await api.updateConfig({ ...fresh, ...patch });
+      setOrig((o) => (o ? { ...o, ...patch } : o));
+      window.dispatchEvent(new Event(CONFIG_UPDATED_EVENT));
+    } catch (e: any) {
+      setErr(e?.message || String(e));
+    } finally {
+      ks.forEach((k) => saving.current.delete(k));
+    }
+  };
+  flush.current = () => {
+    clearTimeout(waitTimer.current);
+    const patch = waiting.current;
+    waiting.current = {};
+    return saveNow(patch);
+  };
+
+  // Whether a change to k saves without the save bar: what the app applies
+  // itself, and, while the node is stopped, what configures it, which it
+  // reads as it next starts. Not the offline signer, which takes the node
+  // down at once, so waits for Save as a decision does; nor what the app
+  // must restart for
+  const savesNow = (k: keyof GUIConfig) =>
+    k !== "offlineSigner" && !APP_FIELDS.has(k) && (LIVE_FIELDS.has(k) || !nodeRunning);
+
+  // A change made only of fields that save now saves at once, or, typed or
+  // the node's, once the typing pauses; any other waits for Save, and what
+  // it needs restarted. A change that mixes them waits whole, so a field
+  // set alongside a decision (the offline signer's) isn't applied without it
+  const update = (patch: Partial<GUIConfig>) => {
+    setCfg((c) => (c ? { ...c, ...patch } : c));
+    const ks = Object.keys(patch) as (keyof GUIConfig)[];
+    if (!ks.every(savesNow)) return;
+    if (ks.every((k) => LIVE_FIELDS.has(k) && !TYPED_FIELDS.has(k))) {
+      saveNow(patch);
+      return;
+    }
+    waiting.current = { ...waiting.current, ...patch };
+    clearTimeout(waitTimer.current);
+    waitTimer.current = setTimeout(() => flush.current(), TYPING_PAUSE_MS);
+  };
 
   // A few settings apply and save at once, outside the save bar: a theme is
   // judged by seeing it, a log level by the logs it lets through
@@ -183,7 +276,9 @@ export default function Settings() {
     if (ch.some((k) => APP_FIELDS.has(k))) return "app";
     return nodeRunning && ch.length > 0;
   };
-  const dirty = keys.some(changed);
+  // What the save bar is for: changes not on their way to being saved without it
+  const pendingNow = (k: keyof GUIConfig) => k in waiting.current || saving.current.has(k);
+  const dirty = keys.some((k) => changed(k) && !pendingNow(k));
   const dirtyNeedsRestart = nodeRunning && keys.some((k) => changed(k) && !LIVE_FIELDS.has(k) && !APP_FIELDS.has(k));
   const dirtyNeedsAppRestart = keys.some((k) => changed(k) && APP_FIELDS.has(k));
 
@@ -237,49 +332,63 @@ export default function Settings() {
   };
 
   // The node's storage, on the Node page and again among the app's Storage
-  // beside the wallet's: one set of rows, so the two never differ. In
-  // Storage (manage), its Advanced also moves the data and clears the chain
-  const nodeStorage = (title: string, manage?: boolean) => (
-    <Group title={title}>
-      <Rows>
-        <Setting title={t("settings.dataDir")} desc={t("settings.dataDir.desc")} restart={restart("dataDir")}>
-          <FolderInput title={t("settings.dataDir")} value={cfg.dataDir} onChange={(v) => update({ dataDir: v })} />
+  // beside the wallet's: one set of rows, so the two never differ. On the
+  // Node page its finer options fold under Advanced; in Storage (manage)
+  // they're all in view, with the rows that move the data and clear the chain
+  const nodeStorage = (title: string, manage?: boolean) => {
+    const finer = (
+      <>
+        <Setting
+          title={t("settings.ancientDir")}
+          more={t("settings.ancientDir.more")}
+          flag="--datadir.ancient"
+          desc={t("settings.ancientDir.desc")}
+          restart={restart("ancientDir")}
+        >
+          <TextInput
+            width="w-72"
+            value={cfg.ancientDir}
+            placeholder={t("settings.ancientDir.placeholder")}
+            onChange={(v) => update({ ancientDir: v })}
+          />
         </Setting>
-        <Advanced id="storage" changed={countSet([cfg.ancientDir, cfg.minFreeDiskMB])}>
-          <Setting
-            title={t("settings.ancientDir")}
-            more={t("settings.ancientDir.more")}
-            flag="--datadir.ancient"
-            desc={t("settings.ancientDir.desc")}
-            restart={restart("ancientDir")}
-          >
-            <TextInput
-              width="w-72"
-              value={cfg.ancientDir}
-              placeholder={t("settings.ancientDir.placeholder")}
-              onChange={(v) => update({ ancientDir: v })}
-            />
+        <Setting
+          title={t("settings.minFreeDisk")}
+          more={t("settings.minFreeDisk.more")}
+          flag="--datadir.minfreedisk"
+          desc={t("settings.minFreeDisk.desc")}
+          restart={restart("minFreeDiskMB")}
+        >
+          <NumberInput
+            optional
+            value={cfg.minFreeDiskMB}
+            placeholder={2 * cfg.trieDirtyCacheMB}
+            unit="MB"
+            onChange={(v) => update({ minFreeDiskMB: v })}
+          />
+        </Setting>
+      </>
+    );
+    return (
+      <Group title={title}>
+        <Rows>
+          <Setting title={t("settings.dataDir")} desc={t("settings.dataDir.desc")} restart={restart("dataDir")}>
+            <FolderInput title={t("settings.dataDir")} value={cfg.dataDir} onChange={(v) => update({ dataDir: v })} />
           </Setting>
-          <Setting
-            title={t("settings.minFreeDisk")}
-            more={t("settings.minFreeDisk.more")}
-            flag="--datadir.minfreedisk"
-            desc={t("settings.minFreeDisk.desc")}
-            restart={restart("minFreeDiskMB")}
-          >
-            <NumberInput
-              optional
-              value={cfg.minFreeDiskMB}
-              placeholder={2 * cfg.trieDirtyCacheMB}
-              unit="MB"
-              onChange={(v) => update({ minFreeDiskMB: v })}
-            />
-          </Setting>
-          {manage && <NodeStorageActions dataDir={orig.dataDir} />}
-        </Advanced>
-      </Rows>
-    </Group>
-  );
+          {manage ? (
+            <>
+              {finer}
+              <NodeStorageActions dataDir={orig.dataDir} />
+            </>
+          ) : (
+            <Advanced id="storage" changed={countSet([cfg.ancientDir, cfg.minFreeDiskMB])}>
+              {finer}
+            </Advanced>
+          )}
+        </Rows>
+      </Group>
+    );
+  };
 
   const inbound = !cfg.blockInbound;
   // With the Tor switch on, Tor sets the node's proxy and Tor ports: the
@@ -533,15 +642,16 @@ export default function Settings() {
                     >
                       <Toggle
                         checked={cfg.offlineSigner}
-                        onChange={(v) => update({ offlineSigner: v, autoStartNode: v ? false : cfg.autoStartNode })}
+                        // A signer never starts its node; turned back off unsaved, the node's switch is as it was
+                        onChange={(v) => update({ offlineSigner: v, autoStartNode: v ? false : orig.autoStartNode })}
                         label={t("settings.offlineSigner")}
                       />
                     </Setting>
-                    {cfg.offlineSigner && (
+                    <Reveal show={cfg.offlineSigner}>
                       <Setting title={t("settings.feeCap")} desc={t("settings.feeCap.desc")}>
                         <FeeCapInput value={cfg.offlineFeeCapWei} onChange={(v) => update({ offlineFeeCapWei: v })} />
                       </Setting>
-                    )}
+                    </Reveal>
                   </Rows>
                 </Group>
               </>
@@ -600,7 +710,7 @@ export default function Settings() {
                           label={t("settings.devChain")}
                         />
                       </Setting>
-                      {cfg.devChain && (
+                      <Reveal show={cfg.devChain}>
                         <Setting
                           title={t("settings.devFund")}
                           desc={t("settings.devFund.desc")}
@@ -613,7 +723,7 @@ export default function Settings() {
                             onChange={(v) => update({ devFundAddress: v.trim() })}
                           />
                         </Setting>
-                      )}
+                      </Reveal>
                       <DevHold />
                     </Rows>
                   </Group>
@@ -1005,7 +1115,7 @@ export default function Settings() {
                           ]}
                         />
                       </Setting>
-                      {inbound && cfg.natMode === "extip" && (
+                      <Reveal show={inbound && cfg.natMode === "extip"}>
                         <Setting
                           title={t("settings.externalIp")}
                           desc={t("settings.externalIp.desc")}
@@ -1018,7 +1128,7 @@ export default function Settings() {
                             onChange={(v) => update({ externalIp: v })}
                           />
                         </Setting>
-                      )}
+                      </Reveal>
                       <Setting
                         title={t("settings.maxPendingPeers")}
                         desc={t("settings.maxPendingPeers.desc")}
@@ -1100,7 +1210,8 @@ export default function Settings() {
                 </Group>
 
                 <Group title={t("settings.group.privacy")} desc={t("settings.privacy.desc")}>
-                  {torSets && (
+                  {/* Between the group's name and its panel, by the group's gap (gap-2.5) */}
+                  <Fold show={torSets} gap={10}>
                     <Notice
                       tone="info"
                       action={
@@ -1111,7 +1222,7 @@ export default function Settings() {
                     >
                       {t("settings.privacy.torOn")}
                     </Notice>
-                  )}
+                  </Fold>
                   <Rows>
                     {/* While Tor is on, the app's own Tor sets the proxy and
                         the control port, the one on this computer may take them */}
@@ -1265,7 +1376,7 @@ export default function Settings() {
                         label={t("settings.rpc.enable")}
                       />
                     </Setting>
-                    {cfg.httpRpcEnabled && (
+                    <Reveal show={cfg.httpRpcEnabled}>
                       <Setting
                         title={t("settings.rpc.port")}
                         desc={t("settings.rpc.port.desc")}
@@ -1278,7 +1389,7 @@ export default function Settings() {
                           onChange={(v) => update({ httpRpcPort: v || 8545 })}
                         />
                       </Setting>
-                    )}
+                    </Reveal>
                     <Advanced id="http" changed={countSet([cfg.httpHost, cfg.httpApis, cfg.httpCors, cfg.httpVhosts])}>
                       <Setting
                         title={t("settings.rpc.host")}
@@ -1327,9 +1438,10 @@ export default function Settings() {
                       </Setting>
                     </Advanced>
                   </Rows>
-                  {!LOOPBACK.has(cfg.httpHost) && cfg.httpRpcEnabled && (
+                  {/* The group's last part, under its panel by the group's gap (gap-2.5) */}
+                  <Fold show={!LOOPBACK.has(cfg.httpHost) && cfg.httpRpcEnabled} gap={10} at="above">
                     <Notice tone="warn">{t("settings.rpc.exposed")}</Notice>
-                  )}
+                  </Fold>
                 </Group>
 
                 <Group title={t("settings.group.ws")}>
@@ -1341,7 +1453,7 @@ export default function Settings() {
                         label={t("settings.ws")}
                       />
                     </Setting>
-                    {cfg.wsEnabled && (
+                    <Reveal show={cfg.wsEnabled}>
                       <Advanced id="ws" changed={countSet([cfg.wsHost, cfg.wsPort, cfg.wsApis, cfg.wsOrigins])}>
                         <Setting title={t("settings.ws.host")} restart={restart("wsHost", "wsPort")}>
                           <TextInput
@@ -1375,7 +1487,7 @@ export default function Settings() {
                           <ListInput value={cfg.wsOrigins} placeholder="*" onChange={(v) => update({ wsOrigins: v })} />
                         </Setting>
                       </Advanced>
-                    )}
+                    </Reveal>
                   </Rows>
                 </Group>
 
@@ -1537,7 +1649,7 @@ export default function Settings() {
                           label={t("settings.metrics")}
                         />
                       </Setting>
-                      {cfg.metrics && (
+                      <Reveal show={cfg.metrics}>
                         <Advanced
                           id="metrics"
                           changed={countSet([cfg.metricsExpensive, cfg.metricsAddr, cfg.metricsPort])}
@@ -1576,7 +1688,7 @@ export default function Settings() {
                             />
                           </Setting>
                         </Advanced>
-                      )}
+                      </Reveal>
                     </Rows>
                   </Group>
                 )}
@@ -1776,12 +1888,14 @@ function NetworkPicker({
 function About() {
   const t = useT();
   const offline = useOfflineMode();
+  const tor = useTorStatus();
   const [appVersion, setAppVersion] = useState("");
   const [client, setClient] = useState<{ release: string; meta: string; commit: string } | null>(null);
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [info, setInfo] = useState<UpdateInfo | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   useEffect(() => {
     api
@@ -1854,6 +1968,30 @@ function About() {
         >
           <span className="selectable font-medium tabular-nums">{client ? `v${client.release}` : "—"}</span>
         </Row>
+        {/* The Tor the app's traffic goes through when Tor is on: the one it
+            ships, by its version, or the one on this computer, whose isn't
+            known. An offline signer sends nothing, Tor or not */}
+        {!offline && tor && (
+          <Row
+            title={t("settings.about.tor")}
+            desc={tor.bundled && !tor.system && tor.version ? t("settings.about.torBundled") : undefined}
+          >
+            {tor.bundled && !tor.system && tor.version ? (
+              <span className="selectable font-medium tabular-nums">{tor.version}</span>
+            ) : (
+              <span className="text-muted-foreground">{t("settings.about.torSystem")}</span>
+            )}
+          </Row>
+        )}
+        {/* What each version brought, as the update's dialog shows it; read
+            from GitHub, which an offline signer never reaches */}
+        {!offline && (
+          <Row title={t("settings.about.notes")} desc={t("settings.about.notes.desc")}>
+            <button type="button" className="btn btn-tinted btn-sm" onClick={() => setNotesOpen(true)}>
+              {t("settings.about.notes.show")}
+            </button>
+          </Row>
+        )}
         <Row
           title={t("settings.about.updates")}
           desc={offline ? t("settings.about.offlineUpdates") : (result ?? undefined)}
@@ -1884,6 +2022,7 @@ function About() {
           )}
         </Row>
       </Rows>
+      <ReleaseNotesModal open={notesOpen} onClose={() => setNotesOpen(false)} version={appNumber} />
 
       <Rows>
         {ABOUT_LINKS.map((l) => (

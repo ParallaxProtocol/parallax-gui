@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -209,5 +211,32 @@ func TestTorBundled(t *testing.T) {
 	tc.Apply(GUIConfig{})
 	if st := tc.Status(); st.State != "off" {
 		t.Errorf("status %+v after stopping", st)
+	}
+}
+
+// TestTorVersion checks that the shipped Tor's version is read from what
+// tor --version says, and that a missing Tor or one that won't say gives
+// none.
+func TestTorVersion(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("a shell script stands in for tor")
+	}
+	dir := t.TempDir()
+	fake := filepath.Join(dir, "tor")
+	if err := os.WriteFile(fake, []byte("#!/bin/sh\necho 'Tor version 0.4.9.14.'\necho 'This build of Tor is covered by the GNU General Public License'\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if got := torVersion(fake); got != "0.4.9.14" {
+		t.Fatalf("torVersion = %q, want 0.4.9.14", got)
+	}
+	if got := torVersion(""); got != "" {
+		t.Fatalf("torVersion(none) = %q", got)
+	}
+	mute := filepath.Join(dir, "mute")
+	if err := os.WriteFile(mute, []byte("#!/bin/sh\nexit 1\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if got := torVersion(mute); got != "" {
+		t.Fatalf("torVersion(failing) = %q", got)
 	}
 }

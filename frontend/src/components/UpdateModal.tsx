@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import { CircleCheck, Download, OctagonAlert, ShieldCheck, type LucideIcon } from "lucide-react";
 import { api, openExternal } from "../lib/api";
 import { useUpdate } from "../lib/update";
-import { useLang, useT } from "../i18n";
+import { useT } from "../i18n";
 import { Modal } from "./ui/Modal";
-import { Markdown } from "./ui/Markdown";
+import { ReleaseNotesList } from "./ReleaseNotes";
 import { Meter } from "./ui/bits";
 import { Tooltip } from "./ui/Tooltip";
 
@@ -21,15 +21,10 @@ const INK = { brand: "text-brand", good: "text-good-ink", critical: "text-critic
  */
 export default function UpdateModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT();
-  const { lang } = useLang();
   const { state, update, retry } = useUpdate();
   if (state.kind === "hidden") return null;
   const { info } = state;
   const version = info.latestVersion;
-  const date = (iso: string) => {
-    const d = iso ? new Date(iso) : null;
-    return d && !isNaN(d.getTime()) ? d.toLocaleDateString(lang, { dateStyle: "long" }) : "";
-  };
   // From the version running to the one on offer: the names are the same in every language
   const subtitle = `Parallax Wallet ${info.currentVersion} → ${version}`;
   const releases = info.releases?.length
@@ -132,24 +127,8 @@ export default function UpdateModal({ open, onClose }: { open: boolean; onClose:
         </div>
       }
     >
-      {/* Each release's notes as it has them, newest first, parted by a line across the dialog, as its header and footer are */}
-      <div className="flex flex-col divide-y divide-border-strong">
-        {releases.map((r) => (
-          <section key={r.version} className="flex flex-col gap-3 px-5 py-5">
-            <div className="flex items-baseline justify-between gap-3">
-              <h3 className="text-xl font-semibold tracking-tight">
-                {t("updater.availableDesc", { version: r.version })}
-              </h3>
-              <span className="shrink-0 text-sm text-muted-foreground">{date(r.publishedAt)}</span>
-            </div>
-            {r.notes.trim() ? (
-              <Markdown text={r.notes} className="selectable" />
-            ) : (
-              <p className="text-muted-foreground">{t("updater.noNotes")}</p>
-            )}
-          </section>
-        ))}
-      </div>
+      {/* Each release's notes, newest first */}
+      <ReleaseNotesList releases={releases} />
     </Modal>
   );
 }

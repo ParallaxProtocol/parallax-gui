@@ -240,7 +240,8 @@ export function Advanced({ id, changed, children }: { id: string; changed: numbe
     // The panel's last child, clipped to its corners (and its top ones, where a
     // group has only its finer options), so the row's tint keeps to them however
     // far the options have folded
-    <div className="overflow-hidden rounded-b-[15px] first:rounded-t-[15px]">
+    // Shown by a setting above it (in a Reveal), it's never the panel's first row
+    <div className="overflow-hidden rounded-b-[15px] first:rounded-t-[15px] [.reveal_&]:rounded-t-none">
       <button
         type="button"
         onClick={toggle}
@@ -272,6 +273,47 @@ export function Advanced({ id, changed, children }: { id: string; changed: numbe
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/**
+ * Fold is what a setting shows outside a panel (a note under a group's
+ * panel): it unfolds and folds away as Reveal's rows do, rather than
+ * popping in and out. In a column with a gap, `gap` (its px) and `at` (the
+ * side the gap is on, the next part's or the last's) let it carry that gap
+ * itself: cancelled by a margin and given back as padding inside what
+ * folds, so the space shrinks with it rather than snapping shut after.
+ */
+export function Fold({
+  show,
+  gap = 0,
+  at = "below",
+  children,
+}: {
+  show: boolean;
+  gap?: number;
+  at?: "above" | "below";
+  children: ReactNode;
+}) {
+  const below = at === "below";
+  return (
+    <AnimatePresence initial={false}>
+      {show && (
+        <motion.div
+          key="fold"
+          // Height alone, clipped as it folds: faded, a notice's glass would
+          // blur only what's inside the fold, losing its frost until it settled
+          initial={{ height: 0 }}
+          animate={{ height: "auto" }}
+          exit={{ height: 0 }}
+          transition={SPRING}
+          className="overflow-hidden"
+          style={below ? { marginBottom: -gap } : { marginTop: -gap }}
+        >
+          <div style={below ? { paddingBottom: gap } : { paddingTop: gap }}>{children}</div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

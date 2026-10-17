@@ -3,10 +3,10 @@ import { Notice } from "../../components/ui/bits";
 import { CardRow } from "../../components/ui/CardRow";
 import type { GUIConfig, MCPAllow, MCPMode } from "../../lib/api";
 import { useT } from "../../i18n";
-import { Row, Rows } from "../../components/ui/Panel";
+import { Panel, Row, Rows } from "../../components/ui/Panel";
 import Toggle from "../../components/ui/Toggle";
 import { Segmented } from "../../components/ui/Segmented";
-import { Group, NumberInput, Setting } from "./fields";
+import { Fold, Group, NumberInput, Reveal, Setting } from "./fields";
 import McpPanel, { McpServerRows, useMcpStatus } from "./McpPanel";
 import { useNode } from "../../lib/live";
 import { NodeOffRow } from "../Wallet/common";
@@ -39,8 +39,6 @@ export function AssistantsOverview({ cfg, update }: PageProps) {
   return (
     <Group title={t("settings.group.mcp")} desc={t("settings.mcp.desc")} more={t("settings.mcp.more")}>
       <Rows>
-        {/* It needs the node, not HTTP-RPC: said first, with the way to start it, while the node is down */}
-        {cfg.mcpEnabled && node && !node.running && <NodeOffRow inPanel desc={t("settings.mcp.nodeStopped")} />}
         <Setting title={t("settings.mcp.enable")} desc={t("settings.mcp.enable.desc")}>
           <Toggle
             checked={cfg.mcpEnabled}
@@ -48,7 +46,7 @@ export function AssistantsOverview({ cfg, update }: PageProps) {
             label={t("settings.mcp.enable")}
           />
         </Setting>
-        {cfg.mcpEnabled && (
+        <Reveal show={cfg.mcpEnabled}>
           <Setting title={t("settings.mcp.port")} desc={t("settings.mcp.port.desc")}>
             <NumberInput
               width="w-24"
@@ -57,11 +55,19 @@ export function AssistantsOverview({ cfg, update }: PageProps) {
               onChange={(v) => update({ mcpPort: v || 8549 })}
             />
           </Setting>
-        )}
+        </Reveal>
         {/* Where the server listens and with which token, once it runs */}
-        <McpServerRows st={st} onStatus={setSt} />
+        <Reveal show={!!st?.enabled}>
+          <McpServerRows st={st} onStatus={setSt} />
+        </Reveal>
       </Rows>
       <McpPanel st={st} />
+      {/* It needs the node, not HTTP-RPC: said apart, at the page's foot, with the way to start it, while the node is down */}
+      {cfg.mcpEnabled && node && !node.running && (
+        <Panel>
+          <NodeOffRow inPanel desc={t("settings.mcp.nodeStopped")} />
+        </Panel>
+      )}
     </Group>
   );
 }
@@ -113,7 +119,8 @@ export function AssistantsPermissions({ cfg, update }: PageProps) {
 
   return (
     <>
-      {!cfg.mcpEnabled && (
+      {/* At the page's top, above its next part by the page's gap (gap-7) */}
+      <Fold show={!cfg.mcpEnabled} gap={28}>
         <Notice
           tone="info"
           action={
@@ -124,7 +131,7 @@ export function AssistantsPermissions({ cfg, update }: PageProps) {
         >
           {t("settings.mcp.permissionsOff")}
         </Notice>
-      )}
+      </Fold>
       <Group title={t("settings.mcp.see")} desc={t("settings.mcp.see.desc")}>
         <Rows>
           <Row title={t("settings.mcp.allow.chain")} desc={t("settings.mcp.allow.chain.desc")}>

@@ -698,22 +698,57 @@ type githubRelease struct {
 // latest, for the app to show what updating brings. Without the list
 // (GitHub unreachable, or refusing), the latest's notes alone.
 func (u *Updater) notesSince(current string, latest ReleaseNotes) []ReleaseNotes {
-	resp, err := u.http.Get(guiReleaseListAPI)
+	list, err := u.releases()
 	if err != nil {
 		logging.Warn("Failed to read the releases' notes", "err", err)
 		return []ReleaseNotes{latest}
 	}
-	defer resp.Body.Close()
-	var list []githubRelease
-	if resp.StatusCode != 200 {
-		logging.Warn("Failed to read the releases' notes", "status", resp.StatusCode)
-		return []ReleaseNotes{latest}
-	}
-	if err := json.NewDecoder(io.LimitReader(resp.Body, maxReleaseList)).Decode(&list); err != nil {
-		logging.Warn("Failed to read the releases' notes", "err", err)
-		return []ReleaseNotes{latest}
-	}
 	return releasesBetween(list, current, latest)
+}
+
+// NotesUpTo reads the notes of every release up to the one running, newest
+// first: what the app has come to be, for Settings' About to show.
+func (u *Updater) NotesUpTo(current string) ([]ReleaseNotes, error) {
+	list, err := u.releases()
+	if err != nil {
+		return nil, err
+	}
+	return releasesUpTo(list, current), nil
+}
+
+// releases reads the release list, newest first.
+func (u *Updater) releases() ([]githubRelease, error) {
+	resp, err := u.http.Get(guiReleaseListAPI)
+	if err != nil {
+		return nil, fmt.Errorf("fetch releases: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("GitHub API returned %d", resp.StatusCode)
+	}
+	var list []githubRelease
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxReleaseList)).Decode(&list); err != nil {
+		return nil, fmt.Errorf("decode releases: %w", err)
+	}
+	return list, nil
+}
+
+// releasesUpTo keeps, of a release list, the published releases no newer
+// than current, newest first, each one's notes clipped.
+func releasesUpTo(list []githubRelease, current string) []ReleaseNotes {
+	out := []ReleaseNotes{}
+	for _, r := range list {
+		v := strings.TrimPrefix(r.TagName, "v")
+		if r.Draft || r.Prerelease || semverNewer(current, v) {
+			continue
+		}
+		out = append(out, ReleaseNotes{Version: v, PublishedAt: r.PublishedAt, URL: r.HTMLURL, Notes: clipNotes(r.Body)})
+	}
+	sort.SliceStable(out, func(i, j int) bool { return semverNewer(out[j].Version, out[i].Version) })
+	if len(out) > maxReleasesShown {
+		out = out[:maxReleasesShown]
+	}
+	return out
 }
 
 // maxReleaseList bounds the release list read: a hundred releases' notes

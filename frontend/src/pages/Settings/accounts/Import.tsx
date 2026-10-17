@@ -11,7 +11,7 @@ import { PasswordInput } from "../../Wallet/common";
 import { useBusy, useDefaultName, useNamePicks } from "../../Wallet/accountActions";
 import { PhraseInput } from "../../Wallet/Phrase";
 import { type Found, PHRASE_LENGTHS, pickKey, picksOf } from "../../Wallet/PhraseImport";
-import { Group } from "../fields";
+import { Group, Reveal } from "../fields";
 import { FieldRow, SettingsFlow, Step, StepFooter, ToggleRow } from "./flow";
 import { BATCH, PhrasePicker } from "./Picker";
 
@@ -253,11 +253,11 @@ export function PhraseImport({ lead, onBack, onDone }: { lead: string; onBack: (
                 checked={advanced}
                 onChange={setAdvanced}
               />
-              {advanced && (
+              <Reveal show={advanced}>
                 <FieldRow label={t("wallet.passphrase.label")} desc={t("wallet.passphrase.importHint")}>
                   {(id) => <PasswordInput id={id} value={passphrase} onChange={setPassphrase} autoFocus />}
                 </FieldRow>
-              )}
+              </Reveal>
             </Rows>
           </Group>
           {error && <Notice tone="critical">{error}</Notice>}

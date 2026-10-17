@@ -1291,6 +1291,15 @@ func (a *App) ApplyUpdate() error {
 	return a.updater.DownloadAndInstall(a.ctx)
 }
 
+// ReleaseNotes reads the notes of every release up to the one running,
+// newest first, for Settings' About. An offline signer reaches out for nothing.
+func (a *App) ReleaseNotes() ([]backend.ReleaseNotes, error) {
+	if a.offline() {
+		return nil, backend.ErrOfflineSigner
+	}
+	return a.updater.NotesUpTo(backend.GUIVersion)
+}
+
 // RestartApp asks the shell to restart the app, onto the update just
 // installed: it relaunches the app (the AppImage on Linux), or on Windows
 // runs the downloaded installer, which starts the app again when done.

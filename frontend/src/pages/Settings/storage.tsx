@@ -8,15 +8,14 @@ import { Modal, ModalForm } from "../../components/ui/Modal";
 import { CopyButton, Meter, Notice } from "../../components/ui/bits";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { Panel, Rows } from "../../components/ui/Panel";
-import { IconTile, TILE } from "../../components/ui/IconTile";
 import { Field, WalletPasswordPrompt } from "../Wallet/common";
 import { useBusy } from "../Wallet/accountActions";
-import { Advanced, Setting } from "./fields";
+import { Setting } from "./fields";
 
 /**
  * WalletStorage is the wallet's part of Settings' Storage: the folder its
- * encrypted keys are kept in on this computer and, folded under Advanced,
- * moving them to another folder. Wiping the wallet is a group of its own
+ * encrypted keys are kept in on this computer, and under it the way to
+ * move them to another folder. Wiping the wallet is a group of its own
  * (WipeWallet).
  */
 export function WalletStorage() {
@@ -47,13 +46,11 @@ export function WalletStorage() {
             <CopyButton value={folder} />
           </div>
         </Setting>
-        <Advanced id="walletStorage" changed={0}>
-          <Setting title={t("storage.wallet.move")} desc={t("storage.wallet.moveDesc")}>
-            <button type="button" className="btn btn-tinted btn-sm" onClick={choose}>
-              {t("storage.move.cta")}
-            </button>
-          </Setting>
-        </Advanced>
+        <Setting title={t("storage.wallet.move")} desc={t("storage.wallet.moveDesc")}>
+          <button type="button" className="btn btn-tinted btn-sm" onClick={choose}>
+            {t("storage.move.cta")}
+          </button>
+        </Setting>
       </Rows>
       <MoveModal
         store="wallet"
@@ -84,11 +81,12 @@ export function WipeWallet() {
   return (
     <>
       {/* Set apart as System Settings sets apart what erases: the panel's edge
-          in the destructive colour, the row marked by a red symbol, its name
+          in the destructive colour, the row tinted and marked by a red symbol, its name
           and its button in red, and a footnote under the group */}
       <Panel tone="critical">
-        <div className="flex min-h-14 items-center gap-3.5 px-4 py-3">
-          <IconTile icon={TriangleAlert} color={TILE.red} />
+        {/* Tinted in the destructive colour, to the panel's rounded edge */}
+        <div className="flex min-h-14 items-center gap-3.5 rounded-[15px] bg-critical/10 px-4 py-3">
+          <TriangleAlert className="size-6 shrink-0 text-critical-ink" strokeWidth={1.75} aria-hidden />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="font-medium text-critical-ink">{t("storage.wallet.delete")}</span>
             <span className="text-sm text-muted-foreground">{t("storage.wallet.deleteDesc")}</span>
@@ -105,9 +103,9 @@ export function WipeWallet() {
 }
 
 /**
- * NodeStorageActions are the node's data's rows of Settings' Storage,
- * under its Advanced: moving the data to another folder or drive, and
- * deleting the chain for a fresh sync.
+ * NodeStorageActions are the node's data's rows of Settings' Storage, in
+ * view under its folder and finer options: moving the data to another
+ * folder or drive, and deleting the chain for a fresh sync.
  */
 export function NodeStorageActions({ dataDir }: { dataDir: string }) {
   const t = useT();

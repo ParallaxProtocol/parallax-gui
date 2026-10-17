@@ -31,6 +31,13 @@ export function openExternal(url: string) {
 }
 
 /**
+ * beforeNodeStart is what must run before the node starts, whichever button
+ * starts it: Settings saves the changes still waiting for a pause in the
+ * typing, so the node starts with them rather than needing a restart.
+ */
+export const beforeNodeStart = new Set<() => Promise<void>>();
+
+/**
  * CONFIG_UPDATED_EVENT is the window event dispatched whenever a new config
  * is saved, so what follows it (App's animations, theme, notifications and
  * keeping awake; the open settings) updates at once rather than on a timer.
@@ -991,6 +998,8 @@ export type TorStatus = {
   bundled: boolean;
   /** The Tor running on this computer is used instead. */
   system: boolean;
+  /** The version of the Tor the app ships ("0.4.9.14"), empty without one. */
+  version?: string;
   state: "off" | "starting" | "ready" | "failed";
   /** Tor's bootstrap, 0 to 100 (the app's own Tor only). */
   progress: number;
@@ -1038,7 +1047,10 @@ export const api = {
 
   torStatus: () => call<TorStatus>("TorStatus"),
 
-  startNode: () => call<void>("StartNode"),
+  startNode: async () => {
+    await Promise.all([...beforeNodeStart].map((f) => f().catch(() => {})));
+    return call<void>("StartNode");
+  },
   stopNode: () => call<void>("StopNode"),
   nodeStatus: () => call<NodeStatus>("NodeStatus"),
   nodeDetails: () => call<NodeDetails>("NodeDetails"),
@@ -1174,6 +1186,8 @@ export const api = {
 
   // Auto-update
   checkForUpdate: () => call<UpdateInfo | null>("CheckForUpdate"),
+  /** The notes of every release up to the one running, newest first. */
+  releaseNotes: () => call<ReleaseNotes[]>("ReleaseNotes"),
   getLatestUpdate: () => call<UpdateInfo | null>("GetLatestUpdate"),
   applyUpdate: () => call<void>("ApplyUpdate"),
   restartApp: () => call<void>("RestartApp"),

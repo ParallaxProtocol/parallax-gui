@@ -43,6 +43,9 @@ type TorStatus struct {
 	// running on this computer is used instead (chosen, or without one)
 	Bundled bool `json:"bundled"`
 	System  bool `json:"system"`
+	// Version is the version of the Tor the app ships ("0.4.9.14"), empty
+	// without one: the Tor on this computer's isn't known
+	Version string `json:"version"`
 	// State is "off", "starting", "ready" or "failed"
 	State string `json:"state"`
 	// Progress is Tor's bootstrap, 0 to 100, and Summary what it is doing
@@ -102,6 +105,8 @@ type torWant struct {
 type TorController struct {
 	dir string // Tor's own data, in the app's folder
 	bin string // the Tor the app ships, "" in a build without one
+	// version is that Tor's, asked once as the app starts
+	version string
 
 	applyMu sync.Mutex // one Apply at a time
 
@@ -138,8 +143,34 @@ func NewTorController(dir string) *TorController {
 		changed:    make(chan struct{}),
 		transports: make(map[string]*http.Transport),
 	}
-	t.st = TorStatus{State: "off", Bundled: t.bin != ""}
+	t.version = torVersion(t.bin)
+	t.st = TorStatus{State: "off", Bundled: t.bin != "", Version: t.version}
 	return t
+}
+
+// torVersionLine is how tor --version names itself: "Tor version 0.4.9.14."
+var torVersionLine = regexp.MustCompile(`Tor version ([0-9][0-9A-Za-z.\-]*[0-9A-Za-z])`)
+
+// torVersion asks a Tor its version, "" if there's none or it won't say.
+func torVersion(bin string) string {
+	if bin == "" {
+		return ""
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, bin, "--version")
+	cmd.Dir = filepath.Dir(bin)
+	cmd.Env = torEnv(bin)
+	prepareTorCmd(cmd)
+	out, err := cmd.Output()
+	if err != nil {
+		logging.Warn("Failed to read the bundled Tor's version", "err", err)
+		return ""
+	}
+	if m := torVersionLine.FindSubmatch(out); m != nil {
+		return string(m[1])
+	}
+	return ""
 }
 
 // bundledTor is the Tor the app ships, in a tor folder beside the backend,
@@ -220,6 +251,7 @@ func (t *TorController) Apply(g GUIConfig) {
 		OnionOnly: t.onionOnly,
 		Bundled:   t.bin != "",
 		System:    want.system,
+		Version:   t.version,
 		State:     "off",
 	}
 	if want.on {

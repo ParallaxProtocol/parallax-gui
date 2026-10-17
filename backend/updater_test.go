@@ -103,3 +103,24 @@ func TestReleasesBetween(t *testing.T) {
 		t.Fatalf("releasesBetween(no list) = %v, want the latest alone", got)
 	}
 }
+
+// TestReleasesUpTo checks that About's notes are every published release
+// up to the one running, newest first: not one past it, nor drafts or
+// prereleases.
+func TestReleasesUpTo(t *testing.T) {
+	list := []githubRelease{
+		{TagName: "v1.3.0"},
+		{TagName: "v1.0.1"},
+		{TagName: "v1.1.0-rc1", Prerelease: true},
+		{TagName: "v0.9.0"},
+		{TagName: "v1.1.0", Draft: true},
+		{TagName: "v1.0.0"},
+	}
+	var versions []string
+	for _, r := range releasesUpTo(list, "1.0.1") {
+		versions = append(versions, r.Version)
+	}
+	if got, want := strings.Join(versions, " "), "1.0.1 1.0.0 0.9.0"; got != want {
+		t.Fatalf("releasesUpTo = %s, want %s", got, want)
+	}
+}
